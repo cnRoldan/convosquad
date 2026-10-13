@@ -2,8 +2,10 @@ import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 import type { Enums } from '@/types/database';
 
-export async function listPlayers(clubId: string) {
-  return unwrap(await requireSupabase().from('players').select('*').eq('club_id', clubId).eq('is_active', true).order('ea_id'));
+export async function listPlayers(clubId: string, includeInactive = false) {
+  let query = requireSupabase().from('players').select('*').eq('club_id', clubId).order('jersey_number', { nullsFirst: false }).order('ea_id');
+  if (!includeInactive) query = query.eq('is_active', true);
+  return unwrap(await query);
 }
 
 export async function createPlayer(clubId: string, input: { eaId: string; jerseyNumber?: number; position: Enums<'player_position'> }) {
@@ -23,4 +25,14 @@ export async function deletePlayer(playerId: string) {
 
 export async function linkPlayerAccount(playerId: string, userId: string) {
   return unwrap(await requireSupabase().rpc('link_player_account', { p_player_id: playerId, p_user_id: userId }).single());
+}
+
+export async function importPlayers(clubId: string, players: { eaId: string; jerseyNumber: number; position: Enums<'player_position'> }[]) {
+  return unwrap(await requireSupabase().rpc('import_players', { p_club_id: clubId,
+    p_players: players.map((player) => ({ ea_id: player.eaId, jersey_number: player.jerseyNumber, position: player.position })),
+  }));
+}
+
+export async function getPlayer(clubId: string, playerId: string) {
+  return unwrap(await requireSupabase().from('players').select('*').eq('club_id', clubId).eq('id', playerId).single());
 }

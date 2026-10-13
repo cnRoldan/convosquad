@@ -28,10 +28,15 @@ export async function setClubMember(clubId: string, userId: string, role: Enums<
 }
 
 export async function searchPublicClubs(query: string) {
-  const safeQuery = query.trim().replace(/[%_]/g, '').slice(0, 80);
-  return unwrap(await requireSupabase().from('club_directory').select('club_id, name, description').ilike('name', `%${safeQuery}%`).limit(50));
+  return unwrap(await requireSupabase().rpc('search_clubs', { p_query: query.trim().slice(0, 80) }));
 }
 
 export async function listClubMembers(clubId: string) {
   return unwrap(await requireSupabase().from('club_members').select('*').eq('club_id', clubId).eq('is_active', true));
+}
+
+export async function listClubAccounts(clubId: string) {
+  return unwrap(await requireSupabase().from('club_members')
+    .select('id, user_id, role, profiles!club_members_user_id_fkey(username)')
+    .eq('club_id', clubId).eq('is_active', true));
 }

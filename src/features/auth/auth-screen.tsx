@@ -1,22 +1,25 @@
 import { useState } from 'react';
-import { Redirect, router } from 'expo-router';
-import * as Linking from 'expo-linking';
-import { Platform } from 'react-native';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { authCallbackUrl } from './redirect';
+import { usePendingInvite } from '@/features/invitations/pending-invite-context';
 
 import { Body, Button, Field, Heading, Screen } from '@/components/ui';
 import { useAuth } from './auth-context';
-import { loginAccount, registerAccount, usernamePattern } from './service';
+import { authErrorMessage, loginAccount, registerAccount, usernamePattern } from './service';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
+  const { recovered } = useLocalSearchParams<{ recovered?: string }>();
   const isRegister = mode === 'register';
-  const { session, isDemo, enterDemo, exitDemo, isLoading } = useAuth();
+  const { session, isDemo, enterDemo, exitDemo, isLoading, isRecovery } = useAuth();
+  const { pendingInvite } = usePendingInvite();
+  const destination = pendingInvite ? '/invite' as const : { pathname: '/clubs' as const, params: { auto: '1' } };
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  if (session && !isDemo) return <Redirect href="/clubs" />;
+  if (session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
 
   async function submit() {
     if (isRegister && !usernamePattern.test(username.trim())) return setMessage('Usa entre 3 y 24 letras, números o guiones bajos para tu nombre de usuario.');
@@ -28,21 +31,18 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
     try {
       exitDemo();
       if (isRegister) {
-        const redirectTo = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL
-          || (Platform.OS === 'web' ? Linking.createURL('/auth/callback') : 'convosquad://auth/callback');
+        const redirectTo = authCallbackUrl();
         const result = await registerAccount({ username, email, password, redirectTo });
         setPassword('');
-        if (result.session) router.replace('/clubs');
+        if (result.session) router.replace(destination);
         else setMessage('Revisa tu correo para confirmar la cuenta. Después podrás iniciar sesión.');
       } else {
         await loginAccount(email, password);
         setPassword('');
-        router.replace('/clubs');
+        router.replace(destination);
       }
-    } catch {
-      setMessage(isRegister
-        ? 'No se pudo crear la cuenta. Comprueba los datos y el nombre de usuario, que debe ser único.'
-        : 'No se pudo iniciar sesión. Comprueba el correo, la contraseña y que tu cuenta esté confirmada.');
+    } catch (error) {
+      setMessage(authErrorMessage(error, isRegister ? 'register' : 'login'));
     } finally {
       setBusy(false);
     }
@@ -54,8 +54,10 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
       {isRegister ? <Field label="Nombre de usuario" value={username} onChangeText={setUsername} autoCapitalize="none" autoComplete="username" textContentType="username" editable={!busy} /> : null}
       <Field label="Correo electrónico" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" editable={!busy} />
       <Field label="Contraseña" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete={isRegister ? 'new-password' : 'current-password'} textContentType={isRegister ? 'newPassword' : 'password'} editable={!busy} />
+      {recovered === '1' && !isRegister ? <Body>Contraseña actualizada. Inicia sesión con la nueva contraseña.</Body> : null}
       {message ? <Body>{message}</Body> : null}
       <Button disabled={busy || isLoading} label={busy ? 'Un momento…' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'} onPress={() => { void submit(); }} />
+      {!isRegister ? <Button secondary disabled={busy} label="He olvidado mi contraseña" onPress={() => router.push('/recover')} /> : null}
       <Button secondary disabled={busy} label="Explorar la demo" onPress={() => { setPassword(''); enterDemo(); router.replace('/clubs'); }} />
       <Button secondary disabled={busy} label={isRegister ? 'Ya tengo una cuenta' : 'Quiero registrarme'} onPress={() => router.replace(isRegister ? '/login' : '/register')} />
       <Body>{isSupabaseConfigured ? 'Acceso gestionado por Supabase Auth.' : 'Modo demo · Supabase aún no está configurado.'}</Body>

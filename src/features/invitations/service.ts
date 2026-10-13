@@ -7,8 +7,8 @@ export async function listClubInvitations(clubId: string) {
     .eq('club_id', clubId).order('created_at'));
 }
 
-export async function createClubInvitation(clubId: string, expiresAt: string, maxUses = 1) {
-  return unwrap(await requireSupabase().rpc('create_club_invitation', { p_club_id: clubId, p_expires_at: expiresAt, p_max_uses: maxUses }).single());
+export async function createClubInvitation(clubId: string, hours: number, maxUses = 1) {
+  return unwrap(await requireSupabase().rpc('create_invitation_for_hours', { p_club_id: clubId, p_hours: hours, p_max_uses: maxUses }).single());
 }
 
 export async function revokeClubInvitation(invitationId: string) {

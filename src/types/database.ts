@@ -222,6 +222,7 @@ export type Database = {
           created_at: string;
           decided_at: string | null;
           decided_by: string | null;
+          club_name_snapshot: string;
         };
         Insert: {
           id?: string;
@@ -231,6 +232,7 @@ export type Database = {
           created_at?: string;
           decided_at?: string | null;
           decided_by?: string | null;
+          club_name_snapshot?: string;
         };
         Update: {
           id?: string;
@@ -240,6 +242,7 @@ export type Database = {
           created_at?: string;
           decided_at?: string | null;
           decided_by?: string | null;
+          club_name_snapshot?: string;
         };
         Relationships: [
           { foreignKeyName: 'join_requests_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -331,6 +334,21 @@ export type Database = {
         };
         Returns: { id: string; token: string; expires_at: string }[];
       };
+      create_invitation_for_hours: {
+        Args: {
+          p_club_id: string;
+          p_hours: number;
+          p_max_uses?: number;
+        };
+        Returns: { id: string; token: string; expires_at: string }[];
+      };
+      import_players: {
+        Args: {
+          p_club_id: string;
+          p_players: Json;
+        };
+        Returns: Database['public']['Tables']['players']['Row'][];
+      };
       link_player_account: {
         Args: {
           p_player_id: string;
@@ -371,6 +389,12 @@ export type Database = {
           p_invitation_id: string;
         };
         Returns: undefined;
+      };
+      search_clubs: {
+        Args: {
+          p_query: string;
+        };
+        Returns: Database['public']['Tables']['club_directory']['Row'][];
       };
       set_club_member: {
         Args: {

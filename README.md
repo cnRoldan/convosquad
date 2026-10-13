@@ -6,7 +6,7 @@ Aplicación móvil para gestionar las convocatorias de equipos de EA Sports FC, 
 
 La demo funciona sin Supabase ni credenciales. Incluye bienvenida, formularios de login y registro, selección de club y pestañas de inicio, plantilla y convocatoria. Álex pertenece a dos clubes: es administrador en Squad Verde FC y jugador en Norte United. Al cambiar de club se muestran su plantilla y convocatoria independientes.
 
-La fase 2 añade registro/login con correo real y nombre de usuario único, sesión persistente, creación segura de clubes y lectura de sus datos cuando Supabase está configurado. La demo sigue siendo independiente y no crea cuentas ni escribe en el backend.
+La fase 3 añade recuperación de contraseña, selección persistente de club, búsqueda pública, solicitudes y aprobación, invitaciones caducables/revocables compartibles por WhatsApp y administración de plantilla. Permite crear, editar, desactivar y vincular una ficha sin registrar a una cuenta existente, además de importar plantillas con vista previa editable y confirmación. Las operaciones reales requieren Supabase configurado; la demo es de solo lectura y nunca simula guardados exitosos. El acceso utiliza correo real y nombre de usuario único, según la decisión aprobada.
 
 Las migraciones, RLS, servicios y pruebas están documentados en [Datos y seguridad](docs/database.md). **Las migraciones no están aplicadas a un proyecto remoto.** Las convocatorias siguen siendo de solo lectura en la interfaz. No hay pagos ni suscripciones.
 
@@ -21,7 +21,7 @@ export npm_config_cache=/tmp/convosquad-npm-cache
 export EXPO_NO_TELEMETRY=1
 npm ci
 npm run check
-npm run test:db
+npm run test
 npm run db:types:check
 npm run export
 ```
@@ -95,12 +95,17 @@ Estas variables se incluyen en el bundle: **nunca uses `service_role`, claves se
 
 `src/lib/supabase.ts` exporta un cliente tipado opcional con PKCE y persistencia de sesión. Sin configuración devuelve `null` y la demo funciona. Antes de usar el acceso real aplica las migraciones y configura Auth y el callback siguiendo [Datos y seguridad](docs/database.md). Un filtro de interfaz no sustituye RLS.
 
+El flujo completo con dos cuentas, correo, enlaces y permisos está descrito en [Pruebas de la fase 3](docs/workflows.md). Para compartir enlaces HTTPS configura también `EXPO_PUBLIC_INVITE_BASE_URL` con el origen web desplegado.
+
 ## Arquitectura
 
 ```text
 src/
   app/                 Rutas y layouts de Expo Router
-    (auth)/            Login y registro
+    (auth)/            Login, registro y recuperación
+    (account)/         Crear/buscar clubes y consultar solicitudes
+    (manage)/          Plantilla, importación, solicitudes e invitaciones
+    invite.tsx         Recepción pública de enlaces de invitación
     (club)/            Inicio, plantilla y convocatoria; exige club seleccionado
     clubs.tsx          Selección de club
     index.tsx          Bienvenida
@@ -108,12 +113,16 @@ src/
   features/
     auth/              Formularios de acceso
     clubs/             Tipos, fixtures y estado del club activo
+    players/           Servicios, editor y parser de importación
+    invitations/       Enlaces, token temporal y servicios
+    join-requests/     Solicitudes y revisión
+  hooks/               Recursos asíncronos con ámbito de cuenta/club
   lib/                 Supabase, preparación push y formato de fechas
   types/               Tipos generados desde las migraciones
   theme/               Paleta compartida
 ```
 
-El rol pertenece a la membresía de un usuario en un club, no al usuario global. Plantillas y convocatorias usan `clubId`; las respuestas usan `membershipId`. El contexto centraliza la selección y separa datos simulados y reales. Una ficha de plantilla es independiente de la cuenta y puede mostrarse como «Sin registrar». El club activo solo se mantiene en memoria; recargar exige volver a elegirlo. La sesión real puede persistir, mientras que la entrada en la demo es explícita. No se generan carpetas nativas: Expo las produce mediante sus plugins al compilar.
+El rol pertenece a la membresía de un usuario en un club, no al usuario global. Plantillas y convocatorias usan `clubId`; las respuestas usan `membershipId`. El contexto centraliza la selección y separa datos simulados y reales. Una ficha de plantilla es independiente de la cuenta y puede mostrarse como «Sin registrar». La selección se guarda por usuario; al recuperarla se comprueba de nuevo que exista una membresía activa. La sesión real puede persistir, mientras que la entrada en la demo es explícita. No se generan carpetas nativas: Expo las produce mediante sus plugins al compilar.
 
 ## Notificaciones
 
@@ -128,7 +137,9 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
-| `npm run test:db` | 24 pruebas de PostgreSQL y RLS sin credenciales |
+| `npm run test` | 46 pruebas: 12 unitarias y 34 de PostgreSQL/RLS |
+| `npm run test:db` | SQL y permisos sin credenciales |
+| `npm run test:unit` | Parser y enlaces de invitación |
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |
 | `npm run db:types` | Regenerar tipos desde las migraciones |
 | `npm run export` | Bundles iOS, Android y web estática |
@@ -139,4 +150,4 @@ GitHub Actions ejecuta instalación reproducible, TypeScript, lint, pruebas de R
 
 ## Próximos pasos
 
-Validar Auth y las migraciones en un proyecto Supabase real; completar recuperación, solicitudes, invitaciones y administración de plantilla; implementar la interfaz de convocatorias y asistencia; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.
+Validar Auth, recuperación y todos los flujos en un proyecto Supabase real; implementar la interfaz de convocatorias y asistencia; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.

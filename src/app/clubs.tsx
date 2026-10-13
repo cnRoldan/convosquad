@@ -1,75 +1,51 @@
 import { useState } from 'react';
-import { Redirect, router } from 'expo-router';
-import { Switch, View } from 'react-native';
-
-import { Body, Button, Card, Field, Heading, Screen } from '@/components/ui';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { Body, Button, Card, Heading, Message, Screen } from '@/components/ui';
+import { LoadingScreen } from '@/components/loading';
+import { AuthAccess } from '@/components/access';
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
-import { createClub } from '@/features/clubs/service';
+import { usePendingInvite } from '@/features/invitations/pending-invite-context';
 import { backendErrorMessage } from '@/lib/backend-result';
-import { colors } from '@/theme';
 
 export default function ClubsScreen() {
-  const { availableClubs, ownMemberships, selectClub, clearClub, isLoading, error, refresh } = useClub();
-  const { session, isDemo, signOut, exitDemo } = useAuth();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [timezone, setTimezone] = useState('Europe/Madrid');
-  const [isPublic, setPublic] = useState(false);
+  return <AuthAccess><ClubSelection /></AuthAccess>;
+}
+function ClubSelection() {
+  const { auto } = useLocalSearchParams<{ auto?: string }>();
+  const { availableClubs, ownMemberships, activeClub, selectClub, clearClub, isLoading, error, refresh } = useClub();
+  const { isDemo, signOut, exitDemo } = useAuth();
+  const { pendingInvite, clearInvite } = usePendingInvite();
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  if (isLoading) return <Screen><Body>Cargando tus clubes…</Body></Screen>;
-  if (!isDemo && !session) return <Redirect href="/login" />;
-
-  async function submitClub() {
-    if (name.trim().length < 2) return setMessage('El nombre del club debe tener al menos dos caracteres.');
-    setBusy(true);
-    setMessage('');
-    try {
-      await createClub({ name: name.trim(), description, timezone: timezone.trim(), isPublic });
-      setName('');
-      setDescription('');
-      setPublic(false);
-      setMessage('Club creado. Ya eres su primer administrador.');
-      refresh();
-    } catch (error) { setMessage(backendErrorMessage(error)); }
-    finally { setBusy(false); }
-  }
+  if (isLoading) return <LoadingScreen label="Cargando tus clubes…" />;
+  if (auto === '1' && availableClubs.length === 1 && activeClub) return <Redirect href="/home" />;
 
   async function leave() {
+    setBusy(true);
     try {
       if (isDemo) exitDemo(); else await signOut();
       clearClub();
+      clearInvite();
       router.replace('/');
-    }
-    catch (error) { setMessage(backendErrorMessage(error)); }
+    } catch (error) { setMessage(backendErrorMessage(error)); }
+    finally { setBusy(false); }
   }
-
-  return (
-    <Screen>
-      <Heading title="Elige tu club" subtitle={isDemo ? 'Hola, Álex. Estos son tus vestuarios en la demo.' : 'Una cuenta, varios vestuarios independientes.'} />
-      {error ? <Card title="No se pudieron cargar los clubes"><Body>{error}</Body><Button label="Reintentar" onPress={refresh} /></Card> : null}
-      {availableClubs.map((club) => {
-        const membership = ownMemberships.find((member) => member.clubId === club.id);
-        return <Card key={club.id} title={club.name}>
-          {club.description ? <Body>{club.description}</Body> : null}
-          <Body>{membership?.role === 'admin' ? 'Administrador' : 'Jugador'} · {club.timezone}</Body>
-          <Button label="Entrar al club" onPress={() => { selectClub(club.id); router.replace('/home'); }} />
-        </Card>;
-      })}
-      {!isDemo && !error ? <Card title="Crear un club">
-        <Field label="Nombre del club" value={name} onChangeText={setName} maxLength={80} editable={!busy} />
-        <Field label="Descripción (opcional)" value={description} onChangeText={setDescription} maxLength={500} editable={!busy} />
-        <Field label="Zona horaria" value={timezone} onChangeText={setTimezone} autoCapitalize="none" editable={!busy} />
-        <View style={{ gap: 8 }}>
-          <Body>Aparecer en la búsqueda pública (nombre y descripción)</Body>
-          <Switch accessibilityLabel="Aparecer en la búsqueda pública" value={isPublic} onValueChange={setPublic} disabled={busy} trackColor={{ true: colors.primary }} />
-        </View>
-        <Button disabled={busy} label={busy ? 'Creando…' : 'Crear club'} onPress={() => { void submitClub(); }} />
-      </Card> : null}
-      {message ? <Body>{message}</Body> : null}
-      <Body>La plantilla, el rol y las convocatorias dependen del club seleccionado.</Body>
-      <Button secondary label={isDemo ? 'Volver a la bienvenida' : 'Cerrar sesión'} onPress={() => { void leave(); }} />
-    </Screen>
-  );
+  return <Screen>
+    <Heading title="Elige tu club" subtitle={isDemo ? 'Hola, Álex. Estos son tus vestuarios en la demo.' : 'Una cuenta, varios vestuarios independientes.'} />
+    {error ? <Card title="No se pudieron cargar los clubes"><Message error>{error}</Message><Button label="Reintentar" onPress={refresh} /></Card> : null}
+    {pendingInvite ? <Button label="Continuar invitación" onPress={() => router.push('/invite')} /> : null}
+    {availableClubs.map((club) => <Card key={club.id} title={club.name}>
+      {club.description ? <Body>{club.description}</Body> : null}
+      <Body>{ownMemberships.find((member) => member.clubId === club.id)?.role === 'admin' ? 'Administrador' : 'Jugador'} · {club.timezone}</Body>
+      <Button label="Entrar al club" onPress={() => { selectClub(club.id); router.replace('/home'); }} />
+    </Card>)}
+    {!availableClubs.length && !error ? <Body>Aún no perteneces a ningún club. Crea uno, busca tu equipo o abre una invitación.</Body> : null}
+    <Button label="Crear un club" onPress={() => router.push('/create-club')} />
+    <Button secondary label="Buscar clubes" onPress={() => router.push('/search-clubs')} />
+    <Button secondary label="Mis solicitudes" onPress={() => router.push('/my-requests')} />
+    {!isDemo ? <Button secondary label="Actualizar mis clubes" onPress={refresh} /> : null}
+    {message ? <Message error>{message}</Message> : null}
+    <Button secondary disabled={busy} label={isDemo ? 'Volver a la bienvenida' : 'Cerrar sesión'} onPress={() => { void leave(); }} />
+  </Screen>;
 }
