@@ -1,28 +1,27 @@
 import { Body, Card, Heading, Screen } from '@/components/ui';
 import { useClub } from '@/features/clubs/club-context';
+import { useAuth } from '@/features/auth/auth-context';
 import { formatMatchDate } from '@/lib/format';
 
-const statusLabels = { confirmed: 'Confirmado', pending: 'Pendiente', declined: 'No disponible' } as const;
+const statusLabels = { available: 'Disponible', unanswered: 'Sin responder', unavailable: 'No disponible', backup: 'Backup' } as const;
 
 export default function CallUpScreen() {
-  const { activeClub, upcomingCallUp, roster } = useClub();
-  const confirmed = upcomingCallUp?.responses.filter((response) => response.status === 'confirmed').length ?? 0;
+  const { activeClub, upcomingCallUp } = useClub();
+  const { isDemo } = useAuth();
+  const confirmed = upcomingCallUp?.responses.filter((response) => response.status === 'available').length ?? 0;
   return (
     <Screen>
       <Heading title="Convocatoria" subtitle={activeClub?.name ?? 'Tu club'} />
       {upcomingCallUp ? <>
         <Card title={upcomingCallUp.title}>
-          <Body>{formatMatchDate(upcomingCallUp.startsAt)} · hora de Madrid</Body>
+          <Body>{formatMatchDate(upcomingCallUp.startsAt, upcomingCallUp.timezone)} · {upcomingCallUp.timezone}</Body>
           <Body>Rival: {upcomingCallUp.opponent}</Body>
-          <Body>{confirmed} de {upcomingCallUp.slots} plazas confirmadas</Body>
+          <Body>{confirmed} de {upcomingCallUp.slots} plazas disponibles</Body>
         </Card>
         <Card title="Disponibilidad">
-          {upcomingCallUp.responses.map((response) => {
-            const member = roster.find((player) => player.id === response.membershipId);
-            return <Body key={response.membershipId}>{member?.displayName ?? 'Jugador'} · {statusLabels[response.status]}</Body>;
-          })}
+          {upcomingCallUp.responses.map((response) => <Body key={response.id}>{response.displayName} · {statusLabels[response.status]}</Body>)}
         </Card>
-        <Body>Convocatoria simulada. Crear convocatorias y confirmar asistencia estarán disponibles en una próxima fase.</Body>
+        <Body>{isDemo ? 'Convocatoria simulada. ' : ''}La gestión de convocatorias y respuestas desde esta pantalla llegará en una próxima fase.</Body>
       </> : <Body>Tu club aún no tiene una convocatoria.</Body>}
     </Screen>
   );

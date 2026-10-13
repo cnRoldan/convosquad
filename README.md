@@ -6,7 +6,9 @@ Aplicación móvil para gestionar las convocatorias de equipos de EA Sports FC, 
 
 La demo funciona sin Supabase ni credenciales. Incluye bienvenida, formularios de login y registro, selección de club y pestañas de inicio, plantilla y convocatoria. Álex pertenece a dos clubes: es administrador en Squad Verde FC y jugador en Norte United. Al cambiar de club se muestran su plantilla y convocatoria independientes.
 
-Los formularios validan los campos, pero **no autentican ni crean cuentas**. Las convocatorias y disponibilidades son ejemplos de solo lectura, con fechas fijas en horario de Madrid. No hay base de datos, autorización real, envíos push, pagos ni suscripciones.
+La fase 2 añade registro/login con correo real y nombre de usuario único, sesión persistente, creación segura de clubes y lectura de sus datos cuando Supabase está configurado. La demo sigue siendo independiente y no crea cuentas ni escribe en el backend.
+
+Las migraciones, RLS, servicios y pruebas están documentados en [Datos y seguridad](docs/database.md). **Las migraciones no están aplicadas a un proyecto remoto.** Las convocatorias siguen siendo de solo lectura en la interfaz. No hay pagos ni suscripciones.
 
 ## Trabajar exclusivamente desde Codex Cloud
 
@@ -19,6 +21,8 @@ export npm_config_cache=/tmp/convosquad-npm-cache
 export EXPO_NO_TELEMETRY=1
 npm ci
 npm run check
+npm run test:db
+npm run db:types:check
 npm run export
 ```
 
@@ -89,7 +93,7 @@ Configura:
 
 Estas variables se incluyen en el bundle: **nunca uses `service_role`, claves secretas ni contraseñas de base de datos**. `.env` está ignorado por Git. Para EAS, configura las mismas variables públicas en el entorno de compilación de tu proyecto Expo. Reinicia Metro cuando cambien.
 
-`src/lib/supabase.ts` exporta un cliente opcional y persistencia de sesión nativa. Sin configuración devuelve `null`. Esta fase no ejecuta consultas ni Auth. En una siguiente fase habrá que crear las tablas, políticas RLS por club y membresía, Auth y Realtime; un filtro de interfaz no sustituye la autorización del backend.
+`src/lib/supabase.ts` exporta un cliente tipado opcional con PKCE y persistencia de sesión. Sin configuración devuelve `null` y la demo funciona. Antes de usar el acceso real aplica las migraciones y configura Auth y el callback siguiendo [Datos y seguridad](docs/database.md). Un filtro de interfaz no sustituye RLS.
 
 ## Arquitectura
 
@@ -105,10 +109,11 @@ src/
     auth/              Formularios de acceso
     clubs/             Tipos, fixtures y estado del club activo
   lib/                 Supabase, preparación push y formato de fechas
+  types/               Tipos generados desde las migraciones
   theme/               Paleta compartida
 ```
 
-El rol pertenece a la membresía de un usuario en un club, no al usuario global. Plantillas y convocatorias usan `clubId`; las respuestas usan `membershipId`. El contexto centraliza la selección y filtra los datos simulados. El club activo solo se mantiene en memoria; recargar exige volver a elegirlo. No se generan carpetas nativas: Expo las produce mediante sus plugins al compilar.
+El rol pertenece a la membresía de un usuario en un club, no al usuario global. Plantillas y convocatorias usan `clubId`; las respuestas usan `membershipId`. El contexto centraliza la selección y separa datos simulados y reales. Una ficha de plantilla es independiente de la cuenta y puede mostrarse como «Sin registrar». El club activo solo se mantiene en memoria; recargar exige volver a elegirlo. La sesión real puede persistir, mientras que la entrada en la demo es explícita. No se generan carpetas nativas: Expo las produce mediante sus plugins al compilar.
 
 ## Notificaciones
 
@@ -123,12 +128,15 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
+| `npm run test:db` | 23 pruebas de PostgreSQL y RLS sin credenciales |
+| `npm run db:types:check` | Sincronización de SQL y TypeScript |
+| `npm run db:types` | Regenerar tipos desde las migraciones |
 | `npm run export` | Bundles iOS, Android y web estática |
 | `EXPO_OFFLINE=1 npx expo install --check` | Compatibilidad con la tabla del SDK instalado |
 | `npm run eas -- build ...` | Compilación nativa en EAS |
 
-GitHub Actions ejecuta instalación reproducible, TypeScript, lint y exportación de bundles en las pull requests. Aún no hay una suite automatizada de pruebas funcionales nativas.
+GitHub Actions ejecuta instalación reproducible, TypeScript, lint, pruebas de RLS, sincronización de tipos y exportación de bundles en las pull requests. Aún no hay una suite automatizada de pruebas funcionales nativas.
 
 ## Próximos pasos
 
-Conectar Auth y diseñar el esquema multiclub con RLS; implementar convocatorias y asistencia; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.
+Validar Auth y las migraciones en un proyecto Supabase real; completar recuperación, solicitudes, invitaciones y administración de plantilla; implementar la interfaz de convocatorias y asistencia; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.

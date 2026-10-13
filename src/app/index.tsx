@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import { useAuth } from '@/features/auth/auth-context';
 
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 
 export default function WelcomeScreen() {
+  const { enterDemo } = useAuth();
   return (
     <Screen>
       <Heading title="Tu equipo. A una convocatoria de distancia." subtitle="Organiza tus noches de Clubes Pro y reúne a tu plantilla." />
@@ -11,8 +13,8 @@ export default function WelcomeScreen() {
       </Card>
       <Button label="Iniciar sesión" onPress={() => router.push('/login')} />
       <Button secondary label="Crear una cuenta" onPress={() => router.push('/register')} />
-      <Button secondary label="Explorar la demo" onPress={() => router.push('/clubs')} />
-      <Body>Versión inicial con datos simulados. No se crean cuentas ni se envían convocatorias.</Body>
+      <Button secondary label="Explorar la demo" onPress={() => { enterDemo(); router.push('/clubs'); }} />
+      <Body>La demo utiliza datos simulados. El acceso real requiere configurar Supabase.</Body>
     </Screen>
   );
 }

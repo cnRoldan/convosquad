@@ -7,7 +7,8 @@ export default function RosterScreen() {
     <Screen>
       <Heading title="La plantilla" subtitle={activeClub?.name ?? 'Tu club'} />
       {roster.map((member) => <Card key={member.id} title={member.displayName}>
-        <Body>{member.position} · {member.role === 'admin' ? 'Administrador' : 'Jugador'}</Body>
+        <Body>{member.position} · {member.jerseyNumber ? `Dorsal ${member.jerseyNumber}` : 'Sin dorsal'}</Body>
+        <Body>{member.userId ? member.role === 'admin' ? 'Administrador' : 'Jugador' : 'Sin registrar'}</Body>
       </Card>)}
       {roster.length === 0 ? <Body>Este club todavía no tiene jugadores.</Body> : null}
     </Screen>
