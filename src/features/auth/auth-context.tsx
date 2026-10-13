@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { AppState, Platform } from 'react-native';
@@ -9,6 +9,8 @@ type AuthContextValue = {
   session: Session | null;
   isLoading: boolean;
   isDemo: boolean;
+  isRecovery: boolean;
+  getRecoveryMode: () => boolean;
   enterDemo: () => void;
   exitDemo: () => void;
   signOut: () => Promise<void>;
@@ -19,15 +21,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setLoading] = useState(Boolean(supabase));
   const [isDemo, setDemo] = useState(false);
+  const recoveryRef = useRef(false);
+  const [isRecovery, setRecovery] = useState(false);
 
   useEffect(() => {
     const client = supabase;
     if (!client) return;
     let active = true;
     let authEventReceived = false;
-    const { data: { subscription } } = client.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: { subscription } } = client.auth.onAuthStateChange((event, nextSession) => {
       authEventReceived = true;
-      if (active) { setSession(nextSession); setLoading(false); }
+      if (active) {
+        setSession(nextSession);
+        setLoading(false);
+        if (event === 'PASSWORD_RECOVERY') { recoveryRef.current = true; setRecovery(true); setDemo(false); }
+        if (event === 'SIGNED_OUT' || event === 'SIGNED_IN') { recoveryRef.current = false; setRecovery(false); }
+      }
     });
     void client.auth.getSession().then(({ data }) => {
       if (active && !authEventReceived) { setSession(data.session); setLoading(false); }
@@ -46,16 +55,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const enterDemo = useCallback(() => setDemo(true), []);
   const exitDemo = useCallback(() => setDemo(false), []);
+  const getRecoveryMode = useCallback(() => recoveryRef.current, []);
   async function signOut() {
     if (supabase) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     }
     setSession(null);
+    recoveryRef.current = false;
+    setRecovery(false);
     setDemo(false);
   }
 
-  return <AuthContext.Provider value={{ session, isLoading, isDemo, enterDemo, exitDemo, signOut }}>
+  return <AuthContext.Provider value={{ session, isLoading, isDemo, isRecovery, getRecoveryMode, enterDemo, exitDemo, signOut }}>
     {children}
   </AuthContext.Provider>;
 }

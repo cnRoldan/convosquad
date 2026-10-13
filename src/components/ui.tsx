@@ -8,7 +8,7 @@ import { colors } from '@/theme';
 export function Screen({ children }: PropsWithChildren) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -94,3 +94,26 @@ export const styles = StyleSheet.create({
   fieldLabel: { color: colors.text, fontWeight: '600', fontSize: 14 },
   input: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 16, color: colors.text, fontSize: 16, minHeight: 52 },
 });
+
+export function Options<T extends string>({ options, value, onChange, disabled = false }: {
+  options: readonly { value: T; label: string }[];
+  value: T;
+  onChange: (value: T) => void;
+  disabled?: boolean;
+}) {
+  return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+    {options.map((option) => <Pressable key={option.value} accessibilityRole="button"
+      disabled={disabled} accessibilityState={{ selected: value === option.value, disabled }} onPress={() => onChange(option.value)}
+      style={{ minHeight: 44, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: value === option.value ? colors.primary : colors.border, backgroundColor: colors.surface }}>
+      <Text style={{ color: value === option.value ? colors.primary : colors.text, fontWeight: '600' }}>{option.label}</Text>
+    </Pressable>)}
+  </View>;
+}
+
+export function Message({ children, error = false }: PropsWithChildren<{ error?: boolean }>) {
+  return <Text accessibilityLiveRegion="polite" style={[styles.body, { color: error ? colors.danger : colors.primary }]}>{children}</Text>;
+}
+
+export function DemoNotice() {
+  return <Body>Modo demo. Puedes explorar y revisar los formularios; los cambios requieren una cuenta y Supabase configurado.</Body>;
+}
