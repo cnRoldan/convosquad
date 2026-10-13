@@ -77,7 +77,7 @@ Las operaciones sensibles bloquean el club antes de modificar recursos dependien
 
 `starts_at` es `timestamptz`: el cliente envía un instante con offset o UTC, no una hora ambigua sin zona. Un trigger deriva `local_date` usando la zona del club. `UNIQUE (club_id, local_date)` impide dos convocatorias el mismo día, incluidos borradores y canceladas. La misma fecha sí puede existir en otros clubes.
 
-La zona se congela en la convocatoria. Editar su hora recalcula la fecha en esa zona. Cambiar la zona del club afecta a convocatorias nuevas y conserva el significado de las históricas. La unicidad sigue aplicándose al día local almacenado. La regla se prueba también cruzando medianoche UTC durante el horario de verano.
+La zona se congela en la convocatoria. Editar su hora recalcula la fecha en esa zona. La zona del club es configurable al crear el club y antes de su primera convocatoria. Después, un trigger bloquea cambiarla para impedir que reinterpretar fechas anteriores permita dos convocatorias en el mismo día local. Un cambio de zona posterior requiere diseñar una migración explícita que preserve históricos y unicidad. La regla se prueba también cruzando medianoche UTC durante el horario de verano.
 
 Las copias guardan EA ID, dorsal y posición. Editar o borrar una ficha no altera estas columnas; el FK al origen pasa a NULL al borrarla. Borrar la cuenta pone su referencia a NULL y conserva disponibilidad y datos históricos. Las vinculaciones posteriores actualizan únicamente el titular de copias aún abiertas o en borrador que estaban sin cuenta; no cambian respuestas ni copias cerradas. Las claves foráneas compuestas impiden mezclar fichas y convocatorias de clubes distintos.
 
@@ -129,7 +129,7 @@ npm run db:types
 EXPO_OFFLINE=1 npm run export
 ```
 
-Las 23 pruebas ejecutan las migraciones y SQL real con roles `anon` y `authenticated` en PostgreSQL/PGlite. La sesión se representa mediante un fixture mínimo de `auth.users` y `auth.uid()`; no se mockean RLS, restricciones ni funciones. Cubren los diez escenarios solicitados, privacidad, escalada de roles, solicitudes, tokens, revocación, caducidad, inactividad, snapshots y reversión atómica. GitHub Actions también las ejecuta y comprueba que los tipos no se hayan quedado desactualizados.
+Las 24 pruebas ejecutan las migraciones y SQL real con roles `anon` y `authenticated` en PostgreSQL/PGlite. La sesión se representa mediante un fixture mínimo de `auth.users` y `auth.uid()`; no se mockean RLS, restricciones ni funciones. Cubren los diez escenarios solicitados, privacidad, escalada de roles, solicitudes, tokens, revocación, caducidad, inactividad, snapshots y reversión atómica. GitHub Actions también las ejecuta y comprueba que los tipos no se hayan quedado desactualizados.
 
 Esto no valida Supabase Auth real, SMTP, verificación JWT por HTTP, PostgREST remoto, Realtime ni un despliegue en producción. Los tests se crean y destruyen sin credenciales ni servicios externos.
 

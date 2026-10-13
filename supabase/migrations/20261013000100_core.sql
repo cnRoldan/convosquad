@@ -134,6 +134,10 @@ begin
   if not exists (select 1 from pg_catalog.pg_timezone_names where name = new.timezone) then
     raise exception 'Invalid timezone' using errcode = '22023';
   end if;
+  if tg_op = 'UPDATE' and new.timezone <> old.timezone
+    and exists (select 1 from public.call_ups where club_id = old.id) then
+    raise exception 'Timezone cannot change after the first call-up' using errcode = '22023';
+  end if;
   return new;
 end;
 $$;
