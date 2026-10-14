@@ -1,6 +1,8 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 export default function configure({ config }: ConfigContext): ExpoConfig {
   const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID?.trim();
+  const linkedId = config.extra?.eas?.projectId;
+  if (projectId && linkedId && projectId.toLowerCase() !== String(linkedId).toLowerCase()) throw new Error('EXPO_PUBLIC_EAS_PROJECT_ID no coincide con el proyecto EAS vinculado en app.json.');
   if (projectId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) throw new Error('EXPO_PUBLIC_EAS_PROJECT_ID debe ser el UUID real del proyecto EAS.');
   return {
     ...config, name: 'ConvoSquad', slug: 'convosquad',
