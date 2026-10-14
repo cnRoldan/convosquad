@@ -1,6 +1,8 @@
 # Quitar y reincorporar jugadores
 
-Los administradores del club pueden abrir una ficha desde Plantilla y pulsar **Quitar de la plantilla**. La confirmación dice: «¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.» Cancelar no guarda cambios. Confirmar actualiza únicamente `players.is_active` a `false` y muestra un aviso de éxito en la plantilla.
+Las tarjetas de Plantilla muestran el EA ID una sola vez y el dorsal/estado de registro en una línea secundaria. Los administradores tienen una fila compacta de cuatro iconos SVG: subir, bajar, editar y quitar. Cada acción tiene un área táctil de 44 × 44 puntos y una etiqueta accesible que identifica al jugador. La fila se sitúa junto a los datos cuando cabe y debajo en móvil; subir/bajar están deshabilitados en los extremos, con filtros o en la demo. Los jugadores normales no ven acciones administrativas.
+
+Los administradores pueden pulsar la papelera o abrir la ficha con el lápiz y pulsar **Quitar de la plantilla**. La confirmación dice: «¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.» Cancelar no guarda cambios. Confirmar actualiza únicamente `players.is_active` a `false` y muestra un aviso de éxito en la plantilla.
 
 La ficha deja de aparecer en la plantilla activa y el RPC existente `create_call_up` la excluye de las convocatorias nuevas. No se elimina la ficha, la cuenta de Supabase Auth, la membresía ni las respuestas/snapshots anteriores. Las convocatorias abiertas que ya incluían al jugador tampoco se reescriben.
 
@@ -27,8 +29,8 @@ La interfaz no ofrece borrado físico y se ha eliminado el helper de borrado que
 7. En Supabase → Authentication → Users verifica que la cuenta vinculada sigue existiendo. En Table Editor puedes comprobar `players.is_active` y el mismo ID de ficha, sin editar filas manualmente.
 8. Con una cuenta de jugador normal comprueba que no hay opciones de administración y que abrir `/inactive-players` o `/players/<id>` devuelve a Inicio. Las pruebas SQL locales comprueban además que RLS rechaza las actualizaciones directas.
 
-No se ha recibido una URL del sitio para verificar este flujo en el Netlify publicado ni se han modificado datos remotos durante el desarrollo. La demo sigue separada y no guarda cambios.
+No se ha recibido una URL del sitio para verificar este flujo en el Netlify publicado ni se han modificado datos remotos durante el desarrollo. La demo sigue separada y no guarda cambios. Permite abrir/cancelar la confirmación de la papelera, pero la confirmación de escritura está deshabilitada. La ficha y la papelera utilizan el mismo componente de confirmación y el mismo servicio.
 
 ## Verificaciones
 
-Las pruebas PostgreSQL/PGlite cubren retirada, reincorporación, exclusión de convocatorias nuevas, snapshots y respuestas históricas íntegros, cuenta/membresía intactas, orden al reincorporar, reserva de EA ID/cuenta y permisos de jugador/otro club/anónimo. Las pruebas unitarias cubren los mensajes de error de actividad.
+Las pruebas PostgreSQL/PGlite cubren retirada, reincorporación, exclusión de convocatorias nuevas, snapshots y respuestas históricas íntegros, cuenta/membresía intactas, orden al reincorporar, reserva de EA ID/cuenta y permisos de jugador/otro club/anónimo. Las pruebas unitarias cubren los mensajes de error y los textos compartidos de confirmación. La comprobación de Chromium en móvil y escritorio cubre iconos SVG, áreas táctiles, adaptación de la fila, etiquetas accesibles, cancelación de la papelera y controles por rol sin peticiones Supabase.

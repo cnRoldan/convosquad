@@ -141,7 +141,7 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
-| `npm run test` | 77 pruebas: 26 unitarias y 51 de PostgreSQL/RLS |
+| `npm run test` | 78 pruebas: 27 unitarias y 51 de PostgreSQL/RLS |
 | `npm run test:db` | SQL y permisos sin credenciales |
 | `npm run test:unit` | Parser y enlaces de invitación |
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |

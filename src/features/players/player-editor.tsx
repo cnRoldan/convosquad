@@ -5,12 +5,12 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { listClubAccounts } from '@/features/clubs/service';
-import { createPlayer, linkPlayerAccount, listPlayers, setPlayerActivity, updatePlayer } from './service';
+import { createPlayer, linkPlayerAccount, listPlayers, updatePlayer } from './service';
 import { categories, categoryLabels } from './categories';
 import type { RosterCategory } from './categories';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
-import { activityErrorMessage } from './activity';
+import { PlayerActivityDialog } from './player-activity-dialog';
 
 export type EditablePlayer = { id: string; eaId: string; jerseyNumber: number | null; category: RosterCategory; userId: string | null; isActive: boolean };
 export function PlayerEditor({ player = null }: { player?: EditablePlayer | null }) {
@@ -47,18 +47,6 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
       router.replace(player && !player.isActive ? '/inactive-players' : '/roster');
     } catch (error) { setMessage(backendErrorMessage(error)); }
     finally { setBusy(false); }
-  }
-  async function changeActivity() {
-    if (!player || !clubId || !admin || isDemo || busy) return;
-    setBusy(true);
-    setMessage('');
-    try {
-      await setPlayerActivity(clubId, player.id, !player.isActive);
-      refreshRoster();
-      router.replace({ pathname: player.isActive ? '/roster' : '/inactive-players', params: { activity: player.isActive ? 'removed' : 'restored' } });
-    }
-    catch (error) { setMessage(activityErrorMessage(error)); }
-    finally { setBusy(false); setDeactivating(false); }
   }
   async function link() {
     if (!player || !admin || !pendingLink || isDemo || busy) return;
@@ -100,9 +88,10 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
     </> : null}
     <ConfirmDialog visible={Boolean(pendingLink)} title="Vincular esta ficha" description={`${eaId} se vinculará con ${pendingLink?.username ?? ''}. Esta cuenta será la titular de la ficha.`}
       confirmLabel="Vincular cuenta" busy={busy} onCancel={() => setPendingLink(null)} onConfirm={() => { void link(); }} />
-    <ConfirmDialog visible={deactivating} title={player?.isActive ? 'Quitar de la plantilla' : 'Reincorporar a la plantilla'}
-      confirmLabel={player?.isActive ? 'Quitar de la plantilla' : 'Reincorporar'}
-      description={player?.isActive ? '¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.' : '¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.'}
-      busy={busy} onCancel={() => setDeactivating(false)} onConfirm={() => { void changeActivity(); }} />
+    {deactivating && player && admin ? <PlayerActivityDialog key={`${session?.user.id}:${clubId}:${player.id}`} player={player}
+      onCancel={() => setDeactivating(false)} onSuccess={() => {
+        setDeactivating(false);
+        router.replace({ pathname: player.isActive ? '/roster' : '/inactive-players', params: { activity: player.isActive ? 'removed' : 'restored' } });
+      }} /> : null}
   </Screen>;
 }
