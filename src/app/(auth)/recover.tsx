@@ -40,7 +40,7 @@ export default function RecoverScreen() {
     <Heading title="Recupera tu acceso" subtitle="Utiliza el correo real de tu cuenta. No necesitas recordar tu nombre de usuario." />
     <Field label="Correo electrónico" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" editable={!busy && !sent} />
     {sent ? <>
-      <Body>Abre el enlace desde el mismo dispositivo o introduce aquí el código incluido en el correo.</Body>
+      <Body>Abre el enlace de recuperación o introduce aquí el código del correo, incluso desde otro navegador o dispositivo.</Body>
       <Field label="Código de recuperación" value={code} onChangeText={setCode} keyboardType="number-pad" textContentType="oneTimeCode" maxLength={10} editable={!busy} />
       <Button label={busy ? 'Comprobando…' : 'Comprobar código'} disabled={busy} onPress={() => { void verify(); }} />
       <Button secondary label="Solicitar otro correo" disabled={busy} onPress={() => { setSent(false); setCode(''); setMessage(''); }} />

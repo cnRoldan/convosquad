@@ -12,3 +12,9 @@
   to = "/index.html"
   status = 200
   force = false
+
+[[headers]]
+  for = "/auth/callback*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
