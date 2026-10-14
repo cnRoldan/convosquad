@@ -8,7 +8,7 @@ La demo funciona sin Supabase ni credenciales. Incluye bienvenida, formularios d
 
 La fase 3 añade recuperación de contraseña, selección persistente de club, búsqueda pública, solicitudes y aprobación, invitaciones caducables/revocables compartibles por WhatsApp y administración de plantilla. Permite crear, editar, desactivar y vincular una ficha sin registrar a una cuenta existente, además de importar plantillas con vista previa editable y confirmación. Las operaciones reales requieren Supabase configurado; la demo es de solo lectura y nunca simula guardados exitosos. El acceso utiliza correo real y nombre de usuario único, según la decisión aprobada.
 
-Las migraciones, RLS, servicios y pruebas están documentados en [Datos y seguridad](docs/database.md). **Las migraciones no están aplicadas a un proyecto remoto.** Las convocatorias siguen siendo de solo lectura en la interfaz. No hay pagos ni suscripciones.
+Las migraciones, RLS, servicios y pruebas están documentados en [Datos y seguridad](docs/database.md). **No se ejecutan migraciones remotas automáticamente. Si ya las aplicaste, no las repitas.** Las convocatorias siguen siendo de solo lectura en la interfaz. No hay pagos ni suscripciones.
 
 ## Trabajar exclusivamente desde Codex Cloud
 
@@ -80,6 +80,8 @@ La versión web sirve para comprobar navegación y diseño. Solo será accesible
 
 ## Supabase
 
+Para conectar el proyecto ya creado desde Codex Cloud, sigue [Conexión con Supabase real](docs/supabase-connection.md): variables del entorno, clave publicable moderna, Auth, SMTP y callbacks.
+
 Copia `.env.example` a `.env` únicamente si necesitas conectar un proyecto real:
 
 ```sh
@@ -89,11 +91,11 @@ cp .env.example .env
 Configura:
 
 - `EXPO_PUBLIC_SUPABASE_URL`: URL del proyecto.
-- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: clave publicable del cliente.
+- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: clave moderna del cliente con prefijo `sb_publishable_`.
 
 Estas variables se incluyen en el bundle: **nunca uses `service_role`, claves secretas ni contraseñas de base de datos**. `.env` está ignorado por Git. Para EAS, configura las mismas variables públicas en el entorno de compilación de tu proyecto Expo. Reinicia Metro cuando cambien.
 
-`src/lib/supabase.ts` exporta un cliente tipado opcional con PKCE y persistencia de sesión. Sin configuración devuelve `null` y la demo funciona. Antes de usar el acceso real aplica las migraciones y configura Auth y el callback siguiendo [Datos y seguridad](docs/database.md). Un filtro de interfaz no sustituye RLS.
+`src/lib/supabase.ts` exporta un cliente tipado opcional con PKCE y persistencia de sesión. Sin configuración devuelve `null` y la demo funciona. En una instalación nueva aplica las migraciones una sola vez. Configura Auth y el callback siguiendo [Datos y seguridad](docs/database.md). Un filtro de interfaz no sustituye RLS.
 
 El flujo completo con dos cuentas, correo, enlaces y permisos está descrito en [Pruebas de la fase 3](docs/workflows.md). Para compartir enlaces HTTPS configura también `EXPO_PUBLIC_INVITE_BASE_URL` con el origen web desplegado.
 
@@ -137,11 +139,12 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
-| `npm run test` | 46 pruebas: 12 unitarias y 34 de PostgreSQL/RLS |
+| `npm run test` | 50 pruebas: 16 unitarias y 34 de PostgreSQL/RLS |
 | `npm run test:db` | SQL y permisos sin credenciales |
 | `npm run test:unit` | Parser y enlaces de invitación |
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |
 | `npm run db:types` | Regenerar tipos desde las migraciones |
+| `npm run supabase:check` | Lectura pública remota, sin filas ni escrituras; requiere variables |
 | `npm run export` | Bundles iOS, Android y web estática |
 | `EXPO_OFFLINE=1 npx expo install --check` | Compatibilidad con la tabla del SDK instalado |
 | `npm run eas -- build ...` | Compilación nativa en EAS |

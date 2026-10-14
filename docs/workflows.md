@@ -4,7 +4,7 @@
 
 Las pantallas de acceso, clubes, solicitudes, invitaciones y plantilla llaman a Supabase con la sesión del usuario. Sin backend configurado indican el requisito y no muestran un guardado o un envío de correo ficticio. La demo conserva navegación y datos simulados; permite analizar/corregir texto, pero no guardar ni aceptar invitaciones.
 
-Validación local: TypeScript estricto, ESLint, 12 pruebas unitarias del parser/enlaces, 34 pruebas SQL con PostgreSQL/PGlite, tipos generados y bundles de iOS, Android y web. Los tests SQL ejecutan permisos y transacciones reales con un fixture de Auth: no son una prueba de Supabase Auth, correo, PostgREST HTTP ni concurrencia entre conexiones. La revisión en Chromium comprueba la interfaz web móvil de la demo. No se ha ejecutado una build EAS ni una prueba nativa en un dispositivo.
+Validación local: TypeScript estricto, ESLint, 16 pruebas unitarias del parser, enlaces y configuración Supabase, 34 pruebas SQL con PostgreSQL/PGlite, tipos generados y bundles de iOS, Android y web. Los tests SQL ejecutan permisos y transacciones reales con un fixture de Auth: no son una prueba de Supabase Auth, correo, PostgREST HTTP ni concurrencia entre conexiones. La revisión en Chromium comprueba la interfaz web móvil de la demo. No se ha ejecutado una build EAS ni una prueba nativa en un dispositivo.
 
 ## Preparar un proyecto real desde la nube
 

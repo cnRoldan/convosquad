@@ -1,18 +1,22 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, processLock } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import type { Database } from '@/types/database';
+import { readSupabaseConfiguration } from './supabase-config';
 
-const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const { configuration, error } = readSupabaseConfiguration(
+  process.env.EXPO_PUBLIC_SUPABASE_URL,
+  process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+);
 
-export const isSupabaseConfigured = Boolean(url && publishableKey);
+export const isSupabaseConfigured = Boolean(configuration);
+export const supabaseConfigurationError = error;
 
-export const supabase = url && publishableKey
-  ? createClient<Database>(url, publishableKey, {
+export const supabase = configuration
+  ? createClient<Database>(configuration.url, configuration.publishableKey, {
       auth: {
-        ...(Platform.OS !== 'web' ? { storage: AsyncStorage } : {}),
+        ...(Platform.OS !== 'web' ? { storage: AsyncStorage, lock: processLock } : {}),
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,
@@ -22,6 +26,6 @@ export const supabase = url && publishableKey
   : null;
 
 export function requireSupabase() {
-  if (!supabase) throw new Error('Configura Supabase para usar el backend. La demo sigue disponible.');
+  if (!supabase) throw new Error(supabaseConfigurationError ?? 'El acceso real no está disponible.');
   return supabase;
 }
