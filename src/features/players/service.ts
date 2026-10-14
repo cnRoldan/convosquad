@@ -19,9 +19,14 @@ export async function updatePlayer(playerId: string, input: { ea_id?: string; je
   return unwrap(await requireSupabase().from('players').update(input).eq('id', playerId).select().single());
 }
 
-export async function deletePlayer(playerId: string) {
-  const { error } = await requireSupabase().from('players').delete().eq('id', playerId);
-  if (error) throw error;
+export async function setPlayerActivity(clubId: string, playerId: string, isActive: boolean) {
+  return unwrap(await requireSupabase().from('players').update({ is_active: isActive })
+    .eq('club_id', clubId).eq('id', playerId).select().single());
+}
+
+export async function listInactivePlayers(clubId: string) {
+  return unwrap(await requireSupabase().from('players').select('*').eq('club_id', clubId)
+    .eq('is_active', false).order('category').order('sort_order').order('id'));
 }
 
 export async function linkPlayerAccount(playerId: string, userId: string) {

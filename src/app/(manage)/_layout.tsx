@@ -5,6 +5,7 @@ export default function ManageLayout() {
   return <ClubAccess admin><Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
     <Stack.Screen name="create-call-up" options={{ title: 'Crear convocatoria' }} />
     <Stack.Screen name="trials/[id]" options={{ title: 'Pruebas' }} />
+    <Stack.Screen name="inactive-players" options={{ title: 'Jugadores inactivos' }} />
     <Stack.Screen name="players/new" options={{ title: 'Añadir jugador' }} />
     <Stack.Screen name="players/[id]" options={{ title: 'Editar jugador' }} />
     <Stack.Screen name="roster-import" options={{ title: 'Importar plantilla' }} />
