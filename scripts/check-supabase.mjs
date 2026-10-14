@@ -1,5 +1,8 @@
+import * as http from 'node:http';
 import { createClient } from '@supabase/supabase-js';
 import { readSupabaseConfiguration } from '../src/lib/supabase-config.ts';
+
+http.setGlobalProxyFromEnv?.();
 
 const { configuration, error } = readSupabaseConfiguration(
   process.env.EXPO_PUBLIC_SUPABASE_URL,

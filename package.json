@@ -45,7 +45,8 @@
     "db:types:check": "node scripts/generate-database-types.mjs --check",
     "test": "npm run test:unit && npm run test:db",
     "test:unit": "node --test tests/*.test.mjs",
-    "supabase:check": "node scripts/check-supabase.mjs"
+    "supabase:check": "node scripts/check-supabase.mjs",
+    "supabase": "npm run supabase:check"
   },
   "private": true,
   "engines": {

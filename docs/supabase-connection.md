@@ -32,10 +32,12 @@ Los servicios de Auth, perfiles, clubes, miembros, jugadores, solicitudes, invit
 Una vez disponibles las dos variables en el proceso:
 
 ```sh
-npm run supabase:check
+npm run supabase
 ```
 
 Ejecuta únicamente un GET del directorio público con límite cero y un HEAD de la RPC de lectura `search_clubs`. No crea cuentas, sesiones, clubes o fichas; no ejecuta SQL, migraciones ni RPC de escritura. No imprime claves, sesiones ni filas. El código de salida es 0 si ambas lecturas pasan, 2 si falta configuración o es inválida y 1 ante un error HTTP/de red.
+
+`npm run supabase` es un alias de `npm run supabase:check`. En el Node 24.19 fijado por el repositorio, el diagnóstico activa el soporte nativo del proxy mediante `setGlobalProxyFromEnv`, respetando `HTTP_PROXY`, `HTTPS_PROXY` y `NO_PROXY`. No modifica la verificación TLS. Sin ese soporte, las peticiones directas de Node pueden agotar el tiempo de espera en Codex aunque las variables de Supabase sean correctas.
 
 Este diagnóstico valida conectividad, clave y exposición de esos recursos públicos. No demuestra permisos de cuentas autenticadas ni las demás RPC remotas. Las RPC de escritura no se prueban sobre el proyecto sin un recorrido explícito con cuentas reales. `npm run test` y `npm run db:types:check` utilizan exclusivamente PostgreSQL/PGlite local, no Supabase remoto.
 
