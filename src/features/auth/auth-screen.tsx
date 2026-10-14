@@ -60,7 +60,7 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
       {!isRegister ? <Button secondary disabled={busy} label="He olvidado mi contraseña" onPress={() => router.push('/recover')} /> : null}
       <Button secondary disabled={busy} label="Explorar la demo" onPress={() => { setPassword(''); enterDemo(); router.replace('/clubs'); }} />
       <Button secondary disabled={busy} label={isRegister ? 'Ya tengo una cuenta' : 'Quiero registrarme'} onPress={() => router.replace(isRegister ? '/login' : '/register')} />
-      <Body>{isSupabaseConfigured ? 'Acceso gestionado por Supabase Auth.' : 'Modo demo · Supabase aún no está configurado.'}</Body>
+      <Body>{isSupabaseConfigured ? 'Acceso gestionado por Supabase Auth.' : 'Acceso real pendiente de configuración. La demo es independiente.'}</Body>
     </Screen>
   );
 }
