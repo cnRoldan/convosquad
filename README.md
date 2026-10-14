@@ -30,6 +30,8 @@ npm run export
 
 ## Probar la aplicación desde la nube
 
+Para la primera cuenta real desde Chrome en Windows, sin instalaciones locales, sigue [Primera prueba de Auth en web](docs/first-web-auth-test.md). Incluye el despliegue desde GitHub en Netlify y cómo obtener el callback HTTPS exacto. No hay una URL pública de pruebas publicada automáticamente.
+
 ### APK de Android con EAS (opción recomendada)
 
 EAS compila en la nube; el APK se instala en un teléfono Android sin herramientas locales. Hace falta una cuenta Expo y vincular este checkout a tu proyecto:
@@ -145,6 +147,7 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |
 | `npm run db:types` | Regenerar tipos desde las migraciones |
 | `npm run supabase:check` | Lectura pública remota, sin filas ni escrituras; requiere variables |
+| `npm run export:web` | Versión web estática para hosting |
 | `npm run export` | Bundles iOS, Android y web estática |
 | `EXPO_OFFLINE=1 npx expo install --check` | Compatibilidad con la tabla del SDK instalado |
 | `npm run eas -- build ...` | Compilación nativa en EAS |

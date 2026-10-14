@@ -1,0 +1,14 @@
+[build]
+  command = "npm run export:web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24.19.0"
+  EXPO_OFFLINE = "1"
+  EXPO_NO_TELEMETRY = "1"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false

@@ -39,6 +39,7 @@
     "lint": "eslint . --max-warnings=0",
     "check": "npm run typecheck && npm run lint",
     "export": "expo export",
+    "export:web": "expo export --platform web",
     "eas": "npx eas-cli@24.13.0",
     "test:db": "node --test supabase/tests/*.test.mjs",
     "db:types": "node scripts/generate-database-types.mjs",
