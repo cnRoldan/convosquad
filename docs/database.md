@@ -53,7 +53,7 @@ RLS está habilitado en todas las tablas públicas. Los permisos de columnas com
 | Perfil | No | Propio y compañeros activos | Propio, compañeros activos y solicitantes pendientes de su club |
 | Plantilla | No | Leer | Leer, crear, editar y eliminar |
 | Membresías | No | Leer las activas del club | Leer también inactivas; administrar por RPC |
-| Convocatorias abiertas y respuestas | No | Leer | Leer |
+| Convocatorias abiertas de hoy/futuras y respuestas | No | Leer | Leer |
 | Borradores, cerradas, canceladas e históricos | No | No | Leer |
 | Disponibilidad | No | Solo propia, si está abierta | Solo propia, si está abierta |
 | Solicitudes | No | Solo propias | Las de su club |
@@ -73,7 +73,7 @@ Las funciones públicas `SECURITY DEFINER` comprueban el actor real mediante `au
 - `create_invitation_for_hours`: calcula la caducidad con el reloj del servidor y delega en la operación segura de creación.
 - `create_call_up`: crea la convocatoria y copia la plantilla activa en la misma transacción.
 - `update_call_up`: modifica fecha/estado como admin mediante una operación serializada.
-- `respond_to_call_up`: valida identidad de la copia, membresía activa y estado abierto. No recibe un ID de usuario.
+- `respond_to_call_up`: valida identidad de la copia, membresía activa, estado abierto y fecha local de hoy/futura. No recibe un ID de usuario.
 - `create_club_invitation`, `revoke_club_invitation`, `redeem_club_invitation`: controlan las invitaciones con ámbito de club y límites en el servidor.
 
 Las operaciones sensibles bloquean el club antes de modificar recursos dependientes para serializar cambios de permisos y consumos. Una restricción diferida impide que el club quede sin admin activo, incluso ante borrados en cascada. Para eliminar la cuenta del último admin hay que transferir antes la administración. Los tests no simulan carga concurrente de múltiples conexiones: esa validación queda para PostgreSQL/Supabase de integración.
@@ -147,3 +147,7 @@ Esto no valida Supabase Auth real, SMTP, verificación JWT por HTTP, PostgREST r
 ## Pendiente
 
 Validación de los flujos en un proyecto Supabase real y dispositivos móviles; edición y respuestas de convocatorias; históricos en la interfaz; Realtime y push. La interfaz actual permite crear convocatorias abiertas, responder con la ficha propia y administrar AYUDAS; editar fecha/estado sigue pendiente. No se han aplicado migraciones a producción ni enviado notificaciones.
+
+## Fase 4: convocatorias y disponibilidad
+
+La migración incremental `20261014180000_call_up_availability.sql` protege por RLS las convocatorias de días anteriores aunque continúen abiertas, añade `list_call_up_history` con autorización administrativa y límite de diez, y configura la publicación Realtime de convocatorias. No modifica datos existentes. Procedimiento de aplicación manual y prueba con dos sesiones en [call-up-availability.md](call-up-availability.md).

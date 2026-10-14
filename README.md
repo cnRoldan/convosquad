@@ -141,7 +141,7 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
-| `npm run test` | 78 pruebas: 27 unitarias y 51 de PostgreSQL/RLS |
+| `npm run test` | 108 pruebas: 50 unitarias y 58 de PostgreSQL/RLS |
 | `npm run test:db` | SQL y permisos sin credenciales |
 | `npm run test:unit` | Parser y enlaces de invitación |
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |
@@ -156,6 +156,8 @@ GitHub Actions ejecuta instalación reproducible, TypeScript, lint, pruebas de R
 
 ## Próximos pasos
 
-Validar Auth, recuperación y todos los flujos en un proyecto Supabase real; validar categorías, pruebas, ayudas y respuestas con usuarios reales; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.
+Validar Auth, recuperación y todos los flujos en un proyecto Supabase real; validar categorías, pruebas, ayudas y respuestas con usuarios reales; validar Realtime con dos sesiones reales e integrar notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.
 
 La gestión de retirada y reincorporación de jugadores, permisos y prueba manual en Netlify se describe en [docs/player-activity.md](docs/player-activity.md). No requiere una migración adicional.
+
+La creación, administración, disponibilidad, historial y recuperación Realtime están documentados en [Convocatorias y disponibilidad](docs/call-up-availability.md). Requieren la migración incremental `20261014180000_call_up_availability.sql`; no se aplican cambios remotos automáticamente.

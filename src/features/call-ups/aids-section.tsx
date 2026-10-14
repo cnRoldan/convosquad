@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Body, Button, Card, Field, Message } from '@/components/ui';
+import { IconButton } from '@/components/icon-button';
+import { View } from 'react-native';
 import { ReorderButtons } from '@/components/reorder-buttons';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
@@ -9,10 +11,12 @@ import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { listAids, saveAid, deleteAid, reorderAids } from './service';
 import type { Tables } from '@/types/database';
-export function AidsSection({ callUpId, editable }: { callUpId: string; editable: boolean }) {
+export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: string; editable: boolean; revision?: number }) {
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
   const load = useCallback(() => listAids(callUpId), [callUpId]);
   const result = useResource(`aids:${session?.user.id}:${clubId}:${callUpId}`, load, Boolean(session && clubId) && !isDemo);
+  const { reload } = result;
+  useEffect(() => { if (revision) reload(); }, [revision, reload]);
   const [text, setText] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
   async function mutate(action: () => Promise<unknown>) {
@@ -45,6 +49,6 @@ export function AidsSection({ callUpId, editable }: { callUpId: string; editable
 function AidRow({ aid, ordinal, editable, disabled, first, last, save, remove, move }: { aid: Tables<'call_up_aids'>; ordinal: number; editable: boolean; disabled: boolean; first: boolean; last: boolean; save: (body: string) => void; remove: () => void; move: (direction: -1 | 1) => void }) {
   const [body, setBody] = useState(aid.body);
   return <Card title={`Ayuda ${ordinal}`}>
-    {editable ? <><Field label={`Texto de ayuda ${ordinal}`} value={body} onChangeText={setBody} maxLength={500} multiline editable={!disabled} /><Button secondary label="Guardar ayuda" disabled={disabled} onPress={() => save(body)} /><Button secondary label="Eliminar ayuda" disabled={disabled} onPress={remove} /><ReorderButtons label={`ayuda ${ordinal}`} first={first} last={last} disabled={disabled} move={move} /></> : <Body>{aid.body}</Body>}
+    {editable ? <><Field label={`Texto de ayuda ${ordinal}`} value={body} onChangeText={setBody} maxLength={500} multiline editable={!disabled} /><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}><ReorderButtons label={`ayuda ${ordinal}`} first={first} last={last} disabled={disabled} move={move} /><IconButton icon="save" label={`Guardar ayuda ${ordinal}`} disabled={disabled} onPress={() => save(body)} /><IconButton icon="trash" label={`Eliminar ayuda ${ordinal}`} danger disabled={disabled} onPress={remove} /></View></> : <Body>{aid.body}</Body>}
   </Card>;
 }

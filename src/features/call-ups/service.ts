@@ -38,3 +38,13 @@ export async function deleteAid(id: string, callUpId: string) {
 export async function reorderAids(callUpId: string, ids: string[]) {
   const { error } = await requireSupabase().rpc('reorder_aids', { p_call_up_id: callUpId, p_ids: ids }); if (error) throw error;
 }
+
+export async function listCurrentCallUps(clubId: string, localDate: string) {
+  return unwrap(await requireSupabase().from('call_ups').select('*').eq('club_id', clubId).gte('local_date', localDate).order('starts_at'));
+}
+export async function getCallUp(clubId: string, callUpId: string) {
+  return unwrap(await requireSupabase().from('call_ups').select('*').eq('club_id', clubId).eq('id', callUpId).single());
+}
+export async function listCallUpHistory(clubId: string) {
+  return unwrap(await requireSupabase().rpc('list_call_up_history', { p_club_id: clubId }));
+}

@@ -6,7 +6,8 @@ import { callUps, clubs, demoUserId, memberships, players } from './mock-data';
 import { useAuth } from '@/features/auth/auth-context';
 import { listClubMembers, listMyClubs, listMyMemberships } from './service';
 import { listPlayers } from '@/features/players/service';
-import { listCallUps, listCallUpPlayers } from '@/features/call-ups/service';
+import { listCurrentCallUps, listCallUpPlayers } from '@/features/call-ups/service';
+import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { getMyProfile } from '@/features/profiles/service';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { useResource } from '@/hooks/use-resource';
@@ -87,8 +88,8 @@ export function ClubProvider({ children }: PropsWithChildren) {
   const clubId = activeClub?.id;
   const loadRoster = useCallback(async (): Promise<{ roster: RosterPlayer[]; callUp: CallUp | null }> => {
     if (!clubId) return { roster: [], callUp: null };
-    const [playerRows, memberRows, callUpRows] = await Promise.all([listPlayers(clubId), listClubMembers(clubId), listCallUps(clubId)]);
-    const next = callUpRows.find((callUp) => callUp.status === 'open' && new Date(callUp.starts_at).getTime() >= Date.now());
+    const [playerRows, memberRows, callUpRows] = await Promise.all([listPlayers(clubId), listClubMembers(clubId), listCurrentCallUps(clubId, clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date)]);
+    const next = callUpRows.find((callUp) => callUp.status === 'open');
     const responses = next ? await listCallUpPlayers(next.id) : [];
     return {
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
@@ -98,7 +99,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
         timezone: next.timezone, opponent: 'Por confirmar', slots: responses.length,
         responses: responses.map((entry) => ({ id: entry.id, displayName: entry.ea_id_snapshot, status: entry.availability, category: entry.category_snapshot, sortOrder: entry.sort_order_snapshot })) } : null,
     };
-  }, [clubId]);
+  }, [clubId, activeClub?.timezone]);
   const data = useResource(`roster:${userId}:${clubId}`, loadRoster, Boolean(userId && clubId && !isDemo && !isRecovery));
 
   function selectClub(id: string) {
