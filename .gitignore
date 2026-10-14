@@ -16,3 +16,6 @@ ios/
 *.key
 *.mobileprovision
 .DS_Store
+
+dist-ui/
+test-results/

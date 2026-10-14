@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { IconButton } from '@/components/icon-button';
 import { ReorderButtons } from '@/components/reorder-buttons';
+import { jerseyAccessibilityLabel, jerseyLabel } from './jersey';
 import { colors } from '@/theme';
 
 export function PlayerCard({ player, actions }: {
@@ -10,7 +11,7 @@ export function PlayerCard({ player, actions }: {
   return <View style={styles.card}>
     <View style={styles.details}>
       <Text style={styles.name}>{player.eaId}</Text>
-      <Text style={styles.meta}>{player.jerseyNumber === null ? 'Sin dorsal' : `Dorsal ${player.jerseyNumber}`} · {player.userId ? 'Registrado' : 'Sin registrar'}</Text>
+      <Text style={styles.meta}><Text accessibilityLabel={jerseyAccessibilityLabel(player.jerseyNumber)}>{jerseyLabel(player.jerseyNumber)}</Text> · {player.userId ? 'Registrado' : 'Sin registrar'}</Text>
     </View>
     {actions ? <View style={styles.actions}>
       <ReorderButtons label={player.eaId} first={actions.first} last={actions.last} disabled={actions.orderingDisabled || actions.disabled} move={actions.move} />
