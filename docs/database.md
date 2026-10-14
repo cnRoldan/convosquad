@@ -8,6 +8,8 @@ El registro envía `username` en los metadatos de Auth. Un trigger inserta el pe
 
 La app usa PKCE, sesión persistente y un callback de confirmación. El enlace se debe abrir en el mismo dispositivo/cliente que inició el registro, donde está el verificador PKCE. En móvil, utiliza una build propia de EAS para validar `convosquad://auth/callback`. En web, configura una URL real accesible desde el correo. La recuperación permite enlace PKCE o código OTP de recuperación, seguido de una nueva contraseña y cierre de sesión. El formulario de nueva contraseña exige una sesión de recuperación emitida por Auth; un parámetro de navegación no concede ese acceso. No se ha implementado ni aprobado un servicio que traduzca nombres de usuario a correos para login.
 
+La refactorización posterior añade categorías, PRUEBAS y AYUDAS mediante una quinta migración incremental; consulta [Categorías, pruebas y ayudas](roster-categories.md). No se repite el script inicial en un proyecto ya instalado.
+
 ## Tablas
 
 | Tabla | Propósito |
@@ -95,7 +97,7 @@ El canje compara el hash **y el club** almacenados, caducidad, revocación y uso
 ## Configurar Supabase desde la nube
 
 1. Crea un proyecto Supabase de desarrollo. Usa PostgreSQL 15 o superior por la acción `SET NULL` limitada a columnas en las claves compuestas.
-2. Aplica las cuatro migraciones **en orden** los archivos de `supabase/migrations`. No ejecutes `supabase/tests/auth-fixture.sql` en Supabase: sustituye Auth únicamente para los tests locales.
+2. Aplica las migraciones **en orden** los archivos de `supabase/migrations`. No ejecutes `supabase/tests/auth-fixture.sql` en Supabase: sustituye Auth únicamente para los tests locales.
 3. Activa Email/Password, confirmación de correo y una longitud mínima de contraseña de 8 caracteres. Configura SMTP real y los límites/CAPTCHA apropiados antes de abrir registros al público. La UI de esta fase no integra CAPTCHA.
 4. Autoriza `convosquad://auth/callback` en Auth → URL Configuration. Para web añade la URL real desplegada de `/auth/callback` y establece `EXPO_PUBLIC_AUTH_REDIRECT_URL` si necesitas un override. No uses el localhost de Codex como URL accesible desde tu teléfono/correo.
 5. Copia `.env.example` a `.env` y establece la URL del proyecto y su clave **publicable**. Son valores públicos del bundle; nunca añadas `service_role`. Si hay restricciones de red, permite el hostname exacto de tu proyecto Supabase en los ajustes del entorno.
@@ -138,10 +140,10 @@ npm run db:types
 EXPO_OFFLINE=1 npm run export
 ```
 
-Las 34 pruebas ejecutan las migraciones y SQL real con roles `anon` y `authenticated` en PostgreSQL/PGlite. La sesión se representa mediante un fixture mínimo de `auth.users` y `auth.uid()`; no se mockean RLS, restricciones ni funciones. Cubren los diez escenarios solicitados, privacidad, escalada de roles, solicitudes, tokens, revocación, caducidad, inactividad, snapshots y reversión atómica. GitHub Actions también las ejecuta y comprueba que los tipos no se hayan quedado desactualizados.
+Las pruebas ejecutan las migraciones y SQL real con roles `anon` y `authenticated` en PostgreSQL/PGlite. La sesión se representa mediante un fixture mínimo de `auth.users` y `auth.uid()`; no se mockean RLS, restricciones ni funciones. Cubren los diez escenarios solicitados, privacidad, escalada de roles, solicitudes, tokens, revocación, caducidad, inactividad, snapshots y reversión atómica. GitHub Actions también las ejecuta y comprueba que los tipos no se hayan quedado desactualizados.
 
 Esto no valida Supabase Auth real, SMTP, verificación JWT por HTTP, PostgREST remoto, Realtime ni un despliegue en producción. Los tests se crean y destruyen sin credenciales ni servicios externos.
 
 ## Pendiente
 
-Validación de los flujos en un proyecto Supabase real y dispositivos móviles; edición y respuestas de convocatorias; históricos en la interfaz; Realtime y push. La pantalla actual de convocatoria permanece de solo lectura. No se han aplicado migraciones a producción ni enviado notificaciones.
+Validación de los flujos en un proyecto Supabase real y dispositivos móviles; edición y respuestas de convocatorias; históricos en la interfaz; Realtime y push. La interfaz actual permite crear convocatorias abiertas, responder con la ficha propia y administrar AYUDAS; editar fecha/estado sigue pendiente. No se han aplicado migraciones a producción ni enviado notificaciones.

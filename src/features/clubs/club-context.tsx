@@ -92,11 +92,11 @@ export function ClubProvider({ children }: PropsWithChildren) {
     const responses = next ? await listCallUpPlayers(next.id) : [];
     return {
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
-        displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position,
+        displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
         role: memberRows.find((member) => member.user_id === player.user_id)?.role ?? null })),
       callUp: next ? { id: next.id, clubId: next.club_id, title: 'Convocatoria del club', startsAt: next.starts_at,
         timezone: next.timezone, opponent: 'Por confirmar', slots: responses.length,
-        responses: responses.map((entry) => ({ id: entry.id, displayName: entry.ea_id_snapshot, status: entry.availability })) } : null,
+        responses: responses.map((entry) => ({ id: entry.id, displayName: entry.ea_id_snapshot, status: entry.availability, category: entry.category_snapshot, sortOrder: entry.sort_order_snapshot })) } : null,
     };
   }, [clubId]);
   const data = useResource(`roster:${userId}:${clubId}`, loadRoster, Boolean(userId && clubId && !isDemo && !isRecovery));
