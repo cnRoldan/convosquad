@@ -3,6 +3,7 @@ import { ClubAccess } from '@/components/access';
 
 export default function ManageLayout() {
   return <ClubAccess admin><Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
+    <Stack.Screen name="call-up-history" options={{ title: 'Historial de convocatorias' }} />
     <Stack.Screen name="create-call-up" options={{ title: 'Crear convocatoria' }} />
     <Stack.Screen name="trials/[id]" options={{ title: 'Pruebas' }} />
     <Stack.Screen name="inactive-players" options={{ title: 'Jugadores inactivos' }} />

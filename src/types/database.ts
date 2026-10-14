@@ -492,6 +492,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['players']['Row'][];
       };
+      list_call_up_history: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
       promote_trial: {
         Args: {
           p_trial_id: string;

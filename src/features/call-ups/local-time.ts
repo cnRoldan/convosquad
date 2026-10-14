@@ -12,3 +12,9 @@ export function clubLocalTimeToInstant(date: string, time: string, timezone: str
   if (matches.length !== 1) throw new Error('Esa hora no existe o se repite por el cambio de horario. Elige otra hora.');
   return new Date(matches[0]!).toISOString();
 }
+
+export function clubLocalDateTime(timezone: string, instant = new Date()) {
+  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const parts = Object.fromEntries(formatter.formatToParts(instant).map(part => [part.type, part.value]));
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+}

@@ -5,11 +5,11 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { createCallUp } from '@/features/call-ups/service';
-import { clubLocalTimeToInstant } from '@/features/call-ups/local-time';
-import { backendErrorMessage } from '@/lib/backend-result';
+import { clubLocalTimeToInstant, clubLocalDateTime } from '@/features/call-ups/local-time';
+import { callUpErrorMessage } from '@/features/call-ups/availability';
 export default function CreateCallUpScreen() {
   const { isDemo } = useAuth(); const { activeClub, refreshRoster } = useClub();
-  const [date, setDate] = useState(''); const [time, setTime] = useState(''); const [instant, setInstant] = useState<string | null>(null);
+  const [date, setDate] = useState(() => clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date); const [time, setTime] = useState('21:50'); const [instant, setInstant] = useState<string | null>(null);
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   function preview() {
     if (!activeClub) return;
@@ -20,7 +20,7 @@ export default function CreateCallUpScreen() {
     if (!activeClub || !instant || isDemo || busy) return;
     setBusy(true);
     try { const call = await createCallUp(activeClub.id, instant, 'open'); refreshRoster(); router.replace({ pathname: '/call-up', params: { id: call.id } }); }
-    catch (error) { setMessage(backendErrorMessage(error)); }
+    catch (error) { setMessage(callUpErrorMessage(error)); }
     finally { setBusy(false); setInstant(null); }
   }
   return <Screen>
