@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Body, Button, Card, Field, Message } from '@/components/ui';
+import { Body, Button, Field, Message } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { ReorderButtons } from '@/components/reorder-buttons';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
@@ -10,6 +10,8 @@ import { moveItem } from '@/features/players/categories';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { listAids, saveAid, deleteAid, reorderAids } from './service';
+import { CompactPanel } from './compact-panel';
+import { colors } from '@/theme';
 import type { Tables } from '@/types/database';
 export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: string; editable: boolean; revision?: number }) {
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
@@ -18,6 +20,7 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
   const { reload } = result;
   useEffect(() => { if (revision) reload(); }, [revision, reload]);
   const [text, setText] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
+  const [expanded, setExpanded] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
   async function mutate(action: () => Promise<unknown>) {
     if (!editable || !clubId || isDemo || busy) return false;
@@ -35,8 +38,7 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
     const ids = moveItem(result.data?.map(row => row.id) ?? [], id, direction);
     if (ids) void mutate(() => reorderAids(callUpId, ids));
   }
-  return <Card title="AYUDAS">
-    <Body>Anotaciones de esta convocatoria. No crean jugadores ni cuentan como respuestas.</Body>
+  return <CompactPanel title={`AYUDAS (${result.data?.length ?? 0})`} expanded={expanded} onToggle={() => setExpanded(value => !value)} subtle>
     {result.isLoading ? <Body>Cargando ayudas…</Body> : null}
     {result.error ? <><Message error>{result.error}</Message><Button label="Reintentar ayudas" onPress={result.reload} /></> : null}
     {message ? <Message error>{message}</Message> : null}
@@ -44,11 +46,11 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
     {!result.isLoading && !result.error && !result.data?.length ? <Body>Esta convocatoria no tiene ayudas.</Body> : null}
     {editable ? <><Field label="Nueva ayuda" value={text} onChangeText={setText} maxLength={500} multiline editable={!busy} /><Button label="Añadir ayuda" disabled={busy || isDemo || result.isLoading || Boolean(result.error)} onPress={() => save(text)} /></> : null}
     <ConfirmDialog visible={Boolean(deleting)} title="Eliminar anotación" description="Se eliminará únicamente esta ayuda de la convocatoria seleccionada." busy={busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting) void mutate(() => deleteAid(deleting, callUpId)); }} />
-  </Card>;
+  </CompactPanel>;
 }
 function AidRow({ aid, ordinal, editable, disabled, first, last, save, remove, move }: { aid: Tables<'call_up_aids'>; ordinal: number; editable: boolean; disabled: boolean; first: boolean; last: boolean; save: (body: string) => void; remove: () => void; move: (direction: -1 | 1) => void }) {
   const [body, setBody] = useState(aid.body);
-  return <Card title={`Ayuda ${ordinal}`}>
-    {editable ? <><Field label={`Texto de ayuda ${ordinal}`} value={body} onChangeText={setBody} maxLength={500} multiline editable={!disabled} /><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}><ReorderButtons label={`ayuda ${ordinal}`} first={first} last={last} disabled={disabled} move={move} /><IconButton icon="save" label={`Guardar ayuda ${ordinal}`} disabled={disabled} onPress={() => save(body)} /><IconButton icon="trash" label={`Eliminar ayuda ${ordinal}`} danger disabled={disabled} onPress={remove} /></View></> : <Body>{aid.body}</Body>}
-  </Card>;
+  return <View style={{ paddingVertical: 8, gap: 6, borderTopWidth: 1, borderColor: colors.border }}>
+    {editable ? <><Field label={`Texto de ayuda ${ordinal}`} value={body} onChangeText={setBody} maxLength={500} multiline editable={!disabled} /><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}><ReorderButtons label={`ayuda ${ordinal}`} first={first} last={last} disabled={disabled} move={move} /><IconButton icon="save" label={`Guardar ayuda ${ordinal}`} disabled={disabled} onPress={() => save(body)} /><IconButton icon="trash" label={`Eliminar ayuda ${ordinal}`} danger disabled={disabled} onPress={remove} /></View></> : <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 20 }}>{ordinal}. {aid.body}</Text>}
+  </View>;
 }

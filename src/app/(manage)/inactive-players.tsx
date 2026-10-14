@@ -1,3 +1,5 @@
+import { Text } from 'react-native';
+import { jerseyAccessibilityLabel, jerseyLabel } from '@/features/players/jersey';
 import { useCallback } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Heading, Message, Screen } from '@/components/ui';
@@ -23,7 +25,7 @@ export default function InactivePlayersScreen() {
     {result.isLoading ? <Body>Cargando jugadores inactivos…</Body> : null}
     {result.error ? <><Message error>{result.error}</Message><Button secondary label="Reintentar" onPress={result.reload} /></> : null}
     {result.data?.map(player => <Card key={player.id} title={player.ea_id}>
-      <Body>{categoryLabels[player.category]} · {player.jersey_number === null ? 'Sin dorsal' : `Dorsal ${player.jersey_number}`}</Body>
+      <Body>{categoryLabels[player.category]} · <Text accessibilityLabel={jerseyAccessibilityLabel(player.jersey_number)}>{jerseyLabel(player.jersey_number)}</Text></Body>
       <Body>{player.user_id ? 'Registrado · cuenta vinculada' : 'Sin registrar'} · Inactivo</Body>
       <Button secondary label={`Consultar y reincorporar ${player.ea_id}`} onPress={() => router.push({ pathname: '/players/[id]', params: { id: player.id } })} />
     </Card>)}

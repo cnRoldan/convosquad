@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Body, Card, DemoNotice, Field, Message } from '@/components/ui';
+import { Body, DemoNotice, Field, Message } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { IconButton } from '@/components/icon-button';
 import { useAuth } from '@/features/auth/auth-context';
@@ -8,6 +8,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { clubLocalDateTime, clubLocalTimeToInstant } from './local-time';
 import { callUpErrorMessage, callStatusLabels } from './availability';
 import { updateCallUp } from './service';
+import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
 
 type Action = 'edit' | 'open' | 'closed' | 'cancelled';
@@ -15,6 +16,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   const { isDemo } = useAuth(); const { activeClub, currentMembership } = useClub();
   const initial = clubLocalDateTime(call.timezone, new Date(call.starts_at));
   const [date, setDate] = useState(initial.date); const [time, setTime] = useState(initial.time);
+  const [expanded, setExpanded] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const admin = currentMembership?.role === 'admin' && activeClub?.id === call.club_id;
@@ -33,7 +35,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   }
   if (!admin) return null;
   const title = action === 'edit' ? 'Modificar fecha y hora' : action === 'open' ? 'Abrir convocatoria' : action === 'closed' ? 'Cerrar convocatoria' : 'Cancelar convocatoria';
-  return <Card title="Administrar convocatoria">
+  return <CompactPanel title="Administrar convocatoria" expanded={expanded} onToggle={() => setExpanded(value => !value)} subtle>
     <Body>Estado: {callStatusLabels[call.status]}. Cerrar o cancelar conserva la fotografía y las respuestas.</Body>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
       <IconButton icon="edit" label="Modificar fecha y hora" disabled={busy} onPress={() => choose('edit')} />
@@ -47,5 +49,5 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
       {isDemo ? <DemoNotice /> : null}
       {error ? <Message error>{error}</Message> : null}
     </ConfirmDialog>
-  </Card>;
+  </CompactPanel>;
 }

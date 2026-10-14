@@ -26,3 +26,11 @@ jobs:
       - run: npm run test
       - run: npm run db:types:check
       - run: npm run export
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compact-call-up-screenshots
+          path: test-results/*.png
+          if-no-files-found: ignore

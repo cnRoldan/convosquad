@@ -5,10 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
 
-export function Screen({ children }: PropsWithChildren) {
+export function Screen({ children, compact = false }: PropsWithChildren<{ compact?: boolean }>) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <ScrollView contentContainerStyle={[styles.content, compact && styles.compactContent]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>
     </SafeAreaView>
@@ -79,6 +79,7 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
 export const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   content: { padding: 24, gap: 20, width: '100%', maxWidth: 600, alignSelf: 'center', paddingBottom: 40 },
+  compactContent: { padding: 16, gap: 12, maxWidth: 880 },
   heading: { gap: 12, marginVertical: 12 },
   eyebrow: { color: colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 2 },
   title: { color: colors.text, fontSize: 32, fontWeight: '800' },

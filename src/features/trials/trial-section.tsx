@@ -1,3 +1,5 @@
+import { Text } from 'react-native';
+import { jerseyAccessibilityLabel, jerseyLabel } from '@/features/players/jersey';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { Body, Button, Card, Message } from '@/components/ui';
@@ -33,7 +35,7 @@ export function TrialSection() {
     {trials.error ? <><Message error>{trials.error}</Message><Button secondary label="Reintentar pruebas" onPress={trials.reload} /></> : null}
     {message ? <Message error>{message}</Message> : null}
     {trials.data?.map(trial => <Card key={trial.id} title={trial.ea_id}>
-      <Body>{trial.jersey_number === null ? 'Sin dorsal' : `Dorsal ${trial.jersey_number}`} · {trial.position ?? 'Posición sin indicar'}</Body>
+      <Body><Text accessibilityLabel={jerseyAccessibilityLabel(trial.jersey_number)}>{jerseyLabel(trial.jersey_number)}</Text> · {trial.position ?? 'Posición sin indicar'}</Body>
       {trial.notes ? <Body>{trial.notes}</Body> : null}
       <Body>Desde {new Date(trial.created_at).toLocaleDateString('es-ES', { timeZone: activeClub?.timezone ?? 'Europe/Madrid' })} · {trial.status === 'active' ? 'En pruebas' : trial.status === 'withdrawn' ? 'Retirado de pruebas' : 'Incorporado a la plantilla'}</Body>
       {admin && trial.player_id ? <Button secondary label="Ver ficha incorporada" onPress={() => router.push({ pathname: '/players/[id]', params: { id: trial.player_id! } })} /> : null}
