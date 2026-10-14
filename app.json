@@ -11,10 +11,26 @@
       "bundleIdentifier": "com.convosquad.app"
     },
     "android": {
-      "package": "com.convosquad.app"
+      "package": "com.convosquad.app",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
     },
-    "web": { "output": "static" },
-    "plugins": ["expo-router", "expo-notifications"],
-    "experiments": { "typedRoutes": true }
+    "web": {
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "call-ups",
+          "color": "#B4F16C"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

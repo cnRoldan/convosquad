@@ -7,6 +7,7 @@ import { requireSupabase } from '@/lib/supabase';
 import { useAuth } from '@/features/auth/auth-context';
 import { authErrorMessage } from '@/features/auth/errors';
 import { completeAuthLink, readAuthLink } from '@/features/auth/callback';
+import { usePendingPush } from '@/features/notifications/pending-push-context';
 import { usePendingInvite } from '@/features/invitations/pending-invite-context';
 
 const subscribe = () => () => undefined;
@@ -15,7 +16,7 @@ const serverSnapshot = () => false;
 
 export default function AuthCallbackScreen() {
   const { exitDemo } = useAuth();
-  const { pendingInvite } = usePendingInvite();
+  const { pendingInvite } = usePendingInvite(); const { pendingPush } = usePendingPush();
   const incomingUrl = Linking.useURL();
   const hydrated = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   const url = hydrated && Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.href : incomingUrl;
@@ -36,12 +37,12 @@ export default function AuthCallbackScreen() {
       exitDemo();
       // Clear credentials before navigating, preserving the destination's parameters.
       if (Platform.OS === 'web' && typeof window !== 'undefined') window.history.replaceState(window.history.state, '', window.location.pathname);
-      router.replace(result.recovery ? '/reset-password' : pendingInvite ? '/invite' : { pathname: '/clubs', params: { auto: '1' } });
+      router.replace(result.recovery ? '/reset-password' : pendingPush ? '/notification' : pendingInvite ? '/invite' : { pathname: '/clubs', params: { auto: '1' } });
     } catch (error) {
       setMessage(authErrorMessage(error, 'callback'));
       if (Platform.OS === 'web' && typeof window !== 'undefined') window.history.replaceState(window.history.state, '', window.location.pathname);
     } finally { setBusy(false); }
-  }, [url, link, exitDemo, pendingInvite]);
+  }, [url, link, exitDemo, pendingInvite, pendingPush]);
 
   useEffect(() => {
     if (!hydrated || !url) return;

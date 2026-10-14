@@ -2,26 +2,19 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
-export async function requestPushToken(): Promise<string> {
-  if (Platform.OS === 'web' || !Device.isDevice) {
-    throw new Error('Las notificaciones push requieren un dispositivo iOS o Android físico.');
-  }
-  if (Constants.executionEnvironment === 'storeClient') {
-    throw new Error('Usa una compilación de desarrollo de EAS para probar notificaciones push.');
-  }
+export function nativePushSupported() {
+  return (Platform.OS === 'android' || Platform.OS === 'ios') && Device.isDevice && Constants.executionEnvironment !== 'storeClient';
+}
+export async function notificationRuntime() {
+  if (!nativePushSupported()) throw new Error('Usa un dispositivo físico con una compilación EAS. Push no está disponible en web, simuladores o Expo Go.');
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-  if (!projectId) throw new Error('Vincula el proyecto con EAS antes de registrar notificaciones.');
-
+  if (typeof projectId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId)) throw new Error('Vincula el proyecto EAS y configura EXPO_PUBLIC_EAS_PROJECT_ID antes de activar notificaciones.');
   const Notifications = await import('expo-notifications');
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'Convocatorias',
-      importance: Notifications.AndroidImportance.MAX,
-    });
-  }
-  let { status } = await Notifications.getPermissionsAsync();
-  if (status !== 'granted') ({ status } = await Notifications.requestPermissionsAsync());
-  if (status !== 'granted') throw new Error('No se ha concedido permiso para notificaciones.');
-
-  return (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('call-ups', {
+    name: 'Convocatorias', importance: Notifications.AndroidImportance.DEFAULT,
+  });
+  return { Notifications, projectId };
+}
+export function permissionGranted(permission: Awaited<ReturnType<typeof import('expo-notifications').getPermissionsAsync>>) {
+  return permission.granted || permission.ios?.status === 3;
 }

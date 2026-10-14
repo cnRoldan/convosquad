@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { ClubProvider } from '@/features/clubs/club-context';
 import { AuthProvider } from '@/features/auth/auth-context';
 import { PendingInviteProvider } from '@/features/invitations/pending-invite-context';
+import { PendingPushProvider } from '@/features/notifications/pending-push-context';
+import { NativePushLifecycle } from '@/features/notifications/native-lifecycle';
 import { colors } from '@/theme';
 
 const theme = {
@@ -15,8 +17,10 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={theme}>
       <AuthProvider>
+        <PendingPushProvider>
         <PendingInviteProvider>
           <ClubProvider>
+            <NativePushLifecycle />
             <StatusBar style="light" />
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
@@ -24,6 +28,7 @@ export default function RootLayout() {
               <Stack.Screen name="clubs" />
               <Stack.Screen name="(account)" />
               <Stack.Screen name="(manage)" />
+              <Stack.Screen name="notification" />
               <Stack.Screen name="invite" />
               <Stack.Screen name="(club)" />
               <Stack.Screen name="auth/callback" />
@@ -31,6 +36,7 @@ export default function RootLayout() {
             </Stack>
           </ClubProvider>
         </PendingInviteProvider>
+        </PendingPushProvider>
       </AuthProvider>
     </ThemeProvider>
   );
