@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "ConvoSquad",
-    "slug": "convosquad",
+    "slug": "k1mbowx",
     "version": "0.1.0",
     "scheme": "convosquad",
     "orientation": "portrait",
@@ -36,6 +36,7 @@
       "eas": {
         "projectId": "99946f80-dcdd-4678-9cbc-5264fb6830d4"
       }
-    }
+    },
+    "owner": "convosquad"
   }
 }
