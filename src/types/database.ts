@@ -434,9 +434,117 @@ export type Database = {
           { foreignKeyName: 'profiles_id_fkey'; columns: ["id"]; isOneToOne: true; referencedRelation: 'users'; referencedColumns: ["id"]; },
         ];
       };
+      push_deliveries: {
+        Row: {
+          id: string;
+          event_id: string;
+          club_id: string;
+          device_id: string | null;
+          user_id: string | null;
+          token_snapshot: string;
+          state: string;
+          claimed_at: string | null;
+          ticket_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          club_id: string;
+          device_id?: string | null;
+          user_id?: string | null;
+          token_snapshot: string;
+          state?: string;
+          claimed_at?: string | null;
+          ticket_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          club_id?: string;
+          device_id?: string | null;
+          user_id?: string | null;
+          token_snapshot?: string;
+          state?: string;
+          claimed_at?: string | null;
+          ticket_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'push_deliveries_device_id_fkey'; columns: ["device_id"]; isOneToOne: false; referencedRelation: 'push_devices'; referencedColumns: ["device_id"]; },
+          { foreignKeyName: 'push_deliveries_event_id_club_id_fkey'; columns: ["event_id","club_id"]; isOneToOne: false; referencedRelation: 'push_events'; referencedColumns: ["id","club_id"]; },
+          { foreignKeyName: 'push_deliveries_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      push_devices: {
+        Row: {
+          device_id: string;
+          user_id: string | null;
+          expo_push_token: string | null;
+          platform: string;
+          is_active: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          device_id: string;
+          user_id?: string | null;
+          expo_push_token?: string | null;
+          platform: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          device_id?: string;
+          user_id?: string | null;
+          expo_push_token?: string | null;
+          platform?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'push_devices_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      push_events: {
+        Row: {
+          id: string;
+          club_id: string;
+          call_up_id: string;
+          event_key: string;
+          kind: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          call_up_id: string;
+          event_key: string;
+          kind: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          call_up_id?: string;
+          event_key?: string;
+          kind?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'push_events_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
+        ];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
+      claim_push_deliveries: {
+        Args: {
+          p_event_id: string;
+          p_limit?: number;
+        };
+        Returns: Database['public']['Tables']['push_deliveries']['Row'][];
+      };
       create_call_up: {
         Args: {
           p_club_id: string;
@@ -470,6 +578,13 @@ export type Database = {
         };
         Returns: { id: string; token: string; expires_at: string }[];
       };
+      deactivate_push_device: {
+        Args: {
+          p_device_id: string;
+          p_unlink?: boolean;
+        };
+        Returns: undefined;
+      };
       import_players: {
         Args: {
           p_club_id: string;
@@ -498,6 +613,15 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      prepare_call_up_push: {
+        Args: {
+          p_club_id: string;
+          p_call_up_id: string;
+          p_event_key: string;
+          p_kind: string;
+        };
+        Returns: string;
+      };
       promote_trial: {
         Args: {
           p_trial_id: string;
@@ -512,6 +636,14 @@ export type Database = {
           p_token: string;
         };
         Returns: Database['public']['Tables']['club_members']['Row'][];
+      };
+      register_push_device: {
+        Args: {
+          p_device_id: string;
+          p_expo_push_token: string;
+          p_platform: string;
+        };
+        Returns: undefined;
       };
       reorder_aids: {
         Args: {

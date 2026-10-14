@@ -177,3 +177,7 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 
 [experimental.pgdelta]
 enabled = true
+
+[functions.prepare-push]
+# La función valida un secreto exclusivo del servidor; no acepta JWT de usuarios.
+verify_jwt = false

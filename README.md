@@ -141,7 +141,7 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
-| `npm run test` | 108 pruebas: 50 unitarias y 58 de PostgreSQL/RLS |
+| `npm run test` | 134 pruebas: 70 unitarias y 64 de PostgreSQL/RLS |
 | `npm run test:db` | SQL y permisos sin credenciales |
 | `npm run test:unit` | Parser y enlaces de invitación |
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |
@@ -161,3 +161,5 @@ Validar Auth, recuperación y todos los flujos en un proyecto Supabase real; val
 La gestión de retirada y reincorporación de jugadores, permisos y prueba manual en Netlify se describe en [docs/player-activity.md](docs/player-activity.md). No requiere una migración adicional.
 
 La creación, administración, disponibilidad, historial y recuperación Realtime están documentados en [Convocatorias y disponibilidad](docs/call-up-availability.md). Requieren la migración incremental `20261014180000_call_up_availability.sql`; no se aplican cambios remotos automáticamente.
+
+La infraestructura móvil de notificaciones, variables EAS, FCM/APNs y primera APK desde Codex Cloud se documentan en [Push — Fase 5A](docs/push-infrastructure.md). Requiere la migración incremental `20261014200000_push_infrastructure.sql`. El envío automático y la recepción en dispositivos reales siguen pendientes.

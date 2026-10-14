@@ -57,6 +57,7 @@ async function fixture({ width = 390, role = 'player', empty = false } = {}) {
   await context.addInitScript(({ user, jwt, expiry }) => {
     localStorage.setItem('sb-auth-auth-token', JSON.stringify({ access_token: jwt, refresh_token: 'fixture-refresh', token_type: 'bearer', expires_in: 3600, expires_at: expiry, user }));
   }, { user, jwt, expiry });
+  await context.route('https://**/*', route => { if (new URL(route.request().url()).hostname === 'auth.example.test') return route.fallback(); unexpected.push('Blocked external HTTP request'); return route.abort(); });
   await context.routeWebSocket('**/realtime/v1/websocket*', socket => {
     socket.onMessage(message => {
       const raw = JSON.parse(String(message));
@@ -213,4 +214,33 @@ test('categorías vacías, exclusión de pruebas/ayudas y retorno fácil a Todos
     assert.equal(await f.page.getByRole('button', { name: 'PRUEBAS (1)', exact: true }).isVisible(), true);
     assert.equal(await f.page.getByRole('button', { name: 'Todos (0)', exact: true }).getAttribute('aria-pressed'), 'true');
   } finally { await f.close(); }
+});
+
+test('enlace push verifica sesión/club y abre la convocatoria; otro club no obtiene acceso', async () => {
+  const f = await fixture();
+  try {
+    await f.page.goto(`${origin}/notification?club=${clubId}&call=${callId}`);
+    await f.page.getByTestId('call-up-player-snapshot-3').waitFor();
+    assert.equal(new URL(f.page.url()).pathname, '/call-up');
+    assert.equal(new URL(f.page.url()).searchParams.get('id'), callId);
+    await f.page.goto(`${origin}/notification?club=00000000-0000-4000-8000-000000000099&call=${callId}`);
+    await f.page.getByText('Ya no perteneces al club de esta convocatoria o no tienes acceso.', { exact: true }).waitFor();
+    await f.page.goto(`${origin}/notifications`);
+    await f.page.getByText('Las notificaciones push móviles se configuran desde una compilación EAS instalada en Android o iOS, no desde el navegador.', { exact: true }).waitFor();
+    assert.equal(await f.page.getByRole('button', { name: 'Activar notificaciones en este dispositivo', exact: true }).count(), 0);
+  } finally { await f.close(); }
+});
+
+test('enlace push sin sesión permite iniciar sesión; payload inválido no navega a recursos externos', async () => {
+  const context = await browser.newContext(); const page = await context.newPage(); let requests = 0;
+  await context.route('https://auth.example.test/**', route => { requests++; return route.abort(); });
+  try {
+    await page.goto(`${origin}/notification?club=${clubId}&call=${callId}`);
+    await page.getByRole('button', { name: 'Iniciar sesión y continuar', exact: true }).click();
+    await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/login');
+    await page.goto(`${origin}/notification?club=invalid&call=invalid`);
+    await page.getByText(/La convocatoria puede haberse cancelado o cerrado/).waitFor();
+    assert.equal(requests, 0);
+  } finally { await context.close(); }
 });

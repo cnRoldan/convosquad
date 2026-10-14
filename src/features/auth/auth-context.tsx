@@ -6,6 +6,7 @@ import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RecoveryState } from './recovery-state';
 
+import { deactivateInstallation, pauseDeviceRegistration } from '@/features/notifications/device-service';
 import { supabase } from '@/lib/supabase';
 
 type AuthContextValue = {
@@ -69,6 +70,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const exitDemo = useCallback(() => setDemo(false), []);
   const getRecoveryMode = useCallback(() => recoveryRef.current?.current ?? false, []);
   async function signOut() {
+    if (session?.user.id) { pauseDeviceRegistration(session.user.id); await deactivateInstallation(session.user.id, true); }
     if (supabase) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;

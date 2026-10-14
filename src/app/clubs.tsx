@@ -43,6 +43,7 @@ function ClubSelection() {
     {!availableClubs.length && !error ? <Body>Aún no perteneces a ningún club. Crea uno, busca tu equipo o abre una invitación.</Body> : null}
     <Button label="Crear un club" onPress={() => router.push('/create-club')} />
     <Button secondary label="Buscar clubes" onPress={() => router.push('/search-clubs')} />
+    <Button secondary label="Notificaciones" onPress={() => router.push('/notifications')} />
     <Button secondary label="Mis solicitudes" onPress={() => router.push('/my-requests')} />
     {!isDemo ? <Button secondary label="Actualizar mis clubes" onPress={refresh} /> : null}
     {message ? <Message error>{message}</Message> : null}

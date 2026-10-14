@@ -1,0 +1,46 @@
+import { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
+import { router, useRootNavigationState } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { nativePushSupported, notificationRuntime } from '@/lib/notifications';
+import { useAuth } from '@/features/auth/auth-context';
+import { syncInstallation } from './device-service';
+import { usePendingPush } from './pending-push-context';
+import { readPushIntent } from './intent';
+
+export function NativePushLifecycle() {
+  const { session, isDemo } = useAuth(); const userId = session?.user.id;
+  const { rememberPush } = usePendingPush(); const navigation = useRootNavigationState();
+  const [open, setOpen] = useState<string | null>(null); const navigated = useRef<string | null>(null);
+  useEffect(() => {
+    if (open && open !== navigated.current && navigation?.key) { navigated.current = open; router.push('/notification'); }
+  }, [open, navigation?.key]);
+  useEffect(() => {
+    if (!nativePushSupported() || isDemo) return;
+    let active = true;
+    const subscriptions: { remove: () => void }[] = [];
+    let responding = Promise.resolve();
+    const sync = () => { if (active && userId) void syncInstallation(userId).catch(() => undefined); };
+    void notificationRuntime().then(async ({ Notifications }) => {
+      if (!active) return;
+      Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
+      const receive = (response: import('expo-notifications').NotificationResponse) => {
+        responding = responding.then(async () => {
+          if (!active || response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
+          const intent = readPushIntent(response.notification.request.content.data); if (!intent) return;
+          const id = response.notification.request.identifier;
+          if (await AsyncStorage.getItem('convosquad:last-push-response') === id || !active) return;
+          rememberPush(intent); setOpen(id);
+          await AsyncStorage.setItem('convosquad:last-push-response', id);
+        }).catch(() => undefined);
+      };
+      subscriptions.push(Notifications.addNotificationResponseReceivedListener(receive));
+      subscriptions.push(Notifications.addPushTokenListener(sync));
+      const last = await Notifications.getLastNotificationResponseAsync(); if (last) receive(last);
+      sync();
+    }).catch(() => undefined);
+    subscriptions.push(AppState.addEventListener('change', state => { if (state === 'active') sync(); }));
+    return () => { active = false; subscriptions.forEach(subscription => subscription.remove()); };
+  }, [userId, isDemo, rememberPush]);
+  return null;
+}

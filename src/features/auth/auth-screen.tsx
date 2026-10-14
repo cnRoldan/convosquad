@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { authCallbackUrl } from './redirect';
+import { usePendingPush } from '@/features/notifications/pending-push-context';
 import { usePendingInvite } from '@/features/invitations/pending-invite-context';
 
 import { Body, Button, Field, Heading, Screen } from '@/components/ui';
@@ -12,8 +13,8 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   const { recovered } = useLocalSearchParams<{ recovered?: string }>();
   const isRegister = mode === 'register';
   const { session, isDemo, enterDemo, exitDemo, isLoading, isRecovery } = useAuth();
-  const { pendingInvite } = usePendingInvite();
-  const destination = pendingInvite ? '/invite' as const : { pathname: '/clubs' as const, params: { auto: '1' } };
+  const { pendingInvite } = usePendingInvite(); const { pendingPush } = usePendingPush();
+  const destination = pendingPush ? '/notification' as const : pendingInvite ? '/invite' as const : { pathname: '/clubs' as const, params: { auto: '1' } };
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
