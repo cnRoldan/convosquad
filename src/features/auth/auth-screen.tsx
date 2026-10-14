@@ -19,12 +19,13 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  if (session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
+  if (!isLoading && session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
 
   async function submit() {
     if (isRegister && !usernamePattern.test(username.trim())) return setMessage('Usa entre 3 y 24 letras, números o guiones bajos para tu nombre de usuario.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setMessage('Introduce un correo válido.');
-    if (password.length < 8) return setMessage('La contraseña debe tener al menos 8 caracteres.');
+    if (isRegister && password.length < 8) return setMessage('La contraseña debe tener al menos 8 caracteres.');
+    if (!password) return setMessage('Introduce tu contraseña.');
     if (!isSupabaseConfigured) return setMessage('Supabase no está configurado. Puedes explorar la demo sin crear una cuenta.');
     setBusy(true);
     setMessage('');
