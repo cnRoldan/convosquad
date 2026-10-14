@@ -8,7 +8,7 @@ La demo funciona sin Supabase ni credenciales. Incluye bienvenida, formularios d
 
 La fase 3 añade recuperación de contraseña, selección persistente de club, búsqueda pública, solicitudes y aprobación, invitaciones caducables/revocables compartibles por WhatsApp y administración de plantilla. Permite crear, editar, desactivar y vincular una ficha sin registrar a una cuenta existente, además de importar plantillas con vista previa editable y confirmación. Las operaciones reales requieren Supabase configurado; la demo es de solo lectura y nunca simula guardados exitosos. El acceso utiliza correo real y nombre de usuario único, según la decisión aprobada.
 
-Las migraciones, RLS, servicios y pruebas están documentados en [Datos y seguridad](docs/database.md). **No se ejecutan migraciones remotas automáticamente. Si ya las aplicaste, no las repitas.** Las convocatorias siguen siendo de solo lectura en la interfaz. No hay pagos ni suscripciones.
+Las migraciones, RLS, servicios y pruebas están documentados en [Datos y seguridad](docs/database.md). **No se ejecutan migraciones remotas automáticamente. Si ya las aplicaste, no las repitas.** La refactorización añade categorías y orden manual, PRUEBAS persistentes, AYUDAS por convocatoria, snapshots históricos y respuestas de la ficha propia. Requiere aplicar la nueva migración incremental antes de desplegar. Consulta [Categorías, pruebas y ayudas](docs/roster-categories.md). No hay pagos ni suscripciones.
 
 ## Trabajar exclusivamente desde Codex Cloud
 
@@ -141,7 +141,7 @@ El rol pertenece a la membresía de un usuario en un club, no al usuario global.
 | `npm run typecheck` | TypeScript estricto |
 | `npm run lint` | ESLint, sin advertencias |
 | `npm run check` | TypeScript y lint |
-| `npm run test` | 50 pruebas: 16 unitarias y 34 de PostgreSQL/RLS |
+| `npm run test` | 72 pruebas: 25 unitarias y 47 de PostgreSQL/RLS |
 | `npm run test:db` | SQL y permisos sin credenciales |
 | `npm run test:unit` | Parser y enlaces de invitación |
 | `npm run db:types:check` | Sincronización de SQL y TypeScript |
@@ -156,4 +156,4 @@ GitHub Actions ejecuta instalación reproducible, TypeScript, lint, pruebas de R
 
 ## Próximos pasos
 
-Validar Auth, recuperación y todos los flujos en un proyecto Supabase real; implementar la interfaz de convocatorias y asistencia; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.
+Validar Auth, recuperación y todos los flujos en un proyecto Supabase real; validar categorías, pruebas, ayudas y respuestas con usuarios reales; integrar Realtime y notificaciones; elegir iconos y recursos gráficos definitivos; vincular EAS y comprobar la app en dispositivos iOS y Android.

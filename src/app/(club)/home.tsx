@@ -26,6 +26,7 @@ export default function HomeScreen() {
         </> : !rosterLoading && !rosterError ? <Body>Todavía no hay convocatorias.</Body> : null}
       </Card>
       {currentMembership?.role === 'admin' ? <Card title="Administrar el club">
+        <Button secondary label="Crear convocatoria" onPress={() => router.push('/create-call-up')} />
         <Button secondary label="Solicitudes pendientes" onPress={() => router.push('/join-requests')} />
         <Button secondary label="Invitar jugadores" onPress={() => router.push('/invitations')} />
       </Card> : null}

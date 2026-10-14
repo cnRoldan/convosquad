@@ -1,3 +1,4 @@
+import { legacyCategory } from '@/features/players/categories';
 import type { CallUp, Club, Membership, RosterPlayer } from './types';
 
 export const demoUserId = 'demo-alex';
@@ -17,28 +18,35 @@ export const memberships: Membership[] = [
 const positions = ['MC', 'DC', 'DFC', 'POR', 'MCO', 'DC', 'DFC'] as const;
 export const players: RosterPlayer[] = memberships.map((member, index) => ({
   id: member.id, clubId: member.clubId, userId: member.userId, displayName: member.displayName,
-  eaId: `FC_${member.userId}`, jerseyNumber: index + 1, position: positions[index] ?? 'MC', role: member.role,
+  eaId: `FC_${member.userId}`, jerseyNumber: index + 1, position: positions[index] ?? 'MC', category: legacyCategory[positions[index] ?? 'MC'], sortOrder: index, role: member.role,
 }));
-players.push({ id: 'verde-guest', clubId: 'squad-verde', userId: null, displayName: 'FC_Invitado', eaId: 'FC_Invitado', jerseyNumber: 12, position: 'EI', role: null });
+players.push({ id: 'verde-guest', clubId: 'squad-verde', userId: null, displayName: 'FC_Invitado', eaId: 'FC_Invitado', jerseyNumber: 12, position: 'EI', category: 'attackers', sortOrder: 20, role: null });
 export const callUps: CallUp[] = [
   {
     id: 'verde-jornada', clubId: 'squad-verde', title: 'Noche de liga', timezone: 'Europe/Madrid',
     startsAt: '2026-11-06T21:00:00+01:00', opponent: 'Rival por confirmar', slots: 11,
     responses: [
-      { id: 'verde-alex', displayName: 'Álex', status: 'available' },
-      { id: 'verde-dani', displayName: 'Dani', status: 'available' },
-      { id: 'verde-lucia', displayName: 'Lucía', status: 'unanswered' },
-      { id: 'verde-marcos', displayName: 'Marcos', status: 'unavailable' },
-      { id: 'verde-guest', displayName: 'FC_Invitado', status: 'unanswered' },
+      { id: 'verde-alex', displayName: 'Álex', status: 'available', category: 'midfielders', sortOrder: 0 },
+      { id: 'verde-dani', displayName: 'Dani', status: 'available', category: 'midfielders', sortOrder: 0 },
+      { id: 'verde-lucia', displayName: 'Lucía', status: 'unanswered', category: 'midfielders', sortOrder: 0 },
+      { id: 'verde-marcos', displayName: 'Marcos', status: 'unavailable', category: 'midfielders', sortOrder: 0 },
+      { id: 'verde-guest', displayName: 'FC_Invitado', status: 'unanswered', category: 'midfielders', sortOrder: 0 },
     ],
   },
   {
     id: 'norte-amistoso', clubId: 'norte-united', title: 'Amistoso del club', timezone: 'Europe/Madrid',
     startsAt: '2026-11-07T20:30:00+01:00', opponent: 'Sur Athletic', slots: 11,
     responses: [
-      { id: 'norte-alex', displayName: 'Álex', status: 'backup' },
-      { id: 'norte-sara', displayName: 'Sara', status: 'available' },
-      { id: 'norte-ivan', displayName: 'Iván', status: 'available' },
+      { id: 'norte-alex', displayName: 'Álex', status: 'backup', category: 'midfielders', sortOrder: 0 },
+      { id: 'norte-sara', displayName: 'Sara', status: 'available', category: 'midfielders', sortOrder: 0 },
+      { id: 'norte-ivan', displayName: 'Iván', status: 'available', category: 'midfielders', sortOrder: 0 },
     ],
   },
 ];
+
+for (const call of callUps) {
+  call.responses = call.responses.map(response => {
+    const player = players.find(row => row.id === response.id);
+    return { ...response, category: player?.category ?? 'midfielders', sortOrder: player?.sortOrder ?? 0 };
+  });
+}

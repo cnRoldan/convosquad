@@ -1,0 +1,50 @@
+import { useCallback, useState } from 'react';
+import { Body, Button, Card, Field, Message } from '@/components/ui';
+import { ReorderButtons } from '@/components/reorder-buttons';
+import { ConfirmDialog } from '@/components/confirm-dialog';
+import { useAuth } from '@/features/auth/auth-context';
+import { useClub } from '@/features/clubs/club-context';
+import { moveItem } from '@/features/players/categories';
+import { useResource } from '@/hooks/use-resource';
+import { backendErrorMessage } from '@/lib/backend-result';
+import { listAids, saveAid, deleteAid, reorderAids } from './service';
+import type { Tables } from '@/types/database';
+export function AidsSection({ callUpId, editable }: { callUpId: string; editable: boolean }) {
+  const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
+  const load = useCallback(() => listAids(callUpId), [callUpId]);
+  const result = useResource(`aids:${session?.user.id}:${clubId}:${callUpId}`, load, Boolean(session && clubId) && !isDemo);
+  const [text, setText] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
+  const [deleting, setDeleting] = useState<string | null>(null);
+  async function mutate(action: () => Promise<unknown>) {
+    if (!editable || !clubId || isDemo || busy) return false;
+    setBusy(true); setMessage('');
+    try { await action(); result.reload(); setDeleting(null); return true; }
+    catch (error) { setMessage(backendErrorMessage(error)); return false; }
+    finally { setBusy(false); }
+  }
+  function save(body: string, id?: string) {
+    if (!clubId) return;
+    if (!body.trim() || body.trim().length > 500) return setMessage('Introduce una anotación de hasta 500 caracteres.');
+    void mutate(() => saveAid(clubId, callUpId, body.trim(), id)).then(saved => { if (saved && !id) setText(''); });
+  }
+  function move(id: string, direction: -1 | 1) {
+    const ids = moveItem(result.data?.map(row => row.id) ?? [], id, direction);
+    if (ids) void mutate(() => reorderAids(callUpId, ids));
+  }
+  return <Card title="AYUDAS">
+    <Body>Anotaciones de esta convocatoria. No crean jugadores ni cuentan como respuestas.</Body>
+    {result.isLoading ? <Body>Cargando ayudas…</Body> : null}
+    {result.error ? <><Message error>{result.error}</Message><Button label="Reintentar ayudas" onPress={result.reload} /></> : null}
+    {message ? <Message error>{message}</Message> : null}
+    {result.data?.map((aid, index) => <AidRow key={`${aid.id}:${aid.body}`} aid={aid} ordinal={index + 1} editable={editable} disabled={busy || isDemo || result.isLoading} first={index === 0} last={index === (result.data?.length ?? 0) - 1} save={body => save(body, aid.id)} remove={() => setDeleting(aid.id)} move={direction => move(aid.id, direction)} />)}
+    {!result.isLoading && !result.error && !result.data?.length ? <Body>Esta convocatoria no tiene ayudas.</Body> : null}
+    {editable ? <><Field label="Nueva ayuda" value={text} onChangeText={setText} maxLength={500} multiline editable={!busy} /><Button label="Añadir ayuda" disabled={busy || isDemo || result.isLoading || Boolean(result.error)} onPress={() => save(text)} /></> : null}
+    <ConfirmDialog visible={Boolean(deleting)} title="Eliminar anotación" description="Se eliminará únicamente esta ayuda de la convocatoria seleccionada." busy={busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting) void mutate(() => deleteAid(deleting, callUpId)); }} />
+  </Card>;
+}
+function AidRow({ aid, ordinal, editable, disabled, first, last, save, remove, move }: { aid: Tables<'call_up_aids'>; ordinal: number; editable: boolean; disabled: boolean; first: boolean; last: boolean; save: (body: string) => void; remove: () => void; move: (direction: -1 | 1) => void }) {
+  const [body, setBody] = useState(aid.body);
+  return <Card title={`Ayuda ${ordinal}`}>
+    {editable ? <><Field label={`Texto de ayuda ${ordinal}`} value={body} onChangeText={setBody} maxLength={500} multiline editable={!disabled} /><Button secondary label="Guardar ayuda" disabled={disabled} onPress={() => save(body)} /><Button secondary label="Eliminar ayuda" disabled={disabled} onPress={remove} /><ReorderButtons label={`ayuda ${ordinal}`} first={first} last={last} disabled={disabled} move={move} /></> : <Body>{aid.body}</Body>}
+  </Card>;
+}

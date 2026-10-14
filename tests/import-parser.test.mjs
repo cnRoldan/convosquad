@@ -9,7 +9,7 @@ test('analiza la plantilla de WhatsApp completa y conserva los IDs', () => {
   const checked = validateImportRows(result.rows, []);
   assert.equal(checked.length, 7);
   assert.ok(checked.every((entry) => entry.player && !entry.errors.length));
-  assert.deepEqual(checked[0].player, { eaId: 'AlexR10', jerseyNumber: 1, position: 'POR' });
+  assert.deepEqual(checked[0].player, { eaId: 'AlexR10', jerseyNumber: 1, category: 'goalkeepers' });
 });
 test('tolera CRLF, espacios, guiones largos, viñetas y formato de WhatsApp', () => {
   const rows = parseRosterText('  • *10* – *Alex_R10* ( mco )\r\n\r\n#3: Luis [dfc]\n5. Gamer Name - DC\n6 Dani LI').rows;
@@ -24,7 +24,7 @@ test('las líneas inválidas permanecen visibles y se pueden corregir', () => {
   const checked = validateImportRows(parsed.rows, []);
   assert.equal(checked.length, 2);
   assert.ok(checked.every((entry) => entry.errors.length));
-  const fixed = parsed.rows.map((row, index) => ({ ...row, eaId: `Corrected_${index}`, jerseyText: String(index + 1), positionText: 'MC' }));
+  const fixed = parsed.rows.map((row, index) => ({ ...row, eaId: `Corrected_${index}`, jerseyText: String(index + 1), positionText: 'MC', category: 'midfielders', requiresReview: false }));
   assert.ok(validateImportRows(fixed, []).every((entry) => entry.player));
 });
 test('detecta EA IDs duplicados sin distinguir mayúsculas ni espacios', () => {

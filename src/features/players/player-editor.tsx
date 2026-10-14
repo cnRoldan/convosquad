@@ -6,19 +6,19 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { listClubAccounts } from '@/features/clubs/service';
 import { createPlayer, linkPlayerAccount, listPlayers, updatePlayer } from './service';
-import { positions, positionLabels } from './positions';
-import type { PlayerPosition } from './positions';
+import { categories, categoryLabels } from './categories';
+import type { RosterCategory } from './categories';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 
-export type EditablePlayer = { id: string; eaId: string; jerseyNumber: number | null; position: PlayerPosition; userId: string | null; isActive: boolean };
+export type EditablePlayer = { id: string; eaId: string; jerseyNumber: number | null; category: RosterCategory; userId: string | null; isActive: boolean };
 export function PlayerEditor({ player = null }: { player?: EditablePlayer | null }) {
   const { session, isDemo } = useAuth();
   const { activeClub, refreshRoster } = useClub();
   const clubId = activeClub?.id;
   const [eaId, setEaId] = useState(player?.eaId ?? '');
   const [jersey, setJersey] = useState(player?.jerseyNumber?.toString() ?? '');
-  const [position, setPosition] = useState<PlayerPosition>(player?.position ?? 'MC');
+  const [category, setCategory] = useState<RosterCategory>(player?.category ?? 'midfielders');
   const [linkedUserId, setLinkedUserId] = useState(player?.userId ?? null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -39,8 +39,8 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
     setBusy(true);
     setMessage('');
     try {
-      if (player) await updatePlayer(player.id, { ea_id: trimmed, jersey_number: jersey.trim() ? Number(jersey) : null, position });
-      else await createPlayer(clubId, { eaId: trimmed, ...(jersey.trim() ? { jerseyNumber: Number(jersey) } : {}), position });
+      if (player) await updatePlayer(player.id, { ea_id: trimmed, jersey_number: jersey.trim() ? Number(jersey) : null, category });
+      else await createPlayer(clubId, { eaId: trimmed, ...(jersey.trim() ? { jerseyNumber: Number(jersey) } : {}), category });
       refreshRoster();
       router.replace('/roster');
     } catch (error) { setMessage(backendErrorMessage(error)); }
@@ -65,15 +65,15 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
     } catch (error) { setMessage(backendErrorMessage(error)); accounts.reload(); }
     finally { setBusy(false); setPendingLink(null); }
   }
-  const dirty = Boolean(player && (eaId.trim() !== player.eaId || jersey.trim() !== (player.jerseyNumber?.toString() ?? '') || position !== player.position));
+  const dirty = Boolean(player && (eaId.trim() !== player.eaId || jersey.trim() !== (player.jerseyNumber?.toString() ?? '') || category !== player.category));
   const freeAccounts = accounts.data?.members.filter((member) => !accounts.data?.players.some((existing) => existing.user_id === member.user_id)) ?? [];
   return <Screen>
     <Heading title={player ? 'Editar ficha' : 'Añadir jugador'} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
     <Field label="ID de EA Sports FC" value={eaId} onChangeText={setEaId} maxLength={64} autoCapitalize="none" editable={!busy} />
     <Field label="Dorsal (opcional)" value={jersey} onChangeText={setJersey} maxLength={2} keyboardType="number-pad" editable={!busy} />
-    <Body>Posición principal · {positionLabels[position]}</Body>
-    <Options value={position} options={positions.map((value) => ({ value, label: value }))} onChange={setPosition} disabled={busy} />
+    <Body>Categoría principal · {categoryLabels[category]}</Body>
+    <Options value={category} options={categories.map((value) => ({ value, label: categoryLabels[value] }))} onChange={setCategory} disabled={busy} />
     <Body>{linkedUserId ? 'Registrado · cuenta vinculada' : 'Sin registrar · la ficha es independiente de una cuenta'}</Body>
     {message ? <Message>{message}</Message> : null}
     <Button label={busy ? 'Guardando…' : 'Guardar jugador'} disabled={busy || isDemo} onPress={() => { void save(); }} />

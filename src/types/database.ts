@@ -4,6 +4,35 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      call_up_aids: {
+        Row: {
+          id: string;
+          club_id: string;
+          call_up_id: string;
+          body: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          call_up_id: string;
+          body: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          call_up_id?: string;
+          body?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'call_up_aids_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
+        ];
+      };
       call_up_players: {
         Row: {
           id: string;
@@ -18,6 +47,8 @@ export type Database = {
           responded_at: string | null;
           created_at: string;
           updated_at: string;
+          category_snapshot: Database['public']['Enums']['roster_category'];
+          sort_order_snapshot: number;
         };
         Insert: {
           id?: string;
@@ -32,6 +63,8 @@ export type Database = {
           responded_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          category_snapshot?: Database['public']['Enums']['roster_category'];
+          sort_order_snapshot?: number;
         };
         Update: {
           id?: string;
@@ -46,11 +79,55 @@ export type Database = {
           responded_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          category_snapshot?: Database['public']['Enums']['roster_category'];
+          sort_order_snapshot?: number;
         };
         Relationships: [
           { foreignKeyName: 'call_up_players_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
           { foreignKeyName: 'call_up_players_club_id_source_player_id_fkey'; columns: ["club_id","source_player_id"]; isOneToOne: false; referencedRelation: 'players'; referencedColumns: ["club_id","id"]; },
           { foreignKeyName: 'call_up_players_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      call_up_trials: {
+        Row: {
+          id: string;
+          club_id: string;
+          call_up_id: string;
+          source_trial_id: string | null;
+          ea_id_snapshot: string;
+          jersey_number_snapshot: number | null;
+          position_snapshot: string | null;
+          notes_snapshot: string | null;
+          sort_order_snapshot: number;
+          trial_created_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          call_up_id: string;
+          source_trial_id?: string | null;
+          ea_id_snapshot: string;
+          jersey_number_snapshot?: number | null;
+          position_snapshot?: string | null;
+          notes_snapshot?: string | null;
+          sort_order_snapshot: number;
+          trial_created_at: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          call_up_id?: string;
+          source_trial_id?: string | null;
+          ea_id_snapshot?: string;
+          jersey_number_snapshot?: number | null;
+          position_snapshot?: string | null;
+          notes_snapshot?: string | null;
+          sort_order_snapshot?: number;
+          trial_created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'call_up_trials_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
+          { foreignKeyName: 'call_up_trials_club_id_source_trial_id_fkey'; columns: ["club_id","source_trial_id"]; isOneToOne: false; referencedRelation: 'club_trials'; referencedColumns: ["club_id","id"]; },
         ];
       };
       call_ups: {
@@ -181,6 +258,51 @@ export type Database = {
           { foreignKeyName: 'club_members_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      club_trials: {
+        Row: {
+          id: string;
+          club_id: string;
+          ea_id: string;
+          jersey_number: number | null;
+          position: string | null;
+          notes: string | null;
+          sort_order: number;
+          status: Database['public']['Enums']['trial_status'];
+          player_id: string | null;
+          created_at: string;
+          incorporated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          ea_id: string;
+          jersey_number?: number | null;
+          position?: string | null;
+          notes?: string | null;
+          sort_order?: number;
+          status?: Database['public']['Enums']['trial_status'];
+          player_id?: string | null;
+          created_at?: string;
+          incorporated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          ea_id?: string;
+          jersey_number?: number | null;
+          position?: string | null;
+          notes?: string | null;
+          sort_order?: number;
+          status?: Database['public']['Enums']['trial_status'];
+          player_id?: string | null;
+          created_at?: string;
+          incorporated_at?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_trials_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'club_trials_club_id_player_id_fkey'; columns: ["club_id","player_id"]; isOneToOne: false; referencedRelation: 'players'; referencedColumns: ["club_id","id"]; },
+        ];
+      };
       clubs: {
         Row: {
           id: string;
@@ -260,16 +382,20 @@ export type Database = {
           user_id: string | null;
           is_active: boolean;
           created_at: string;
+          category: Database['public']['Enums']['roster_category'];
+          sort_order: number;
         };
         Insert: {
           id?: string;
           club_id: string;
           ea_id: string;
           jersey_number?: number | null;
-          position: Database['public']['Enums']['player_position'];
+          position?: Database['public']['Enums']['player_position'];
           user_id?: string | null;
           is_active?: boolean;
           created_at?: string;
+          category: Database['public']['Enums']['roster_category'];
+          sort_order?: number;
         };
         Update: {
           id?: string;
@@ -280,6 +406,8 @@ export type Database = {
           user_id?: string | null;
           is_active?: boolean;
           created_at?: string;
+          category?: Database['public']['Enums']['roster_category'];
+          sort_order?: number;
         };
         Relationships: [
           { foreignKeyName: 'players_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -349,10 +477,26 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['players']['Row'][];
       };
+      import_roster: {
+        Args: {
+          p_club_id: string;
+          p_players: Json;
+          p_trials: Json;
+        };
+        Returns: Json;
+      };
       link_player_account: {
         Args: {
           p_player_id: string;
           p_user_id: string;
+        };
+        Returns: Database['public']['Tables']['players']['Row'][];
+      };
+      promote_trial: {
+        Args: {
+          p_trial_id: string;
+          p_category: Database['public']['Enums']['roster_category'];
+          p_existing_player_id?: string;
         };
         Returns: Database['public']['Tables']['players']['Row'][];
       };
@@ -362,6 +506,28 @@ export type Database = {
           p_token: string;
         };
         Returns: Database['public']['Tables']['club_members']['Row'][];
+      };
+      reorder_aids: {
+        Args: {
+          p_call_up_id: string;
+          p_ids: string[];
+        };
+        Returns: undefined;
+      };
+      reorder_players: {
+        Args: {
+          p_club_id: string;
+          p_category: Database['public']['Enums']['roster_category'];
+          p_ids: string[];
+        };
+        Returns: undefined;
+      };
+      reorder_trials: {
+        Args: {
+          p_club_id: string;
+          p_ids: string[];
+        };
+        Returns: undefined;
       };
       request_to_join: {
         Args: {
@@ -413,6 +579,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      withdraw_trial: {
+        Args: {
+          p_trial_id: string;
+        };
+        Returns: Database['public']['Tables']['club_trials']['Row'][];
+      };
     };
     Enums: {
       availability_status: 'unanswered' | 'available' | 'unavailable' | 'backup';
@@ -420,6 +592,8 @@ export type Database = {
       club_role: 'admin' | 'player';
       join_request_status: 'pending' | 'approved' | 'rejected';
       player_position: 'POR' | 'DFC' | 'LI' | 'LD' | 'MCD' | 'MC' | 'MCO' | 'MI' | 'MD' | 'EI' | 'ED' | 'DC';
+      roster_category: 'goalkeepers' | 'centre_backs' | 'wide_backs' | 'midfielders' | 'attackers' | 'backups';
+      trial_status: 'active' | 'withdrawn' | 'incorporated';
     };
     CompositeTypes: { [_ in never]: never };
   };

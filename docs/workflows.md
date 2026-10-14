@@ -4,7 +4,7 @@
 
 Las pantallas de acceso, clubes, solicitudes, invitaciones y plantilla llaman a Supabase con la sesión del usuario. Sin backend configurado indican el requisito y no muestran un guardado o un envío de correo ficticio. La demo conserva navegación y datos simulados; permite analizar/corregir texto, pero no guardar ni aceptar invitaciones.
 
-Validación local: TypeScript estricto, ESLint, 16 pruebas unitarias del parser, enlaces y configuración Supabase, 34 pruebas SQL con PostgreSQL/PGlite, tipos generados y bundles de iOS, Android y web. Los tests SQL ejecutan permisos y transacciones reales con un fixture de Auth: no son una prueba de Supabase Auth, correo, PostgREST HTTP ni concurrencia entre conexiones. La revisión en Chromium comprueba la interfaz web móvil de la demo. No se ha ejecutado una build EAS ni una prueba nativa en un dispositivo.
+Validación local: TypeScript estricto, ESLint, 25 pruebas unitarias del parser, enlaces, configuración y horario, 47 pruebas SQL con PostgreSQL/PGlite, tipos generados y bundles de iOS, Android y web. Los tests SQL ejecutan permisos y transacciones reales con un fixture de Auth: no son una prueba de Supabase Auth, correo, PostgREST HTTP ni concurrencia entre conexiones. La revisión en Chromium comprueba la interfaz web móvil de la demo. No se ha ejecutado una build EAS ni una prueba nativa en un dispositivo.
 
 ## Preparar un proyecto real desde la nube
 
@@ -48,4 +48,4 @@ Los enlaces HTTPS abren la versión web; no se afirma que abran automáticamente
 
 ## Pendientes
 
-Validar este recorrido con Supabase alojado, SMTP y PostgREST, y en dispositivos Android/iOS; configurar el proyecto EAS y el dominio HTTPS reales. Las convocatorias siguen siendo de solo lectura en la interfaz. Realtime, push, gestión de asistencia e históricos en pantallas no se implementan en esta fase. No hay pagos. No se han aplicado migraciones a un proyecto remoto ni publicado una app.
+Validar este recorrido con Supabase alojado, SMTP y PostgREST, y en dispositivos Android/iOS; configurar el proyecto EAS y el dominio HTTPS reales. La refactorización de [categorías, pruebas y ayudas](roster-categories.md) añade una migración incremental y permite crear convocatorias abiertas, responder con la ficha propia y administrar ayudas. Realtime, push, gestión de asistencia e históricos en pantallas no se implementan en esta fase. No hay pagos. No se han aplicado migraciones a un proyecto remoto ni publicado una app.

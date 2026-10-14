@@ -3,11 +3,12 @@ import { createTestDatabase } from './database-test-utils.mjs';
 
 const database = await createTestDatabase();
 try {
-  const { rows: types } = await database.query(`select t.oid, t.typname, t.typtype, t.typcategory, n.nspname
+  const { rows: types } = await database.query(`select t.oid, t.typname, t.typtype, t.typcategory, t.typelem, n.nspname
     from pg_type t join pg_namespace n on n.oid = t.typnamespace`);
   const byOid = new Map(types.map((type) => [type.oid, type]));
   const tsType = (oid) => {
     const type = byOid.get(oid);
+    if (type.typcategory === 'A') return `${tsType(type.typelem)}[]`;
     if (type.nspname === 'public' && type.typtype === 'e') return `Database['public']['Enums']['${type.typname}']`;
     if (type.nspname === 'public' && type.typtype === 'c') return `Database['public']['Tables']['${type.typname}']['Row']`;
     if (type.typname === 'void') return 'undefined';

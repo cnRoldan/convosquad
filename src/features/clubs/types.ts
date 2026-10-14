@@ -11,6 +11,8 @@ export type RosterPlayer = {
   eaId: string;
   jerseyNumber: number | null;
   position: Enums<'player_position'>;
+  category: Enums<'roster_category'>;
+  sortOrder: number;
   role: ClubRole | null;
 };
 export type CallUp = {
@@ -21,5 +23,5 @@ export type CallUp = {
   timezone: string;
   opponent: string;
   slots: number;
-  responses: { id: string; displayName: string; status: Enums<'availability_status'> }[];
+  responses: { id: string; displayName: string; status: Enums<'availability_status'>; category: Enums<'roster_category'>; sortOrder: number }[];
 };
