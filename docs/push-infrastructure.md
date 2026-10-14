@@ -8,7 +8,7 @@ La app guarda únicamente el ID de instalación y la preferencia local; los toke
 
 Cerrar sesión desde la app nativa detiene registros pendientes, espera las escrituras en curso y limpia token/propietario de esa instalación antes de cerrar Auth. No desactiva otros dispositivos. Si falla la limpieza, la sesión permanece abierta y debe reintentarse con conexión. Una invalidación externa de Auth no puede limpiar el registro sin un JWT vigente; no se promete revocación automática de todos los dispositivos desde el servidor en esta fase. Las notificaciones solo contienen un aviso genérico e IDs; el contenido se consulta tras autenticar y verificar RLS.
 
-No hay envíos automáticos, cron, HTTP de envío a Expo, acciones de disponibilidad, publicación en tiendas ni builds iniciadas desde Codex. El projectId EAS todavía falta en este entorno. **No se han probado tokens, FCM/APNs o recepción push en dispositivos físicos.** Exportar bundles o pasar pruebas web no demuestra entrega push.
+No hay envíos automáticos, cron, HTTP de envío a Expo, acciones de disponibilidad, publicación en tiendas ni builds iniciadas desde Codex. El projectId EAS público ya está vinculado en app.json: `99946f80-dcdd-4678-9cbc-5264fb6830d4`. La comprobación remota mediante EAS está pendiente de autenticar el CLI. **No se han probado tokens, FCM/APNs o recepción push en dispositivos físicos.** Exportar bundles o pasar pruebas web no demuestra entrega push.
 
 ## Archivos y configuración
 
@@ -42,18 +42,18 @@ Configura en **cada entorno de EAS** (development, preview y production), desde 
 | --- | --- |
 | `EXPO_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase, pública |
 | `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Clave moderna `sb_publishable_…`, pública; nunca service_role |
-| `EXPO_PUBLIC_EAS_PROJECT_ID` | UUID real de Expo/EAS → Project settings → Project ID, público |
+| `EXPO_PUBLIC_EAS_PROJECT_ID` | Opcional: el UUID ya está vinculado en app.json; si se define debe coincidir con él, público |
 | `GOOGLE_SERVICES_JSON` | Variable **de tipo archivo** con el google-services.json Android de Firebase; el valor durante la build es su ruta |
 | `EXPO_PUBLIC_AUTH_REDIRECT_URL` | Opcional: dejar vacía para Linking o usar `convosquad://auth/callback` en builds nativas. No copiar el callback HTTPS de Netlify |
 
-Las variables de Codex no se transfieren automáticamente a EAS. Para ejecutar el CLI desde Codex configura también las tres variables públicas anteriores en su gestor de entorno. `EXPO_TOKEN` es un token de acceso de Expo para autenticar el CLI: introducirlo **solo como secreto en Codex**, sin prefijo EXPO_PUBLIC, sin pasarlo en argumentos ni pegarlo en chat. Alternativamente puede usarse una sesión de CLI autenticada existente. Verifica siempre el propietario del proyecto mediante `eas project:info`.
+Las variables de Codex no se transfieren automáticamente a EAS. Para ejecutar el CLI desde Codex configura las variables Supabase en su gestor de entorno; el projectId se obtiene de app.json y no necesita otra variable. `EXPO_TOKEN` es un token de acceso de Expo para autenticar el CLI: introducirlo **solo como secreto en Codex**, sin prefijo EXPO_PUBLIC, sin pasarlo en argumentos ni pegarlo en chat. Alternativamente puede usarse una sesión de CLI autenticada existente. Verifica siempre el propietario del proyecto mediante `eas project:info`.
 
 Supabase Edge Functions, cuando se autorice desplegar el backend: `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` son variables exclusivas del servidor provistas por Supabase; `PUSH_WORKER_SECRET` debe configurarse como secreto de al menos 32 caracteres en el gestor de secretos de Supabase. La función usa `verify_jwt=false` y valida explícitamente ese secreto: un JWT de usuario no la autoriza. No desplegarla sin esta protección. No guardar esos valores en `.env.example`, Expo, Netlify, Git ni logs. El futuro emisor debería habilitar Enhanced Push Security en Expo y usar un `EXPO_PUSH_ACCESS_TOKEN` exclusivo del servidor; el emisor no se implementa aquí.
 
 ## Android: Firebase Cloud Messaging y primera APK desde Codex Cloud
 
 1. Revisa esta PR y aplica la migración incremental en Supabase cuando esté aprobada.
-2. En Expo Dashboard crea/vincula el proyecto real `convosquad`, copia su Project ID y configura las variables en Codex y en el entorno EAS `preview`. No uses un UUID inventado. Inicia la sesión CLI mediante `EXPO_TOKEN` seguro o la autenticación existente.
+2. El proyecto existente ya está vinculado mediante su UUID público en app.json. No crees otro proyecto ni ejecutes create-expo-app. Configura las variables Supabase en Codex y en el entorno EAS `preview`; si defines EXPO_PUBLIC_EAS_PROJECT_ID debe coincidir con el UUID vinculado. Inicia la sesión CLI mediante `EXPO_TOKEN` seguro o la autenticación existente.
 3. En Firebase Console crea/selecciona el proyecto y registra una app Android cuyo package sea exactamente `com.convosquad.app`. Descarga su `google-services.json` y súbelo como variable de archivo `GOOGLE_SERVICES_JSON` a EAS `preview`. Si haces evaluación/prebuild local en Codex, proporciona también su ruta allí, sin versionar el archivo.
 4. Habilita FCM HTTP v1. En Firebase → configuración del proyecto → Service accounts crea/obtén la credencial de cuenta de servicio para FCM. Es **privada y distinta de google-services.json**. Súbela a las credenciales Android del proyecto Expo/EAS (Push Notifications / FCM V1), mediante Dashboard o `npm run eas -- credentials --platform android`. Nunca al repositorio ni al bundle de la app.
 5. Desde la terminal de Codex Cloud, en el repositorio:
@@ -67,7 +67,7 @@ npm run eas -- project:info
 npm run eas -- build --platform android --profile preview
 ```
 
-`eas:preflight` no imprime valores y comprueba las tres variables públicas; no valida credenciales privadas ni FCM/APNs. Si falta projectId, falla de forma explícita. La build debe recibir GOOGLE_SERVICES_JSON desde EAS y las credenciales de FCM configuradas. El CLI usa la versión fijada por el repositorio, sin instalar herramientas en Windows. Si necesitas development client, sustituye preview por development.
+`eas:preflight` no imprime valores y comprueba las variables Supabase y el projectId resuelto; no valida credenciales privadas ni FCM/APNs. Si falta projectId, falla de forma explícita. La build debe recibir GOOGLE_SERVICES_JSON desde EAS y las credenciales de FCM configuradas. El CLI usa la versión fijada por el repositorio, sin instalar herramientas en Windows. Si necesitas development client, sustituye preview por development.
 
 6. EAS compila en la nube. Sigue la URL real que devuelva el CLI, descarga/abre el enlace de instalación desde Chrome en tu teléfono Android y permite instalar esa APK. No se ha creado ni inventado una URL de build en esta tarea.
 7. Inicia sesión con tu cuenta real, abre Notificaciones y activa el dispositivo. Android 13+ pide permiso; versiones anteriores utilizan el canal. En Supabase → Table Editor → push_devices confirma su propietario/plataforma/estado. No publiques el token ni lo copies en logs.
@@ -92,3 +92,15 @@ Pruebas automatizadas: permisos concedidos/rechazados, web excluida, cambios de 
 Verificaciones: `npm run check`, `npm run test`, `npm run db:types:check`, `npm run check:push-server`, `npm run test:ui`, exportaciones Expo. El servidor Deno tiene lockfile y comprobación independiente del TypeScript de Expo. La verificación Deno usa los certificados del sistema, sin desactivar TLS.
 
 Pendiente: vincular EAS/credenciales, aplicar migración, registrar tokens en dispositivos físicos, probar recepción/taps reales iOS/Android y, en fases posteriores, automatizar publicación/recordatorios, envío, receipts y acciones interactivas. No hay datos remotos modificados ni notificaciones enviadas por Codex.
+
+## Vinculación del proyecto existente
+
+El UUID público `99946f80-dcdd-4678-9cbc-5264fb6830d4` está guardado en `expo.extra.eas.projectId` de app.json. app.config.ts lo conserva y rechaza un EXPO_PUBLIC_EAS_PROJECT_ID diferente. El preflight lee la configuración resuelta de Expo, por lo que esa variable es opcional. No se reinicializa la app ni se crea otro proyecto. El perfil preview conserva APK y com.convosquad.app.
+
+Para autenticar EAS desde Codex sin compartir secretos:
+
+1. En tu cuenta Expo, abre Account settings → Access tokens y crea un token con acceso al proyecto existente. Sigue [Programmatic access](https://docs.expo.dev/accounts/programmatic-access/).
+2. En la configuración del entorno de Codex Cloud, guarda su valor como **secreto** llamado `EXPO_TOKEN`. No lo añadas a archivos del repositorio ni a variables EXPO_PUBLIC; no lo pegues en chat, argumentos de terminal o logs.
+3. Aplica/guarda la configuración y reinicia el entorno o inicia una tarea que reciba ese secreto. Ejecuta `npm run eas -- whoami` y `npm run eas -- project:info` para confirmar el propietario y proyecto antes de cualquier build.
+
+La comprobación local del UUID/perfil/preflight pasa. Los comandos `eas whoami` y `eas config --platform android --profile preview --non-interactive` no pudieron verificar el proyecto remoto porque el CLI no tiene sesión ni EXPO_TOKEN. No se ha ejecutado init remoto, build ni submit. Tras autenticar, revisa también el slug/propietario real, el archivo Firebase en EAS preview y las credenciales Android antes de autorizar la primera APK.
