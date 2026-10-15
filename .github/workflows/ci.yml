@@ -23,6 +23,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: node scripts/export-reminder-dashboard.mjs --check
       - run: npm run check:push-server
       - run: npm run test
       - run: npm run db:types:check
