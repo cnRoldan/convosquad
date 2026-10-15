@@ -44,6 +44,7 @@ function ClubSelection() {
     <Button label="Crear un club" onPress={() => router.push('/create-club')} />
     <Button secondary label="Buscar clubes" onPress={() => router.push('/search-clubs')} />
     <Button secondary label="Notificaciones" onPress={() => router.push('/notifications')} />
+    {!isDemo ? <Button secondary label="Cambiar mi contraseña" onPress={() => router.push('/change-password')} /> : null}
     <Button secondary label="Mis solicitudes" onPress={() => router.push('/my-requests')} />
     {!isDemo ? <Button secondary label="Actualizar mis clubes" onPress={refresh} /> : null}
     {message ? <Message error>{message}</Message> : null}

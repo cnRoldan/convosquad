@@ -21,6 +21,16 @@ Antes de dar de alta, la app comprueba que Auth no exige correo y que el RPC exi
 
 Las contraseñas requieren al menos ocho caracteres. Se conservan los límites de Supabase Auth; no se llama a la API administrativa para evitarlos. Para protección adicional frente a altas abusivas, Supabase permite configurar CAPTCHA; activarlo requiere integrar su desafío en el formulario.
 
+## Cambiar mi contraseña
+
+Con la sesión iniciada, abre **Mis clubes → Cambiar mi contraseña**. Introduce la contraseña actual, la nueva (al menos ocho caracteres) y su confirmación. La nueva debe ser distinta. Si ya estás dentro de un club, usa primero **Cambiar de club** para acceder a Mis clubes.
+
+La app valida la contraseña actual con Supabase en una sesión temporal sin persistencia, comprueba que corresponde al mismo usuario y la cierra con alcance local. Después actualiza la contraseña mediante Auth con la sesión original, enviando también `current_password`. Esta verificación funciona aunque Supabase no tenga activada la exigencia de contraseña actual. El UUID, el ID de EA, los clubes, las fichas y los permisos se conservan. Las contraseñas se limpian del formulario después del intento y no se guardan en almacenamiento local ni se registran en logs.
+
+No requiere migraciones, claves administrativas ni nuevos secretos. Si el proyecto exige reautenticación adicional para cambiar contraseñas, vuelve a iniciar sesión antes de realizar el cambio. Esta opción necesita conocer la contraseña actual; la recuperación de una contraseña olvidada sigue siendo manual.
+
+Para probarlo con una cuenta autorizada: intenta primero una contraseña actual incorrecta, comprueba el error y que puedes seguir usando tu sesión. A continuación guarda una nueva, cierra sesión y comprueba que la nueva permite entrar y la anterior se rechaza. Los tests del repositorio usan Auth simulado; no cambian contraseñas reales automáticamente.
+
 ## Soporte y cuentas de desarrollo
 
 El formulario solo admite ID de EA y contraseña. Se ha retirado la compatibilidad de acceso y recuperación por correo, incluidos los formularios de las rutas antiguas. Las cuentas de desarrollo previas no se eliminan ni convierten automáticamente: si se quiere conservar el club de una cuenta antigua, soporte debe adaptar su identificador de Auth y su perfil al ID de EA elegido, conservando el mismo UUID. Crear otra cuenta no transfiere clubes ni permisos.
