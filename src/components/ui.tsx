@@ -4,10 +4,12 @@ import type { TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
+import { SessionIdentity } from './session-identity';
 
 export function Screen({ children, compact = false }: PropsWithChildren<{ compact?: boolean }>) {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <SessionIdentity compact={compact} />
       <ScrollView contentContainerStyle={[styles.content, compact && styles.compactContent]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>

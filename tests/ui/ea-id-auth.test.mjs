@@ -82,11 +82,13 @@ test('registro móvil: dos campos, sesión inmediata y navegación a clubes sin 
   const f = await fixture();
   try {
     await f.page.goto(`${origin}/register`);
+    assert.equal(await f.page.getByText('ID: EA-Player_9', { exact: true }).count(), 0);
     await f.page.getByLabel('ID de EA', { exact: true }).fill('EA-Player_9');
     await f.page.getByLabel('Contraseña', { exact: true }).fill('test-only-password');
     assert.equal(await f.page.getByLabel('Correo electrónico', { exact: true }).count(), 0);
     await f.page.getByRole('button', { name: 'Crear cuenta', exact: true }).click();
     await f.page.waitForURL('**/clubs*');
+    await f.page.getByText('ID: EA-Player_9', { exact: true }).waitFor();
     assert.equal(f.requests.find(r => r.endpoint === 'signup').body.email, 'ea.ea-player_9@accounts.convosquad.invalid');
     assert.equal(f.requests.some(r => r.endpoint === 'recover'), false);
   } finally { await f.close(); }
@@ -127,6 +129,7 @@ test('capitán guarda antelación, designa un jugador registrado y no puede elim
   const f = await fixture({ clubRole: 'admin' });
   try {
     await f.page.goto(`${origin}/club-settings`);
+    await f.page.getByText('ID: EA-Player_9', { exact: true }).waitFor();
     await f.page.getByRole('button', { name: 'Designar capitán a Candidate', exact: true }).waitFor();
     assert.equal(await f.page.getByRole('button', { name: 'Designar capitán a SinFicha', exact: true }).count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Eliminar club', exact: true }).count(), 0);
