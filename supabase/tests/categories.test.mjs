@@ -61,7 +61,10 @@ describe('Categorías, pruebas y ayudas',{concurrency:false},()=>{
  });
  test('un BACKUPS vinculado responde Disponible, No disponible o Backup como cualquier jugador',async()=>{
   const entry=await row(member,'select * from public.call_up_players where call_up_id=$1 and source_player_id=$2',[first.id,linked.id]);
-  for(const state of ['available','unavailable','backup']) assert.equal((await row(member,'select * from public.respond_to_call_up($1,$2)',[entry.id,state])).availability,state);
+  for(const state of ['available','unavailable','backup']) {
+    await db.query("update public.call_up_players set responded_at=clock_timestamp()-interval '31 seconds' where id=$1 and responded_at is not null",[entry.id]);
+    assert.equal((await row(member,'select * from public.respond_to_call_up($1,$2)',[entry.id,state])).availability,state);
+  }
  });
  test('la promoción es atómica, no crea usuario y no modifica snapshots anteriores',async()=>{
   const before=Number((await db.query('select count(*) as n from auth.users')).rows[0].n);

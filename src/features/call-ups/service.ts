@@ -10,12 +10,12 @@ export async function listCallUpPlayers(callUpId: string) {
   return unwrap(await requireSupabase().from('call_up_players').select('*').eq('call_up_id', callUpId).order('category_snapshot').order('sort_order_snapshot').order('id'));
 }
 
-export async function createCallUp(clubId: string, startsAt: string, status: 'draft' | 'open' = 'draft') {
-  return unwrap(await requireSupabase().rpc('create_call_up', { p_club_id: clubId, p_starts_at: startsAt, p_status: status }).single());
+export async function createCallUp(clubId: string, startsAt: string, status: 'draft' | 'open' = 'draft', lastNoticeAt: string | null = null) {
+  return unwrap(await requireSupabase().rpc('create_call_up_with_notice', { p_club_id: clubId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}) }).single());
 }
 
-export async function updateCallUp(callUpId: string, startsAt: string, status: Enums<'call_up_status'>) {
-  return unwrap(await requireSupabase().rpc('update_call_up', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status }).single());
+export async function updateCallUp(callUpId: string, startsAt: string, status: Enums<'call_up_status'>, lastNoticeAt: string | null) {
+  return unwrap(await requireSupabase().rpc('update_call_up_with_notice', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}) }).single());
 }
 
 export async function refreshCallUpRoster(callUpId: string, reopen = false) {
@@ -51,4 +51,8 @@ export async function getCallUp(clubId: string, callUpId: string) {
 }
 export async function listCallUpHistory(clubId: string) {
   return unwrap(await requireSupabase().rpc('list_call_up_history', { p_club_id: clubId }));
+}
+
+export async function respondFromNotification(clubId: string, callUpId: string, availability: 'available' | 'unavailable' | 'backup', actionId: string) {
+  return unwrap(await requireSupabase().rpc('respond_from_notification', { p_club_id: clubId, p_call_up_id: callUpId, p_availability: availability, p_action_id: actionId }).single());
 }

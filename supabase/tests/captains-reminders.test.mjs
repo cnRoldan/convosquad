@@ -52,19 +52,20 @@ test('capitanes guardan avisos de su club; RLS bloquea jugadores y clubes ajenos
   assert.equal((await query(captain, 'update public.clubs set reminder_minutes=15 where id=$1 returning id', [other.id])).rows.length, 0);
   await assert.rejects(query(captain, 'update public.clubs set reminder_minutes=61 where id=$1', [club.id]), { code: '23514' });
 });
-test('servidor prepara una sola vez y por dispositivo, incluyendo jugadores que respondieron', async () => {
+test('servidor prepara una sola vez y por dispositivo, solo para jugadores pendientes', async () => {
   for (const [index, user] of [captain, captain, second, foreign].entries()) {
     await query(user, 'select public.register_push_device($1,$2,$3)', [`20000000-0000-4000-8000-${String(index).padStart(12, '0')}`, `ExpoPushToken[Reminder_${index}]`, 'android']);
   }
   const snapshot = await row(second, 'select * from public.call_up_players where call_up_id=$1 and user_id=$2', [call.id, second]);
   await query(second, "select * from public.respond_to_call_up($1,'available')", [snapshot.id]);
   await assert.rejects(query(captain, 'select * from public.prepare_due_call_up_reminders()'), { code: '42501' });
+  await query(captain, "select * from public.update_call_up_with_notice($1,$2,$3,date_trunc('day',now()))", [call.id, new Date().toISOString().slice(0,10)+'T23:59:59Z', 'open']);
   const events = (await server('select * from public.prepare_due_call_up_reminders()')).rows;
   assert.equal(events.length, 1);
   assert.equal((await server('select * from public.prepare_due_call_up_reminders()')).rows.length, 0);
   const eventId = Object.values(events[0])[0];
   const deliveries = (await server('select * from public.claim_push_deliveries($1)', [eventId])).rows;
-  assert.equal(deliveries.length, 3);
+  assert.equal(deliveries.length, 2);
   assert.ok(deliveries.every(d => d.club_id === club.id && d.user_id !== foreign));
   assert.equal((await server('select * from public.claim_push_deliveries($1)', [eventId])).rows.length, 0);
   await assert.rejects(query(captain, "select public.finish_push_delivery($1,'sent','fake')", [deliveries[0].id]), { code: '42501' });
@@ -73,11 +74,11 @@ test('servidor prepara una sola vez y por dispositivo, incluyendo jugadores que 
 test('desactivar avisos, cambiar hora y cancelar descarta los envíos pendientes', async () => {
   for (const action of ['disable', 'reschedule', 'cancel']) {
     await query(captain, 'update public.clubs set reminder_minutes=60 where id=$1', [club.id]);
-    await query(captain, "select * from public.update_call_up($1,now()+interval '30 minutes','open')", [call.id]);
+    await query(captain, "select * from public.update_call_up_with_notice($1,date_trunc('day',now())+interval '23 hours 59 minutes 59 seconds','open',date_trunc('day',now()))", [call.id]);
     const eventId = (await server("select public.prepare_call_up_push($1,$2,$3,'reminder') as id", [club.id, call.id, `test:${action}`])).rows[0].id;
-    if (action === 'disable') await query(captain, 'update public.clubs set reminder_minutes=null where id=$1', [club.id]);
-    if (action === 'reschedule') await query(captain, "select * from public.update_call_up($1,now()+interval '40 minutes','open')", [call.id]);
-    if (action === 'cancel') await query(captain, "select * from public.update_call_up($1,now()+interval '30 minutes','cancelled')", [call.id]);
+    if (action === 'disable') await query(captain, "select * from public.update_call_up_with_notice($1,date_trunc('day',now())+interval '23 hours 59 minutes 59 seconds','open',null)", [call.id]);
+    if (action === 'reschedule') await query(captain, "select * from public.update_call_up_with_notice($1,date_trunc('day',now())+interval '23 hours 59 minutes','open',date_trunc('day',now()))", [call.id]);
+    if (action === 'cancel') await query(captain, "select * from public.update_call_up_with_notice($1,date_trunc('day',now())+interval '23 hours 59 minutes 59 seconds','cancelled',date_trunc('day',now()))", [call.id]);
     assert.equal((await server('select * from public.claim_push_deliveries($1)', [eventId])).rows.length, 0);
   }
 });

@@ -41,7 +41,7 @@ test('solo el secreto de worker autoriza preparar eventos; no hay destinatarios/
   const secret='unit-only-worker-secret-not-a-real-credential';assert.equal(authorizedWorker(null,secret),false);assert.equal(authorizedWorker('Bearer user-jwt',secret),false);assert.equal(authorizedWorker(`Bearer ${secret}`,undefined),false);assert.equal(authorizedWorker(`Bearer ${secret}`,secret),true);
   const event={...intent,eventKey:'published:unit',kind:'published'};assert.deepEqual(parsePushEvent(event),event);
   assert.equal(parsePushEvent({...event,to:'another-user'}),null);assert.equal(parsePushEvent({...event,body:'arbitrary'}),null);assert.equal(parsePushEvent({...event,kind:'arbitrary'}),null);
-  const message=pushMessage(event,'ExpoPushToken[unit_only]');assert.deepEqual(readPushIntent(message.data),intent);assert.equal(message.channelId,'call-ups');assert.ok(!('categoryId' in message));
+  const message=pushMessage(event,'ExpoPushToken[unit_only]');assert.deepEqual(readPushIntent(message.data),intent);assert.equal(message.channelId,'call-ups');assert.equal(message.categoryId,'call-up-availability');
 });
 
 test('logout bloquea registros tardíos y desvincula después de escrituras pendientes',async()=>{

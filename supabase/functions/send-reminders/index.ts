@@ -14,8 +14,8 @@ Deno.serve(async request => {
       if (error) throw new Error('No se pudieron preparar avisos');
     },
     async events() {
-      const { data, error } = await client.from('push_events').select('id,club_id,call_up_id,event_key,push_deliveries!inner(state)')
-        .eq('kind', 'reminder').eq('push_deliveries.state', 'pending').order('created_at').limit(10);
+      const { data, error } = await client.from('push_events').select('id,club_id,call_up_id,event_key,kind,actor_ea_id,vote_availability,push_deliveries!inner(state)')
+        .eq('push_deliveries.state', 'pending').order('created_at').limit(10);
       if (error || !data) throw new Error('No se pudo consultar la cola');
       return data;
     },

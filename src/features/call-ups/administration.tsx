@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { Body, DemoNotice, Field, Message } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { IconButton } from '@/components/icon-button';
@@ -8,6 +8,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { clubLocalDateTime, clubLocalTimeToInstant } from './local-time';
 import { callUpErrorMessage, callStatusLabels } from './availability';
 import { refreshCallUpRoster, updateCallUp } from './service';
+import { lastNoticeInstant } from './last-notice';
 import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
 
@@ -16,23 +17,25 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   const { isDemo } = useAuth(); const { activeClub, currentMembership } = useClub();
   const initial = clubLocalDateTime(call.timezone, new Date(call.starts_at));
   const [date, setDate] = useState(initial.date); const [time, setTime] = useState(initial.time);
+  const [noticeTime, setNoticeTime] = useState(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45');
+  const [noticeEnabled, setNoticeEnabled] = useState(Boolean(call.last_notice_at));
   const [expanded, setExpanded] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const admin = currentMembership?.role === 'admin' && activeClub?.id === call.club_id;
-  function choose(value: Action) { setError(''); setDate(initial.date); setTime(initial.time); setAction(value); }
+  function choose(value: Action) { setError(''); setDate(initial.date); setTime(initial.time); setNoticeEnabled(Boolean(call.last_notice_at)); setNoticeTime(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45'); setAction(value); }
   async function save() {
     if (!admin || isDemo || busy || !action) return;
-    let instant = call.starts_at;
+    let instant = call.starts_at; let noticeAt = call.last_notice_at;
     if (action === 'edit') {
-      try { instant = clubLocalTimeToInstant(date.trim(), time.trim(), call.timezone); }
+      try { instant = clubLocalTimeToInstant(date.trim(), time.trim(), call.timezone); noticeAt = lastNoticeInstant(noticeEnabled, date, noticeTime, call.timezone, instant); }
       catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa la fecha y hora.'); return; }
     }
     setBusy(true); setError('');
     try {
       const refreshing = action === 'refresh' || (action === 'open' && call.status === 'cancelled');
       if (refreshing) await refreshCallUpRoster(call.id, action === 'open');
-      else await updateCallUp(call.id, instant, action === 'edit' ? call.status : action);
+      else await updateCallUp(call.id, instant, action === 'edit' ? call.status : action, noticeAt);
       setAction(null);
       onSaved(refreshing ? 'Plantilla de la convocatoria actualizada. Se conservan las respuestas de quienes continúan y las AYUDAS.' : undefined);
     }
@@ -56,7 +59,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
     </View>
     <ConfirmDialog visible={action !== null} title={title} description={action === 'refresh' || resuming ? 'Se incorporarán los jugadores, categorías, dorsales, orden y PRUEBAS de la plantilla actual. Se conservarán las respuestas de quienes continúen y las AYUDAS. Los nuevos empezarán sin responder y los retirados dejarán de aparecer en esta convocatoria.' : action === 'edit' ? `Horario del club: ${call.timezone}. Solo puede existir una convocatoria por fecha local; la fotografía y respuestas se conservarán.` : 'Se conservarán los jugadores, respuestas, PRUEBAS y AYUDAS. Solo una convocatoria abierta permite responder.'}
       confirmLabel={title} busy={busy} disabled={isDemo} onCancel={() => setAction(null)} onConfirm={() => { void save(); }}>
-      {action === 'edit' ? <><Field label="Nueva fecha (AAAA-MM-DD)" value={date} onChangeText={setDate} maxLength={10} editable={!busy} /><Field label="Nueva hora (HH:mm)" value={time} onChangeText={setTime} maxLength={5} editable={!busy} /></> : null}
+      {action === 'edit' ? <><Field label="Nueva fecha (AAAA-MM-DD)" value={date} onChangeText={setDate} maxLength={10} editable={!busy} /><Field label="Nueva hora (HH:mm)" value={time} onChangeText={setTime} maxLength={5} editable={!busy} /><Body>Enviar último aviso para votar</Body><Switch accessibilityLabel="Enviar último aviso para votar" value={noticeEnabled} onValueChange={setNoticeEnabled} disabled={busy} />{noticeEnabled ? <Field label="Último aviso para votar (HH:mm)" value={noticeTime} onChangeText={setNoticeTime} maxLength={5} editable={!busy} /> : null}</> : null}
       {isDemo ? <DemoNotice /> : null}
       {error ? <Message error>{error}</Message> : null}
     </ConfirmDialog>

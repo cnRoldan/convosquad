@@ -6,6 +6,7 @@ import { IconButton } from '@/components/icon-button';
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { CompactRoster } from '@/features/call-ups/compact-roster';
+import { responseCooldown } from '@/features/call-ups/last-notice';
 import { AvailabilityActions } from '@/features/call-ups/availability-actions';
 import { canRespondToPlayer } from '@/features/call-ups/list-model';
 import type { CallUpPlayer } from '@/features/call-ups/list-model';
@@ -27,6 +28,9 @@ export default function CallUpScreen() {
   const scope = `${session?.user.id}:${clubId}:${isDemo}`;
   const selectionScope = `${scope}:${id ?? ''}`;
   const [selection, setSelection] = useState<{ scope: string; id: string } | null>(null);
+  const [clock, setClock] = useState(Date.now);
+  useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  const [lastResponse, setLastResponse] = useState<{ scope: string; at: string } | null>(null);
   const [notice, setNotice] = useState('');
   const mutationLock = useRef(false);
   const [responseMessage, setResponseMessage] = useState<{ scope: string; text: string; error: boolean } | null>(null);
@@ -50,7 +54,7 @@ export default function CallUpScreen() {
   const demoCall: Tables<'call_ups'> | null = isDemo && upcomingCallUp ? {
     id: upcomingCallUp.id, club_id: upcomingCallUp.clubId, starts_at: upcomingCallUp.startsAt,
     local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date,
-    timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
+    last_notice_at: null, timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
   } : null;
   const call = isDemo ? demoCall : snapshots.data?.call;
   const sourcePlayers = useMemo<CallUpPlayer[]>(() => isDemo ? upcomingCallUp?.responses.map(row => ({ id: row.id, eaId: row.displayName, category: row.category, sortOrder: row.sortOrder, availability: row.status, userId: roster.find(player => player.id === row.id)?.userId ?? null, jersey: roster.find(player => player.id === row.id)?.jerseyNumber ?? null })) ?? []
@@ -64,12 +68,15 @@ export default function CallUpScreen() {
   const respond = useCallback(async (entryId: string, availability: typeof responseOptions[number]) => {
     const player = sourcePlayers.find(row => row.id === entryId);
     if (mutationLock.current || !call || !player || snapshots.isLoading || snapshots.error || !canRespondToPlayer(player, session?.user.id, call, localDate, isDemo)) return;
+    const ownSnapshot = snapshots.data?.players.find(row => row.id === entryId);
+    if (Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null), responseCooldown(ownSnapshot?.responded_at))) return;
     mutationLock.current = true;
     setPending({ scope: responseScope, id: entryId, availability, saving: true, source: snapshots.data });
     setResponseMessage({ scope: responseScope, text: 'Guardando respuesta…', error: false });
     try {
       const result = await respondToCallUp(entryId, availability);
       setPending({ scope: responseScope, id: entryId, availability: result.availability, saving: false, source: latestSnapshot.current });
+      if (result.responded_at) setLastResponse({ scope: responseScope, at: result.responded_at });
       reloadSnapshots();
       setResponseMessage({ scope: responseScope, text: `Tu respuesta: ${availabilityLabels[result.availability]}.`, error: false });
     } catch (cause) {
@@ -77,11 +84,12 @@ export default function CallUpScreen() {
       setResponseMessage({ scope: responseScope, text: callUpErrorMessage(cause), error: true });
       refresh();
     } finally { mutationLock.current = false; }
-  }, [sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, localDate, isDemo, responseScope, reloadSnapshots, refresh]);
+  }, [sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, localDate, isDemo, responseScope, reloadSnapshots, refresh, lastResponse]);
   const ownPlayer = players.find(player => player.userId === session?.user.id);
+  const remaining = Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null, clock), responseCooldown(snapshots.data?.players.find(row => row.user_id === session?.user.id)?.responded_at, clock));
   const availabilityFooter = ownPlayer && call && !snapshots.error && canRespondToPlayer(ownPlayer, session?.user.id, call, localDate, isDemo)
-    ? <AvailabilityActions player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading}
-      feedback={responseMessage?.scope === responseScope ? responseMessage : null} onRespond={respond} /> : null;
+    ? <AvailabilityActions player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
+      feedback={remaining > 0 ? { text: `Podrás cambiar tu voto en ${remaining} s.`, error: false } : responseMessage?.scope === responseScope ? responseMessage : null} onRespond={respond} /> : null;
   return <Screen compact footer={availabilityFooter}>
     <Heading title="Convocatoria" subtitle={activeClub?.name ?? ''} />
     <View style={styles.toolbar}>
@@ -99,6 +107,7 @@ export default function CallUpScreen() {
     {notice ? <Message>{notice}</Message> : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {callStatusLabels[call.status]}</Text>
+      {call.last_notice_at ? <Body>Último aviso para votar: {clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} · solo pendientes</Body> : null}
       {admin ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={message => { setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
       {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []}
