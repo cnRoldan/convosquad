@@ -51,6 +51,7 @@
     "test:unit": "node --test tests/*.test.mjs",
     "supabase:check": "node scripts/check-supabase.mjs",
     "supabase": "npm run supabase:check",
+    "auth:check": "node scripts/check-ea-auth.mjs",
     "test:ui": "node scripts/test-call-up-ui.mjs",
     "eas:preflight": "node scripts/check-eas-build.mjs",
     "check:push-server": "DENO_TLS_CA_STORE=system npx --yes deno@2.5.6 check --config supabase/functions/deno.json supabase/functions/prepare-push/index.ts"

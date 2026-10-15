@@ -174,8 +174,8 @@ describe('Modelo multiclub y seguridad PostgreSQL', { concurrency: false }, () =
 
   test('nombre de usuario único sin distinguir mayúsculas', async () => {
     await assert.rejects(database.query('insert into auth.users(id, raw_user_meta_data) values ($1, $2)', ['10000000-0000-4000-8000-000000000001', { username: 'uSeR_1' }]), (error) => error.code === '23505');
-    await rejectsAs(player, "update public.profiles set username = 'USER_1' where id = $1", [player], '23505');
-    assert.equal((await sqlAs(player, "update public.profiles set username = 'Stolen' where id = $1 returning id", [adminA])).rows.length, 0);
+    await rejectsAs(player, "update public.profiles set username = 'USER_1' where id = $1", [player], '42501');
+    await rejectsAs(player, "update public.profiles set username = 'Stolen' where id = $1 returning id", [adminA], '42501');
   });
 
   test('solicitudes privadas: aprobaciones autorizadas y resolución atómica', async () => {

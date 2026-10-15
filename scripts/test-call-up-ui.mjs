@@ -7,5 +7,5 @@ const build = spawnSync(process.execPath, ['node_modules/expo/bin/cli', 'export'
   },
 });
 if (build.status !== 0) process.exit(build.status ?? 1);
-const tests = spawnSync(process.execPath, ['--test', 'tests/ui/compact-call-up.test.mjs'], { stdio: 'inherit', env: process.env });
+const tests = spawnSync(process.execPath, ['--test', 'tests/ui/compact-call-up.test.mjs', 'tests/ui/ea-id-auth.test.mjs'], { stdio: 'inherit', env: process.env });
 process.exit(tests.status ?? 1);

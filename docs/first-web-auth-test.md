@@ -1,5 +1,7 @@
 # Primera cuenta real desde Chrome, sin herramientas locales
 
+> Esta guía describe el registro anterior con correo. Para nuevas cuentas usa [Acceso con ID de EA](ea-id-auth.md), que incluye la migración y la configuración actual de Supabase. El alojamiento Netlify y los callbacks anteriores siguen siendo válidos para las cuentas existentes.
+
 ## Estado comprobado
 
 Las PR 1–5 están fusionadas y esta preparación parte de `main`. El directorio público y `search_clubs` responden HTTP 200. TypeScript, lint, las 50 pruebas locales y la sincronización de tipos pasan. La exportación de Expo Web genera las pantallas y `auth/callback.html`. La revisión en Chromium comprueba validaciones, metadatos de registro, callback del origen, PKCE S256 y errores de login/callback, interceptando todas las peticiones a Supabase antes de que salgan del navegador de prueba. No valida un registro exitoso ni envía correos. Se ha corregido un error de hidratación de React al abrir la página estática de callback con parámetros.
