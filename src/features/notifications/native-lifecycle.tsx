@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { router, useRootNavigationState } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nativePushSupported, notificationRuntime } from '@/lib/notifications';
@@ -28,6 +28,10 @@ export function NativePushLifecycle() {
         responding = responding.then(async () => {
           if (!active) return;
           const intent = readNotificationResponse(response.notification.request.content.data, response.actionIdentifier, response.notification.request.identifier, Notifications.DEFAULT_ACTION_IDENTIFIER); if (!intent) return;
+          if (intent.response && Platform.OS === 'android') {
+            const { handleAndroidNotificationResponse } = await import('./background-action-service');
+            await handleAndroidNotificationResponse(response); return;
+          }
           const id = `${response.notification.request.identifier}:${response.actionIdentifier}`;
           if (await AsyncStorage.getItem('convosquad:last-push-response') === id || !active) return;
           rememberPush(intent); setOpen(id);
@@ -36,7 +40,8 @@ export function NativePushLifecycle() {
       };
       subscriptions.push(Notifications.addNotificationResponseReceivedListener(receive));
       subscriptions.push(Notifications.addPushTokenListener(sync));
-      const last = await Notifications.getLastNotificationResponseAsync(); if (last) receive(last);
+      const last = await Notifications.getLastNotificationResponseAsync();
+      if (last && (Platform.OS !== 'android' || last.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER)) receive(last);
       sync();
     }).catch(() => undefined);
     subscriptions.push(AppState.addEventListener('change', state => { if (state === 'active') sync(); }));

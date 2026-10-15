@@ -59,10 +59,10 @@ test('30 segundos se aplican en servidor; voto igual es idempotente y no retrasa
   await assert.rejects(query(player,"select public.respond_to_call_up($1,'backup')",[entry.id]),{code:'P0030'});
   const repeat=await row(player,"select * from public.respond_to_call_up($1,'available')",[entry.id]);
   assert.equal(repeat.responded_at.getTime(),first.responded_at.getTime());
-  assert.equal((await db.query('select * from public.push_events where call_up_id=$1',[call.id])).rows.length,1);
+  assert.equal((await db.query("select * from public.push_events where call_up_id=$1 and kind='vote'",[call.id])).rows.length,1);
   await db.query("update public.call_up_players set responded_at=clock_timestamp()-interval '31 seconds' where id=$1",[entry.id]);
   assert.equal((await row(player,"select * from public.respond_to_call_up($1,'backup')",[entry.id])).availability,'backup');
-  assert.equal((await db.query('select * from public.push_events where call_up_id=$1',[call.id])).rows.length,2);
+  assert.equal((await db.query("select * from public.push_events where call_up_id=$1 and kind='vote'",[call.id])).rows.length,2);
 });
 test('preferencia revocada y membresía retirada después del voto cancelan envíos todavía pendientes',async()=>{
   const {club,call,entry}=await setup();

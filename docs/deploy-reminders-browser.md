@@ -2,7 +2,7 @@
 
 ## Antes de desplegar
 
-Aplica las migraciones pendientes en orden, hasta `20261015220000_call_up_notifications.sql`. No repitas las iniciales. Si la tercera migración indica que `refresh_call_up_roster` ya existe, no la borres ni la ejecutes de nuevo: esa función ya está creada.
+Aplica las migraciones pendientes en orden, hasta `20261015230000_call_up_lifecycle_push.sql`. No repitas las iniciales. Si la tercera migración indica que `refresh_call_up_roster` ya existe, no la borres ni la ejecutes de nuevo: esa función ya está creada.
 
 ## Secretos de Edge Functions
 
@@ -52,4 +52,4 @@ $job$);
 
 Revisa las ejecuciones de Cron y los logs de la función. Un cron correcto solo confirma que programó la petición HTTP; confirma también el estado HTTP de la función. Un 401 exige revisar la verificación JWT y la coincidencia de los dos secretos; un 503 puede indicar migraciones pendientes o un problema del servicio de envío. Un 200 con `attempted: 0` significa que no se reservó ningún envío en esa ejecución.
 
-Un ticket aceptado por Expo no demuestra recepción física. Para probar las tres acciones, instala una APK que incluya la PR #19 en dispositivos físicos con cuentas diferentes, activa notificaciones y vincula sus fichas. La APK anterior no incorpora este código por desplegar el worker.
+Un ticket aceptado por Expo no demuestra recepción física. Para probar las tres acciones, instala una APK actualizada que incluya `expo-task-manager` y la respuesta Android en segundo plano en dispositivos físicos con cuentas diferentes, activa notificaciones y vincula sus fichas. La APK anterior no incorpora este código por desplegar el worker.

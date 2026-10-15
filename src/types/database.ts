@@ -145,6 +145,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           last_notice_at: string | null;
+          status_version: number;
         };
         Insert: {
           id?: string;
@@ -157,6 +158,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           last_notice_at?: string | null;
+          status_version?: number;
         };
         Update: {
           id?: string;
@@ -169,6 +171,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           last_notice_at?: string | null;
+          status_version?: number;
         };
         Relationships: [
           { foreignKeyName: 'call_ups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -475,6 +478,7 @@ export type Database = {
           claimed_at: string | null;
           ticket_id: string | null;
           created_at: string;
+          can_vote: boolean;
         };
         Insert: {
           id?: string;
@@ -487,6 +491,7 @@ export type Database = {
           claimed_at?: string | null;
           ticket_id?: string | null;
           created_at?: string;
+          can_vote?: boolean;
         };
         Update: {
           id?: string;
@@ -499,6 +504,7 @@ export type Database = {
           claimed_at?: string | null;
           ticket_id?: string | null;
           created_at?: string;
+          can_vote?: boolean;
         };
         Relationships: [
           { foreignKeyName: 'push_deliveries_device_id_fkey'; columns: ["device_id"]; isOneToOne: false; referencedRelation: 'push_devices'; referencedColumns: ["device_id"]; },
@@ -549,6 +555,7 @@ export type Database = {
           actor_user_id: string | null;
           actor_ea_id: string | null;
           vote_availability: Database['public']['Enums']['availability_status'] | null;
+          call_status_version: number | null;
         };
         Insert: {
           id?: string;
@@ -563,6 +570,7 @@ export type Database = {
           actor_user_id?: string | null;
           actor_ea_id?: string | null;
           vote_availability?: Database['public']['Enums']['availability_status'] | null;
+          call_status_version?: number | null;
         };
         Update: {
           id?: string;
@@ -577,6 +585,7 @@ export type Database = {
           actor_user_id?: string | null;
           actor_ea_id?: string | null;
           vote_availability?: Database['public']['Enums']['availability_status'] | null;
+          call_status_version?: number | null;
         };
         Relationships: [
           { foreignKeyName: 'push_events_actor_user_id_fkey'; columns: ["actor_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
