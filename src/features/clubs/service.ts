@@ -45,10 +45,6 @@ export async function getClubSettings(clubId: string) {
   return unwrap(await requireSupabase().from('clubs').select('*').eq('id', clubId).single());
 }
 
-export async function updateClubReminder(clubId: string, minutes: number | null) {
-  return unwrap(await requireSupabase().from('clubs').update({ reminder_minutes: minutes }).eq('id', clubId).select().single());
-}
-
 export async function deleteClub(clubId: string) {
   const { error } = await requireSupabase().rpc('delete_club', { p_club_id: clubId });
   if (error) throw error;

@@ -41,6 +41,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     const token = `${btoa('{}')}.${btoa(JSON.stringify({ sub: userId, exp: expires_at }))}.fixture`;
     localStorage.setItem('sb-auth-auth-token', JSON.stringify({ user, access_token: token, refresh_token: 'fixture', expires_at, expires_in: 3600, token_type: 'bearer' }));
   }, { userId });
+  let voteNotifications = true;
   const page = await context.newPage(); const requests = []; const errors = [];
   page.setDefaultTimeout(10000);
   page.on('pageerror', error => errors.push(error.message));
@@ -50,6 +51,9 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     if (url.hostname !== 'auth.example.test') throw new Error('External request blocked');
     const endpoint = url.pathname.split('/').at(-1); const body = req.postData() ? req.postDataJSON() : null;
     requests.push({ endpoint, body });
+    if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
+    if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
+    if (endpoint === 'create_call_up_with_notice') return route.fulfill({ json: { id: 'new-call' } });
     if (clubRole) {
       if (endpoint === 'clubs') {
         if (req.method() === 'PATCH') Object.assign(club, body);
@@ -128,7 +132,7 @@ test('login solo por ID de EA y ayuda manual sin formularios de correo', async (
   } finally { await f.close(); }
 });
 
-test('capitán guarda antelación, designa un jugador registrado y no puede eliminar el club', async () => {
+test('capitán designa un jugador registrado, sin avisos globales ni eliminación de club', async () => {
   const f = await fixture({ clubRole: 'admin' });
   try {
     await f.page.goto(`${origin}/club-settings`);
@@ -136,12 +140,7 @@ test('capitán guarda antelación, designa un jugador registrado y no puede elim
     await f.page.getByRole('button', { name: 'Designar capitán a Candidate', exact: true }).waitFor();
     assert.equal(await f.page.getByRole('button', { name: 'Designar capitán a SinFicha', exact: true }).count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Eliminar club', exact: true }).count(), 0);
-    await f.page.getByRole('switch', { name: 'Notificar a los jugadores antes de la convocatoria' }).click();
-    await f.page.getByRole('button', { name: 'Antelación: 1 hora antes', exact: true }).click();
-    await f.page.getByRole('button', { name: '30 minutos antes', exact: true }).click();
-    await f.page.getByRole('button', { name: 'Guardar avisos', exact: true }).click();
-    await f.page.getByText('Configuración de avisos guardada.', { exact: true }).waitFor();
-    assert.equal(f.requests.find(r => r.endpoint === 'clubs' && r.body)?.body.reminder_minutes, 30);
+    assert.equal(await f.page.getByRole('button', { name: 'Guardar avisos', exact: true }).count(), 0);
     await f.page.getByRole('button', { name: 'Designar capitán a Candidate', exact: true }).click();
     assert.equal(f.requests.some(r => r.endpoint === 'set_club_member'), false);
     await f.page.getByRole('button', { name: 'Confirmar', exact: true }).click();
@@ -212,4 +211,39 @@ test('cambiar contraseña exige iniciar sesión', async () => {
     await f.page.waitForURL('**/login');
     assert.equal(f.requests.some(r => r.endpoint === 'token' || r.endpoint === 'user'), false);
   } finally { await f.close(); }
+});
+
+test('convocatoria propone último aviso a las 18:45, valida hora y lo envía en el RPC atómico', async () => {
+  const f=await fixture({clubRole:'admin'});
+  try {
+    await f.page.goto(`${origin}/create-call-up`);
+    const notice=f.page.getByLabel('Último aviso para votar (HH:mm)',{exact:true});
+    assert.equal(await notice.inputValue(),'18:45');
+    await f.page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).fill('2035-06-01');
+    await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('18:00');
+    await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
+    await f.page.getByText('El último aviso debe ser anterior a la hora de la convocatoria.',{exact:true}).waitFor();
+    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_notice'),false);
+    await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('21:50');
+    await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
+    await f.page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
+    await f.page.waitForURL('**/call-up*');
+    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_notice');
+    assert.equal(request.body.p_last_notice_at,'2035-06-01T18:45:00.000Z');
+    assert.equal(request.body.p_status,'open');
+  }finally{await f.close();}
+});
+test('preferencia personal de votos se guarda sin pedir datos de otras cuentas',async()=>{
+  const f=await fixture({clubRole:'player'});
+  try{
+    await f.page.goto(`${origin}/notifications`);
+    const toggle=f.page.getByRole('switch',{name:'Avisarme cuando otro jugador vote',exact:true});
+    await toggle.waitFor();
+    await f.page.waitForFunction(()=>!document.querySelector('[role="switch"]').disabled);
+    await toggle.click();
+    await f.page.getByText('Preferencia guardada para todos tus dispositivos y clubes.',{exact:true}).waitFor();
+    assert.deepEqual(f.requests.find(r=>r.endpoint==='set_notification_preferences').body,{p_vote_notifications:false});
+    await f.page.reload();
+    await f.page.getByRole('switch',{name:'Avisarme cuando otro jugador vote',exact:true,checked:false}).waitFor();
+  }finally{await f.close();}
 });

@@ -49,6 +49,7 @@ export type Database = {
           updated_at: string;
           category_snapshot: Database['public']['Enums']['roster_category'];
           sort_order_snapshot: number;
+          availability_version: number;
         };
         Insert: {
           id?: string;
@@ -65,6 +66,7 @@ export type Database = {
           updated_at?: string;
           category_snapshot?: Database['public']['Enums']['roster_category'];
           sort_order_snapshot?: number;
+          availability_version?: number;
         };
         Update: {
           id?: string;
@@ -81,6 +83,7 @@ export type Database = {
           updated_at?: string;
           category_snapshot?: Database['public']['Enums']['roster_category'];
           sort_order_snapshot?: number;
+          availability_version?: number;
         };
         Relationships: [
           { foreignKeyName: 'call_up_players_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
@@ -141,6 +144,7 @@ export type Database = {
           created_by: string | null;
           created_at: string;
           updated_at: string;
+          last_notice_at: string | null;
         };
         Insert: {
           id?: string;
@@ -152,6 +156,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          last_notice_at?: string | null;
         };
         Update: {
           id?: string;
@@ -163,6 +168,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           updated_at?: string;
+          last_notice_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'call_ups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -375,6 +381,26 @@ export type Database = {
           { foreignKeyName: 'join_requests_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      notification_preferences: {
+        Row: {
+          user_id: string;
+          vote_notifications: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          vote_notifications?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          vote_notifications?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'notification_preferences_user_id_fkey'; columns: ["user_id"]; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       players: {
         Row: {
           id: string;
@@ -519,6 +545,10 @@ export type Database = {
           created_at: string;
           scheduled_start: string | null;
           reminder_minutes: number | null;
+          notice_at: string | null;
+          actor_user_id: string | null;
+          actor_ea_id: string | null;
+          vote_availability: Database['public']['Enums']['availability_status'] | null;
         };
         Insert: {
           id?: string;
@@ -529,6 +559,10 @@ export type Database = {
           created_at?: string;
           scheduled_start?: string | null;
           reminder_minutes?: number | null;
+          notice_at?: string | null;
+          actor_user_id?: string | null;
+          actor_ea_id?: string | null;
+          vote_availability?: Database['public']['Enums']['availability_status'] | null;
         };
         Update: {
           id?: string;
@@ -539,8 +573,13 @@ export type Database = {
           created_at?: string;
           scheduled_start?: string | null;
           reminder_minutes?: number | null;
+          notice_at?: string | null;
+          actor_user_id?: string | null;
+          actor_ea_id?: string | null;
+          vote_availability?: Database['public']['Enums']['availability_status'] | null;
         };
         Relationships: [
+          { foreignKeyName: 'push_events_actor_user_id_fkey'; columns: ["actor_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
           { foreignKeyName: 'push_events_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
         ];
       };
@@ -558,6 +597,15 @@ export type Database = {
         Args: {
           p_club_id: string;
           p_starts_at: string;
+          p_status?: Database['public']['Enums']['call_up_status'];
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      create_call_up_with_notice: {
+        Args: {
+          p_club_id: string;
+          p_starts_at: string;
+          p_last_notice_at?: string;
           p_status?: Database['public']['Enums']['call_up_status'];
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
@@ -715,6 +763,15 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['join_requests']['Row'][];
       };
+      respond_from_notification: {
+        Args: {
+          p_club_id: string;
+          p_call_up_id: string;
+          p_availability: Database['public']['Enums']['availability_status'];
+          p_action_id: string;
+        };
+        Returns: Database['public']['Tables']['call_up_players']['Row'][];
+      };
       respond_to_call_up: {
         Args: {
           p_call_up_player_id: string;
@@ -751,11 +808,26 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['club_members']['Row'][];
       };
+      set_notification_preferences: {
+        Args: {
+          p_vote_notifications: boolean;
+        };
+        Returns: Database['public']['Tables']['notification_preferences']['Row'][];
+      };
       update_call_up: {
         Args: {
           p_call_up_id: string;
           p_starts_at: string;
           p_status: Database['public']['Enums']['call_up_status'];
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      update_call_up_with_notice: {
+        Args: {
+          p_call_up_id: string;
+          p_starts_at: string;
+          p_status: Database['public']['Enums']['call_up_status'];
+          p_last_notice_at?: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };

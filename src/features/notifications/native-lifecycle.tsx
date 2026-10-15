@@ -6,7 +6,7 @@ import { nativePushSupported, notificationRuntime } from '@/lib/notifications';
 import { useAuth } from '@/features/auth/auth-context';
 import { syncInstallation } from './device-service';
 import { usePendingPush } from './pending-push-context';
-import { readPushIntent } from './intent';
+import { readNotificationResponse } from './actions';
 
 export function NativePushLifecycle() {
   const { session, isDemo } = useAuth(); const userId = session?.user.id;
@@ -26,9 +26,9 @@ export function NativePushLifecycle() {
       Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
       const receive = (response: import('expo-notifications').NotificationResponse) => {
         responding = responding.then(async () => {
-          if (!active || response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
-          const intent = readPushIntent(response.notification.request.content.data); if (!intent) return;
-          const id = response.notification.request.identifier;
+          if (!active) return;
+          const intent = readNotificationResponse(response.notification.request.content.data, response.actionIdentifier, response.notification.request.identifier, Notifications.DEFAULT_ACTION_IDENTIFIER); if (!intent) return;
+          const id = `${response.notification.request.identifier}:${response.actionIdentifier}`;
           if (await AsyncStorage.getItem('convosquad:last-push-response') === id || !active) return;
           rememberPush(intent); setOpen(id);
           await AsyncStorage.setItem('convosquad:last-push-response', id);

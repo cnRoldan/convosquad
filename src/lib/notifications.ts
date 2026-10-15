@@ -1,3 +1,4 @@
+import { availabilityCategory, notificationActions } from '@/features/notifications/actions';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
@@ -13,6 +14,7 @@ export async function notificationRuntime() {
   if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('call-ups', {
     name: 'Convocatorias', importance: Notifications.AndroidImportance.DEFAULT,
   });
+  await Notifications.setNotificationCategoryAsync(availabilityCategory, notificationActions.map(({ identifier, buttonTitle }) => ({ identifier, buttonTitle, options: { opensAppToForeground: true, isAuthenticationRequired: true } })));
   return { Notifications, projectId };
 }
 export function permissionGranted(permission: Awaited<ReturnType<typeof import('expo-notifications').getPermissionsAsync>>) {

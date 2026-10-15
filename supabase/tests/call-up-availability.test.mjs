@@ -43,7 +43,10 @@ test('duplicados por fecha local se rechazan incluso al editar o cancelar y cons
 test('solo el propietario miembro puede responder; ni admin puede responder por otra ficha',async()=>{
   const mine=await row(member,'select * from public.call_up_players where call_up_id=$1 and source_player_id=$2',[call.id,own.id]);
   const noAccount=await row(member,'select * from public.call_up_players where call_up_id=$1 and source_player_id=$2',[call.id,unsigned.id]);
-  for(const state of ['available','unavailable','backup']) assert.equal((await row(member,'select * from public.respond_to_call_up($1,$2)',[mine.id,state])).availability,state);
+  for(const state of ['available','unavailable','backup']) {
+    await db.query("update public.call_up_players set responded_at=clock_timestamp()-interval '31 seconds' where id=$1 and responded_at is not null",[mine.id]);
+    assert.equal((await row(member,'select * from public.respond_to_call_up($1,$2)',[mine.id,state])).availability,state);
+  }
   for(const actor of [admin,other,member]) await reject(actor,"select * from public.respond_to_call_up($1,'available')",[noAccount.id],'42501');
   for(const actor of [admin,other]) await reject(actor,"select * from public.respond_to_call_up($1,'available')",[mine.id],'42501');
   await reject(member,"select * from public.respond_to_call_up($1,'unanswered')",[mine.id],'22023');
@@ -62,6 +65,8 @@ test('cerrar, cancelar y reabrir protege respuestas y administración; otros clu
     await reject(actor,"select * from public.create_call_up($1,'2035-08-01T20:00:00Z','open')",[club.id],'42501');
   }
   await query(admin,'select * from public.update_call_up($1,$2,$3)',[call.id,call.starts_at,'open']);
+  await reject(member,"select * from public.respond_to_call_up($1,'available')",[mine.id],'P0030');
+  await db.query("update public.call_up_players set responded_at=clock_timestamp()-interval '31 seconds' where id=$1",[mine.id]);
   assert.equal((await row(member,"select * from public.respond_to_call_up($1,'available')",[mine.id])).availability,'available');
   assert.equal((await query(other,'select * from public.call_ups where club_id=$1',[club.id])).rows.length,0);
   assert.equal((await query(member,'select * from public.call_ups where club_id=$1',[foreign.id])).rows.length,0);

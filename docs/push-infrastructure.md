@@ -104,3 +104,7 @@ Para autenticar EAS desde Codex sin compartir secretos:
 3. Aplica/guarda la configuración y reinicia el entorno o inicia una tarea que reciba ese secreto. Ejecuta `npm run eas -- whoami` y `npm run eas -- project:info` para confirmar el propietario y proyecto antes de cualquier build.
 
 La configuración local conserva `name: ConvoSquad`, Android package/iOS bundle identifier `com.convosquad.app` y el mismo UUID EAS. `owner: convosquad` y `slug: k1mbowx` coinciden con el proyecto remoto verificado mediante `eas project:info`. app.config.ts utiliza el slug de app.json para evitar otra discrepancia. No se ha ejecutado init remoto, build ni submit. El archivo Firebase, las variables de EAS preview y las credenciales Android siguen pendientes antes de autorizar la primera APK.
+
+## Avisos y acciones de disponibilidad
+
+La infraestructura inicial se amplía con `20261015220000_call_up_notifications.sql`: avisos por convocatoria, preferencias personales de avisos de votos, cooldown de 30 segundos e idempotencia de respuestas desde push. El worker `send-reminders` procesa ahora todos los tipos de evento. Consulta [Capitanes y avisos](captains-reminders.md) para la configuración vigente y las pruebas físicas pendientes; las notas anteriores sobre acciones interactivas pendientes corresponden a la fase inicial.

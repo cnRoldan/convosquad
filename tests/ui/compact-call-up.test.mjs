@@ -33,7 +33,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 } });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -51,6 +51,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     category_snapshot: categories[Math.floor(index / 4)], sort_order_snapshot: index, availability: statuses[index % 4],
     responded_at: null, created_at: call.created_at, updated_at: call.updated_at,
   }));
+  if (cooldown && players[3]) { players[3].availability = 'available'; players[3].responded_at = new Date().toISOString(); }
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, last_sign_in_at: new Date().toISOString(), created_at: call.created_at };
   const expiry = Math.floor(Date.now() / 1000) + 3600;
   const jwt = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: userId, exp: expiry })).toString('base64url')}.fixture`;
@@ -111,7 +112,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
     else if (endpoint === 'call_up_trials') result = [{ id: 'trial', ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
     else if (endpoint === 'call_up_aids') result = [{ id: 'aid', body: 'Ayuda fuera del total', sort_order: 0 }];
-    else if (endpoint === 'club_trials') result = [];
+    else if (endpoint === 'club_trials' || endpoint === 'notification_preferences') result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     await route.fulfill({ json: result });
     if (data.snapshotReads >= (status === 'open' ? 3 : 2)) initialReloadComplete();
@@ -129,7 +130,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   // Club context, screen snapshot, then the initial Realtime reconciliation.
   await initialReload;
   await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
-  if (!empty && linked && status === 'open') await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
+  if (!empty && linked && status === 'open' && !cooldown) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
   async function close() { assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); await context.close(); }
   return { context, page, data, players, emit, close };
 }
@@ -324,4 +325,16 @@ test('enlace push sin sesión permite iniciar sesión; payload inválido no nave
     await page.getByText(/La convocatoria puede haberse cancelado o cerrado/).waitFor();
     assert.equal(requests, 0);
   } finally { await context.close(); }
+});
+
+test('bloqueo de 30 segundos visible; Realtime recupera el desbloqueo sin recargar',async()=>{
+  const f=await fixture({cooldown:true});
+  try{
+    const action=f.page.getByRole('button',{name:'Backup para Jugador_4',exact:true});
+    assert.equal(await action.getAttribute('aria-disabled'),'true');
+    await f.page.getByText(/Podrás cambiar tu voto en \d+ s\./).waitFor();
+    assert.equal(f.data.writes,0);
+    f.players[3].responded_at=new Date(Date.now()-31_000).toISOString();f.emit(3,'available');
+    await f.page.getByRole('button',{name:'Backup para Jugador_4',exact:true,disabled:false}).waitFor();
+  }finally{await f.close();}
 });
