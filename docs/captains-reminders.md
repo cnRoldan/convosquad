@@ -24,6 +24,8 @@ La app confirma el resultado o muestra el error. Si falla la red, se puede abrir
 
 ## Activación del backend (pendiente, no automática)
 
+Para hacerlo exclusivamente desde Supabase Dashboard, sigue [Despliegue desde el navegador](deploy-reminders-browser.md).
+
 1. En Supabase SQL Editor aplica una sola vez `supabase/migrations/20261015200000_captains_reminders.sql`, después de las migraciones anteriores. Aplica también `20261015210000_refresh_call_up_roster.sql` si falta y, por último, **`20261015220000_call_up_notifications.sql`**. No repitas el setup inicial ni la migración de ID de EA si ya está aplicada.
 2. Despliega la función `send-reminders` y sus módulos `_shared` desde este repositorio. Actualiza el worker aunque ya estuviera desplegado: ahora procesa también los eventos de voto. Se puede hacer desde Codex Cloud con Supabase CLI (`npx supabase functions deploy send-reminders --project-ref <ref-del-proyecto>`), usando `SUPABASE_ACCESS_TOKEN` en el gestor de secretos. No es la clave publicable de la aplicación. En este trabajo no se ha solicitado ni usado una credencial administrativa de Supabase.
 3. En los secretos de Edge Functions configura `PUSH_WORKER_SECRET` con un valor aleatorio de al menos 32 caracteres; no lo incluyas en la aplicación ni GitHub. `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` son variables de servidor provistas por Supabase. Si Expo tiene activada la seguridad adicional para push, configura también `EXPO_ACCESS_TOKEN` únicamente en el servidor.
