@@ -181,3 +181,7 @@ enabled = true
 [functions.prepare-push]
 # La función valida un secreto exclusivo del servidor; no acepta JWT de usuarios.
 verify_jwt = false
+
+[functions.send-reminders]
+# Solo el worker con PUSH_WORKER_SECRET puede iniciar envíos.
+verify_jwt = false

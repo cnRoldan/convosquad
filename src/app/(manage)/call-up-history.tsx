@@ -17,7 +17,7 @@ export default function CallUpHistoryScreen() {
   useCallUpSync(scope, clubId, enabled, result.reload);
   return <Screen>
     <Heading title="Historial de convocatorias" subtitle={activeClub?.name ?? ''} />
-    <Body>Las diez convocatorias de días anteriores más recientes, según la zona horaria del club. Solo administradores.</Body>
+    <Body>Las diez convocatorias de días anteriores más recientes, según la zona horaria del club. Solo capitanes.</Body>
     {isDemo ? <DemoNotice /> : null}
     {result.isLoading ? <Body>Cargando historial…</Body> : null}
     {result.error ? <Message error>{result.error}</Message> : null}
@@ -26,6 +26,6 @@ export default function CallUpHistoryScreen() {
       <Button secondary label={`Consultar convocatoria del ${call.local_date}`} onPress={() => router.push({ pathname: '/call-up', params: { id: call.id } })} />
     </Card>)}
     {result.data?.length === 0 ? <Body>No hay convocatorias de días anteriores.</Body> : null}
-    {!isDemo ? <Button secondary label="Actualizar historial" disabled={result.isLoading} onPress={result.reload} /> : <Body>El historial real requiere una cuenta administradora.</Body>}
+    {!isDemo ? <Button secondary label="Actualizar historial" disabled={result.isLoading} onPress={result.reload} /> : <Body>El historial real requiere una cuenta de capitán.</Body>}
   </Screen>;
 }

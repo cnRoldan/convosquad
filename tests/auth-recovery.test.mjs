@@ -60,7 +60,7 @@ test('no navega con errores, enlaces incompletos o una respuesta sin sesión', a
   await assert.rejects(completeAuthLink({ async verifyOtp() { return { data: {}, error: { code: 'otp_expired' } }; } }, readAuthLink(`${base}#token_hash=${hash}&type=recovery`)), { code: 'otp_expired' });
 });
 test('traduce errores de Auth sin mostrar detalles o tokens del servidor', () => {
-  for (const [code, match] of [['invalid_credentials', /correo o la contraseña/], ['email_not_confirmed', /Confirma/], ['pkce_code_verifier_not_found', /navegador y dispositivo/], ['bad_code_verifier', /navegador y dispositivo/], ['otp_expired', /caducado/], ['over_email_send_rate_limit', /Espera/], ['same_password', /diferente/], ['weak_password', /segura/]]) assert.match(authErrorMessage({ code, message: 'SECRET' }, 'callback'), match);
+  for (const [code, match] of [['invalid_credentials', /ID de EA o la contraseña/], ['email_not_confirmed', /administrador/], ['pkce_code_verifier_not_found', /navegador y dispositivo/], ['bad_code_verifier', /navegador y dispositivo/], ['otp_expired', /caducado/], ['over_email_send_rate_limit', /Espera/], ['same_password', /diferente/], ['weak_password', /segura/]]) assert.match(authErrorMessage({ code, message: 'SECRET' }, 'callback'), match);
   assert.match(authErrorMessage(new TypeError('Failed to fetch'), 'recovery'), /conexión/);
   assert.doesNotMatch(authErrorMessage({ code: 'unknown', message: 'SECRET' }, 'callback'), /SECRET/);
   assert.deepEqual(readAuthLink(`${base}#error=access_denied&error_code=otp_expired&error_description=SECRET`), { kind: 'error', code: 'otp_expired' });
