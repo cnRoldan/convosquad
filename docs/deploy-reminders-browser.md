@@ -2,7 +2,7 @@
 
 ## Antes de desplegar
 
-Aplica las migraciones pendientes en orden, hasta `20261015230000_call_up_lifecycle_push.sql`. No repitas las iniciales. Si la tercera migración indica que `refresh_call_up_roster` ya existe, no la borres ni la ejecutes de nuevo: esa función ya está creada.
+Aplica las migraciones pendientes en orden, hasta `20261015233000_notification_recipient_rules.sql`. No repitas las iniciales. Si la tercera migración indica que `refresh_call_up_roster` ya existe, no la borres ni la ejecutes de nuevo: esa función ya está creada.
 
 ## Secretos de Edge Functions
 

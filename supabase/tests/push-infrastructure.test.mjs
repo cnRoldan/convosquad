@@ -12,7 +12,7 @@ before(async()=>{
  db=await createTestDatabase();for(const [id,username]of [[admin,'PushAdmin'],[member,'PushMember'],[other,'PushOther']])await db.query('insert into auth.users(id,raw_user_meta_data) values ($1,$2)',[id,{username}]);
  club=await row(admin,"select * from public.create_club('Push Club',null,'Europe/Madrid',true)");foreign=await row(other,"select * from public.create_club('Push Foreign')");
  const request=await row(member,'select * from public.request_to_join($1)',[club.id]);await query(admin,'select * from public.review_join_request($1,true)',[request.id]);
- const player=await row(admin,"insert into public.players(club_id,ea_id,category) values ($1,'PushMember','backups') returning *",[club.id]);await query(admin,'select * from public.link_player_account($1,$2)',[player.id,member]);
+ const player=await row(admin,"insert into public.players(club_id,ea_id,category) values ($1,'PushMember','midfielders') returning *",[club.id]);await query(admin,'select * from public.link_player_account($1,$2)',[player.id,member]);
  call=await row(admin,"select * from public.create_call_up($1,'2035-09-01T20:00:00Z','open')",[club.id]);entry=await row(member,'select id from public.call_up_players where call_up_id=$1 and user_id=$2',[call.id,member]);
 });after(async()=>{await db?.close();});
 test('registro actualiza token/plataforma/fecha y permite varios dispositivos por usuario',async()=>{

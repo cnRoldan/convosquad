@@ -18,20 +18,22 @@ after(async()=>{await db?.close();});
 async function setup(status='open'){
   const club=await row(owner,'select * from public.create_club($1,null,$2)',[`Lifecycle_${randomUUID().slice(0,8)}`,'Europe/Madrid']);
   for(const user of [player,unlinked])await db.query('insert into public.club_members(club_id,user_id) values($1,$2)',[club.id,user]);
-  const p=await row(owner,"insert into public.players(club_id,ea_id,category) values($1,'Linked_Player','backups') returning *",[club.id]);
+  const p=await row(owner,"insert into public.players(club_id,ea_id,category) values($1,'Linked_Player','midfielders') returning *",[club.id]);
   await query(owner,'select public.link_player_account($1,$2)',[p.id,player]);
+  const own=await row(owner,"insert into public.players(club_id,ea_id,category) values($1,'Owner_Player','midfielders') returning *",[club.id]);
+  await query(owner,'select public.link_player_account($1,$2)',[own.id,owner]);
   const call=await row(owner,"select * from public.create_call_up_with_notice($1,'2035-06-01T19:50:00Z','2035-06-01T16:45:00Z',$2)",[club.id,status]);
   return {club,call};
 }
 async function events(callId,kind){return (await db.query('select * from public.push_events where call_up_id=$1 and kind=$2 order by created_at,id',[callId,kind])).rows;}
 async function update(call,status){return row(owner,'select * from public.update_call_up_with_notice($1,$2,$3,$4)',[call.id,call.starts_at,status,call.last_notice_at]);}
-test('publicar genera un único evento transaccional y avisa a todos los miembros activos con dispositivos',async()=>{
+test('publicar genera un único evento transaccional para fichas elegibles con dispositivos',async()=>{
   const {call}=await setup();const published=await events(call.id,'published');
   assert.equal(published.length,1);
   const deliveries=(await server('select * from public.claim_push_deliveries($1)',[published[0].id])).rows;
-  assert.deepEqual(new Set(deliveries.map(d=>d.user_id)),new Set([owner,player,unlinked]));
+  assert.deepEqual(new Set(deliveries.map(d=>d.user_id)),new Set([owner,player]));
   assert.equal(deliveries.find(d=>d.user_id===player).can_vote,true);
-  assert.ok(deliveries.filter(d=>d.user_id!==player).every(d=>!d.can_vote));
+  assert.ok(deliveries.every(d=>d.can_vote));
   assert.equal((await server('select * from public.claim_push_deliveries($1)',[published[0].id])).rows.length,0);
 });
 test('borrador no avisa; abrirlo sí; guardar o cambiar fecha/hora no duplica el aviso',async()=>{
@@ -40,12 +42,12 @@ test('borrador no avisa; abrirlo sí; guardar o cambiar fecha/hora no duplica el
   await row(owner,"select * from public.update_call_up_with_notice($1,'2035-06-02T19:50:00Z','open','2035-06-02T16:45:00Z')",[call.id]);
   assert.equal((await events(call.id,'published')).length,1);
 });
-test('cancelar avisa a todos, incluso sin ficha y con avisos de votos desactivados, sin repetir al guardar',async()=>{
+test('cancelar avisa a fichas elegibles con avisos de votos desactivados, sin repetir al guardar',async()=>{
   const {call}=await setup();await query(player,'select public.set_notification_preferences(false)');
   await update(call,'cancelled');await update(call,'cancelled');
   const cancelled=await events(call.id,'cancelled');assert.equal(cancelled.length,1);
   const deliveries=(await server('select * from public.claim_push_deliveries($1)',[cancelled[0].id])).rows;
-  assert.deepEqual(new Set(deliveries.map(d=>d.user_id)),new Set([owner,player,unlinked]));
+  assert.deepEqual(new Set(deliveries.map(d=>d.user_id)),new Set([owner,player]));
   assert.ok(deliveries.every(d=>!d.can_vote));
   const published=await events(call.id,'published');assert.equal((await server('select * from public.claim_push_deliveries($1)',[published[0].id])).rows.length,0);
 });
@@ -55,7 +57,7 @@ test('reanudar crea una nueva publicación y descarta cancelaciones/publicacione
   const current=published.find(e=>e.call_status_version===3),stale=published.find(e=>e.call_status_version===1);
   assert.equal((await server('select * from public.claim_push_deliveries($1)',[stale.id])).rows.length,0);
   assert.equal((await server('select * from public.claim_push_deliveries($1)',[(await events(call.id,'cancelled'))[0].id])).rows.length,0);
-  assert.equal((await server('select * from public.claim_push_deliveries($1)',[current.id])).rows.length,3);
+  assert.equal((await server('select * from public.claim_push_deliveries($1)',[current.id])).rows.length,2);
 });
 test('RLS, tokens rotados y membresías retiradas se revalidan antes de enviar cancelaciones',async()=>{
   const {club,call}=await setup();
