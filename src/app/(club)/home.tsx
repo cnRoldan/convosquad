@@ -10,7 +10,7 @@ export default function HomeScreen() {
   const { activeClub, currentMembership, roster, upcomingCallUp, rosterLoading, rosterError, refreshRoster, notice } = useClub();
   return (
     <Screen>
-      <Heading title={activeClub?.name ?? 'Tu club'} subtitle={`Tu rol: ${currentMembership?.role === 'admin' ? 'administrador' : 'jugador'}.`} />
+      <Heading title={activeClub?.name ?? 'Tu club'} subtitle={`Tu rol: ${currentMembership?.role === 'admin' ? 'capitán' : 'jugador'}.`} />
       {notice ? <Body>{notice}</Body> : null}
       {rosterLoading ? <Body>Cargando datos del vestuario…</Body> : null}
       {rosterError ? <Card title="No se pudieron cargar los datos"><Body>{rosterError}</Body><Button label="Reintentar" onPress={refreshRoster} /></Card> : null}
@@ -26,6 +26,7 @@ export default function HomeScreen() {
         </> : !rosterLoading && !rosterError ? <Body>Todavía no hay convocatorias.</Body> : null}
       </Card>
       {currentMembership?.role === 'admin' ? <Card title="Administrar el club">
+        <Button secondary label="Capitanes y avisos" onPress={() => router.push('/club-settings')} />
         <Button secondary label="Historial de convocatorias" onPress={() => router.push('/call-up-history')} />
         <Button secondary label="Crear convocatoria" onPress={() => router.push('/create-call-up')} />
         <Button secondary label="Solicitudes pendientes" onPress={() => router.push('/join-requests')} />

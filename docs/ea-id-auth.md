@@ -21,9 +21,9 @@ Antes de dar de alta, la app comprueba que Auth no exige correo y que el RPC exi
 
 Las contraseñas requieren al menos ocho caracteres. Se conservan los límites de Supabase Auth; no se llama a la API administrativa para evitarlos. Para protección adicional frente a altas abusivas, Supabase permite configurar CAPTCHA; activarlo requiere integrar su desafío en el formulario.
 
-## Cuentas anteriores y soporte
+## Soporte y cuentas de desarrollo
 
-Las cuentas existentes conservan su UUID, contraseña, correo, clubes e historial. En login, **Tengo una cuenta anterior con correo** permite seguir entrando y recuperar la contraseña mediante el flujo anterior. Su nombre de usuario también reserva el mismo ID para evitar duplicados. No se convierten automáticamente a un acceso por ID de EA ni se les pide crear otra cuenta.
+El formulario solo admite ID de EA y contraseña. Se ha retirado la compatibilidad de acceso y recuperación por correo, incluidos los formularios de las rutas antiguas. Las cuentas de desarrollo previas no se eliminan ni convierten automáticamente: si se quiere conservar el club de una cuenta antigua, soporte debe adaptar su identificador de Auth y su perfil al ID de EA elegido, conservando el mismo UUID. Crear otra cuenta no transfiere clubes ni permisos.
 
 Las cuentas nuevas muestran que deben contactar con el administrador si olvidan la contraseña o su ID está ocupado. No se enviarán recuperaciones a los identificadores internos. No añadas contraseñas, correos técnicos ni detalles de sesión a logs o tickets. Antes de eliminar una cuenta en Authentication → Users, revisa sus clubes: una cuenta que sea el último administrador requiere transferir antes ese rol. El soporte y las eliminaciones son manuales, nunca parte del formulario de registro.
 

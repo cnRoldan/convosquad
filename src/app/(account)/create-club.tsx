@@ -33,7 +33,7 @@ export default function CreateClubScreen() {
         setCreatedClubId(club.id);
       }
       await reloadClubs(confirmedClubId);
-      notifyClub(confirmedClubId, 'Club creado. Ya eres su primer administrador.');
+      notifyClub(confirmedClubId, 'Club creado. Ya eres su creador y primer capitán.');
       router.replace('/home');
     } catch (error) {
       setMessage(confirmedClubId ? 'El club se ha creado, pero no se pudieron cargar sus datos. Reintenta entrar al club.' : backendErrorMessage(error));
@@ -41,7 +41,7 @@ export default function CreateClubScreen() {
     finally { setBusy(false); }
   }
   return <Screen>
-    <Heading title="Tu propio vestuario" subtitle="Serás el primer administrador del club." />
+    <Heading title="Tu propio vestuario" subtitle="Serás el creador y primer capitán del club." />
     {isDemo ? <DemoNotice /> : null}
     <Field label="Nombre del club" value={name} onChangeText={setName} maxLength={80} editable={!busy && !createdClubId} />
     <Field label="Descripción (opcional)" value={description} onChangeText={setDescription} maxLength={500} multiline editable={!busy && !createdClubId} />

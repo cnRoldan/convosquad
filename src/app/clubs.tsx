@@ -37,7 +37,7 @@ function ClubSelection() {
     {pendingInvite ? <Button label="Continuar invitación" onPress={() => router.push('/invite')} /> : null}
     {availableClubs.map((club) => <Card key={club.id} title={club.name}>
       {club.description ? <Body>{club.description}</Body> : null}
-      <Body>{ownMemberships.find((member) => member.clubId === club.id)?.role === 'admin' ? 'Administrador' : 'Jugador'} · {club.timezone}</Body>
+      <Body>{ownMemberships.find((member) => member.clubId === club.id)?.role === 'admin' ? 'Capitán' : 'Jugador'} · {club.timezone}</Body>
       <Button label="Entrar al club" onPress={() => { selectClub(club.id); router.replace('/home'); }} />
     </Card>)}
     {!availableClubs.length && !error ? <Body>Aún no perteneces a ningún club. Crea uno, busca tu equipo o abre una invitación.</Body> : null}

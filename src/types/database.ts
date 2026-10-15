@@ -312,6 +312,7 @@ export type Database = {
           is_public: boolean;
           created_by: string | null;
           created_at: string;
+          reminder_minutes: number | null;
         };
         Insert: {
           id?: string;
@@ -321,6 +322,7 @@ export type Database = {
           is_public?: boolean;
           created_by?: string | null;
           created_at?: string;
+          reminder_minutes?: number | null;
         };
         Update: {
           id?: string;
@@ -330,6 +332,7 @@ export type Database = {
           is_public?: boolean;
           created_by?: string | null;
           created_at?: string;
+          reminder_minutes?: number | null;
         };
         Relationships: [
           { foreignKeyName: 'clubs_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
@@ -514,6 +517,8 @@ export type Database = {
           event_key: string;
           kind: string;
           created_at: string;
+          scheduled_start: string | null;
+          reminder_minutes: number | null;
         };
         Insert: {
           id?: string;
@@ -522,6 +527,8 @@ export type Database = {
           event_key: string;
           kind: string;
           created_at?: string;
+          scheduled_start?: string | null;
+          reminder_minutes?: number | null;
         };
         Update: {
           id?: string;
@@ -530,6 +537,8 @@ export type Database = {
           event_key?: string;
           kind?: string;
           created_at?: string;
+          scheduled_start?: string | null;
+          reminder_minutes?: number | null;
         };
         Relationships: [
           { foreignKeyName: 'push_events_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
@@ -585,6 +594,20 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_club: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: undefined;
+      };
+      finish_push_delivery: {
+        Args: {
+          p_delivery_id: string;
+          p_state: string;
+          p_ticket_id?: string;
+        };
+        Returns: undefined;
+      };
       import_players: {
         Args: {
           p_club_id: string;
@@ -625,6 +648,12 @@ export type Database = {
           p_call_up_id: string;
           p_event_key: string;
           p_kind: string;
+        };
+        Returns: string;
+      };
+      prepare_due_call_up_reminders: {
+        Args: {
+          p_limit?: number;
         };
         Returns: string;
       };
