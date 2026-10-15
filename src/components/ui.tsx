@@ -1,16 +1,21 @@
-import type { PropsWithChildren } from 'react';
+import { useState } from 'react';
+import type { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/theme';
+import { SessionIdentity } from './session-identity';
 
-export function Screen({ children, compact = false }: PropsWithChildren<{ compact?: boolean }>) {
+export function Screen({ children, compact = false, footer }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode }>) {
+  const [footerHeight, setFooterHeight] = useState(0);
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={[styles.content, compact && styles.compactContent]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
+      <SessionIdentity compact={compact} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.content, compact && styles.compactContent, footer ? { paddingBottom: footerHeight + 24 } : undefined]} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>
+      {footer ? <View pointerEvents="box-none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }} onLayout={event => setFooterHeight(Math.ceil(event.nativeEvent.layout.height))}>{footer}</View> : null}
     </SafeAreaView>
   );
 }

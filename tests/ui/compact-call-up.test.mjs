@@ -33,20 +33,20 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 } });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status: 'open', created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
+  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
   const players = empty ? [] : Array.from({ length: 24 }, (_, index) => ({
     id: `snapshot-${index}`, club_id: clubId, call_up_id: callId, source_player_id: `player-${index}`,
-    user_id: index === 3 ? userId : index === 4 ? null : `other-${index}`,
+    user_id: index === 3 ? (linked ? userId : null) : index === 4 ? null : `other-${index}`,
     ea_id_snapshot: rowName(index), jersey_number_snapshot: index + 1, position_snapshot: 'MC',
     category_snapshot: categories[Math.floor(index / 4)], sort_order_snapshot: index, availability: statuses[index % 4],
     responded_at: null, created_at: call.created_at, updated_at: call.updated_at,
@@ -80,6 +80,17 @@ async function fixture({ width = 390, role = 'player', empty = false } = {}) {
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'refresh_call_up_roster') {
+        assert.equal(role, 'admin');
+        const body = request.postDataJSON();
+        assert.equal(body.p_call_up_id, callId);
+        assert.equal(body.p_reopen, status === 'cancelled');
+        data.refreshes++;
+        players[15].category_snapshot = 'attackers';
+        if (body.p_reopen) call.status = 'open';
+        call.updated_at = new Date().toISOString();
+        return route.fulfill({ json: call });
+      }
       if (endpoint !== 'respond_to_call_up') { unexpected.push(endpoint); return route.abort(); }
       data.writes++;
       const body = request.postDataJSON();
@@ -103,7 +114,7 @@ async function fixture({ width = 390, role = 'player', empty = false } = {}) {
     else if (endpoint === 'club_trials') result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     await route.fulfill({ json: result });
-    if (data.snapshotReads >= 3) initialReloadComplete();
+    if (data.snapshotReads >= (status === 'open' ? 3 : 2)) initialReloadComplete();
   });
   function emit(index, availability) {
     players[index].availability = availability;
@@ -118,7 +129,7 @@ async function fixture({ width = 390, role = 'player', empty = false } = {}) {
   // Club context, screen snapshot, then the initial Realtime reconciliation.
   await initialReload;
   await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
-  if (!empty) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
+  if (!empty && linked && status === 'open') await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
   async function close() { assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); await context.close(); }
   return { context, page, data, players, emit, close };
 }
@@ -134,9 +145,15 @@ for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros a
     assert.equal(await page.getByTestId('call-up-player-snapshot-1').locator('[aria-label="Dorsal 2"]').count(), 1);
     assert.equal(await page.getByTestId('call-up-player-snapshot-4').getByRole('button').count(), 0);
     assert.equal(await page.getByTestId('call-up-player-snapshot-1').getByRole('button').count(), 0);
-    const ownButtons = page.getByTestId('call-up-player-snapshot-3').getByRole('button');
+    assert.equal(await page.getByTestId('call-up-player-snapshot-3').getByRole('button').count(), 0);
+    const floating = page.getByTestId('availability-actions');
+    const ownButtons = floating.getByRole('button');
     assert.equal(await ownButtons.count(), 3);
     for (const button of await ownButtons.all()) assert.ok((await button.boundingBox()).height >= 44);
+    const bounds = await floating.boundingBox();
+    assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= width && bounds.y + bounds.height <= 844);
+    const tab = await page.getByText('Inicio', { exact: true }).boundingBox();
+    assert.ok(bounds.y + bounds.height <= tab.y, 'floating buttons must remain above navigation');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
     const heading = page.getByRole('button', { name: 'PORTEROS (4)', exact: true });
     await heading.click(); assert.equal(await heading.getAttribute('aria-expanded'), 'false');
@@ -177,10 +194,74 @@ test('Realtime actualiza contadores y retira una respuesta del filtro Pendientes
   } finally { await f.close(); }
 });
 
+test('barra flotante permite responder con la ficha oculta y no tapa el final de la lista', async () => {
+  const f = await fixture(); const { page } = f;
+  try {
+    const bar = page.getByTestId('availability-actions');
+    const before = await bar.boundingBox();
+    await page.getByRole('button', { name: 'Disponibles (6)', exact: true }).click();
+    assert.equal(await page.getByTestId('call-up-player-snapshot-3').count(), 0);
+    await bar.getByRole('button', { name: 'Disponible para Jugador_4', exact: true }).click();
+    await page.waitForFunction(() => document.body.innerText.includes('Disponibles (7)'));
+    f.data.release();
+    await bar.getByText('Tu respuesta: Disponible.', { exact: true }).waitFor();
+    await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
+    assert.equal(f.data.writes, 1);
+    await page.getByRole('button', { name: 'Todos (24)', exact: true }).click();
+    const aid = page.getByText('Ayuda fuera del total', { exact: false });
+    await aid.scrollIntoViewIfNeeded();
+    const after = await bar.boundingBox();
+    assert.ok(Math.abs(before.y - after.y) <= 1, 'the bar must not scroll with the list');
+    const end = await aid.boundingBox();
+    assert.ok(end.y + end.height <= after.y, 'the final content must be visible above the bar');
+  } finally { await f.close(); }
+});
+
+test('barra oculta sin ficha vinculada y en convocatorias no abiertas', async () => {
+  for (const options of [{ linked: false }, { status: 'closed', role: 'admin' }, { status: 'cancelled', role: 'admin' }, { status: 'draft', role: 'admin' }]) {
+    const f = await fixture(options);
+    try {
+      assert.equal(await f.page.getByTestId('availability-actions').count(), 0);
+      assert.equal(f.data.writes, 0);
+    } finally { await f.close(); }
+  }
+});
+
+test('administración con margen y actualización explícita de categorías sin esperar al día siguiente', async () => {
+  const f = await fixture({ role: 'admin' }); const { page } = f;
+  try {
+    await page.getByRole('button', { name: 'Administrar convocatoria', exact: true }).click();
+    const state = await page.getByText(/^Estado: Abierta\./).boundingBox();
+    const edit = await page.getByRole('button', { name: 'Modificar fecha y hora', exact: true }).boundingBox();
+    assert.ok(edit.y - state.y - state.height >= 10, 'actions need space above the buttons');
+    await page.getByRole('button', { name: 'Actualizar plantilla de convocatoria', exact: true }).click();
+    assert.equal(f.data.refreshes, 0);
+    await page.getByRole('button', { name: 'Actualizar plantilla', exact: true }).click();
+    await page.getByText('Plantilla de la convocatoria actualizada.', { exact: false }).waitFor();
+    await page.getByRole('button', { name: 'ATACANTES (5)', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'CENTROCAMPISTAS (3)', exact: true }).waitFor();
+    assert.equal(f.data.refreshes, 1);
+    assert.equal(f.data.writes, 0);
+  } finally { await f.close(); }
+});
+
+test('reanudar cancelada confirma y utiliza la plantilla actual', async () => {
+  const f = await fixture({ role: 'admin', status: 'cancelled' }); const { page } = f;
+  try {
+    await page.getByRole('button', { name: 'Administrar convocatoria', exact: true }).click();
+    await page.getByRole('button', { name: 'Reanudar con plantilla actual', exact: true }).click();
+    assert.equal(f.data.refreshes, 0);
+    await page.getByRole('button', { name: 'Reanudar con plantilla actual', exact: true }).last().click();
+    await page.getByRole('button', { name: 'ATACANTES (5)', exact: true }).waitFor();
+    await page.getByTestId('availability-actions').waitFor();
+    assert.equal(f.data.refreshes, 1);
+  } finally { await f.close(); }
+});
+
 test('respuesta propia es inmediata, bloquea pulsaciones rápidas y vuelve al estado real si falla', async () => {
   const f = await fixture({ role: 'admin' }); const { page } = f;
   try {
-    const row = page.getByTestId('call-up-player-snapshot-3');
+    const row = page.getByTestId('availability-actions');
     const button = row.getByRole('button', { name: 'Disponible para Jugador_4', exact: true });
     await button.evaluate(element => { element.click(); element.click(); });
     await page.getByText('Guardando respuesta…', { exact: true }).first().waitFor();

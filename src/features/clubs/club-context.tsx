@@ -14,6 +14,7 @@ import { useResource } from '@/hooks/use-resource';
 import type { CallUp, Club, Membership, RosterPlayer } from './types';
 
 type ClubContextValue = {
+  accountEaId: string | null;
   availableClubs: Club[];
   ownMemberships: Membership[];
   activeClub: Club | null;
@@ -33,7 +34,7 @@ type ClubContextValue = {
   selectClub: (clubId: string) => void;
   clearClub: () => void;
 };
-type ClubsState = { userId: string; clubs: Club[]; memberships: Membership[]; error: string | null };
+type ClubsState = { userId: string; eaId: string | null; clubs: Club[]; memberships: Membership[]; error: string | null };
 type Selection = { scope: string; id: string | null };
 const ClubContext = createContext<ClubContextValue | null>(null);
 
@@ -62,14 +63,14 @@ export function ClubProvider({ children }: PropsWithChildren) {
       const current = selectionRef.current.scope === userId ? selectionRef.current.id : null;
       const candidate = preferredId ?? current ?? savedId;
       const chosen = available.find((club) => club.id === candidate)?.id ?? (available.length === 1 ? available[0]?.id ?? null : null);
-      setLiveClubs({ userId, clubs: available, memberships: own, error: null });
+      setLiveClubs({ userId, eaId: profile.username, clubs: available, memberships: own, error: null });
       const next = { scope: userId, id: chosen };
       selectionRef.current = next;
       setSelection(next);
       if (chosen) await AsyncStorage.setItem(`convosquad:club:${userId}`, chosen).catch(() => undefined);
       if (preferredId && chosen !== preferredId) throw new Error('No se pudo cargar el club seleccionado.');
     } catch (error) {
-      if (version === requestId.current) setLiveClubs({ userId, clubs: [], memberships: [], error: backendErrorMessage(error) });
+      if (version === requestId.current) setLiveClubs({ userId, eaId: null, clubs: [], memberships: [], error: backendErrorMessage(error) });
       throw error;
     }
   }, [userId, isDemo, isRecovery]);
@@ -116,6 +117,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
     setSelection(next);
   }
   const value: ClubContextValue = {
+    accountEaId: !isDemo && userId && liveClubs?.userId === userId ? liveClubs.eaId : null,
     availableClubs, ownMemberships, activeClub,
     notice: notice?.scope === scope && notice.clubId === clubId ? notice.message : null,
     notifyClub: (clubId, message) => setNotice({ scope, clubId, message }),

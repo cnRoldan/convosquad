@@ -7,12 +7,12 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { clubLocalDateTime, clubLocalTimeToInstant } from './local-time';
 import { callUpErrorMessage, callStatusLabels } from './availability';
-import { updateCallUp } from './service';
+import { refreshCallUpRoster, updateCallUp } from './service';
 import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
 
-type Action = 'edit' | 'open' | 'closed' | 'cancelled';
-export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups'>; onSaved: () => void }) {
+type Action = 'edit' | 'open' | 'closed' | 'cancelled' | 'refresh';
+export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups'>; onSaved: (message?: string) => void }) {
   const { isDemo } = useAuth(); const { activeClub, currentMembership } = useClub();
   const initial = clubLocalDateTime(call.timezone, new Date(call.starts_at));
   const [date, setDate] = useState(initial.date); const [time, setTime] = useState(initial.time);
@@ -29,21 +29,32 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
       catch (cause) { setError(cause instanceof Error ? cause.message : 'Revisa la fecha y hora.'); return; }
     }
     setBusy(true); setError('');
-    try { await updateCallUp(call.id, instant, action === 'edit' ? call.status : action); setAction(null); onSaved(); }
+    try {
+      const refreshing = action === 'refresh' || (action === 'open' && call.status === 'cancelled');
+      if (refreshing) await refreshCallUpRoster(call.id, action === 'open');
+      else await updateCallUp(call.id, instant, action === 'edit' ? call.status : action);
+      setAction(null);
+      onSaved(refreshing ? 'Plantilla de la convocatoria actualizada. Se conservan las respuestas de quienes continúan y las AYUDAS.' : undefined);
+    }
     catch (cause) { setError(callUpErrorMessage(cause)); }
     finally { setBusy(false); }
   }
   if (!admin) return null;
-  const title = action === 'edit' ? 'Modificar fecha y hora' : action === 'open' ? 'Abrir convocatoria' : action === 'closed' ? 'Cerrar convocatoria' : 'Cancelar convocatoria';
+  const current = call.local_date >= clubLocalDateTime(call.timezone).date;
+  const resuming = action === 'open' && call.status === 'cancelled';
+  const title = action === 'refresh' ? 'Actualizar plantilla' : action === 'edit' ? 'Modificar fecha y hora' : resuming ? 'Reanudar con plantilla actual' : action === 'open' ? 'Abrir convocatoria' : action === 'closed' ? 'Cerrar convocatoria' : 'Cancelar convocatoria';
   return <CompactPanel title="Administrar convocatoria" expanded={expanded} onToggle={() => setExpanded(value => !value)} subtle>
-    <Body>Estado: {callStatusLabels[call.status]}. Cerrar o cancelar conserva la fotografía y las respuestas.</Body>
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+    <View style={{ paddingTop: 12, paddingBottom: 6, gap: 12 }}>
+    <Body>Estado: {callStatusLabels[call.status]}. Cerrar o cancelar conserva los datos; reanudar una cancelada incorpora la plantilla actual.</Body>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       <IconButton icon="edit" label="Modificar fecha y hora" disabled={busy} onPress={() => choose('edit')} />
-      {call.status !== 'open' ? <IconButton icon="play" label="Abrir convocatoria" disabled={busy || call.local_date < clubLocalDateTime(call.timezone).date} onPress={() => choose('open')} /> : null}
+      {(call.status === 'open' || call.status === 'draft') && current ? <IconButton icon="refresh" label="Actualizar plantilla de convocatoria" disabled={busy} onPress={() => choose('refresh')} /> : null}
+      {call.status !== 'open' ? <IconButton icon="play" label={call.status === 'cancelled' ? 'Reanudar con plantilla actual' : 'Abrir convocatoria'} disabled={busy || !current} onPress={() => choose('open')} /> : null}
       {call.status === 'open' || call.status === 'draft' ? <IconButton icon="lock" label="Cerrar convocatoria" disabled={busy} onPress={() => choose('closed')} /> : null}
       {call.status !== 'cancelled' ? <IconButton icon="cancel" label="Cancelar convocatoria" danger disabled={busy} onPress={() => choose('cancelled')} /> : null}
     </View>
-    <ConfirmDialog visible={action !== null} title={title} description={action === 'edit' ? `Horario del club: ${call.timezone}. Solo puede existir una convocatoria por fecha local; la fotografía y respuestas se conservarán.` : 'Se conservarán los jugadores, respuestas, PRUEBAS y AYUDAS. Solo una convocatoria abierta permite responder.'}
+    </View>
+    <ConfirmDialog visible={action !== null} title={title} description={action === 'refresh' || resuming ? 'Se incorporarán los jugadores, categorías, dorsales, orden y PRUEBAS de la plantilla actual. Se conservarán las respuestas de quienes continúen y las AYUDAS. Los nuevos empezarán sin responder y los retirados dejarán de aparecer en esta convocatoria.' : action === 'edit' ? `Horario del club: ${call.timezone}. Solo puede existir una convocatoria por fecha local; la fotografía y respuestas se conservarán.` : 'Se conservarán los jugadores, respuestas, PRUEBAS y AYUDAS. Solo una convocatoria abierta permite responder.'}
       confirmLabel={title} busy={busy} disabled={isDemo} onCancel={() => setAction(null)} onConfirm={() => { void save(); }}>
       {action === 'edit' ? <><Field label="Nueva fecha (AAAA-MM-DD)" value={date} onChangeText={setDate} maxLength={10} editable={!busy} /><Field label="Nueva hora (HH:mm)" value={time} onChangeText={setTime} maxLength={5} editable={!busy} /></> : null}
       {isDemo ? <DemoNotice /> : null}

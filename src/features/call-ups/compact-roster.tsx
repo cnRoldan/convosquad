@@ -4,8 +4,8 @@ import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions,
 import { colors } from '@/theme';
 import { categoryLabels } from '@/features/players/categories';
 import { jerseyAccessibilityLabel, jerseyLabel } from '@/features/players/jersey';
-import { availabilityLabels, responseOptions } from './availability';
-import { availabilityIcons, availabilityStates, callUpList, canRespondToPlayer, filterLabels } from './list-model';
+import { availabilityLabels } from './availability';
+import { availabilityIcons, availabilityStates, callUpList, filterLabels } from './list-model';
 import type { AvailabilityFilter, CallUpPlayer } from './list-model';
 import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
@@ -13,9 +13,8 @@ import type { Tables } from '@/types/database';
 const statusColors = { available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
 const shortLabels = { available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
 
-export function CompactRoster({ players, call, userId, localDate, isDemo, savingId, disabled, onRespond, trials, aids }: {
-  players: readonly CallUpPlayer[]; call: Tables<'call_ups'>; userId: string | undefined; localDate: string; isDemo: boolean;
-  savingId: string | null; disabled: boolean; onRespond: (id: string, availability: typeof responseOptions[number]) => void;
+export function CompactRoster({ players, trials, aids }: {
+  players: readonly CallUpPlayer[];
   trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode;
 }) {
   const [filter, setFilter] = useState<AvailabilityFilter>('all');
@@ -45,9 +44,7 @@ export function CompactRoster({ players, call, userId, localDate, isDemo, saving
     {model.groups.map(group => <CompactPanel key={group.category} title={`${categoryLabels[group.category]} (${group.total})`}
       summary={availabilityStates.map(status => `${availabilityIcons[status]} ${group.counts[status]}`).join(' · ')}
       expanded={!collapsed.has(group.category)} onToggle={() => toggle(group.category)}>
-      {group.players.map(player => <AvailabilityRow key={player.id} player={player}
-        editable={canRespondToPlayer(player, userId, call, localDate, isDemo)} saving={savingId === player.id}
-        disabled={disabled} onRespond={onRespond} />)}
+      {group.players.map(player => <AvailabilityRow key={player.id} player={player} />)}
       {!group.players.length ? <Text style={styles.empty}>Sin jugadores.</Text> : null}
     </CompactPanel>)}
     {!model.visibleTotal ? <View style={styles.emptyResults}>
@@ -67,10 +64,7 @@ export function CompactRoster({ players, call, userId, localDate, isDemo, saving
   </View>;
 }
 
-const AvailabilityRow = memo(function AvailabilityRow({ player, editable, saving, disabled, onRespond }: {
-  player: CallUpPlayer; editable: boolean; saving: boolean; disabled: boolean;
-  onRespond: (id: string, availability: typeof responseOptions[number]) => void;
-}) {
+const AvailabilityRow = memo(function AvailabilityRow({ player }: { player: CallUpPlayer }) {
   return <View style={styles.row} testID={`call-up-player-${player.id}`}>
     <View style={styles.line}>
       <Text style={styles.name}>{player.eaId}</Text>
@@ -78,15 +72,6 @@ const AvailabilityRow = memo(function AvailabilityRow({ player, editable, saving
       <Text style={[styles.status, { color: statusColors[player.availability] }]}>{availabilityIcons[player.availability]} {availabilityLabels[player.availability]}</Text>
     </View>
     {!player.userId ? <Text style={styles.meta}>Sin registrar</Text> : null}
-    {editable ? <View style={styles.controls}>
-      {responseOptions.map(status => <Pressable key={status} accessibilityRole="button"
-        accessibilityLabel={`${availabilityLabels[status]} para ${player.eaId}`} {...(Platform.OS === 'web' ? { 'aria-pressed': player.availability === status } : {})} aria-disabled={disabled || saving} accessibilityState={{ selected: player.availability === status, disabled: disabled || saving }}
-        disabled={disabled || saving} onPress={() => { if (player.availability !== status) onRespond(player.id, status); }}
-        style={({ pressed }) => [styles.response, player.availability === status && styles.selected, (pressed || disabled || saving) && styles.pressed]}>
-        <Text style={[styles.responseText, { color: statusColors[status] }]}>{availabilityIcons[status]} {status === 'unavailable' ? 'No disponible' : availabilityLabels[status]}</Text>
-      </Pressable>)}
-    </View> : null}
-    {saving ? <Text accessibilityLiveRegion="polite" style={styles.meta}>Guardando respuesta…</Text> : null}
   </View>;
 });
 
@@ -99,7 +84,6 @@ const styles = StyleSheet.create({
   help: { fontSize: 12, color: colors.muted }, row: { paddingVertical: 8, gap: 3, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   line: { flexDirection: 'row', alignItems: 'center', gap: 8 }, name: { flex: 1, minWidth: 0, color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
   jersey: { color: colors.muted, fontSize: 13, lineHeight: 20 }, status: { flexShrink: 0, fontSize: 12, lineHeight: 20 }, meta: { color: colors.muted, fontSize: 12, lineHeight: 18 },
-  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 }, response: { minHeight: 44, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border, borderRadius: 8 }, responseText: { fontSize: 12, fontWeight: '600' },
   trial: { paddingVertical: 6, gap: 2, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }, empty: { color: colors.muted, fontSize: 13, lineHeight: 20, paddingVertical: 6 },
   emptyResults: { gap: 4, alignItems: 'flex-start' }, aids: { marginTop: 10 }, hidden: { display: 'none' }, pressed: { opacity: 0.6 },
 });
