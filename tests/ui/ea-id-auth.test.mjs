@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false } = {}) {
+async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -66,6 +66,9 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     }
     if (endpoint === 'settings') return route.fulfill({ json: { mailer_autoconfirm: confirmed, disable_signup: false } });
     if (endpoint === 'is_ea_id_available') return route.fulfill({ json: available });
+    if (endpoint === 'user') return route.fulfill({ json: { id: userId, aud: 'authenticated', role: 'authenticated', email: 'ea.player@accounts.convosquad.invalid', user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() } });
+    if (endpoint === 'logout') return route.fulfill({ json: {} });
+    if (endpoint === 'token' && wrongPassword) return route.fulfill({ status: 400, headers: { 'X-Supabase-Api-Version': '2024-01-01', 'Access-Control-Expose-Headers': 'X-Supabase-Api-Version' }, json: { code: 'invalid_credentials', msg: 'Invalid login credentials' } });
     if (endpoint === 'signup' || endpoint === 'token') {
       const user = { id: '00000000-0000-4000-8000-000000000901', aud: 'authenticated', role: 'authenticated', email: body.email, user_metadata: body.data ?? {}, app_metadata: {}, created_at: new Date().toISOString() };
       const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.fixture`;
@@ -160,4 +163,53 @@ test('solo el creador ve eliminación y un jugador no accede a la administració
     await player.page.waitForURL('**/home');
     assert.equal(await player.page.getByRole('button', { name: 'Guardar avisos', exact: true }).count(), 0);
   } finally { await player.close(); }
+});
+
+test('cambiar contraseña desde clubes: validación, guardado y sesión original conservada', async () => {
+  const f = await fixture({ clubRole: 'player' });
+  try {
+    await f.page.goto(`${origin}/clubs`);
+    await f.page.getByRole('button', { name: 'Cambiar mi contraseña', exact: true }).click();
+    const current = f.page.getByLabel('Contraseña actual', { exact: true });
+    const next = f.page.getByLabel('Nueva contraseña', { exact: true });
+    const confirmation = f.page.getByLabel('Confirmar nueva contraseña', { exact: true });
+    assert.equal(await current.getAttribute('type'), 'password');
+    await current.fill('old-fixture-password'); await next.fill('new-fixture-password'); await confirmation.fill('does-not-match');
+    await f.page.getByRole('button', { name: 'Guardar contraseña', exact: true }).click();
+    await f.page.getByText('Las contraseñas nuevas no coinciden.', { exact: true }).waitFor();
+    assert.equal(f.requests.some(r => r.endpoint === 'token'), false);
+    await current.fill('old-fixture-password'); await next.fill('new-fixture-password'); await confirmation.fill('new-fixture-password');
+    await f.page.getByRole('button', { name: 'Guardar contraseña', exact: true }).click();
+    await f.page.getByText('Contraseña actualizada.', { exact: false }).waitFor();
+    const update = f.requests.find(r => r.endpoint === 'user' && r.body?.password);
+    assert.equal(update.body.password, 'new-fixture-password');
+    assert.equal(update.body.current_password, 'old-fixture-password');
+    const session = await f.page.evaluate(() => JSON.parse(localStorage.getItem('sb-auth-auth-token')));
+    assert.equal(session.user.id, '00000000-0000-4000-8000-000000000901');
+    assert.equal(session.refresh_token, 'fixture');
+    assert.equal(JSON.stringify(session).includes('new-fixture-password'), false);
+    await f.page.getByRole('button', { name: 'Volver a mis clubes', exact: true }).click();
+    await f.page.waitForURL('**/clubs');
+  } finally { await f.close(); }
+});
+test('contraseña anterior incorrecta: error español, campos vacíos y ninguna actualización', async () => {
+  const f = await fixture({ clubRole: 'player', wrongPassword: true });
+  try {
+    await f.page.goto(`${origin}/change-password`);
+    await f.page.getByLabel('Contraseña actual', { exact: true }).fill('incorrect');
+    await f.page.getByLabel('Nueva contraseña', { exact: true }).fill('new-fixture-password');
+    await f.page.getByLabel('Confirmar nueva contraseña', { exact: true }).fill('new-fixture-password');
+    await f.page.getByRole('button', { name: 'Guardar contraseña', exact: true }).click();
+    await f.page.getByText('La contraseña actual no es correcta.', { exact: true }).waitFor();
+    assert.equal(await f.page.getByLabel('Contraseña actual', { exact: true }).inputValue(), '');
+    assert.equal(f.requests.some(r => r.endpoint === 'user' && r.body?.password), false);
+  } finally { await f.close(); }
+});
+test('cambiar contraseña exige iniciar sesión', async () => {
+  const f = await fixture();
+  try {
+    await f.page.goto(`${origin}/change-password`);
+    await f.page.waitForURL('**/login');
+    assert.equal(f.requests.some(r => r.endpoint === 'token' || r.endpoint === 'user'), false);
+  } finally { await f.close(); }
 });

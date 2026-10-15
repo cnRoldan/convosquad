@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+import { changeOwnPassword, type PasswordChangeInput } from './password-change';
 import { requireSupabase } from '@/lib/supabase';
 import { EaAccountError, loginEaAccount, registerEaAccount } from './ea-account';
 
@@ -18,4 +20,13 @@ export async function loginAccount(eaId: string, password: string) {
 export async function logoutAccount() {
   const { error } = await requireSupabase().auth.signOut();
   if (error) throw error;
+}
+
+export async function changeAccountPassword(userId: string, input: PasswordChangeInput) {
+  const client = requireSupabase();
+  const verifier = createClient(
+    process.env.EXPO_PUBLIC_SUPABASE_URL!, process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'convosquad-password-check' } },
+  );
+  return changeOwnPassword(client, verifier, userId, input);
 }
