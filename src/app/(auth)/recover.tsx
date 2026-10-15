@@ -37,7 +37,7 @@ export default function RecoverScreen() {
     finally { setBusy(false); }
   }
   return <Screen>
-    <Heading title="Recupera tu acceso" subtitle="Utiliza el correo real de tu cuenta. No necesitas recordar tu nombre de usuario." />
+    <Heading title="Recupera tu acceso" subtitle="Solo para cuentas anteriores con correo. Si te registraste con ID de EA, contacta con el administrador." />
     <Field label="Correo electrónico" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" editable={!busy && !sent} />
     {sent ? <>
       <Body>Abre el enlace de recuperación o introduce aquí el código del correo, incluso desde otro navegador o dispositivo.</Body>

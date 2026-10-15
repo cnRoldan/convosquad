@@ -600,6 +600,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      is_ea_id_available: {
+        Args: {
+          p_ea_id: string;
+        };
+        Returns: boolean;
+      };
       link_player_account: {
         Args: {
           p_player_id: string;

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { authCallbackUrl } from './redirect';
 import { usePendingPush } from '@/features/notifications/pending-push-context';
 import { usePendingInvite } from '@/features/invitations/pending-invite-context';
 
 import { Body, Button, Field, Heading, Screen } from '@/components/ui';
 import { useAuth } from './auth-context';
-import { authErrorMessage, loginAccount, registerAccount, usernamePattern } from './service';
+import { authErrorMessage, loginAccount, loginLegacyAccount, registerAccount } from './service';
+import { eaIdPattern } from './ea-account';
 import { isSupabaseConfigured } from '@/lib/supabase';
 
 export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
@@ -15,7 +15,8 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   const { session, isDemo, enterDemo, exitDemo, isLoading, isRecovery } = useAuth();
   const { pendingInvite } = usePendingInvite(); const { pendingPush } = usePendingPush();
   const destination = pendingPush ? '/notification' as const : pendingInvite ? '/invite' as const : { pathname: '/clubs' as const, params: { auto: '1' } };
-  const [username, setUsername] = useState('');
+  const [eaId, setEaId] = useState('');
+  const [legacy, setLegacy] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -23,8 +24,8 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   if (!isLoading && session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
 
   async function submit() {
-    if (isRegister && !usernamePattern.test(username.trim())) return setMessage('Usa entre 3 y 24 letras, números o guiones bajos para tu nombre de usuario.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setMessage('Introduce un correo válido.');
+    if ((isRegister || !legacy) && !eaIdPattern.test(eaId.trim())) return setMessage('El ID de EA debe tener entre 3 y 24 letras, números, guiones o guiones bajos.');
+    if (!isRegister && legacy && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setMessage('Introduce un correo válido.');
     if (isRegister && password.length < 8) return setMessage('La contraseña debe tener al menos 8 caracteres.');
     if (!password) return setMessage('Introduce tu contraseña.');
     if (!isSupabaseConfigured) return setMessage('Supabase no está configurado. Puedes explorar la demo sin crear una cuenta.');
@@ -33,13 +34,12 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
     try {
       exitDemo();
       if (isRegister) {
-        const redirectTo = authCallbackUrl();
-        const result = await registerAccount({ username, email, password, redirectTo });
+        await registerAccount({ eaId, password });
         setPassword('');
-        if (result.session) router.replace(destination);
-        else setMessage('Revisa tu correo para confirmar la cuenta. Después podrás iniciar sesión.');
+        router.replace(destination);
       } else {
-        await loginAccount(email, password);
+        if (legacy) await loginLegacyAccount(email, password);
+        else await loginAccount(eaId, password);
         setPassword('');
         router.replace(destination);
       }
@@ -52,14 +52,16 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <Screen>
-      <Heading title={isRegister ? 'Únete al vestuario' : 'Nos vemos en el campo'} subtitle={isRegister ? 'Un nombre de usuario único y un correo real para verificar y recuperar tu cuenta.' : 'Accede a todos tus clubes con tu correo y contraseña.'} />
-      {isRegister ? <Field label="Nombre de usuario" value={username} onChangeText={setUsername} autoCapitalize="none" autoComplete="username" textContentType="username" editable={!busy} /> : null}
-      <Field label="Correo electrónico" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" editable={!busy} />
+      <Heading title={isRegister ? 'Únete al vestuario' : 'Nos vemos en el campo'} subtitle={isRegister ? 'Tu ID de EA y una contraseña. Sin correo ni confirmaciones.' : legacy ? 'Acceso para cuentas creadas anteriormente con correo.' : 'Accede a tus clubes con tu ID de EA y contraseña.'} />
+      {isRegister || !legacy ? <Field label="ID de EA" value={eaId} onChangeText={setEaId} autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" maxLength={24} editable={!busy} /> :
+        <Field label="Correo electrónico" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" textContentType="emailAddress" editable={!busy} />}
       <Field label="Contraseña" value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete={isRegister ? 'new-password' : 'current-password'} textContentType={isRegister ? 'newPassword' : 'password'} editable={!busy} />
       {recovered === '1' && !isRegister ? <Body>Contraseña actualizada. Inicia sesión con la nueva contraseña.</Body> : null}
       {message ? <Body>{message}</Body> : null}
       <Button disabled={busy || isLoading} label={busy ? 'Un momento…' : isRegister ? 'Crear cuenta' : 'Iniciar sesión'} onPress={() => { void submit(); }} />
-      {!isRegister ? <Button secondary disabled={busy} label="He olvidado mi contraseña" onPress={() => router.push('/recover')} /> : null}
+      {isRegister || !legacy ? <Body>Si olvidas la contraseña o tu ID ya está ocupado, contacta con el administrador. No hay recuperación automática.</Body> :
+        <Button secondary disabled={busy} label="He olvidado mi contraseña" onPress={() => router.push('/recover')} />}
+      {!isRegister ? <Button secondary disabled={busy} label={legacy ? 'Acceder con ID de EA' : 'Tengo una cuenta anterior con correo'} onPress={() => { setLegacy(!legacy); setPassword(''); setMessage(''); }} /> : null}
       <Button secondary disabled={busy} label="Explorar la demo" onPress={() => { setPassword(''); enterDemo(); router.replace('/clubs'); }} />
       <Button secondary disabled={busy} label={isRegister ? 'Ya tengo una cuenta' : 'Quiero registrarme'} onPress={() => router.replace(isRegister ? '/login' : '/register')} />
       <Body>{isSupabaseConfigured ? 'Acceso gestionado por Supabase Auth.' : 'Acceso real pendiente de configuración. La demo es independiente.'}</Body>

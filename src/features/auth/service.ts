@@ -1,21 +1,21 @@
 import { requireSupabase } from '@/lib/supabase';
+import { EaAccountError, loginEaAccount, registerEaAccount } from './ea-account';
 
 export { authErrorMessage } from './errors';
 
-export const usernamePattern = /^[A-Za-z0-9_]{3,24}$/;
-
-export async function registerAccount(input: { username: string; email: string; password: string; redirectTo: string }) {
-  if (!usernamePattern.test(input.username.trim())) throw new Error('Nombre de usuario inválido.');
-  const { data, error } = await requireSupabase().auth.signUp({
-    email: input.email.trim(),
-    password: input.password,
-    options: { data: { username: input.username.trim() }, emailRedirectTo: input.redirectTo },
+export async function registerAccount(input: { eaId: string; password: string }) {
+  const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/$/, '')}/auth/v1/settings`, {
+    headers: { apikey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '' },
   });
-  if (error) throw error;
-  return data;
+  if (!response.ok) throw new EaAccountError('ea_registration_unavailable');
+  return registerEaAccount(requireSupabase(), input, await response.json());
 }
 
-export async function loginAccount(email: string, password: string) {
+export async function loginAccount(eaId: string, password: string) {
+  return loginEaAccount(requireSupabase(), eaId, password);
+}
+
+export async function loginLegacyAccount(email: string, password: string) {
   const { data, error } = await requireSupabase().auth.signInWithPassword({ email: email.trim(), password });
   if (error) throw error;
   return data;
