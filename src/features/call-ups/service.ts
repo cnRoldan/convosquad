@@ -18,6 +18,10 @@ export async function updateCallUp(callUpId: string, startsAt: string, status: E
   return unwrap(await requireSupabase().rpc('update_call_up', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status }).single());
 }
 
+export async function refreshCallUpRoster(callUpId: string, reopen = false) {
+  return unwrap(await requireSupabase().rpc('refresh_call_up_roster', { p_call_up_id: callUpId, p_reopen: reopen }).single());
+}
+
 export async function respondToCallUp(entryId: string, availability: Enums<'availability_status'>) {
   return unwrap(await requireSupabase().rpc('respond_to_call_up', { p_call_up_player_id: entryId, p_availability: availability }).single());
 }

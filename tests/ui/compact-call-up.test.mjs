@@ -40,7 +40,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
@@ -80,6 +80,17 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'refresh_call_up_roster') {
+        assert.equal(role, 'admin');
+        const body = request.postDataJSON();
+        assert.equal(body.p_call_up_id, callId);
+        assert.equal(body.p_reopen, status === 'cancelled');
+        data.refreshes++;
+        players[15].category_snapshot = 'attackers';
+        if (body.p_reopen) call.status = 'open';
+        call.updated_at = new Date().toISOString();
+        return route.fulfill({ json: call });
+      }
       if (endpoint !== 'respond_to_call_up') { unexpected.push(endpoint); return route.abort(); }
       data.writes++;
       const body = request.postDataJSON();
@@ -214,6 +225,37 @@ test('barra oculta sin ficha vinculada y en convocatorias no abiertas', async ()
       assert.equal(f.data.writes, 0);
     } finally { await f.close(); }
   }
+});
+
+test('administración con margen y actualización explícita de categorías sin esperar al día siguiente', async () => {
+  const f = await fixture({ role: 'admin' }); const { page } = f;
+  try {
+    await page.getByRole('button', { name: 'Administrar convocatoria', exact: true }).click();
+    const state = await page.getByText(/^Estado: Abierta\./).boundingBox();
+    const edit = await page.getByRole('button', { name: 'Modificar fecha y hora', exact: true }).boundingBox();
+    assert.ok(edit.y - state.y - state.height >= 10, 'actions need space above the buttons');
+    await page.getByRole('button', { name: 'Actualizar plantilla de convocatoria', exact: true }).click();
+    assert.equal(f.data.refreshes, 0);
+    await page.getByRole('button', { name: 'Actualizar plantilla', exact: true }).click();
+    await page.getByText('Plantilla de la convocatoria actualizada.', { exact: false }).waitFor();
+    await page.getByRole('button', { name: 'ATACANTES (5)', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'CENTROCAMPISTAS (3)', exact: true }).waitFor();
+    assert.equal(f.data.refreshes, 1);
+    assert.equal(f.data.writes, 0);
+  } finally { await f.close(); }
+});
+
+test('reanudar cancelada confirma y utiliza la plantilla actual', async () => {
+  const f = await fixture({ role: 'admin', status: 'cancelled' }); const { page } = f;
+  try {
+    await page.getByRole('button', { name: 'Administrar convocatoria', exact: true }).click();
+    await page.getByRole('button', { name: 'Reanudar con plantilla actual', exact: true }).click();
+    assert.equal(f.data.refreshes, 0);
+    await page.getByRole('button', { name: 'Reanudar con plantilla actual', exact: true }).last().click();
+    await page.getByRole('button', { name: 'ATACANTES (5)', exact: true }).waitFor();
+    await page.getByTestId('availability-actions').waitFor();
+    assert.equal(f.data.refreshes, 1);
+  } finally { await f.close(); }
 });
 
 test('respuesta propia es inmediata, bloquea pulsaciones rápidas y vuelve al estado real si falla', async () => {

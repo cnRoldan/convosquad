@@ -672,6 +672,13 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['club_members']['Row'][];
       };
+      refresh_call_up_roster: {
+        Args: {
+          p_call_up_id: string;
+          p_reopen?: boolean;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
       register_push_device: {
         Args: {
           p_device_id: string;
