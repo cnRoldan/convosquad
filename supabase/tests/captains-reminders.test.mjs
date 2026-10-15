@@ -15,7 +15,7 @@ before(async () => {
   other = await row(foreign, "select * from public.create_club('Otro club',null,'UTC')");
   for (const user of [captain, second, unlinked, inactive]) await db.query('insert into public.club_members(club_id,user_id) values ($1,$2)', [club.id, user]);
   for (const user of [captain, second, inactive]) {
-    const player = await row(owner, "insert into public.players(club_id,ea_id,category) values ($1,$2,'backups') returning *", [club.id, user]);
+    const player = await row(owner, "insert into public.players(club_id,ea_id,category) values ($1,$2,'midfielders') returning *", [club.id, user]);
     await query(owner, 'select * from public.link_player_account($1,$2)', [player.id, user]);
     if (user === inactive) await query(owner, 'update public.players set is_active=false where id=$1', [player.id]);
   }

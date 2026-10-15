@@ -1,11 +1,11 @@
 import { availabilityCategory, notificationActions } from '@/features/notifications/actions';
+import { ensureBackgroundNotificationTask } from '@/features/notifications/background-task';
+import { nativePushSupported } from './push-support';
 import Constants from 'expo-constants';
-import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 
-export function nativePushSupported() {
-  return (Platform.OS === 'android' || Platform.OS === 'ios') && Device.isDevice && Constants.executionEnvironment !== 'storeClient';
-}
+export { nativePushSupported } from './push-support';
+
 export async function notificationRuntime() {
   if (!nativePushSupported()) throw new Error('Usa un dispositivo físico con una compilación EAS. Push no está disponible en web, simuladores o Expo Go.');
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
@@ -14,7 +14,8 @@ export async function notificationRuntime() {
   if (Platform.OS === 'android') await Notifications.setNotificationChannelAsync('call-ups', {
     name: 'Convocatorias', importance: Notifications.AndroidImportance.DEFAULT,
   });
-  await Notifications.setNotificationCategoryAsync(availabilityCategory, notificationActions.map(({ identifier, buttonTitle }) => ({ identifier, buttonTitle, options: { opensAppToForeground: true, isAuthenticationRequired: true } })));
+  await ensureBackgroundNotificationTask();
+  await Notifications.setNotificationCategoryAsync(availabilityCategory, notificationActions.map(({ identifier, buttonTitle }) => ({ identifier, buttonTitle, options: { opensAppToForeground: Platform.OS !== 'android', isAuthenticationRequired: true } })));
   return { Notifications, projectId };
 }
 export function permissionGranted(permission: Awaited<ReturnType<typeof import('expo-notifications').getPermissionsAsync>>) {

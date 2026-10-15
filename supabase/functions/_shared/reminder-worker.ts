@@ -1,7 +1,7 @@
 import { pushMessage } from './push-event.ts';
 
-type Event = { id: string; club_id: string; call_up_id: string; event_key: string; kind?: 'published' | 'pending' | 'reminder' | 'vote'; actor_ea_id?: string | null; vote_availability?: string | null };
-type Delivery = { id: string; token_snapshot: string; user_id?: string | null };
+type Event = { id: string; club_id: string; call_up_id: string; event_key: string; kind?: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled'; actor_ea_id?: string | null; vote_availability?: string | null };
+type Delivery = { id: string; token_snapshot: string; user_id?: string | null; can_vote?: boolean };
 type State = 'sent' | 'failed' | 'unknown';
 export type ReminderStore = {
   prepare: () => Promise<void>;
@@ -19,7 +19,7 @@ export async function dispatchReminders(store: ReminderStore, submit: (messages:
     counts.attempted += deliveries.length;
     let tickets: unknown[] = [];
     try {
-      const response = await submit(deliveries.map(delivery => pushMessage({ clubId: event.club_id, callUpId: event.call_up_id, eventKey: event.event_key, kind: event.kind ?? 'reminder', actorEaId: event.actor_ea_id ?? null, availability: event.vote_availability ?? null }, delivery.token_snapshot, delivery.user_id)));
+      const response = await submit(deliveries.map(delivery => pushMessage({ clubId: event.club_id, callUpId: event.call_up_id, eventKey: event.event_key, kind: event.kind ?? 'reminder', actorEaId: event.actor_ea_id ?? null, availability: event.vote_availability ?? null }, delivery.token_snapshot, delivery.user_id, delivery.can_vote ?? true)));
       if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data) && response.data.length === deliveries.length) tickets = response.data;
     } catch { /* Una respuesta ambigua nunca se reenvía automáticamente. */ }
     for (const [index, delivery] of deliveries.entries()) {

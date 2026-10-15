@@ -10,7 +10,8 @@ export const notificationActions = [
 export function readNotificationResponse(data: unknown, actionId: string, notificationId: string, defaultActionId: string): PushIntent | null {
   const intent = readPushIntent(data);
   if (!intent) return null;
-  if (actionId === defaultActionId) return { clubId: intent.clubId, callUpId: intent.callUpId };
+  if (actionId === defaultActionId) return { clubId: intent.clubId, callUpId: intent.callUpId, ...(intent.cancelled ? { cancelled: true } : {}) };
+  if (intent.cancelled) return null;
   const action = notificationActions.find(item => item.identifier === actionId);
   if (!action || !data || typeof data !== 'object' || !('userId' in data) || typeof data.userId !== 'string'
     || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.userId)

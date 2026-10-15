@@ -18,6 +18,7 @@ export function VoteNotificationPreference({ userId }: { userId: string }) {
   }
   return <Card title="Avisos de votos">
     <Body>Avísame cuando otro jugador vote o cambie su disponibilidad. No recibirás avisos de tus propios votos. Esta preferencia no desactiva el último aviso para votar.</Body>
+    <Body>Los jugadores de la categoría BACKUPS solo reciben el aviso de cancelación si ya han respondido. PRUEBAS y AYUDAS no reciben avisos.</Body>
     <Switch accessibilityLabel="Avisarme cuando otro jugador vote" value={preferences.data?.vote_notifications ?? true} disabled={saving || preferences.isLoading || Boolean(preferences.error)} onValueChange={value => { void save(value); }} />
     {preferences.error ? <><Message error>No se pudo cargar tu preferencia de avisos.</Message><Button secondary label="Reintentar preferencias" onPress={preferences.reload} /></> : null}
     {message ? <Message error={failure}>{message}</Message> : null}
