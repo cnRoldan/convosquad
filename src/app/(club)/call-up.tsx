@@ -6,6 +6,7 @@ import { IconButton } from '@/components/icon-button';
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { CompactRoster } from '@/features/call-ups/compact-roster';
+import { AvailabilityActions } from '@/features/call-ups/availability-actions';
 import { canRespondToPlayer } from '@/features/call-ups/list-model';
 import type { CallUpPlayer } from '@/features/call-ups/list-model';
 import { AidsSection } from '@/features/call-ups/aids-section';
@@ -77,7 +78,11 @@ export default function CallUpScreen() {
       refresh();
     } finally { mutationLock.current = false; }
   }, [sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, localDate, isDemo, responseScope, reloadSnapshots, refresh]);
-  return <Screen compact>
+  const ownPlayer = players.find(player => player.userId === session?.user.id);
+  const availabilityFooter = ownPlayer && call && !snapshots.error && canRespondToPlayer(ownPlayer, session?.user.id, call, localDate, isDemo)
+    ? <AvailabilityActions player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading}
+      feedback={responseMessage?.scope === responseScope ? responseMessage : null} onRespond={respond} /> : null;
+  return <Screen compact footer={availabilityFooter}>
     <Heading title="Convocatoria" subtitle={activeClub?.name ?? ''} />
     <View style={styles.toolbar}>
       {admin ? <Pressable accessibilityRole="button" accessibilityLabel="Crear convocatoria" onPress={() => router.push('/create-call-up')} style={styles.create}>
@@ -90,14 +95,12 @@ export default function CallUpScreen() {
     {calls.data && calls.data.length > 1 ? <Options value={callId ?? ''} options={calls.data.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${callStatusLabels[row.status]}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
     {calls.isLoading || snapshots.isLoading ? <Body>Cargando convocatoria…</Body> : null}
     {calls.error || snapshots.error ? <><Message error>{calls.error ?? snapshots.error}</Message><Button label="Reintentar" onPress={refresh} /></> : null}
-    {responseMessage?.scope === responseScope ? <Message error={responseMessage.error}>{responseMessage.text}</Message> : null}
+    {responseMessage?.scope === responseScope && !availabilityFooter ? <Message error={responseMessage.error}>{responseMessage.text}</Message> : null}
     {notice ? <Message>{notice}</Message> : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {callStatusLabels[call.status]}</Text>
       {admin ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={() => { setNotice('Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
-      {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players} call={call}
-        userId={session?.user.id} localDate={localDate} isDemo={isDemo} savingId={currentPending?.saving ? currentPending.id : null}
-        disabled={Boolean(currentPending?.saving) || snapshots.isLoading} onRespond={respond}
+      {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []}
         aids={<AidsSection key={responseScope} callUpId={call.id} revision={aidsRevision} editable={admin && (call.status === 'open' || call.status === 'draft')} />} />}
       {isDemo ? <Body>Convocatoria simulada · los cambios no se guardan.</Body> : null}
