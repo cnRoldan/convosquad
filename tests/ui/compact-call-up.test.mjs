@@ -491,6 +491,18 @@ test('capitanes guardan teléfonos privados, abren WhatsApp y quitan pruebas y a
     const panel = page.getByRole('button', {name: 'PRUEBAS (2)', exact: true}); await panel.waitFor();
     if (await panel.getAttribute('aria-expanded') === 'false') await panel.click();
     await page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).waitFor();
+    assert.equal(await page.getByRole('textbox', {name: 'Teléfono', exact: true}).count(), 0);
+    const editContact = page.getByRole('button', {name: 'Editar teléfono de Contacto de prueba', exact: true});
+    const actionRow = editContact.locator('..');
+    assert.equal(await actionRow.getByRole('button').count(), 3);
+    for (const button of await actionRow.getByRole('button').all()) {
+      const bounds = await button.boundingBox(); assert.ok(bounds.width >= 44 && bounds.height >= 44);
+    }
+    assert.equal(await page.getByText('WhatsApp de Contacto de prueba', {exact: true}).count(), 0);
+    await editContact.click();
+    await page.getByRole('textbox', {name: 'Teléfono', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Guardar teléfono de Contacto de prueba', exact: true}).click();
+    await page.getByRole('button', {name: 'Editar teléfono de Contacto de prueba', exact: true}).waitFor();
     await page.evaluate(() => { window.open = url => { window.__contactUrl = String(url); return null; }; });
     await page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).click();
     await page.waitForFunction(() => window.__contactUrl === 'https://wa.me/34600000000');
