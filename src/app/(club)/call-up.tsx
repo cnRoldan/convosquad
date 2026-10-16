@@ -22,7 +22,8 @@ import { colors } from '@/theme';
 import type { Tables } from '@/types/database';
 
 export default function CallUpScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id: routeId, history } = useLocalSearchParams<{ id?: string; history?: string }>();
+  const id = routeId || undefined;
   const { activeClub, currentMembership, upcomingCallUp, roster, rosterVersion, refreshRoster } = useClub(); const { session, isDemo } = useAuth();
   const clubId = activeClub?.id; const admin = currentMembership?.role === 'admin';
   const scope = `${session?.user.id}:${clubId}:${isDemo}`;
@@ -57,6 +58,11 @@ export default function CallUpScreen() {
     status_version: 0, last_notice_at: null, timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
   } : null;
   const call = isDemo ? demoCall : snapshots.data?.call;
+  const historical = history === '1' || Boolean(call && call.local_date < clubLocalDateTime(call.timezone).date);
+  function returnToCurrent() {
+    setSelection(null); setResponseMessage(null); setNotice('');
+    router.setParams({ id: undefined, history: undefined });
+  }
   const sourcePlayers = useMemo<CallUpPlayer[]>(() => isDemo ? upcomingCallUp?.responses.map(row => ({ id: row.id, eaId: row.displayName, category: row.category, sortOrder: row.sortOrder, availability: row.status, userId: roster.find(player => player.id === row.id)?.userId ?? null, jersey: roster.find(player => player.id === row.id)?.jerseyNumber ?? null })) ?? []
     : snapshots.data?.players.map(row => ({ id: row.id, eaId: row.ea_id_snapshot, category: row.category_snapshot, sortOrder: row.sort_order_snapshot, availability: row.availability, userId: row.user_id, jersey: row.jersey_number_snapshot })) ?? [], [isDemo, upcomingCallUp?.responses, snapshots.data?.players, roster]);
   const responseScope = `${scope}:${callId}`;
@@ -67,7 +73,7 @@ export default function CallUpScreen() {
   const syncStatus = useCallUpSync(scope, clubId, enabled, refresh);
   const respond = useCallback(async (entryId: string, availability: typeof responseOptions[number]) => {
     const player = sourcePlayers.find(row => row.id === entryId);
-    if (mutationLock.current || !call || !player || snapshots.isLoading || snapshots.error || !canRespondToPlayer(player, session?.user.id, call, localDate, isDemo)) return;
+    if (historical || mutationLock.current || !call || !player || snapshots.isLoading || snapshots.error || !canRespondToPlayer(player, session?.user.id, call, localDate, isDemo)) return;
     const ownSnapshot = snapshots.data?.players.find(row => row.id === entryId);
     if (Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null), responseCooldown(ownSnapshot?.responded_at))) return;
     mutationLock.current = true;
@@ -84,23 +90,27 @@ export default function CallUpScreen() {
       setResponseMessage({ scope: responseScope, text: callUpErrorMessage(cause), error: true });
       refresh();
     } finally { mutationLock.current = false; }
-  }, [sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, localDate, isDemo, responseScope, reloadSnapshots, refresh, lastResponse]);
+  }, [historical, sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, localDate, isDemo, responseScope, reloadSnapshots, refresh, lastResponse]);
   const ownPlayer = players.find(player => player.userId === session?.user.id);
   const remaining = Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null, clock), responseCooldown(snapshots.data?.players.find(row => row.user_id === session?.user.id)?.responded_at, clock));
-  const availabilityFooter = ownPlayer && call && !snapshots.error && canRespondToPlayer(ownPlayer, session?.user.id, call, localDate, isDemo)
+  const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && canRespondToPlayer(ownPlayer, session?.user.id, call, localDate, isDemo)
     ? <AvailabilityActions player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: `Podrás cambiar tu voto en ${remaining} s.`, error: false } : responseMessage?.scope === responseScope ? responseMessage : null} onRespond={respond} /> : null;
   return <Screen compact footer={availabilityFooter}>
-    <Heading title="Convocatoria" subtitle={activeClub?.name ?? ''} />
-    <View style={styles.toolbar}>
+    {historical ? <View style={styles.toolbar}>
+      <IconButton icon="back" label="Volver a la convocatoria actual" onPress={returnToCurrent} />
+      <Text style={styles.date}>Volver a la convocatoria actual</Text>
+    </View> : null}
+    <Heading title={historical ? 'Convocatoria histórica' : 'Convocatoria'} subtitle={activeClub?.name ?? ''} />
+    {!historical ? <View style={styles.toolbar}>
       {admin ? <Pressable accessibilityRole="button" accessibilityLabel="Crear convocatoria" onPress={() => router.push('/create-call-up')} style={styles.create}>
         <Text style={styles.createLabel}>Crear convocatoria</Text>
       </Pressable> : null}
       {admin ? <IconButton icon="history" label="Historial de convocatorias" onPress={() => router.push('/call-up-history')} /> : null}
       {!isDemo ? <IconButton icon="refresh" label="Actualizar convocatoria" disabled={calls.isLoading || snapshots.isLoading} onPress={refresh} /> : null}
       {!isDemo ? <Text accessibilityLiveRegion="polite" style={styles.sync}>{syncStatus === 'live' ? 'Actualización en directo' : syncStatus === 'connecting' ? 'Conectando actualizaciones…' : 'Recuperando conexión. Puedes actualizar manualmente.'}</Text> : null}
-    </View>
-    {calls.data && calls.data.length > 1 ? <Options value={callId ?? ''} options={calls.data.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${callStatusLabels[row.status]}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
+    </View> : null}
+    {!historical && calls.data && calls.data.length > 1 ? <Options value={callId ?? ''} options={calls.data.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${callStatusLabels[row.status]}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
     {calls.isLoading || snapshots.isLoading ? <Body>Cargando convocatoria…</Body> : null}
     {calls.error || snapshots.error ? <><Message error>{calls.error ?? snapshots.error}</Message><Button label="Reintentar" onPress={refresh} /></> : null}
     {responseMessage?.scope === responseScope && !availabilityFooter ? <Message error={responseMessage.error}>{responseMessage.text}</Message> : null}
@@ -108,10 +118,10 @@ export default function CallUpScreen() {
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {callStatusLabels[call.status]}</Text>
       {call.last_notice_at ? <Body>Último aviso para votar: {clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} · solo pendientes</Body> : null}
-      {admin ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={message => { setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
+      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={message => { setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
       {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []}
-        aids={<AidsSection key={responseScope} callUpId={call.id} revision={aidsRevision} editable={admin && (call.status === 'open' || call.status === 'draft')} />} />}
+        aids={<AidsSection key={responseScope} callUpId={call.id} revision={aidsRevision} editable={!historical && admin && (call.status === 'open' || call.status === 'draft')} />} />}
       {isDemo ? <Body>Convocatoria simulada · los cambios no se guardan.</Body> : null}
     </> : !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <Body>No hay convocatorias accesibles en este club.</Body> : null}
   </Screen>;

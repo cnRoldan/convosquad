@@ -33,7 +33,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 } });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -44,6 +44,8 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
+  const pastId = '00000000-0000-4000-8000-000000000004';
+  const pastCall = { ...call, id: pastId, local_date: '2020-01-01', starts_at: '2020-01-01T20:00:00Z' };
   const players = empty ? [] : Array.from({ length: 24 }, (_, index) => ({
     id: `snapshot-${index}`, club_id: clubId, call_up_id: callId, source_player_id: `player-${index}`,
     user_id: index === 3 ? (linked ? userId : null) : index === 4 ? null : `other-${index}`,
@@ -108,7 +110,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'club_members') result = [{ id: 'member', club_id: clubId, user_id: userId, role, is_active: true }];
     else if (endpoint === 'profiles') result = { id: userId, username: 'fixture' };
     else if (endpoint === 'players') result = players.map(row => ({ id: row.source_player_id, club_id: clubId, ea_id: row.ea_id_snapshot, jersey_number: row.jersey_number_snapshot, category: row.category_snapshot, sort_order: row.sort_order_snapshot, position: row.position_snapshot, user_id: row.user_id, is_active: true }));
-    else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? call : [call];
+    else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : [call];
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
     else if (endpoint === 'call_up_trials') result = [{ id: 'trial', ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
     else if (endpoint === 'call_up_aids') result = [{ id: 'aid', body: 'Ayuda fuera del total', sort_order: 0 }];
@@ -124,13 +126,13 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
       channel.send('postgres_changes', { ids: [binding.id], data: { schema: 'public', table: 'call_up_players', type: 'UPDATE', columns: [], record: players[index], old_record: {}, commit_timestamp: new Date().toISOString() } });
     }
   }
-  await page.goto(`${origin}/call-up`);
+  await page.goto(`${origin}/call-up${historical ? `?id=${pastId}&history=1` : ''}`);
   await page.getByRole('button', { name: `Todos (${players.length})`, exact: true }).waitFor();
-  await page.getByText('Actualización en directo', { exact: true }).waitFor();
+  if (!historical) await page.getByText('Actualización en directo', { exact: true }).waitFor();
   // Club context, screen snapshot, then the initial Realtime reconciliation.
   await initialReload;
   await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
-  if (!empty && linked && status === 'open' && !cooldown) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
+  if (!historical && !empty && linked && status === 'open' && !cooldown) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
   async function close() { assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); await context.close(); }
   return { context, page, data, players, emit, close };
 }
@@ -308,7 +310,7 @@ test('enlace push verifica sesión/club y abre la convocatoria; otro club no obt
     await f.page.goto(`${origin}/notification?club=00000000-0000-4000-8000-000000000099&call=${callId}`);
     await f.page.getByText('Ya no perteneces al club de esta convocatoria o no tienes acceso.', { exact: true }).waitFor();
     await f.page.goto(`${origin}/notifications`);
-    await f.page.getByText('Las notificaciones push móviles se configuran desde una compilación EAS instalada en Android o iOS, no desde el navegador.', { exact: true }).waitFor();
+    await f.page.getByText('Las notificaciones de convocatoria están disponibles en la app para Android e iOS.', { exact: true }).waitFor();
     assert.equal(await f.page.getByRole('button', { name: 'Activar notificaciones en este dispositivo', exact: true }).count(), 0);
   } finally { await f.close(); }
 });
@@ -337,4 +339,24 @@ test('bloqueo de 30 segundos visible; Realtime recupera el desbloqueo sin recarg
     f.players[3].responded_at=new Date(Date.now()-31_000).toISOString();f.emit(3,'available');
     await f.page.getByRole('button',{name:'Backup para Jugador_4',exact:true,disabled:false}).waitFor();
   }finally{await f.close();}
+});
+
+test('consulta histórica es de solo lectura y vuelve a la convocatoria actual sin cambiar de pestaña', async () => {
+  const f = await fixture({role: 'admin', historical: true});
+  try {
+    const {page} = f;
+    assert.equal(await page.getByRole('button', {name: 'Crear convocatoria', exact: true}).count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Historial de convocatorias', exact: true}).count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Actualizar convocatoria', exact: true}).count(), 0);
+    assert.equal(await page.getByText('Administrar convocatoria', {exact: true}).count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Añadir ayuda', exact: true}).count(), 0);
+    assert.equal(await page.getByTestId('availability-actions').count(), 0);
+    assert.equal(f.data.writes, 0);
+    await page.getByRole('button', {name: 'Volver a la convocatoria actual', exact: true}).click();
+    await page.getByRole('button', {name: 'Crear convocatoria', exact: true}).waitFor();
+    await page.getByText('Administrar convocatoria', {exact: true}).waitFor();
+    assert.equal(new URL(page.url()).searchParams.has('id'), false);
+    assert.equal(new URL(page.url()).searchParams.has('history'), false);
+    assert.equal(await page.getByRole('button', {name: 'Volver a la convocatoria actual', exact: true}).count(), 0);
+  } finally { await f.close(); }
 });

@@ -76,3 +76,6 @@ Si la llamada al historial devuelve `PGRST202` para `list_call_up_history(p_club
 Desde Supabase → SQL Editor, ejecutar únicamente `supabase/migrations/20261016180000_restore_call_up_history.sql` para esta corrección, con las migraciones anteriores ya aplicadas. Crea o reemplaza la función, restaura sus permisos y solicita refrescar el catálogo PostgREST. No modifica convocatorias, plantillas ni votos, y no requiere repetir las migraciones iniciales. Es segura si la función ya existe con la firma original.
 
 Volver a pulsar **Actualizar historial** con una cuenta de capitán. Si no hay convocatorias de días anteriores en la zona horaria del club, debe aparecer el historial vacío. Los jugadores normales y miembros de otros clubes continúan sin acceso; se conservan el límite de diez y los datos históricos.
+
+
+Al consultar una convocatoria del historial, la pantalla indica **Convocatoria histórica** y muestra arriba a la izquierda **Volver a la convocatoria actual**. Este botón limpia la selección histórica sin pasar por otra pestaña. La vista histórica no muestra administración, creación, accesos a historial/actualización, selector de convocatorias ni controles para votar o editar AYUDAS; conserva jugadores, estados y anotaciones para consulta. Las convocatorias de días anteriores abiertas desde un enlace directo también se presentan sin controles de edición.
