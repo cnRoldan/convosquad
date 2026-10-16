@@ -4,6 +4,8 @@ import { Switch, View } from 'react-native';
 import { Body, Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { CrestPicker } from '@/features/clubs/crest-picker';
 import { uploadClubCrest, type ClubCrestImage } from '@/features/clubs/crest';
+import { TimezonePicker } from '@/features/clubs/timezone-picker';
+import { defaultClubTimezone, isClubTimezone } from '@/features/clubs/timezones';
 import { createClub } from '@/features/clubs/service';
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
@@ -17,7 +19,7 @@ export default function CreateClubScreen() {
   const [crestUploaded, setCrestUploaded] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [timezone, setTimezone] = useState('Europe/Madrid');
+  const [timezone, setTimezone] = useState(defaultClubTimezone);
   const [isPublic, setPublic] = useState(false);
   const [busy, setBusy] = useState(false);
   const [createdClubId, setCreatedClubId] = useState<string | null>(null);
@@ -25,8 +27,7 @@ export default function CreateClubScreen() {
   async function submit() {
     if (isDemo || busy) return;
     if (name.trim().length < 2) return setMessage('El nombre debe tener entre 2 y 80 caracteres.');
-    try { new Intl.DateTimeFormat('es-ES', { timeZone: timezone.trim() }).format(); }
-    catch { return setMessage('Utiliza una zona horaria válida, por ejemplo Europe/Madrid.'); }
+    if (!isClubTimezone(timezone)) return setMessage('Selecciona la zona horaria del club.');
     setBusy(true);
     setMessage('');
     let confirmedClubId = createdClubId;
@@ -51,7 +52,7 @@ export default function CreateClubScreen() {
     <CrestPicker image={crest} onChange={image => { setCrest(image); setCrestUploaded(false); }} disabled={busy || isDemo} />
     <Field label="Nombre del club" value={name} onChangeText={setName} maxLength={80} editable={!busy && !createdClubId} />
     <Field label="Descripción (opcional)" value={description} onChangeText={setDescription} maxLength={500} multiline editable={!busy && !createdClubId} />
-    <Field label="Zona horaria" value={timezone} onChangeText={setTimezone} autoCapitalize="none" editable={!busy && !createdClubId} />
+    <TimezonePicker value={timezone} onChange={setTimezone} disabled={busy || Boolean(createdClubId)} />
     <View style={{ gap: 8 }}><Body>Mostrar nombre y descripción en el buscador público</Body>
       <Switch accessibilityLabel="Mostrar el club en el buscador público" value={isPublic} onValueChange={setPublic} disabled={busy || Boolean(createdClubId)} trackColor={{ true: colors.primary }} />
     </View>
