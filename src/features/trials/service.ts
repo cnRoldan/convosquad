@@ -6,10 +6,13 @@ export async function listTrials(clubId: string, all = false) {
   if (!all) query = query.eq('status', 'active');
   return unwrap(await query);
 }
-export async function saveTrial(clubId: string, input: { name: string; notes: string | null }, id?: string) {
-  const values = { ea_id: input.name, jersey_number: null, position: null, notes: input.notes };
-  return unwrap(await (id ? requireSupabase().from('club_trials').update(values).eq('id', id).eq('club_id', clubId)
-    : requireSupabase().from('club_trials').insert({ club_id: clubId, ...values })).select().single());
+export async function saveTrial(clubId: string, input: { name: string; notes: string | null; phone: string | null }, id?: string) {
+  return unwrap(await requireSupabase().rpc('save_club_trial_with_contact', {
+    p_club_id: clubId, p_name: input.name,
+    ...(input.notes ? { p_notes: input.notes } : {}),
+    ...(input.phone ? { p_phone: input.phone } : {}),
+    ...(id ? { p_trial_id: id } : {}),
+  }).single());
 }
 export async function withdrawTrial(id: string) { return unwrap(await requireSupabase().rpc('withdraw_trial', { p_trial_id: id }).single()); }
 export async function promoteTrial(id: string, category: RosterCategory, existingId?: string) {
