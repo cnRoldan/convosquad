@@ -285,6 +285,28 @@ test('escudo PNG se selecciona, se convierte sin perder alfa y aparece junto al 
       return context.getImageData(0, 0, 1, 1).data[3];
     }, upload.body.bytes);
     assert.equal(alpha, 0, 'PNG transparency must survive conversion and upload');
+    const crestCard = page.getByText('Escudo del club', {exact: true}).locator('..');
+    const currentCrest = crestCard.getByRole('img', {name: 'Escudo de Club de prueba', exact: true});
+    await currentCrest.waitFor();
+    const crestBox = await currentCrest.boundingBox();
+    const cardBox = await crestCard.boundingBox();
+    assert.equal(crestBox.width, 160); assert.equal(crestBox.height, 160);
+    assert.ok(Math.abs(crestBox.x + crestBox.width / 2 - cardBox.x - cardBox.width / 2) < 1);
+    assert.equal(await crestCard.getByRole('button', {name: 'Añadir escudo (opcional)', exact: true}).count(), 0);
+    const replacementChooser = page.waitForEvent('filechooser');
+    await crestCard.getByRole('button', {name: 'Cambiar escudo', exact: true}).click();
+    await (await replacementChooser).setFiles({name: 'nuevo-escudo.png', mimeType: 'image/png', buffer: f.crestFixture});
+    await crestCard.getByRole('img', {name: 'Vista previa del escudo', exact: true}).waitFor();
+    assert.equal(await crestCard.getByRole('img').count(), 1, 'La vista previa sustituye al escudo actual');
+    const previewBox = await crestCard.getByRole('img').boundingBox();
+    assert.equal(previewBox.width, 160);
+    assert.ok(Math.abs(previewBox.x + previewBox.width / 2 - cardBox.x - cardBox.width / 2) < 1);
+    await page.getByRole('button', {name: 'Guardar escudo', exact: true}).click();
+    await currentCrest.waitFor();
+    assert.equal(await crestCard.getByRole('img').count(), 1);
+    assert.equal(f.requests.filter(request => request.endpoint === 'crest-upload').length, 2);
+    await crestCard.getByRole('button', {name: 'Cambiar escudo', exact: true}).waitFor();
+
     await page.goto(`${origin}/clubs`);
     const cardImage = page.getByRole('img', {name: 'Escudo de Club de prueba', exact: true});
     await cardImage.waitFor();
