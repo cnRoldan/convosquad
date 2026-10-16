@@ -19,6 +19,10 @@ export async function reorderTrials(clubId: string, ids: string[]) {
   const { error } = await requireSupabase().rpc('reorder_trials', { p_club_id: clubId, p_ids: ids }); if (error) throw error;
 }
 
+export async function listTrialContacts(clubId: string) {
+  return unwrap(await requireSupabase().from('club_trial_contacts').select('trial_id,phone').eq('club_id', clubId));
+}
+
 export async function addCallUpTrial(callUpId: string, name: string, notes: string | null) {
   return unwrap(await requireSupabase().rpc('add_call_up_trial', { p_call_up_id: callUpId, p_name: name, ...(notes ? { p_notes: notes } : {}) }));
 }
