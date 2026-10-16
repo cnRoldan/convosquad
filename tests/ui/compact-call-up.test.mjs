@@ -169,6 +169,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : [call];
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
     else if (endpoint === 'call_up_trials') result = trialSnapshots;
+    else if (endpoint === 'call_up_trial_notes') { assert.equal(role, 'admin'); result = [{trial_id: 'trial', notes: 'Valoración privada de la convocatoria'}]; }
     else if (endpoint === 'call_up_aids') result = aids;
     else if (endpoint === 'call_up_contacts') { assert.equal(role, 'admin'); data.privateReads++; result = privateContacts; }
     else if (endpoint === 'club_trial_contacts') { assert.equal(role, 'admin'); assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); result = []; }
@@ -559,4 +560,16 @@ test('cierre de votación oculta acciones al vencer sin esperar Realtime ni Cron
     assert.equal(await button.count(),0);
     assert.equal(f.data.writes,0);
   }finally{await f.close();}
+});
+
+
+test('observaciones de convocatoria solo aparecen para capitanes, también en historial', async () => {
+  for (const options of [{role: 'player'}, {role: 'admin'}, {role: 'admin', historical: true}]) {
+    const f = await fixture(options);
+    try {
+      const note = f.page.getByText('Valoración privada de la convocatoria', {exact: true});
+      if (options.role === 'admin') await note.waitFor();
+      else assert.equal(await note.count(), 0);
+    } finally { await f.close(); }
+  }
 });

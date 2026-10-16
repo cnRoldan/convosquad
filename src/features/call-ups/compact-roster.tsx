@@ -15,8 +15,9 @@ import type { Tables } from '@/types/database';
 const statusColors = { available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
 const shortLabels = { available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
 
-export function CompactRoster({ players, trials, aids, trialEditor, trialActions }: {
+export function CompactRoster({ players, trials, aids, trialEditor, trialActions, showTrialNotes = false }: {
   players: readonly CallUpPlayer[];
+  showTrialNotes?: boolean;
   trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode; trialEditor?: ReactNode; trialActions?: ((trial: Tables<'call_up_trials'>) => ReactNode) | undefined;
 }) {
   useLanguage();
@@ -59,7 +60,7 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
       <CompactPanel title={t("PRUEBAS ({{v0}})", { v0: trials.length })} expanded={expandedPanels.has('trials')} onToggle={() => toggle('trials')} subtle>
         {trials.map(trial => <View key={trial.id} style={styles.trial}>
           <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
-          {trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
+          {showTrialNotes && trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
           {trialActions?.(trial)}
         </View>)}
         {!trials.length ? <Text style={styles.empty}>{t("No se incluyeron pruebas.")}</Text> : null}

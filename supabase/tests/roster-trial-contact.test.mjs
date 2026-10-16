@@ -16,7 +16,8 @@ before(async()=>{
 after(async()=>{await db?.close();});
 test('crear prueba guarda contacto privado y deja observaciones separadas',async()=>{
   trial=await save(admin,club.id,'Prueba contacto','Delantero','+34600000000');
-  assert.equal(trial.notes,'Delantero');
+  assert.equal(trial.notes,null);
+  assert.equal((await row(admin,'select notes from public.club_trial_notes where trial_id=$1',[trial.id])).notes,'Delantero');
   assert.equal(JSON.stringify(trial).includes('+34600000000'),false);
   assert.equal((await row(admin,'select phone from public.club_trial_contacts where trial_id=$1',[trial.id])).phone,'+34600000000');
   assert.equal((await query(member,'select * from public.club_trial_contacts')).rows.length,0);

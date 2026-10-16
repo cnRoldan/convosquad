@@ -1,7 +1,7 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
+import { Body, Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { LoadingScreen } from '@/components/loading';
 import { useAuth } from '@/features/auth/auth-context';
@@ -18,7 +18,7 @@ export default function TrialScreen() {
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
   const load = useCallback(async () => {
     if (!clubId) return { trials: [], contacts: [] };
-    const [trials, contacts] = await Promise.all([listTrials(clubId, true), listTrialContacts(clubId)]);
+    const [trials, contacts] = await Promise.all([listTrials(clubId, true, true), listTrialContacts(clubId)]);
     return { trials, contacts };
   }, [clubId]);
   const result = useResource(`trial:${session?.user.id}:${clubId}:${id}`, load, Boolean(session && clubId && id !== 'new') && !isDemo);
@@ -59,6 +59,7 @@ function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | n
     <Field label={t("Nombre de la prueba")} value={name} onChangeText={setName} maxLength={64} editable={!busy} />
     <PrivatePhoneField label={t("Teléfono de la prueba (solo capitanes, opcional)")} value={phone} onChangeText={setPhone} editable={!busy} />
     <Field label={t("Observaciones")} value={notes} onChangeText={setNotes} maxLength={1000} multiline editable={!busy} />
+    <Body>{t("Solo los capitanes pueden ver estas observaciones.")}</Body>
     {message ? <Message error>{message}</Message> : null}
     <Button label={t("Guardar prueba")} disabled={busy || isDemo} onPress={() => { void save(); }} />
     {trial ? <Button secondary label={t("Retirar de pruebas")} disabled={busy || isDemo} onPress={() => setConfirming(true)} /> : null}

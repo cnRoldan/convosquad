@@ -41,7 +41,7 @@ test('actualiza categoría, dorsal, orden y pruebas conservando identidad y resp
   assert.equal(updated.user_id,member); assert.equal(updated.source_player_id,player.id);
   const live = await row(owner,'select * from public.players where id=$1',[player.id]);
   assert.equal(updated.sort_order_snapshot,live.sort_order);
-  assert.equal((await row(owner,'select * from public.call_up_trials where call_up_id=$1',[current.id])).notes_snapshot,'Después');
+  assert.equal((await row(owner,'select * from public.call_up_trial_notes where call_up_id=$1',[current.id])).notes,'Después');
 });
 test('nuevos sin responder, retirados fuera, pruebas actualizadas y AYUDAS conservadas', async () => {
   await query(owner,'update public.players set is_active=false where id=$1',[removed.id]);

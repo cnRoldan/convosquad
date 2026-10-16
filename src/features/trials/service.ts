@@ -1,10 +1,13 @@
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 import type { RosterCategory } from '@/features/players/categories';
-export async function listTrials(clubId: string, all = false) {
+export async function listTrials(clubId: string, all = false, includePrivateNotes = false) {
   let query = requireSupabase().from('club_trials').select('*').eq('club_id', clubId).order('sort_order').order('id');
   if (!all) query = query.eq('status', 'active');
-  return unwrap(await query);
+  const trials = unwrap(await query);
+  if (!includePrivateNotes) return trials;
+  const notes = unwrap(await requireSupabase().from('club_trial_notes').select('trial_id,notes').eq('club_id', clubId));
+  return trials.map(trial => ({ ...trial, notes: notes.find(note => note.trial_id === trial.id)?.notes ?? null }));
 }
 export async function saveTrial(clubId: string, input: { name: string; notes: string | null; phone: string | null }, id?: string) {
   return unwrap(await requireSupabase().rpc('save_club_trial_with_contact', {

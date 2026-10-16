@@ -26,8 +26,11 @@ export async function respondToCallUp(entryId: string, availability: Enums<'avai
   return unwrap(await requireSupabase().rpc('respond_to_call_up', { p_call_up_player_id: entryId, p_availability: availability }).single());
 }
 
-export async function listCallUpTrials(callUpId: string) {
-  return unwrap(await requireSupabase().from('call_up_trials').select('*').eq('call_up_id', callUpId).order('sort_order_snapshot').order('id'));
+export async function listCallUpTrials(callUpId: string, includePrivateNotes = false) {
+  const trials = unwrap(await requireSupabase().from('call_up_trials').select('*').eq('call_up_id', callUpId).order('sort_order_snapshot').order('id'));
+  if (!includePrivateNotes) return trials;
+  const notes = unwrap(await requireSupabase().from('call_up_trial_notes').select('trial_id,notes').eq('call_up_id', callUpId));
+  return trials.map(trial => ({ ...trial, notes_snapshot: notes.find(note => note.trial_id === trial.id)?.notes ?? null }));
 }
 export async function listAids(callUpId: string) {
   return unwrap(await requireSupabase().from('call_up_aids').select('*').eq('call_up_id', callUpId).order('sort_order').order('id'));
