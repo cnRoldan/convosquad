@@ -8,6 +8,7 @@ export function countAvailability(players: readonly { availability: keyof typeof
 }
 export function callUpErrorMessage(error: unknown) {
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null;
+  if (code === '40001') return 'La convocatoria ha cambiado. Actualízala antes de reiniciarla.';
   if (code === 'P0030') return 'Espera 30 segundos desde tu último voto antes de cambiarlo.';
   if (code === '23514') return 'El último aviso debe ser del mismo día y anterior a la convocatoria.';
   if (code === '23505') return 'Ya existe una convocatoria para esa fecha local en el club. Elige otro día.';

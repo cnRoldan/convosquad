@@ -10,6 +10,8 @@ import { responseCooldown } from '@/features/call-ups/last-notice';
 import { AvailabilityActions } from '@/features/call-ups/availability-actions';
 import { canRespondToPlayer } from '@/features/call-ups/list-model';
 import type { CallUpPlayer } from '@/features/call-ups/list-model';
+import { listCallUpContacts } from '@/features/call-ups/contacts';
+import { CallUpTrialActions } from '@/features/trials/call-up-trial-actions';
 import { CallUpTrialForm } from '@/features/trials/call-up-trial-form';
 import { AidsSection } from '@/features/call-ups/aids-section';
 import { CallUpAdministration } from '@/features/call-ups/administration';
@@ -51,6 +53,8 @@ export default function CallUpScreen() {
     return { call, players, trials };
   }, [clubId, callId]);
   const snapshots = useResource(`call-snapshot:${scope}:${callId}:${rosterVersion}`, load, enabled && Boolean(callId));
+  const loadContacts = useCallback(() => callId ? listCallUpContacts(callId) : Promise.resolve([]), [callId]);
+  const contacts = useResource(`contacts:${scope}:${callId}:${rosterVersion}`, loadContacts, enabled && admin && Boolean(callId));
   const latestSnapshot = useRef(snapshots.data);
   useEffect(() => { latestSnapshot.current = snapshots.data; }, [snapshots.data]);
   const demoCall: Tables<'call_ups'> | null = isDemo && upcomingCallUp ? {
@@ -69,8 +73,8 @@ export default function CallUpScreen() {
   const responseScope = `${scope}:${callId}`;
   const currentPending = pending?.scope === responseScope ? pending : null;
   const players = useMemo(() => currentPending && (currentPending.saving || currentPending.source === snapshots.data) ? sourcePlayers.map(player => player.id === currentPending.id ? { ...player, availability: currentPending.availability } : player) : sourcePlayers, [sourcePlayers, currentPending, snapshots.data]);
-  const { reload: reloadCalls } = calls; const { reload: reloadSnapshots } = snapshots;
-  const refresh = useCallback(() => { reloadCalls(); reloadSnapshots(); setAidsRevision(value => value + 1); }, [reloadCalls, reloadSnapshots]);
+  const { reload: reloadCalls } = calls; const { reload: reloadSnapshots } = snapshots; const { reload: reloadContacts } = contacts;
+  const refresh = useCallback(() => { reloadCalls(); reloadSnapshots(); reloadContacts(); setAidsRevision(value => value + 1); }, [reloadCalls, reloadSnapshots, reloadContacts]);
   const syncStatus = useCallUpSync(scope, clubId, enabled, refresh);
   const respond = useCallback(async (entryId: string, availability: typeof responseOptions[number]) => {
     const player = sourcePlayers.find(row => row.id === entryId);
@@ -119,9 +123,13 @@ export default function CallUpScreen() {
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {callStatusLabels[call.status]}</Text>
       {call.last_notice_at ? <Body>Último aviso para votar: {clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} · solo pendientes</Body> : null}
-      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={message => { setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
+      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
+      {admin && contacts.error ? <Message error>No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.</Message> : null}
       {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []}
+        trialActions={admin && !isDemo ? trial => <CallUpTrialActions key={`${trial.id}:${contacts.data?.find(contact => contact.trial_id === trial.id)?.phone ?? ''}`} trial={trial}
+          phone={contacts.data?.find(contact => contact.trial_id === trial.id)?.phone ?? ''}
+          editable={!historical && (call.status === 'open' || call.status === 'draft')} disabled={contacts.isLoading || Boolean(contacts.error)} onSaved={refresh} /> : undefined}
         trialEditor={!historical && admin && !isDemo && (call.status === 'open' || call.status === 'draft') ? <CallUpTrialForm key={responseScope} callUpId={call.id} onSaved={() => { refreshRoster(); refresh(); }} /> : null}
         aids={<AidsSection key={responseScope} callUpId={call.id} revision={aidsRevision} editable={!historical && admin && (call.status === 'open' || call.status === 'draft')} />} />}
       {isDemo ? <Body>Convocatoria simulada · los cambios no se guardan.</Body> : null}

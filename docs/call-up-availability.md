@@ -88,3 +88,22 @@ Los capitanes pueden escribir un nombre libre y pulsar **Añadir prueba** en la 
 Aplicar manualmente `20261016190000_add_call_up_trial.sql` después de las migraciones anteriores. No se ejecuta automáticamente. La función comprueba permisos de capitán y protege convocatorias cerradas, canceladas y antiguas. RLS sigue habilitado y las copias no admiten escritura directa del cliente.
 
 Por compatibilidad con los datos y RPC anteriores se conserva la columna interna `ea_id` de pruebas para almacenar el nombre libre, sin validarlo ni vincularlo como identidad EA. La interfaz de pruebas muestra nombre y observaciones, sin dorsal, EA ID o conversión automática a ficha oficial. Los campos históricos existentes no se eliminan; los nuevos registros e importaciones de la app dejan dorsal y posición vacíos.
+
+
+## Reiniciar una convocatoria
+
+**Administrar convocatoria → Reiniciar convocatoria** muestra una confirmación: «¿Estás seguro de que deseas reiniciar la convocatoria? Los votos anteriores se eliminarán». Si se confirma, la operación actualiza jugadores y PRUEBAS desde la plantilla activa, borra los votos y sus tiempos de respuesta, conserva las AYUDAS, fecha y hora, y deja la convocatoria abierta. Conserva el mismo registro y la regla de una convocatoria por día. Las convocatorias de días anteriores no admiten reinicios y no se modifican.
+
+La migración incremental `20261016200000_restart_call_up.sql` añade esta operación atómica, solo para capitanes. Aplicarla después de las anteriores; no se ejecuta remotamente desde el repositorio. La versión esperada evita que una doble confirmación con datos antiguos reinicie dos veces. El nuevo evento de publicación conserva las reglas de destinatarios: sin categoría BACKUPS, PRUEBAS o AYUDAS. El emisor proporciona las tres acciones de voto a los jugadores registrados elegibles. No se puede retirar un aviso que ya haya sido enviado o reservado; se omiten los avisos anteriores que sigan pendientes en la cola. La recepción y las acciones en el móvil siguen requiriendo validación física con la nueva APK y emisor.
+
+
+Los paneles de las seis categorías, PRUEBAS, AYUDAS y administración empiezan cerrados cada vez que se entra en Convocatoria. Se abren con su cabecera y conservan la elección mientras se consulta la pantalla. Los contadores y los botones propios para responder permanecen accesibles sin desplegar la ficha. Las flechas usan un icono vectorial centrado para mantener la alineación con cabeceras de una o dos líneas.
+
+
+## Retirar PRUEBAS/AYUDAS y teléfonos privados
+
+Los capitanes pueden quitar una PRUEBA de una convocatoria mediante su papelera y confirmación. Se conserva su ficha activa en el club para otros días y se registra una exclusión para que actualizar plantilla o reiniciar esa misma convocatoria no la vuelva a incorporar. Las AYUDAS conservan su papelera con confirmación. No se modifica ninguna convocatoria anterior ni se elimina una cuenta.
+
+Al añadir una PRUEBA o AYUDA se puede indicar un teléfono opcional con prefijo internacional (por ejemplo, +34). Los capitanes pueden editarlo, vaciarlo o abrir WhatsApp desde esa fila; no se envían mensajes automáticamente. El teléfono de una PRUEBA se conserva también para las siguientes convocatorias, con una copia privada por convocatoria que no cambia al editar el contacto en otra. Los teléfonos de AYUDAS pertenecen exclusivamente a su convocatoria y desaparecen al eliminar esa ayuda.
+
+Aplicar manualmente `20261016210000_call_up_contacts_and_trial_removal.sql` después de las anteriores. Añade tablas separadas de contactos con RLS de lectura exclusiva para capitanes del club, sin escritura directa del cliente; las RPC comprueban club, rol, convocatoria y formato. Las altas con contacto son atómicas. No se añaden teléfonos a los campos públicos de nombres, observaciones, fotos de plantilla, eventos push ni a Realtime. Los jugadores normales no consultan contactos desde la app y tampoco pueden leerlos mediante la API. Las convocatorias históricas son de consulta.

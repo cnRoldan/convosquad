@@ -22,3 +22,11 @@ export async function reorderTrials(clubId: string, ids: string[]) {
 export async function addCallUpTrial(callUpId: string, name: string, notes: string | null) {
   return unwrap(await requireSupabase().rpc('add_call_up_trial', { p_call_up_id: callUpId, p_name: name, ...(notes ? { p_notes: notes } : {}) }));
 }
+
+export async function addCallUpTrialWithContact(callUpId: string, name: string, phone: string | null) {
+  return unwrap(await requireSupabase().rpc('add_call_up_trial_with_contact', { p_call_up_id: callUpId, p_name: name, ...(phone ? { p_phone: phone } : {}) }));
+}
+export async function removeCallUpTrial(trialId: string) {
+  const { error } = await requireSupabase().rpc('remove_call_up_trial', { p_trial_id: trialId });
+  if (error) throw error;
+}

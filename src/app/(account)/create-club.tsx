@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { router } from 'expo-router';
 import { Switch, View } from 'react-native';
 import { Body, Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
+import { CrestPicker } from '@/features/clubs/crest-picker';
+import { uploadClubCrest, type ClubCrestImage } from '@/features/clubs/crest';
 import { createClub } from '@/features/clubs/service';
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
@@ -11,6 +13,8 @@ import { colors } from '@/theme';
 export default function CreateClubScreen() {
   const { isDemo } = useAuth();
   const { reloadClubs, notifyClub } = useClub();
+  const [crest, setCrest] = useState<ClubCrestImage | null>(null);
+  const [crestUploaded, setCrestUploaded] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [timezone, setTimezone] = useState('Europe/Madrid');
@@ -32,17 +36,19 @@ export default function CreateClubScreen() {
         confirmedClubId = club.id;
         setCreatedClubId(club.id);
       }
+      if (crest && !crestUploaded) { await uploadClubCrest(confirmedClubId, crest); setCrestUploaded(true); }
       await reloadClubs(confirmedClubId);
       notifyClub(confirmedClubId, 'Club creado. Ya eres su creador y primer capitán.');
       router.replace('/home');
     } catch (error) {
-      setMessage(confirmedClubId ? 'El club se ha creado, pero no se pudieron cargar sus datos. Reintenta entrar al club.' : backendErrorMessage(error));
+      setMessage(confirmedClubId ? 'El club ya está creado, pero falta completar el escudo o cargar sus datos. Reintenta para continuar sin crear otro club.' : backendErrorMessage(error));
     }
     finally { setBusy(false); }
   }
   return <Screen>
     <Heading title="Tu propio vestuario" subtitle="Serás el creador y primer capitán del club." />
     {isDemo ? <DemoNotice /> : null}
+    <CrestPicker image={crest} onChange={image => { setCrest(image); setCrestUploaded(false); }} disabled={busy || isDemo} />
     <Field label="Nombre del club" value={name} onChangeText={setName} maxLength={80} editable={!busy && !createdClubId} />
     <Field label="Descripción (opcional)" value={description} onChangeText={setDescription} maxLength={500} multiline editable={!busy && !createdClubId} />
     <Field label="Zona horaria" value={timezone} onChangeText={setTimezone} autoCapitalize="none" editable={!busy && !createdClubId} />

@@ -1,3 +1,6 @@
+import { Text, View } from 'react-native';
+import { ClubCrest } from '@/features/clubs/club-crest';
+import { colors } from '@/theme';
 import { useState } from 'react';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Body, Button, Card, Heading, Message, Screen } from '@/components/ui';
@@ -35,7 +38,8 @@ function ClubSelection() {
     <Heading title="Elige tu club" subtitle={isDemo ? 'Hola, Álex. Estos son tus vestuarios en la demo.' : 'Una cuenta, varios vestuarios independientes.'} />
     {error ? <Card title="No se pudieron cargar los clubes"><Message error>{error}</Message><Button label="Reintentar" onPress={refresh} /></Card> : null}
     {pendingInvite ? <Button label="Continuar invitación" onPress={() => router.push('/invite')} /> : null}
-    {availableClubs.map((club) => <Card key={club.id} title={club.name}>
+    {availableClubs.map((club) => <Card key={club.id}>
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}><Text style={{flex: 1, color: colors.text, fontSize: 20, fontWeight: '700'}}>{club.name}</Text><ClubCrest path={club.crestPath} name={club.name} /></View>
       {club.description ? <Body>{club.description}</Body> : null}
       <Body>{ownMemberships.find((member) => member.clubId === club.id)?.role === 'admin' ? 'Capitán' : 'Jugador'} · {club.timezone}</Body>
       <Button label="Entrar al club" onPress={() => { selectClub(club.id); router.replace('/home'); }} />
