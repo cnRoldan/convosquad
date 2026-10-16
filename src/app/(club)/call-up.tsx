@@ -40,7 +40,7 @@ export default function CallUpScreen() {
   const [lastResponse, setLastResponse] = useState<{ scope: string; at: string } | null>(null);
   const [notice, setNotice] = useState('');
   const mutationLock = useRef(false);
-  const [responseMessage, setResponseMessage] = useState<{ scope: string; text: string; error: boolean } | null>(null);
+  const [responseMessage, setResponseMessage] = useState<{ scope: string; text: string; availability?: CallUpPlayer['availability']; error: boolean } | null>(null);
   const [pending, setPending] = useState<{ scope: string; id: string; availability: CallUpPlayer['availability']; saving: boolean; source: unknown } | null>(null);
   const [aidsRevision, setAidsRevision] = useState(0);
   const localDate = clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date;
@@ -86,13 +86,13 @@ export default function CallUpScreen() {
     if (Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null), responseCooldown(ownSnapshot?.responded_at))) return;
     mutationLock.current = true;
     setPending({ scope: responseScope, id: entryId, availability, saving: true, source: snapshots.data });
-    setResponseMessage({ scope: responseScope, text: t("Guardando respuesta…"), error: false });
+    setResponseMessage({ scope: responseScope, text: "Guardando respuesta…", error: false });
     try {
       const result = await respondToCallUp(entryId, availability);
       setPending({ scope: responseScope, id: entryId, availability: result.availability, saving: false, source: latestSnapshot.current });
       if (result.responded_at) setLastResponse({ scope: responseScope, at: result.responded_at });
       reloadSnapshots();
-      setResponseMessage({ scope: responseScope, text: t("Tu respuesta: {{v0}}.", { v0: t(availabilityLabels[result.availability]) }), error: false });
+      setResponseMessage({ scope: responseScope, text: "Tu respuesta: {{v0}}.", availability: result.availability, error: false });
     } catch (cause) {
       setPending(null);
       setResponseMessage({ scope: responseScope, text: callUpErrorMessage(cause), error: true });
@@ -101,9 +101,15 @@ export default function CallUpScreen() {
   }, [historical, sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, isDemo, responseScope, reloadSnapshots, refresh, lastResponse]);
   const ownPlayer = players.find(player => player.userId === session?.user.id);
   const remaining = Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null, clock), responseCooldown(snapshots.data?.players.find(row => row.user_id === session?.user.id)?.responded_at, clock));
+  // Keep keys and domain values in state; translate only when rendering so
+  // existing feedback follows language changes, even after the vote is closed.
+  const responseFeedback = responseMessage?.scope === responseScope ? {
+    ...responseMessage,
+    text: t(responseMessage.text, responseMessage.availability ? { v0: t(availabilityLabels[responseMessage.availability]) } : undefined),
+  } : null;
   const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock)
     ? <AvailabilityActions player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
-      feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseMessage?.scope === responseScope ? responseMessage : null} onRespond={respond} /> : null;
+      feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;
   return <Screen compact footer={availabilityFooter}>
     {historical ? <View style={styles.toolbar}>
       <IconButton icon="back" label={t("Volver a la convocatoria actual")} onPress={returnToCurrent} />
@@ -121,14 +127,14 @@ export default function CallUpScreen() {
     {!historical && calls.data && calls.data.length > 1 ? <Options value={callId ?? ''} options={calls.data.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${t(callStatusLabels[row.status])}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
     {calls.isLoading || snapshots.isLoading ? <Body>{t("Cargando convocatoria…")}</Body> : null}
     {calls.error || snapshots.error ? <><Message error>{calls.error ?? snapshots.error}</Message><Button label={t("Reintentar")} onPress={refresh} /></> : null}
-    {responseMessage?.scope === responseScope && !availabilityFooter ? <Message error={responseMessage.error}>{responseMessage.text}</Message> : null}
+    {responseFeedback && !availabilityFooter ? <Message error={responseFeedback.error}>{responseFeedback.text}</Message> : null}
     {notice ? <Message>{notice}</Message> : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callStatusLabels[call.status === 'open' && votingDeadlinePassed(call, clock) ? 'closed' : call.status])}</Text>
       {call.closes_at ? <Body>{t("Cierre de votación:")}{clubLocalDateTime(call.timezone, new Date(call.closes_at)).time} · {call.timezone}</Body> : null}
       {call.status !== 'cancelled' && votingDeadlinePassed(call, clock) ? <Body>{t("El plazo para votar ha terminado.")}</Body> : null}
       {call.last_notice_at ? <Body>{t("Último aviso para votar:")}{clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} {t("· solo pendientes")}</Body> : null}
-      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? t("Convocatoria actualizada. La fotografía y respuestas se conservan.")); refreshRoster(); refresh(); }} /> : null}
+      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? "Convocatoria actualizada. La fotografía y respuestas se conservan."); refreshRoster(); refresh(); }} /> : null}
       {admin && contacts.error ? <Message error>{t("No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.")}</Message> : null}
       {snapshots.error ? <Body>{t("Respuestas no disponibles.")}</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []} showTrialNotes={admin}

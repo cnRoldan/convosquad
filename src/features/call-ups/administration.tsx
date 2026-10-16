@@ -36,7 +36,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
     let instant = call.starts_at; let noticeAt = call.last_notice_at; let closesAt = call.closes_at;
     if (action === 'edit') {
       try { instant = clubLocalTimeToInstant(date.trim(), time.trim(), call.timezone); noticeAt = lastNoticeInstant(noticeEnabled, date, noticeTime, call.timezone, instant); closesAt = closingInstant(closingEnabled, date, closingTime, call.timezone, instant, noticeAt); }
-      catch (cause) { setError(cause instanceof Error ? cause.message : t("Revisa la fecha y hora.")); return; }
+      catch (cause) { setError(cause instanceof Error ? cause.message : "Revisa la fecha y hora."); return; }
     }
     setBusy(true); setError('');
     try {
@@ -45,7 +45,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
       else if (refreshing) await refreshCallUpRoster(call.id, action === 'open');
       else await updateCallUp(call.id, instant, action === 'edit' ? call.status : action, noticeAt, closesAt);
       setAction(null);
-      onSaved(action === 'restart' ? t("Convocatoria reiniciada. Todos los jugadores están sin responder y se ha preparado un nuevo aviso.") : refreshing ? t("Plantilla de la convocatoria actualizada. Se conservan las respuestas de quienes continúan y las AYUDAS.") : undefined, action === 'restart');
+      onSaved(action === 'restart' ? "Convocatoria reiniciada. Todos los jugadores están sin responder y se ha preparado un nuevo aviso." : refreshing ? "Plantilla de la convocatoria actualizada. Se conservan las respuestas de quienes continúan y las AYUDAS." : undefined, action === 'restart');
     }
     catch (cause) { setError(callUpErrorMessage(cause)); }
     finally { setBusy(false); }

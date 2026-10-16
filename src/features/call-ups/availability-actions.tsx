@@ -16,7 +16,7 @@ export function AvailabilityActions({ player, disabled, feedback, onRespond }: {
   return <View pointerEvents="box-none" style={styles.position}>
     <View style={styles.card} testID="availability-actions">
       <Text accessibilityLiveRegion="polite" style={[styles.status, feedback?.error && { color: colors.danger }]}>
-        {t(feedback?.text ?? t("Tu disponibilidad: {{v0}}", { v0: t(availabilityLabels[player.availability]) }))}
+        {feedback?.text ?? t("Tu disponibilidad: {{v0}}", { v0: t(availabilityLabels[player.availability]) })}
       </Text>
       <View style={styles.buttons}>
         {responseOptions.map(status => <Pressable key={status} accessibilityRole="button"

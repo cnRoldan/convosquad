@@ -37,7 +37,7 @@ export function CallUpTrialActions({ trial, phone, editable, disabled, onSaved }
       </> : null}
       <IconButton icon="whatsapp" label={t("WhatsApp de {{v0}}", { v0: trial.ea_id_snapshot })} disabled={busy || disabled || !phone} onPress={() => {
         setMessage('');
-        void (async () => { try { await Linking.openURL(whatsappUrl(phone)); } catch { setMessage(t("No se pudo abrir WhatsApp. Revisa el número e inténtalo de nuevo.")); } })();
+        void (async () => { try { await Linking.openURL(whatsappUrl(phone)); } catch { setMessage("No se pudo abrir WhatsApp. Revisa el número e inténtalo de nuevo."); } })();
       }} />
     </View>
     {message ? <Message error>{message}</Message> : null}

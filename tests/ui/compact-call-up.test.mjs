@@ -41,7 +41,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, updates: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
@@ -118,6 +118,14 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         const index = aids.findIndex(aid => `eq.${aid.id}` === url.searchParams.get('id'));
         aids.splice(index, 1);
         return route.fulfill({status: 204});
+      }
+      if (endpoint === 'update_call_up_with_schedule') {
+        assert.equal(role, 'admin');
+        const body = request.postDataJSON();
+        assert.equal(body.p_call_up_id, callId);
+        call.status = body.p_status; call.status_version++; call.updated_at = new Date().toISOString();
+        data.updates++;
+        return route.fulfill({json: call});
       }
       if (endpoint === 'restart_call_up') {
         assert.equal(role, 'admin');
@@ -573,4 +581,48 @@ test('observaciones de convocatoria solo aparecen para capitanes, también en hi
       else assert.equal(await note.count(), 0);
     } finally { await f.close(); }
   }
+});
+
+
+test('mensajes de voto y cierre siguen el idioma actual sin repetir acciones', async () => {
+  const f = await fixture({role: 'admin'});
+  const catalogs = Object.fromEntries(['es','de','en','fr'].map(language => [language, JSON.parse(readFileSync(new URL(`../../src/features/i18n/locales/${language}.json`, import.meta.url), 'utf8'))]));
+  const noticeKey = 'Convocatoria actualizada. La fotografía y respuestas se conservan.';
+  const responseKey = 'Tu respuesta: {{v0}}.';
+  let language = 'es';
+  async function change(next, name) {
+    await f.page.getByRole('button', {name: catalogs[language]['Cambiar idioma'], exact: true}).click();
+    await f.page.getByRole('radio', {name, exact: true}).click();
+    await f.page.getByRole('button', {name: catalogs[next]['Cambiar idioma'], exact: true}).waitFor();
+    language = next;
+  }
+  try {
+    const {page} = f;
+    await change('de', 'Deutsch');
+    const de = catalogs.de;
+    const voteLabel = de['{{v0}} para {{v1}}'].replace('{{v0}}',de.Disponible).replace('{{v1}}','Jugador_4');
+    await page.getByTestId('availability-actions').getByRole('button', {name: voteLabel, exact: true}).click();
+    await page.getByText(de['Guardando respuesta…'], {exact: true}).waitFor();
+    await change('en', 'English');
+    await page.getByText(catalogs.en['Guardando respuesta…'], {exact: true}).waitFor();
+    f.data.release();
+    await page.getByText(catalogs.en[responseKey].replace('{{v0}}',catalogs.en.Disponible), {exact: true}).waitFor();
+    await change('de', 'Deutsch');
+    await page.getByRole('button', {name: de['Administrar convocatoria'], exact: true}).click();
+    await page.getByRole('button', {name: de['Cerrar convocatoria'], exact: true}).click();
+    await page.getByRole('button', {name: de['Cerrar convocatoria'], exact: true}).last().click();
+    await page.getByText(de[noticeKey], {exact: true}).waitFor();
+    for (const [next,name] of [['es','Español'],['fr','Français'],['en','English'],['de','Deutsch'],['es','Español']]) {
+      await change(next,name);
+      await page.getByText(catalogs[next][noticeKey], {exact: true}).waitFor();
+      await page.getByText(catalogs[next][responseKey].replace('{{v0}}',catalogs[next].Disponible), {exact: true}).waitFor();
+      assert.equal(await page.getByTestId('availability-actions').count(),0);
+    }
+    assert.equal(f.data.writes,1);
+    assert.equal(f.data.updates,1);
+    assert.equal(await page.getByText(de[noticeKey], {exact: true}).count(),0);
+    await page.screenshot({path: 'test-results/call-up-language-feedback.png'});
+    assert.equal(f.data.refreshes,0);
+    assert.equal(f.data.restarts,0);
+  } finally { await f.close(); }
 });

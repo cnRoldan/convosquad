@@ -43,7 +43,7 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
   }
   function save(body: string, phoneValue: string, id?: string) {
     if (!clubId) return;
-    if (!body.trim() || body.trim().length > 500) return setMessage(t("Introduce una anotación de hasta 500 caracteres."));
+    if (!body.trim() || body.trim().length > 500) return setMessage("Introduce una anotación de hasta 500 caracteres.");
     let normalized: string | null;
     try { normalized = normalizePhone(phoneValue); } catch (error) { setMessage((error as Error).message); return; }
     void mutate(() => saveAidWithContact(callUpId, body.trim(), normalized, id)).then(saved => { if (saved && !id) { setText(''); setPhone(''); } });
