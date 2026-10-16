@@ -33,6 +33,14 @@
           "color": "#B4F16C",
           "icon": "./assets/images/notification-icon.png"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permite que ConvoSquad seleccione una imagen para el escudo de tu club.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

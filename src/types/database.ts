@@ -394,6 +394,7 @@ export type Database = {
           created_by: string | null;
           created_at: string;
           reminder_minutes: number | null;
+          crest_path: string | null;
         };
         Insert: {
           id?: string;
@@ -404,6 +405,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           reminder_minutes?: number | null;
+          crest_path?: string | null;
         };
         Update: {
           id?: string;
@@ -414,6 +416,7 @@ export type Database = {
           created_by?: string | null;
           created_at?: string;
           reminder_minutes?: number | null;
+          crest_path?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'clubs_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
@@ -926,6 +929,13 @@ export type Database = {
           p_query: string;
         };
         Returns: Database['public']['Tables']['club_directory']['Row'][];
+      };
+      set_club_crest: {
+        Args: {
+          p_club_id: string;
+          p_has_crest: boolean;
+        };
+        Returns: Database['public']['Tables']['clubs']['Row'][];
       };
       set_club_member: {
         Args: {

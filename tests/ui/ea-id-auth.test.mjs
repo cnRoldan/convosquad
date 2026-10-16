@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false } = {}) {
+async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -42,6 +42,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     localStorage.setItem('sb-auth-auth-token', JSON.stringify({ user, access_token: token, refresh_token: 'fixture', expires_at, expires_in: 3600, token_type: 'bearer' }));
   }, { userId });
   let voteNotifications = true;
+  const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
   const page = await context.newPage(); const requests = []; const errors = [];
   page.setDefaultTimeout(10000);
   page.on('pageerror', error => errors.push(error.message));
@@ -49,8 +50,18 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     const req = route.request(); const url = new URL(req.url());
     if (url.origin === origin) return route.continue();
     if (url.hostname !== 'auth.example.test') throw new Error('External request blocked');
+    if (url.pathname.includes('/storage/v1/object/')) {
+      if (req.method() === 'GET') return route.fulfill({contentType: 'image/png', body: transparentPng});
+      if (url.pathname.includes('/object/sign/')) return route.fulfill({json: {signedURL: `/object/sign/club-crests/${club.id}/crest.png?token=fixture`}});
+      const bytes = req.postDataBuffer();
+      requests.push({endpoint: 'crest-upload', body: {contentType: req.headers()['content-type'], pngSignature: bytes?.subarray(0,8).toString('hex'), bytes: bytes?.toString('base64')}});
+      if (failCrestUploadOnce) { failCrestUploadOnce = false; return route.fulfill({status: 500, json: {message: 'Fixture upload failure'}}); }
+      return route.fulfill({json: {Key: `club-crests/${club.id}/crest.png`}});
+    }
     const endpoint = url.pathname.split('/').at(-1); const body = req.postData() ? req.postDataJSON() : null;
     requests.push({ endpoint, body });
+    if (endpoint === 'create_club') { club.name = body.p_name; return route.fulfill({json: club}); }
+    if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
     if (endpoint === 'create_call_up_with_notice') return route.fulfill({ json: { id: 'new-call' } });
@@ -82,7 +93,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     if (['clubs', 'club_members', 'search_clubs', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
     throw new Error(`Unexpected fixture endpoint: ${endpoint}`);
   });
-  return { page, requests, async close() { assert.deepEqual(errors, []); await context.close(); } };
+  return { page, requests, crestFixture: transparentPng, async close() { assert.deepEqual(errors, []); await context.close(); } };
 }
 
 test('registro móvil: dos campos, sesión inmediata y navegación a clubes sin confirmar correo', async () => {
@@ -246,4 +257,59 @@ test('preferencia personal de votos se guarda sin pedir datos de otras cuentas',
     await f.page.reload();
     await f.page.getByRole('switch',{name:'Avisarme cuando otro jugador vote',exact:true,checked:false}).waitFor();
   }finally{await f.close();}
+});
+
+test('escudo PNG se selecciona, se convierte sin perder alfa y aparece junto al club y en cabecera', async () => {
+  const f = await fixture({clubRole: 'admin'});
+  try {
+    const {page} = f;
+    await page.goto(`${origin}/club-settings`);
+    const chooserPromise = page.waitForEvent('filechooser');
+    await page.getByRole('button', {name: 'Añadir escudo (opcional)', exact: true}).click();
+    const chooser = await chooserPromise;
+    // PNG transparente de dos píxeles por lado, sin datos externos.
+    await chooser.setFiles({name: 'escudo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=','base64')});
+    await page.getByRole('img', {name: 'Vista previa del escudo', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Guardar escudo', exact: true}).click();
+    await page.getByText('Escudo actualizado.', {exact: true}).waitFor();
+    const upload = f.requests.find(request => request.endpoint === 'crest-upload');
+    assert.equal(upload.body.contentType, 'image/png');
+    assert.equal(upload.body.pngSignature, '89504e470d0a1a0a');
+    const alpha = await page.evaluate(async base64 => {
+      const image = new Image(); image.src = `data:image/png;base64,${base64}`; await image.decode();
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+      const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+      return context.getImageData(0, 0, 1, 1).data[3];
+    }, upload.body.bytes);
+    assert.equal(alpha, 0, 'PNG transparency must survive conversion and upload');
+    await page.goto(`${origin}/clubs`);
+    const cardImage = page.getByRole('img', {name: 'Escudo de Club de prueba', exact: true});
+    await cardImage.waitFor();
+    const imageBox = await cardImage.boundingBox(); const nameBox = await page.getByText('Club de prueba', {exact: true}).boundingBox();
+    assert.ok(imageBox.x > nameBox.x);
+    await page.getByRole('button', {name: 'Entrar al club', exact: true}).click();
+    const headerImage = page.getByRole('img', {name: 'Escudo de Club de prueba', exact: true}); await headerImage.waitFor();
+    const headerBox = await headerImage.boundingBox(); assert.equal(headerBox.width, 32); assert.ok(headerBox.x < 60);
+  } finally { await f.close(); }
+});
+
+test('crear club con escudo permite reintentar una subida fallida sin duplicar el club', async () => {
+  const f = await fixture({clubRole: 'admin', failCrestUploadOnce: true});
+  try {
+    const {page} = f;
+    await page.goto(`${origin}/create-club`);
+    await page.getByRole('textbox', {name: 'Nombre del club', exact: true}).fill('Club con escudo');
+    const choosing = page.waitForEvent('filechooser');
+    await page.getByRole('button', {name: 'Añadir escudo (opcional)', exact: true}).click();
+    await (await choosing).setFiles({name: 'escudo.png', mimeType: 'image/png', buffer: f.crestFixture});
+    await page.getByRole('img', {name: 'Vista previa del escudo', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Crear club', exact: true}).click();
+    await page.getByText(/El club ya está creado, pero falta completar el escudo/).waitFor();
+    assert.equal(f.requests.filter(request => request.endpoint === 'create_club').length, 1);
+    await page.getByRole('button', {name: 'Entrar al club creado', exact: true}).click();
+    await page.waitForURL('**/home');
+    assert.equal(f.requests.filter(request => request.endpoint === 'create_club').length, 1);
+    assert.equal(f.requests.filter(request => request.endpoint === 'crest-upload').length, 2);
+    await page.getByRole('img', {name: 'Escudo de Club con escudo', exact: true}).waitFor();
+  } finally { await f.close(); }
 });

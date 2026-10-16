@@ -1,3 +1,4 @@
+import { CrestSettings } from '@/features/clubs/crest-settings';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Heading, Message, Screen } from '@/components/ui';
@@ -54,6 +55,7 @@ function ClubSettingsContent() {
     {result.isLoading ? <Body>Cargando configuración…</Body> : null}
     {result.error ? <><Message error>{result.error}</Message><Button secondary label="Reintentar" onPress={result.reload} /></> : null}
     {message ? <Message>{message}</Message> : null}
+    {admin && !isDemo ? <CrestSettings /> : null}
     {data ? <>
       <Card title="Capitanes del club">
         <Body>Los capitanes pueden gestionar la plantilla, las convocatorias y los avisos. Solo el creador puede eliminar el club.</Body>
