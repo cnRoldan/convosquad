@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, browserLanguage = 'es-ES' } = {}) {
+async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -46,6 +46,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     {id: 'trial-two', club_id: club.id, ea_id: 'Prueba segunda', status: 'active', sort_order: 1, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
     {id: 'trial-retired', club_id: club.id, ea_id: 'Prueba retirada', status: 'withdrawn', sort_order: 2, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
   ] : [];
+  const trialContacts = rosterTrials ? [{trial_id: 'trial-one', phone: '+34600000000'}] : [];
   let preferredLanguage = null;
   let voteNotifications = true;
   const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
@@ -75,7 +76,18 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
       if (endpoint === 'club_trials') return route.fulfill({json: trials.filter(trial => url.searchParams.get('status') !== 'eq.active' || trial.status === 'active').sort((a,b) => a.sort_order - b.sort_order)});
       if (endpoint === 'club_trial_contacts') {
         assert.equal(clubRole, 'admin');
-        return route.fulfill({json: rosterTrials ? [{trial_id: 'trial-one', phone: '+34600000000'}] : []});
+        if (failTrialContacts) return route.fulfill({status: 400, json: {message: 'Contacts unavailable'}});
+        return route.fulfill({json: trialContacts});
+      }
+      if (endpoint === 'save_club_trial_with_contact') {
+        assert.equal(clubRole, 'admin');
+        let trial = trials.find(row => row.id === body.p_trial_id);
+        if (!trial) { trial = {id: 'trial-new', club_id: club.id, status: 'active', sort_order: trials.length, created_at: '2026-10-16T12:00:00Z'}; trials.push(trial); }
+        Object.assign(trial, {ea_id: body.p_name, notes: body.p_notes});
+        const previous = trialContacts.findIndex(row => row.trial_id === trial.id);
+        if (previous >= 0) trialContacts.splice(previous, 1);
+        if (body.p_phone) trialContacts.push({trial_id: trial.id, phone: body.p_phone});
+        return route.fulfill({json: trial});
       }
       if (endpoint === 'withdraw_trial') {
         assert.equal(clubRole, 'admin');
@@ -485,4 +497,49 @@ test('escudos reutilizan URL al navegar y se invalidan al guardar una sustituci�
   await page.getByRole('tab',{name:'Roster',exact:true}).click();await page.getByRole('img',{name:/Club de prueba/}).waitFor();
   assert.equal(f.requests.filter(r=>r.endpoint==='crest-sign').length,signedBefore);
  }finally{await f.close();}
+});
+
+
+test('gestionar prueba: carga teléfono privado y guarda con prefijo normalizado para WhatsApp', async () => {
+  const f = await fixture({clubRole: 'admin', rosterTrials: true});
+  try {
+    const {page} = f;
+    await page.goto(`${origin}/roster`);
+    await page.getByRole('button', {name: 'Editar prueba de Prueba primera', exact: true}).click();
+    const phone = page.getByLabel('Teléfono de la prueba (solo capitanes, opcional)', {exact: true});
+    await phone.waitFor(); assert.equal(await phone.inputValue(), '+34600000000');
+    await page.getByText('Solo los capitanes pueden ver este número.', {exact: true}).waitFor();
+    await phone.fill('666666666');
+    await page.getByRole('button', {name: 'Guardar prueba', exact: true}).click();
+    await page.getByText('Introduce el teléfono con prefijo internacional, por ejemplo +34 612 345 678.', {exact: true}).waitFor();
+    assert.equal(f.requests.some(r => r.endpoint === 'save_club_trial_with_contact'), false);
+    await phone.fill('+34 612 345 678');
+    await page.getByRole('button', {name: 'Guardar prueba', exact: true}).click();
+    await page.getByRole('button', {name: 'WhatsApp de Prueba primera', exact: true, disabled: false}).waitFor();
+    assert.equal(f.requests.find(r => r.endpoint === 'save_club_trial_with_contact').body.p_phone, '+34612345678');
+    await page.evaluate(() => { window.open = url => { window.__trialWhatsapp = String(url); return null; }; });
+    await page.getByRole('button', {name: 'WhatsApp de Prueba primera', exact: true, disabled: false}).click();
+    await page.waitForFunction(() => window.__trialWhatsapp === 'https://wa.me/34612345678');
+  } finally { await f.close(); }
+});
+
+test('nueva prueba admite teléfono opcional; fallo al cargar contacto impide sobrescribirlo', async () => {
+  const f = await fixture({clubRole: 'admin'});
+  try {
+    await f.page.goto(`${origin}/roster`);
+    await f.page.getByRole('button', {name: 'Añadir prueba', exact: true}).click();
+    await f.page.getByLabel('Nombre de la prueba', {exact: true}).fill('Nueva prueba');
+    await f.page.getByLabel('Teléfono de la prueba (solo capitanes, opcional)', {exact: true}).fill('+44 7000 000000');
+    await f.page.getByRole('button', {name: 'Guardar prueba', exact: true}).click();
+    await f.page.getByRole('button', {name: 'WhatsApp de Nueva prueba', exact: true, disabled: false}).waitFor();
+    assert.equal(f.requests.find(r => r.endpoint === 'save_club_trial_with_contact').body.p_phone, '+447000000000');
+  } finally { await f.close(); }
+  const failed = await fixture({clubRole: 'admin', rosterTrials: true, failTrialContacts: true});
+  try {
+    await failed.page.goto(`${origin}/roster`);
+    await failed.page.getByRole('button', {name: 'Editar prueba de Prueba primera', exact: true}).click();
+    await failed.page.getByRole('button', {name: 'Volver a la plantilla', exact: true}).waitFor();
+    assert.equal(await failed.page.getByRole('button', {name: 'Guardar prueba', exact: true}).count(), 0);
+    assert.equal(failed.requests.some(r => r.endpoint === 'save_club_trial_with_contact'), false);
+  } finally { await failed.close(); }
 });

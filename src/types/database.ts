@@ -940,6 +940,16 @@ export type Database = {
         };
         Returns: undefined;
       };
+      save_club_trial_with_contact: {
+        Args: {
+          p_club_id: string;
+          p_name: string;
+          p_notes?: string;
+          p_phone?: string;
+          p_trial_id?: string;
+        };
+        Returns: Database['public']['Tables']['club_trials']['Row'][];
+      };
       search_clubs: {
         Args: {
           p_query: string;
