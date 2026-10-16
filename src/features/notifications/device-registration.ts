@@ -19,3 +19,18 @@ export async function registerDeviceWithPermission(deps: {
   await deps.register(token);
   return await deps.current() ? 'enabled' : 'cancelled';
 }
+
+export async function requestDevicePermission(deps: {
+  automatic: boolean;
+  previouslyRequested: () => Promise<boolean>;
+  current: () => Promise<boolean>;
+  canAskAgain: () => Promise<boolean>;
+  markRequested: () => Promise<void>;
+  request: () => Promise<boolean>;
+}): Promise<boolean> {
+  if (deps.automatic && await deps.previouslyRequested()) return false;
+  if (!await deps.current() || !await deps.canAskAgain()) return false;
+  await deps.markRequested();
+  if (!await deps.current()) return false;
+  return deps.request();
+}

@@ -4,7 +4,7 @@ import { router, useRootNavigationState } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nativePushSupported, notificationRuntime } from '@/lib/notifications';
 import { useAuth } from '@/features/auth/auth-context';
-import { syncInstallation } from './device-service';
+import { beginDeviceSession, syncInstallation } from './device-service';
 import { usePendingPush } from './pending-push-context';
 import { readNotificationResponse } from './actions';
 
@@ -18,6 +18,7 @@ export function NativePushLifecycle() {
   useEffect(() => {
     if (!nativePushSupported() || isDemo) return;
     let active = true;
+    if (userId) beginDeviceSession(userId);
     const subscriptions: { remove: () => void }[] = [];
     let responding = Promise.resolve();
     const sync = () => { if (active && userId) void syncInstallation(userId).catch(() => undefined); };
@@ -42,9 +43,9 @@ export function NativePushLifecycle() {
       subscriptions.push(Notifications.addPushTokenListener(sync));
       const last = await Notifications.getLastNotificationResponseAsync();
       if (last && (Platform.OS !== 'android' || last.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER)) receive(last);
-      sync();
+      if (userId && AppState.currentState === 'active') void syncInstallation(userId, true).catch(() => undefined);
     }).catch(() => undefined);
-    subscriptions.push(AppState.addEventListener('change', state => { if (state === 'active') sync(); }));
+    subscriptions.push(AppState.addEventListener('change', state => { if (state === 'active' && active && userId) void syncInstallation(userId, true).catch(() => undefined); }));
     return () => { active = false; subscriptions.forEach(subscription => subscription.remove()); };
   }, [userId, isDemo, rememberPush]);
   return null;

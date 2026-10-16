@@ -108,3 +108,11 @@ La configuración local conserva `name: ConvoSquad`, Android package/iOS bundle 
 ## Avisos y acciones de disponibilidad
 
 La infraestructura inicial se amplía con `20261015220000_call_up_notifications.sql`: avisos por convocatoria, preferencias personales de avisos de votos, cooldown de 30 segundos e idempotencia de respuestas desde push. El worker `send-reminders` procesa ahora todos los tipos de evento. Consulta [Capitanes y avisos](captains-reminders.md) para la configuración vigente y las pruebas físicas pendientes; las notas anteriores sobre acciones interactivas pendientes corresponden a la fase inicial.
+
+## Activación por defecto en móviles
+
+Al iniciar o restaurar una sesión en una compilación móvil compatible, la app registra el dispositivo automáticamente si el permiso del sistema ya está concedido. Si falta, solicita el permiso una sola vez por instalación al estar en primer plano. No se solicitan tokens en web ni en modo demostración.
+
+El permiso de Android/iOS sigue siendo necesario. Tras rechazarlo no se repite automáticamente la solicitud; el usuario puede usar **Activar las notificaciones de convocatoria** o los ajustes del dispositivo. Una desactivación explícita se conserva en ese dispositivo y cuenta, incluso tras cerrar sesión; el cierre de sesión desvincula el dispositivo. La preferencia personal de avisos de votos ajenos se mantiene independiente.
+
+Prueba manual con una APK nueva: iniciar sesión en una instalación sin configurar, aceptar el permiso y comprobar que se reciben avisos sin entrar en ajustes. Probar también rechazo sin solicitudes repetidas, activación manual posterior, desactivación persistente y cierre de sesión. Esta verificación requiere un móvil físico; las pruebas automatizadas no acreditan recepción real.
