@@ -60,7 +60,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     }
     const endpoint = url.pathname.split('/').at(-1); const body = req.postData() ? req.postDataJSON() : null;
     requests.push({ endpoint, body });
-    if (endpoint === 'create_club') { club.name = body.p_name; return route.fulfill({json: club}); }
+    if (endpoint === 'create_club') { club.name = body.p_name; club.timezone = body.p_timezone; return route.fulfill({json: club}); }
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
@@ -312,4 +312,24 @@ test('crear club con escudo permite reintentar una subida fallida sin duplicar e
     assert.equal(f.requests.filter(request => request.endpoint === 'crest-upload').length, 2);
     await page.getByRole('img', {name: 'Escudo de Club con escudo', exact: true}).waitFor();
   } finally { await f.close(); }
+});
+
+test('crear club usa selector con GMT y Madrid por defecto, admite Canarias y Reino Unido', async () => {
+  for (const timezone of ['Europe/Madrid', 'Atlantic/Canary', 'Europe/London']) {
+    const f = await fixture({clubRole: 'admin'});
+    try {
+      const {page} = f;
+      await page.goto(`${origin}/create-club`);
+      const picker = page.getByRole('combobox', {name: 'Zona horaria', exact: true});
+      await picker.waitFor();
+      assert.equal(await picker.inputValue(), 'Europe/Madrid');
+      assert.equal(await page.getByRole('textbox', {name: 'Zona horaria', exact: true}).count(), 0);
+      assert.match(await picker.locator('option:checked').textContent(), /Madrid.*GMT/);
+      await picker.selectOption(timezone);
+      await page.getByRole('textbox', {name: 'Nombre del club', exact: true}).fill('Club horario');
+      await page.getByRole('button', {name: 'Crear club', exact: true}).click();
+      await page.waitForURL('**/home');
+      assert.equal(f.requests.find(request => request.endpoint === 'create_club').body.p_timezone, timezone);
+    } finally { await f.close(); }
+  }
 });
