@@ -98,3 +98,12 @@ La migración incremental `20261016200000_restart_call_up.sql` añade esta opera
 
 
 Los paneles de las seis categorías, PRUEBAS, AYUDAS y administración empiezan cerrados cada vez que se entra en Convocatoria. Se abren con su cabecera y conservan la elección mientras se consulta la pantalla. Los contadores y los botones propios para responder permanecen accesibles sin desplegar la ficha. Las flechas usan un icono vectorial centrado para mantener la alineación con cabeceras de una o dos líneas.
+
+
+## Retirar PRUEBAS/AYUDAS y teléfonos privados
+
+Los capitanes pueden quitar una PRUEBA de una convocatoria mediante su papelera y confirmación. Se conserva su ficha activa en el club para otros días y se registra una exclusión para que actualizar plantilla o reiniciar esa misma convocatoria no la vuelva a incorporar. Las AYUDAS conservan su papelera con confirmación. No se modifica ninguna convocatoria anterior ni se elimina una cuenta.
+
+Al añadir una PRUEBA o AYUDA se puede indicar un teléfono opcional con prefijo internacional (por ejemplo, +34). Los capitanes pueden editarlo, vaciarlo o abrir WhatsApp desde esa fila; no se envían mensajes automáticamente. El teléfono de una PRUEBA se conserva también para las siguientes convocatorias, con una copia privada por convocatoria que no cambia al editar el contacto en otra. Los teléfonos de AYUDAS pertenecen exclusivamente a su convocatoria y desaparecen al eliminar esa ayuda.
+
+Aplicar manualmente `20261016210000_call_up_contacts_and_trial_removal.sql` después de las anteriores. Añade tablas separadas de contactos con RLS de lectura exclusiva para capitanes del club, sin escritura directa del cliente; las RPC comprueban club, rol, convocatoria y formato. Las altas con contacto son atómicas. No se añaden teléfonos a los campos públicos de nombres, observaciones, fotos de plantilla, eventos push ni a Realtime. Los jugadores normales no consultan contactos desde la app y tampoco pueden leerlos mediante la API. Las convocatorias históricas son de consulta.

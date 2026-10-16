@@ -40,7 +40,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, restarts: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
@@ -54,7 +54,9 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     responded_at: null, created_at: call.created_at, updated_at: call.updated_at,
   }));
   if (cooldown && players[3]) { players[3].availability = 'available'; players[3].responded_at = new Date().toISOString(); }
-  const trialSnapshots = [{ id: 'trial', ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
+  const privateContacts = [];
+  const aids = [{id: 'aid', body: 'Ayuda fuera del total', sort_order: 0}];
+  const trialSnapshots = [{ id: 'trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, last_sign_in_at: new Date().toISOString(), created_at: call.created_at };
   const expiry = Math.floor(Date.now() / 1000) + 3600;
   const jwt = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: userId, exp: expiry })).toString('base64url')}.fixture`;
@@ -84,6 +86,37 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'save_call_up_contact') {
+        assert.equal(role, 'admin');
+        const body = request.postDataJSON();
+        assert.equal(body.p_call_up_id, callId);
+        const key = body.p_kind === 'trial' ? 'trial_id' : 'aid_id';
+        const index = privateContacts.findIndex(contact => contact[key] === body.p_entry_id);
+        if (index >= 0) privateContacts.splice(index, 1);
+        if (body.p_phone) privateContacts.push({id: 'saved-contact', [key]: body.p_entry_id, phone: body.p_phone});
+        return route.fulfill({json: null});
+      }
+      if (endpoint === 'remove_call_up_trial') {
+        assert.equal(role, 'admin'); data.trialRemovals++;
+        const index = trialSnapshots.findIndex(trial => trial.id === request.postDataJSON().p_trial_id);
+        trialSnapshots.splice(index, 1);
+        return route.fulfill({json: null});
+      }
+      if (endpoint === 'save_call_up_aid_with_contact') {
+        assert.equal(role, 'admin');
+        const body = request.postDataJSON();
+        const aid = body.p_aid_id ? aids.find(aid => aid.id === body.p_aid_id) : {id: 'new-aid', sort_order: aids.length};
+        aid.body = body.p_body;
+        if (!body.p_aid_id) aids.push(aid);
+        if (body.p_phone) privateContacts.push({id: 'aid-contact', aid_id: aid.id, phone: body.p_phone});
+        return route.fulfill({json: aid});
+      }
+      if (endpoint === 'call_up_aids' && request.method() === 'DELETE') {
+        assert.equal(role, 'admin'); data.aidRemovals++;
+        const index = aids.findIndex(aid => `eq.${aid.id}` === url.searchParams.get('id'));
+        aids.splice(index, 1);
+        return route.fulfill({status: 204});
+      }
       if (endpoint === 'restart_call_up') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();
@@ -94,13 +127,14 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         for (const player of players) { player.availability = 'unanswered'; player.responded_at = null; }
         return route.fulfill({json: call});
       }
-      if (endpoint === 'add_call_up_trial') {
+      if (endpoint === 'add_call_up_trial_with_contact') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();
         assert.equal(body.p_call_up_id, callId);
         assert.equal('p_ea_id' in body, false);
-        const snapshot = { id: 'added-trial', ea_id_snapshot: body.p_name, jersey_number_snapshot: null, position_snapshot: null, notes_snapshot: null };
+        const snapshot = { id: 'added-trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: body.p_name, jersey_number_snapshot: null, position_snapshot: null, notes_snapshot: null };
         trialSnapshots.push(snapshot); data.trialAdds++;
+        if (body.p_phone) privateContacts.push({id: 'trial-contact', trial_id: snapshot.id, phone: body.p_phone});
         return route.fulfill({ json: snapshot });
       }
       if (endpoint === 'refresh_call_up_roster') {
@@ -133,7 +167,8 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : [call];
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
     else if (endpoint === 'call_up_trials') result = trialSnapshots;
-    else if (endpoint === 'call_up_aids') result = [{ id: 'aid', body: 'Ayuda fuera del total', sort_order: 0 }];
+    else if (endpoint === 'call_up_aids') result = aids;
+    else if (endpoint === 'call_up_contacts') { assert.equal(role, 'admin'); data.privateReads++; result = privateContacts; }
     else if (endpoint === 'club_trials' || endpoint === 'notification_preferences') result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     await route.fulfill({ json: result });
@@ -443,5 +478,44 @@ test('todos los paneles empiezan cerrados, se abren a petición y la flecha est�
     await page.getByRole('tab', {name: 'Plantilla', exact: true}).click();
     await page.getByRole('tab', {name: 'Convocatoria', exact: true}).click();
     assert.equal(await page.getByRole('button', {name: 'PORTEROS (4)', exact: true}).getAttribute('aria-expanded'), 'false');
+  } finally { await f.close(); }
+});
+
+test('capitanes guardan teléfonos privados, abren WhatsApp y quitan pruebas y ayudas con confirmación', async () => {
+  const f = await fixture({role: 'admin'});
+  try {
+    const {page} = f;
+    await page.getByRole('textbox', {name: 'Nueva prueba', exact: true}).fill('Contacto de prueba');
+    await page.getByRole('textbox', {name: 'Teléfono de la prueba (solo capitanes, opcional)', exact: true}).fill('+34 600 000 000');
+    await page.getByRole('button', {name: 'Añadir prueba', exact: true}).click();
+    const panel = page.getByRole('button', {name: 'PRUEBAS (2)', exact: true}); await panel.waitFor();
+    if (await panel.getAttribute('aria-expanded') === 'false') await panel.click();
+    await page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).waitFor();
+    await page.evaluate(() => { window.open = url => { window.__contactUrl = String(url); return null; }; });
+    await page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).click();
+    await page.waitForFunction(() => window.__contactUrl === 'https://wa.me/34600000000');
+    await page.getByRole('button', {name: 'Quitar prueba Contacto de prueba', exact: true}).click();
+    await page.getByRole('button', {name: 'Cancelar', exact: true}).click(); assert.equal(f.data.trialRemovals, 0);
+    await page.getByRole('button', {name: 'Quitar prueba Contacto de prueba', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirmar', exact: true}).click();
+    await page.getByRole('button', {name: 'PRUEBAS (1)', exact: true}).waitFor(); assert.equal(f.data.trialRemovals, 1);
+    const aidPanel = page.getByRole('button', {name: 'AYUDAS (1)', exact: true});
+    if (await aidPanel.getAttribute('aria-expanded') === 'false') await aidPanel.click();
+    await page.getByRole('textbox', {name: 'Nueva ayuda', exact: true}).fill('Refuerzo invitado');
+    await page.getByRole('textbox', {name: 'Teléfono de la ayuda (solo capitanes, opcional)', exact: true}).fill('+34600000000');
+    await page.getByRole('button', {name: 'Añadir ayuda', exact: true}).click();
+    await page.getByRole('button', {name: 'WhatsApp de ayuda 2', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Eliminar ayuda 2', exact: true}).click();
+    await page.getByRole('button', {name: 'Confirmar', exact: true}).click();
+    await page.getByRole('button', {name: 'AYUDAS (1)', exact: true}).waitFor(); assert.equal(f.data.aidRemovals, 1);
+  } finally { await f.close(); }
+});
+
+test('jugadores no solicitan teléfonos privados ni ven campos de contacto o acciones de retirar', async () => {
+  const f = await fixture();
+  try {
+    assert.equal(f.data.privateReads, 0);
+    assert.equal(await f.page.getByRole('textbox', {name: /Teléfono/}).count(), 0);
+    assert.equal(await f.page.getByRole('button', {name: /WhatsApp de|Quitar prueba|Eliminar ayuda/}).count(), 0);
   } finally { await f.close(); }
 });

@@ -14,9 +14,9 @@ import type { Tables } from '@/types/database';
 const statusColors = { available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
 const shortLabels = { available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
 
-export function CompactRoster({ players, trials, aids, trialEditor }: {
+export function CompactRoster({ players, trials, aids, trialEditor, trialActions }: {
   players: readonly CallUpPlayer[];
-  trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode; trialEditor?: ReactNode;
+  trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode; trialEditor?: ReactNode; trialActions?: ((trial: Tables<'call_up_trials'>) => ReactNode) | undefined;
 }) {
   const [filter, setFilter] = useState<AvailabilityFilter>('all');
   const [expandedPanels, setExpandedPanels] = useState<ReadonlySet<string>>(() => new Set());
@@ -58,6 +58,7 @@ export function CompactRoster({ players, trials, aids, trialEditor }: {
         {trials.map(trial => <View key={trial.id} style={styles.trial}>
           <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
           {trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
+          {trialActions?.(trial)}
         </View>)}
         {!trials.length ? <Text style={styles.empty}>No se incluyeron pruebas.</Text> : null}
         {trialEditor}

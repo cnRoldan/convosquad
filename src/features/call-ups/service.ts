@@ -60,3 +60,7 @@ export async function respondFromNotification(clubId: string, callUpId: string, 
 export async function restartCallUp(callUpId: string, expectedVersion: number) {
   return unwrap(await requireSupabase().rpc('restart_call_up', { p_call_up_id: callUpId, p_expected_version: expectedVersion }).single());
 }
+
+export async function saveAidWithContact(callUpId: string, body: string, phone: string | null, id?: string) {
+  return unwrap(await requireSupabase().rpc('save_call_up_aid_with_contact', { p_call_up_id: callUpId, p_body: body, ...(phone ? { p_phone: phone } : {}), ...(id ? { p_aid_id: id } : {}) }));
+}
