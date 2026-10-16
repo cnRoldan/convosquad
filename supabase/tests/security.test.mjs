@@ -91,13 +91,14 @@ describe('Modelo multiclub y seguridad PostgreSQL', { concurrency: false }, () =
     await rejectsAs(adminA, "select * from public.update_call_up($1, '2030-06-02T20:00:00Z', 'open')", [callUp.id], '23505');
   });
 
-  test('la zona es configurable antes de convocar y no puede invalidar la unicidad local', async () => {
+  test('la zona es configurable sin alterar convocatorias existentes ni invalidar la unicidad local', async () => {
     const club = await rowAs(adminA, "select * from public.create_club('Zona configurable')");
     const changed = await rowAs(adminA, "update public.clubs set timezone = 'Asia/Tokyo' where id = $1 returning timezone", [club.id]);
     assert.equal(changed.timezone, 'Asia/Tokyo');
     const scheduled = await rowAs(adminA, "select * from public.create_call_up($1, '2030-10-01T23:00:00Z')", [club.id]);
     assert.equal(scheduled.local_date.toISOString().slice(0, 10), '2030-10-02');
-    await rejectsAs(adminA, "update public.clubs set timezone = 'America/New_York' where id = $1", [club.id], '22023');
+    await sqlAs(adminA, "update public.clubs set timezone = 'America/New_York' where id = $1", [club.id]);
+    assert.deepEqual(await rowAs(adminA, 'select * from public.call_ups where id=$1', [scheduled.id]), scheduled);
     await rejectsAs(adminA, "select * from public.create_call_up($1, '2030-10-02T05:00:00Z')", [club.id], '23505');
   });
 
