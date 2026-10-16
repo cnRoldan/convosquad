@@ -10,6 +10,7 @@ export function TimezonePicker({ value, onChange, disabled }: { value: string; o
     <View style={styles.container}>
       <Picker accessibilityLabel="Zona horaria" selectedValue={value} enabled={!disabled} dropdownIconColor={colors.primary}
         style={styles.picker} itemStyle={styles.item} onValueChange={next => { if (typeof next === 'string' && isClubTimezone(next)) onChange(next); }}>
+        {!isClubTimezone(value) ? <Picker.Item value={value} label={timezoneLabel({ value, label: 'Zona actual' }, today)} color={colors.text} /> : null}
         {clubTimezones.map(zone => <Picker.Item key={zone.value} value={zone.value} label={timezoneLabel(zone, today)} color={colors.text} style={styles.item} />)}
       </Picker>
     </View>

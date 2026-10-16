@@ -163,13 +163,16 @@ test('solo el creador ve eliminación y un jugador no accede a la administració
   const owner = await fixture({ clubRole: 'admin', creator: true });
   try {
     await owner.page.goto(`${origin}/club-settings`);
+    await owner.page.getByRole('button', { name: 'Designar capitán a Candidate', exact: true }).waitFor();
+    assert.equal(await owner.page.getByRole('button', { name: 'Eliminar club', exact: true }).count(), 0);
+    await owner.page.goto(`${origin}/club-info`);
     await owner.page.getByRole('button', { name: 'Eliminar club', exact: true }).click();
     await owner.page.getByRole('button', { name: 'Eliminar definitivamente', exact: true }).waitFor();
     assert.equal(owner.requests.some(r => r.endpoint === 'delete_club'), false);
   } finally { await owner.close(); }
   const player = await fixture({ clubRole: 'player' });
   try {
-    await player.page.goto(`${origin}/club-settings`);
+    await player.page.goto(`${origin}/club-info`);
     await player.page.waitForURL('**/home');
     assert.equal(await player.page.getByRole('button', { name: 'Guardar avisos', exact: true }).count(), 0);
   } finally { await player.close(); }
@@ -263,7 +266,7 @@ test('escudo PNG se selecciona, se convierte sin perder alfa y aparece junto al 
   const f = await fixture({clubRole: 'admin'});
   try {
     const {page} = f;
-    await page.goto(`${origin}/club-settings`);
+    await page.goto(`${origin}/club-info`);
     const chooserPromise = page.waitForEvent('filechooser');
     await page.getByRole('button', {name: 'Añadir escudo (opcional)', exact: true}).click();
     const chooser = await chooserPromise;
@@ -332,4 +335,27 @@ test('crear club usa selector con GMT y Madrid por defecto, admite Canarias y Re
       assert.equal(f.requests.find(request => request.endpoint === 'create_club').body.p_timezone, timezone);
     } finally { await f.close(); }
   }
+});
+
+
+test('editar información desde inicio: nombre, descripción, visibilidad y zona; capitán sin eliminación', async () => {
+  const f = await fixture({ clubRole: 'admin' });
+  try {
+    await f.page.goto(`${origin}/home`);
+    await f.page.getByRole('button', { name: 'Editar información', exact: true }).click();
+    await f.page.getByLabel('Nombre del club', { exact: true }).fill('Nuevo nombre');
+    await f.page.getByLabel('Descripción (opcional)', { exact: true }).fill('Nueva descripción');
+    await f.page.getByLabel('Zona horaria', { exact: true }).selectOption('Atlantic/Canary');
+    await f.page.getByRole('switch', { name: 'Mostrar el club en el buscador público', exact: true }).click();
+    await f.page.getByRole('button', { name: 'Guardar información', exact: true }).click();
+    await f.page.getByText('Información del club actualizada.', { exact: true }).waitFor();
+    assert.deepEqual(f.requests.find(r => r.endpoint === 'clubs' && r.body).body, {
+      name: 'Nuevo nombre', description: 'Nueva descripción', timezone: 'Atlantic/Canary', is_public: true,
+    });
+    assert.equal(await f.page.getByRole('button', { name: 'Eliminar club', exact: true }).count(), 0);
+    await f.page.getByLabel('Nombre del club', { exact: true }).fill(' ');
+    await f.page.getByRole('button', { name: 'Guardar información', exact: true }).click();
+    await f.page.getByText('El nombre debe tener entre 2 y 80 caracteres.', { exact: true }).waitFor();
+    assert.equal(f.requests.filter(r => r.endpoint === 'clubs' && r.body).length, 1);
+  } finally { await f.close(); }
 });
