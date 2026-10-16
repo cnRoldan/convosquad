@@ -169,6 +169,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'call_up_trials') result = trialSnapshots;
     else if (endpoint === 'call_up_aids') result = aids;
     else if (endpoint === 'call_up_contacts') { assert.equal(role, 'admin'); data.privateReads++; result = privateContacts; }
+    else if (endpoint === 'club_trial_contacts') { assert.equal(role, 'admin'); assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); result = []; }
     else if (endpoint === 'club_trials' || endpoint === 'notification_preferences') result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     await route.fulfill({ json: result });

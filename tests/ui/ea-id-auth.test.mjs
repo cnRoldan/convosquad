@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false } = {}) {
+async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -41,6 +41,11 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     const token = `${btoa('{}')}.${btoa(JSON.stringify({ sub: userId, exp: expires_at }))}.fixture`;
     localStorage.setItem('sb-auth-auth-token', JSON.stringify({ user, access_token: token, refresh_token: 'fixture', expires_at, expires_in: 3600, token_type: 'bearer' }));
   }, { userId });
+  const trials = rosterTrials ? [
+    {id: 'trial-one', club_id: club.id, ea_id: 'Prueba primera', status: 'active', sort_order: 0, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
+    {id: 'trial-two', club_id: club.id, ea_id: 'Prueba segunda', status: 'active', sort_order: 1, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
+    {id: 'trial-retired', club_id: club.id, ea_id: 'Prueba retirada', status: 'withdrawn', sort_order: 2, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
+  ] : [];
   let voteNotifications = true;
   const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
   const page = await context.newPage(); const requests = []; const errors = [];
@@ -66,6 +71,20 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
     if (endpoint === 'create_call_up_with_notice') return route.fulfill({ json: { id: 'new-call' } });
     if (clubRole) {
+      if (endpoint === 'club_trials') return route.fulfill({json: trials.filter(trial => url.searchParams.get('status') !== 'eq.active' || trial.status === 'active').sort((a,b) => a.sort_order - b.sort_order)});
+      if (endpoint === 'club_trial_contacts') {
+        assert.equal(clubRole, 'admin');
+        return route.fulfill({json: rosterTrials ? [{trial_id: 'trial-one', phone: '+34600000000'}] : []});
+      }
+      if (endpoint === 'withdraw_trial') {
+        assert.equal(clubRole, 'admin');
+        const trial = trials.find(row => row.id === body.p_trial_id); trial.status = 'withdrawn';
+        return route.fulfill({json: trial});
+      }
+      if (endpoint === 'reorder_trials') {
+        body.p_ids.forEach((id, index) => { trials.find(row => row.id === id).sort_order = index; });
+        return route.fulfill({json: null});
+      }
       if (endpoint === 'clubs') {
         if (req.method() === 'PATCH') Object.assign(club, body);
         return route.fulfill({ json: req.headers().accept?.includes('object') ? club : [club] });
@@ -379,5 +398,52 @@ test('editar información desde inicio: nombre, descripción, visibilidad y zona
     await f.page.getByRole('button', { name: 'Guardar información', exact: true }).click();
     await f.page.getByText('El nombre debe tener entre 2 y 80 caracteres.', { exact: true }).waitFor();
     assert.equal(f.requests.filter(r => r.endpoint === 'clubs' && r.body).length, 1);
+  } finally { await f.close(); }
+});
+
+
+test('plantilla: capitanes ordenan, abren WhatsApp y retiran pruebas con confirmación', async () => {
+  const f = await fixture({clubRole: 'admin', rosterTrials: true});
+  try {
+    const {page} = f;
+    await page.goto(`${origin}/roster`);
+    const edit = page.getByRole('button', {name: 'Editar prueba de Prueba primera', exact: true});
+    await edit.waitFor();
+    const actions = edit.locator('..');
+    assert.equal(await actions.getByRole('button').count(), 5);
+    for (const action of await actions.getByRole('button').all()) {
+      const box = await action.boundingBox(); assert.ok(box.width >= 44 && box.height >= 44);
+      const editBox = await edit.boundingBox(); assert.equal(box.y, editBox.y);
+    }
+    assert.equal(await page.getByText('Prueba retirada', {exact: true}).count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Subir prueba de Prueba primera', exact: true}).getAttribute('aria-disabled'), 'true');
+    assert.equal(await page.getByRole('button', {name: 'Bajar prueba de Prueba segunda', exact: true}).getAttribute('aria-disabled'), 'true');
+    await page.getByRole('button', {name: 'Bajar prueba de Prueba primera', exact: true}).click();
+    await page.getByRole('button', {name: 'Bajar prueba de Prueba primera', exact: true, disabled: true}).waitFor();
+    assert.deepEqual(f.requests.find(r => r.endpoint === 'reorder_trials').body.p_ids, ['trial-two', 'trial-one']);
+    await page.evaluate(() => { window.open = url => { window.__trialWhatsapp = String(url); return null; }; });
+    await page.getByRole('button', {name: 'WhatsApp de Prueba primera', exact: true, disabled: false}).click();
+    await page.waitForFunction(() => window.__trialWhatsapp === 'https://wa.me/34600000000');
+    assert.equal(await page.getByRole('button', {name: 'WhatsApp de Prueba segunda', exact: true}).getAttribute('aria-disabled'), 'true');
+    await page.getByRole('button', {name: 'Quitar prueba de Prueba primera', exact: true}).click();
+    assert.equal(f.requests.some(r => r.endpoint === 'withdraw_trial'), false);
+    await page.getByRole('button', {name: 'Cancelar', exact: true}).click();
+    assert.equal(f.requests.some(r => r.endpoint === 'withdraw_trial'), false);
+    await page.getByRole('button', {name: 'Quitar prueba de Prueba primera', exact: true}).click();
+    await page.getByRole('button', {name: 'Quitar prueba', exact: true}).click();
+    await page.getByText('Prueba retirada de la plantilla. Las convocatorias anteriores conservan sus datos.', {exact: true}).waitFor();
+    await page.getByText('Prueba primera', {exact: true}).waitFor({state: 'detached'});
+    assert.equal(f.requests.filter(r => r.endpoint === 'withdraw_trial').length, 1);
+  } finally { await f.close(); }
+});
+
+test('plantilla: jugadores no reciben teléfonos ni acciones de gestión de pruebas', async () => {
+  const f = await fixture({clubRole: 'player', rosterTrials: true});
+  try {
+    await f.page.goto(`${origin}/roster`);
+    await f.page.getByText('Prueba primera', {exact: true}).waitFor();
+    assert.equal(f.requests.some(r => r.endpoint === 'club_trial_contacts'), false);
+    assert.equal(await f.page.getByRole('button', {name: /WhatsApp de Prueba|Quitar prueba de|Editar prueba de|Subir prueba de/}).count(), 0);
+    assert.equal(await f.page.getByText('Prueba retirada', {exact: true}).count(), 0);
   } finally { await f.close(); }
 });

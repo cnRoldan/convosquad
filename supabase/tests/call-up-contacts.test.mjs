@@ -65,3 +65,18 @@ test('eliminar ayuda elimina su teléfono; cerradas e históricas no admiten cam
   await query(admin,'select public.update_call_up($1,$2,$3)',[call.id,call.starts_at,'closed']);
   await assert.rejects(query(admin,'select public.save_call_up_aid_with_contact($1,$2,$3)',[call.id,'Closed',phone]),e=>e.code==='42501');
 });
+
+
+test('retirar de plantilla conserva fotografía y teléfono histórico y excluye nuevas convocatorias', async () => {
+  const ownClub = await row(admin, "select * from public.create_club('Retirada segura')");
+  const existing = await row(admin, "select * from public.create_call_up($1,'2038-01-01T20:00:00Z','open')", [ownClub.id]);
+  const snapshot = await row(admin, 'select * from public.add_call_up_trial_with_contact($1,$2,$3)', [existing.id, 'Prueba que se retira', phone]);
+  const contact = await row(admin, 'select * from public.call_up_contacts where trial_id=$1', [snapshot.id]);
+  for (const user of [member,other]) await assert.rejects(query(user,'select public.withdraw_trial($1)',[snapshot.source_trial_id]), e => e.code === '42501');
+  await query(admin,'select public.withdraw_trial($1)',[snapshot.source_trial_id]);
+  assert.equal((await row(admin,'select status from public.club_trials where id=$1',[snapshot.source_trial_id])).status,'withdrawn');
+  assert.deepEqual(await row(admin,'select * from public.call_up_trials where id=$1',[snapshot.id]),snapshot);
+  assert.deepEqual(await row(admin,'select * from public.call_up_contacts where trial_id=$1',[snapshot.id]),contact);
+  const next = await row(admin, "select * from public.create_call_up($1,'2038-01-02T20:00:00Z','open')", [ownClub.id]);
+  assert.equal((await query(admin,'select * from public.call_up_trials where call_up_id=$1',[next.id])).rows.length,0);
+});
