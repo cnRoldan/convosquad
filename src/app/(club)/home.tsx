@@ -33,7 +33,7 @@ export default function HomeScreen() {
         <Button secondary label="Invitar jugadores" onPress={() => router.push('/invitations')} />
       </Card> : null}
       <Button secondary label="Cambiar de club" onPress={() => router.replace('/clubs')} />
-      <Body>{isDemo ? 'Datos de demostración · sin conexión al backend.' : 'Datos del club · Supabase'}</Body>
+      {isDemo ? <Body>Estás explorando un club de ejemplo.</Body> : null}
     </Screen>
   );
 }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DeviceWriteGate } from '../src/features/notifications/device-write-gate.ts';
-import { registerDeviceWithPermission } from '../src/features/notifications/device-registration.ts';
+import { registerDeviceWithPermission, requestDevicePermission } from '../src/features/notifications/device-registration.ts';
 import { readPushIntent, notificationDestination } from '../src/features/notifications/intent.ts';
 import { parsePushEvent, authorizedWorker, pushMessage } from '../supabase/functions/_shared/push-event.ts';
 const clubId='80000000-0000-4000-8000-000000000010', callUpId='80000000-0000-4000-8000-000000000020';
@@ -41,7 +41,7 @@ test('solo el secreto de worker autoriza preparar eventos; no hay destinatarios/
   const secret='unit-only-worker-secret-not-a-real-credential';assert.equal(authorizedWorker(null,secret),false);assert.equal(authorizedWorker('Bearer user-jwt',secret),false);assert.equal(authorizedWorker(`Bearer ${secret}`,undefined),false);assert.equal(authorizedWorker(`Bearer ${secret}`,secret),true);
   const event={...intent,eventKey:'published:unit',kind:'published'};assert.deepEqual(parsePushEvent(event),event);
   assert.equal(parsePushEvent({...event,to:'another-user'}),null);assert.equal(parsePushEvent({...event,body:'arbitrary'}),null);assert.equal(parsePushEvent({...event,kind:'arbitrary'}),null);
-  const message=pushMessage(event,'ExpoPushToken[unit_only]');assert.deepEqual(readPushIntent(message.data),intent);assert.equal(message.channelId,'call-ups');assert.equal(message.categoryId,'call-up-availability');
+  const message=pushMessage(event,'ExpoPushToken[unit_only]');assert.deepEqual(readPushIntent(message.data),intent);assert.equal(message.channelId,'call-ups');assert.equal(message.categoryId,'call_up_availability');
 });
 
 test('logout bloquea registros tardíos y desvincula después de escrituras pendientes',async()=>{
@@ -54,4 +54,40 @@ test('logout bloquea registros tardíos y desvincula después de escrituras pend
 test('fallo de desvinculación no habilita de nuevo el dispositivo ni bloquea un reintento explícito',async()=>{
   const gate=new DeviceWriteGate();gate.pause('user');await assert.rejects(gate.run(async()=>{throw new Error('offline');}));
   assert.equal(gate.allowed('user'),false);await gate.run(async()=>{});gate.resume('user');assert.equal(gate.allowed('user'),true);
+});
+
+test('la activación automática pide permiso una vez y permite reintento explícito', async () => {
+  let requested = false; let prompts = 0;
+  const deps = {
+    automatic: true,
+    previouslyRequested: async () => requested,
+    current: async () => true,
+    canAskAgain: async () => true,
+    markRequested: async () => { requested = true; },
+    request: async () => { prompts++; return false; },
+  };
+  assert.equal(await requestDevicePermission(deps), false);
+  assert.equal(await requestDevicePermission(deps), false);
+  assert.equal(prompts, 1);
+  assert.equal(await requestDevicePermission({...deps, automatic: false, request: async () => { prompts++; return true; }}), true);
+  assert.equal(prompts, 2);
+});
+
+test('no se pide permiso si el sistema lo impide o termina la sesión', async () => {
+  const deps = {
+    automatic: true, previouslyRequested: async () => false,
+    current: async () => true, canAskAgain: async () => true,
+    markRequested: async () => {}, request: async () => { assert.fail('No debe pedir permiso'); },
+  };
+  assert.equal(await requestDevicePermission({...deps, canAskAgain: async () => false}), false);
+  assert.equal(await requestDevicePermission({...deps, current: async () => false}), false);
+  let current = true;
+  assert.equal(await requestDevicePermission({...deps, current: async () => current, markRequested: async () => { current = false; }}), false);
+});
+
+test('al aceptar el permiso inicial se registra el dispositivo sin activación manual adicional', async () => {
+  const d = device(false);
+  d.deps.requestPermission = async () => { d.allow(); return true; };
+  assert.equal(await registerDeviceWithPermission(d.deps, true), 'enabled');
+  assert.deepEqual(d.calls, ['token', ['register', 'ExpoPushToken[unit_only]']]);
 });

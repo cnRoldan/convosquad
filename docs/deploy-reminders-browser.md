@@ -53,3 +53,14 @@ $job$);
 Revisa las ejecuciones de Cron y los logs de la función. Un cron correcto solo confirma que programó la petición HTTP; confirma también el estado HTTP de la función. Un 401 exige revisar la verificación JWT y la coincidencia de los dos secretos; un 503 puede indicar migraciones pendientes o un problema del servicio de envío. Un 200 con `attempted: 0` significa que no se reservó ningún envío en esa ejecución.
 
 Un ticket aceptado por Expo no demuestra recepción física. Para probar las tres acciones, instala una APK actualizada que incluya `expo-task-manager` y la respuesta Android en segundo plano en dispositivos físicos con cuentas diferentes, activa notificaciones y vincula sus fichas. La APK anterior no incorpora este código por desplegar el worker.
+
+## Actualización de los botones de voto en Android
+
+La categoría de acciones utiliza `call_up_availability`. Expo desaconseja `:` y `-` en estos identificadores. El emisor y la aplicación deben usar el mismo identificador.
+
+1. Genera e instala una nueva APK con el perfil **preview**, que contiene el nuevo identificador. Abre la app con sesión y activa las notificaciones del dispositivo si todavía no están activadas.
+2. Actualiza la función existente `send-reminders` con el archivo `dashboard.ts` de esta misma versión siguiendo los pasos anteriores. Conserva secretos, Vault y Cron. No se necesita una migración SQL.
+3. Crea una convocatoria de prueba y expande su notificación en Android. Los avisos anteriores no se actualizan al cambiar el código.
+4. Con la app en segundo plano, prueba Disponible, No disponible y Backup en avisos nuevos, respetando los 30 segundos entre cambios. Comprueba la confirmación y el voto guardado en otra sesión. La cancelación debe seguir sin acciones.
+
+Android controla la presentación de las acciones: puede ser necesario desplegar el aviso y desbloquear el dispositivo. Las comprobaciones automáticas de categorías y transporte no sustituyen esta prueba física. Actualizar solo la APK o solo el servidor deja versiones con identificadores diferentes y puede ocultar las acciones.

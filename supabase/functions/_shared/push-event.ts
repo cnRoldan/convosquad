@@ -17,7 +17,7 @@ export function pushMessage(event: PushEventInput, token: string, recipientUserI
   return {
     to: token, title: event.kind === 'cancelled' ? 'Convocatoria cancelada' : event.kind === 'vote' ? 'Nueva respuesta en tu convocatoria' : event.kind === 'published' ? 'Nueva convocatoria' : event.kind === 'reminder' ? 'Último aviso para votar' : 'Confirma tu disponibilidad',
     body: event.kind === 'cancelled' ? 'Tu club ha cancelado esta convocatoria. Ya no se puede votar.' : event.kind === 'vote' ? `${event.actorEaId?.slice(0, 100) ?? 'Un jugador'} ha votado: ${event.availability === 'available' ? 'Disponible' : event.availability === 'unavailable' ? 'No disponible' : 'Backup'}.` : event.kind === 'published' ? (canVote ? 'Responde Disponible, No disponible o Backup desde este aviso.' : 'Tu club tiene una convocatoria. Abre ConvoSquad para consultarla.') : event.kind === 'reminder' ? 'Aún no has respondido. Indica si estás disponible, no disponible o backup.' : 'Hay una convocatoria pendiente de tu respuesta. Abre ConvoSquad para responder.',
-    channelId: 'call-ups', sound: 'default', ...(event.kind !== 'cancelled' && canVote ? { categoryId: 'call-up-availability' } : {}),
+    channelId: 'call-ups', sound: 'default', ...(event.kind !== 'cancelled' && canVote ? { categoryId: 'call_up_availability' } : {}),
     data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, ...(recipientUserId ? { userId: recipientUserId } : {}), ...(event.kind === 'cancelled' ? { kind: 'cancelled' } : {}) },
   };
 }

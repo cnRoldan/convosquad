@@ -121,5 +121,5 @@ export function Message({ children, error = false }: PropsWithChildren<{ error?:
 }
 
 export function DemoNotice() {
-  return <Body>Modo demo. Puedes explorar y revisar los formularios; los cambios requieren una cuenta y Supabase configurado.</Body>;
+  return <Body>Modo demo. Explora un club de ejemplo. Crea una cuenta para organizar tu equipo.</Body>;
 }

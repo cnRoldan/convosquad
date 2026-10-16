@@ -6,6 +6,7 @@ export function unwrap<T extends { data: unknown; error: { message: string; code
 
 export function backendErrorMessage(error: unknown): string {
   if (typeof error === 'object' && error !== null && 'code' in error) {
+    if (error.code === 'PGRST202') return 'Esta función no está disponible en este momento. Inténtalo más tarde.';
     if (error.code === '23505') return 'Ese nombre, ficha o fecha ya está en uso.';
     if (error.code === '42501') return 'No tienes permiso para realizar esta operación.';
     if (error.code === '23514' || error.code === '22023' || error.code === '22P02') return 'Revisa los datos y el estado actual de la operación.';

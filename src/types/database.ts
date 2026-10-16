@@ -595,6 +595,14 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      add_call_up_trial: {
+        Args: {
+          p_call_up_id: string;
+          p_name: string;
+          p_notes?: string;
+        };
+        Returns: Database['public']['Tables']['call_up_trials']['Row'][];
+      };
       claim_push_deliveries: {
         Args: {
           p_event_id: string;

@@ -1,6 +1,6 @@
 import { readPushIntent, type PushIntent } from './intent.ts';
 
-export const availabilityCategory = 'call-up-availability';
+export const availabilityCategory = 'call_up_availability';
 export const notificationActions = [
   { identifier: 'availability-available', buttonTitle: 'Disponible', availability: 'available' },
   { identifier: 'availability-unavailable', buttonTitle: 'No disponible', availability: 'unavailable' },

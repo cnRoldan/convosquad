@@ -26,6 +26,6 @@ export const supabase = configuration
   : null;
 
 export function requireSupabase() {
-  if (!supabase) throw new Error(supabaseConfigurationError ?? 'El acceso real no está disponible.');
+  if (!supabase) throw new Error('El acceso no está disponible en este momento. Inténtalo más tarde.');
   return supabase;
 }

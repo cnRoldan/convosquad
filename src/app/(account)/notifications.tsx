@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Linking, Platform } from 'react-native';
-import { Body, Button, Heading, Message, Screen } from '@/components/ui';
+import { Button, Heading, Message, Screen } from '@/components/ui';
 import { VoteNotificationPreference } from '@/features/notifications/vote-preference';
 import { useAuth } from '@/features/auth/auth-context';
 import { enableInstallation, deactivateInstallation } from '@/features/notifications/device-service';
@@ -13,17 +13,16 @@ export default function NotificationsScreen() {
       if (!enabled) { await deactivateInstallation(session.user.id); setMessage('Notificaciones desactivadas en este dispositivo.'); }
       else {
         const result = await enableInstallation(session.user.id);
-        setMessage(result === 'enabled' ? 'Dispositivo registrado. Los avisos requieren el servicio del servidor configurado.' : result === 'denied' ? 'No has concedido permiso. Puedes habilitarlo en los ajustes del dispositivo.' : result === 'cancelled' ? 'La sesión ha cambiado. Vuelve a intentarlo.' : 'Usa un dispositivo físico y una compilación EAS; Expo Go no es compatible.');
+        setMessage(result === 'enabled' ? 'Notificaciones de convocatoria activadas.' : result === 'denied' ? 'No has concedido permiso. Puedes habilitarlo en los ajustes del dispositivo.' : result === 'cancelled' ? 'La sesión ha cambiado. Vuelve a intentarlo.' : 'Las notificaciones no están disponibles en este dispositivo.');
       }
-    } catch (error) { setMessage(error instanceof Error && error.message.startsWith('Vincula el proyecto EAS') ? error.message : 'No se pudieron configurar las notificaciones. Revisa la conexión, los permisos y la configuración EAS y FCM/APNs.'); }
+    } catch { setMessage('No se pudieron activar las notificaciones. Comprueba tu conexión y los permisos del dispositivo.'); }
     finally { setBusy(false); }
   }
   return <Screen>
     <Heading title="Notificaciones" />
     {session && !isDemo ? <VoteNotificationPreference key={session.user.id} userId={session.user.id} /> : null}
-    <Body>Registra este dispositivo para recibir avisos de convocatorias de tus clubes. Los envíos requieren el servicio del servidor configurado.</Body>
-    {Platform.OS === 'web' ? <Message>Las notificaciones push móviles se configuran desde una compilación EAS instalada en Android o iOS, no desde el navegador.</Message> : <>
-      <Button label="Activar notificaciones en este dispositivo" disabled={busy || isDemo} onPress={() => { void change(true); }} />
+    {Platform.OS === 'web' ? <Message>Las notificaciones de convocatoria están disponibles en la app para Android e iOS.</Message> : <>
+      <Button label="Activar las notificaciones de convocatoria" disabled={busy || isDemo} onPress={() => { void change(true); }} />
       <Button secondary label="Desactivar en este dispositivo" disabled={busy || isDemo} onPress={() => { void change(false); }} />
       <Button secondary label="Abrir ajustes del dispositivo" disabled={busy} onPress={() => { void Linking.openSettings(); }} />
     </>}

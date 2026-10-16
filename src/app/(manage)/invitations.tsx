@@ -68,7 +68,7 @@ export default function InvitationsScreen() {
     {message ? <Message>{message}</Message> : null}
     {link ? <Card title="Comparte tu invitación">
       <Body>El enlace permite incorporarse sin aprobación adicional. Compártelo solo con los jugadores que quieres invitar.</Body>
-      {!process.env.EXPO_PUBLIC_INVITE_BASE_URL ? <Body>Este es un enlace de desarrollo: necesita Expo Go o la versión de desarrollo instalada. Para enlaces HTTPS en WhatsApp, configura la dirección web de ConvoSquad.</Body> : null}
+      {!process.env.EXPO_PUBLIC_INVITE_BASE_URL ? <Body>Este enlace se abre con ConvoSquad instalada en el móvil.</Body> : null}
       <Button label="Compartir enlace" onPress={() => { void share(); }} />
       <Button secondary label="Abrir WhatsApp" onPress={() => {
         void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(`Únete a ${activeClub?.name ?? 'mi club'}: ${link.url}`)}`)

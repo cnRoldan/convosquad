@@ -67,3 +67,24 @@ Pruebas SQL sobre PostgreSQL/PGlite: creación/snapshots, exclusión de inactivo
 Pruebas unitarias: fecha/hora por zona, medianoche y DST, contadores, errores en español, lectura inicial y al suscribirse, ráfagas, reconexión, descarte de canales antiguos, sondeo, recuperación y limpieza al desmontar. No sustituyen la validación del servidor Realtime alojado ni una prueba en dispositivos nativos.
 
 La comprobación de Chromium utiliza dos sesiones completamente simuladas y transporte Supabase HTTP/WebSocket interceptado en local: valida respuesta de un toque visible en la otra sesión mediante el protocolo Realtime, contadores, pendientes, edición horaria, cierre, pérdida de acceso, permisos de historial y fecha inicial. No contacta con Supabase remoto y no demuestra Realtime de producción.
+
+
+## Recuperar el historial cuando la API no encuentra su función
+
+Si la llamada al historial devuelve `PGRST202` para `list_call_up_history(p_club_id)`, la API no encuentra la función en su catálogo. Puede faltar la función en la base de datos desplegada o estar desactualizado el catálogo de la API.
+
+Desde Supabase → SQL Editor, ejecutar únicamente `supabase/migrations/20261016180000_restore_call_up_history.sql` para esta corrección, con las migraciones anteriores ya aplicadas. Crea o reemplaza la función, restaura sus permisos y solicita refrescar el catálogo PostgREST. No modifica convocatorias, plantillas ni votos, y no requiere repetir las migraciones iniciales. Es segura si la función ya existe con la firma original.
+
+Volver a pulsar **Actualizar historial** con una cuenta de capitán. Si no hay convocatorias de días anteriores en la zona horaria del club, debe aparecer el historial vacío. Los jugadores normales y miembros de otros clubes continúan sin acceso; se conservan el límite de diez y los datos históricos.
+
+
+Al consultar una convocatoria del historial, la pantalla indica **Convocatoria histórica** y muestra arriba a la izquierda **Volver a la convocatoria actual**. Este botón limpia la selección histórica sin pasar por otra pestaña. La vista histórica no muestra administración, creación, accesos a historial/actualización, selector de convocatorias ni controles para votar o editar AYUDAS; conserva jugadores, estados y anotaciones para consulta. Las convocatorias de días anteriores abiertas desde un enlace directo también se presentan sin controles de edición.
+
+
+## Añadir PRUEBAS desde la convocatoria
+
+Los capitanes pueden escribir un nombre libre y pulsar **Añadir prueba** en la sección PRUEBAS de una convocatoria abierta o en borrador del día actual o posterior. La operación guarda la prueba activa en el club y su copia en esa convocatoria dentro de una sola transacción. Las siguientes convocatorias incluyen esa prueba; las anteriores conservan sus datos. No crea fichas oficiales, cuentas ni vínculos a usuarios, aunque el nombre coincida con un ID registrado. No añade votos ni destinatarios push.
+
+Aplicar manualmente `20261016190000_add_call_up_trial.sql` después de las migraciones anteriores. No se ejecuta automáticamente. La función comprueba permisos de capitán y protege convocatorias cerradas, canceladas y antiguas. RLS sigue habilitado y las copias no admiten escritura directa del cliente.
+
+Por compatibilidad con los datos y RPC anteriores se conserva la columna interna `ea_id` de pruebas para almacenar el nombre libre, sin validarlo ni vincularlo como identidad EA. La interfaz de pruebas muestra nombre y observaciones, sin dorsal, EA ID o conversión automática a ficha oficial. Los campos históricos existentes no se eliminan; los nuevos registros e importaciones de la app dejan dorsal y posición vacíos.

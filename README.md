@@ -167,3 +167,6 @@ La gestión de retirada y reincorporación de jugadores, permisos y prueba manua
 La creación, administración, disponibilidad, historial y recuperación Realtime están documentados en [Convocatorias y disponibilidad](docs/call-up-availability.md). Requieren la migración incremental `20261014180000_call_up_availability.sql`; no se aplican cambios remotos automáticamente.
 
 La infraestructura móvil de notificaciones, variables EAS, FCM/APNs y primera APK desde Codex Cloud se documentan en [Push — Fase 5A](docs/push-infrastructure.md). Requiere la migración incremental `20261014200000_push_infrastructure.sql`. El envío automático y la recepción en dispositivos reales siguen pendientes.
+
+
+La identidad visual móvil se configura en `app.json`, con recursos en `assets/images`: icono de ConvoSquad para Android e iOS, icono adaptativo Android, símbolo blanco para las notificaciones y favicon web. Los cambios en iconos móviles necesitan una nueva compilación; actualizar la web no cambia una APK instalada. El perfil `preview` genera la APK para compartir con los miembros sin publicar en Google Play.

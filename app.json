@@ -14,10 +14,15 @@
       "package": "com.convosquad.app",
       "permissions": [
         "android.permission.POST_NOTIFICATIONS"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#0B1210"
+      }
     },
     "web": {
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -25,7 +30,8 @@
         "expo-notifications",
         {
           "defaultChannel": "call-ups",
-          "color": "#B4F16C"
+          "color": "#B4F16C",
+          "icon": "./assets/images/notification-icon.png"
         }
       ]
     ],
@@ -37,6 +43,7 @@
         "projectId": "99946f80-dcdd-4678-9cbc-5264fb6830d4"
       }
     },
-    "owner": "convosquad"
+    "owner": "convosquad",
+    "icon": "./assets/images/icon.png"
   }
 }
