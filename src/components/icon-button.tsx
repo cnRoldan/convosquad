@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import { colors } from '@/theme';
 
 const paths = {
+  whatsapp: 'M21 11.5a8.5 8.5 0 01-12.3 7.6L3 21l1.9-5.7A8.5 8.5 0 1121 11.5zM8 7c-.8 0-1 1.2-.7 2.4.7 2.6 2.7 4.6 5.3 5.3 1.2.3 2.4.1 2.4-.7v-1l-2-1-1 1c-1.6-.6-2.7-1.7-3.3-3.3l1-1-1-2H8z',
   restart: 'M3 4v7h7M3 11a9 9 0 119 10M12 7v5l3 2',
   back: 'M19 12H5M12 19l-7-7 7-7',
   up: 'M12 19V5M5 12l7-7 7 7',
