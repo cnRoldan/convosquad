@@ -2,6 +2,14 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { createClient } from 'npm:@supabase/supabase-js@2.117.3';
 
+const copy = {
+ es: { cancelled:'Convocatoria cancelada', vote:'Nueva respuesta en tu convocatoria', published:'Nueva convocatoria', reminder:'Último aviso para votar', pending:'Confirma tu disponibilidad', cancelledBody:'Tu club ha cancelado esta convocatoria. Ya no se puede votar.', publishedBody:'Responde Disponible, No disponible o Backup desde este aviso.', readOnly:'Tu club tiene una convocatoria. Abre ConvoSquad para consultarla.', reminderBody:'Aún no has respondido. Indica si estás disponible, no disponible o backup.', pendingBody:'Hay una convocatoria pendiente de tu respuesta. Abre ConvoSquad para responder.', available:'Disponible', unavailable:'No disponible', backup:'Backup', player:'Un jugador', voted:'ha votado' },
+ en: { cancelled:'Call-up cancelled', vote:'New response to your call-up', published:'New call-up', reminder:'Last reminder to vote', pending:'Confirm your availability', cancelledBody:'Your club has cancelled this call-up. Voting is closed.', publishedBody:'Choose Available, Unavailable or Backup from this notification.', readOnly:'Your club has a call-up. Open ConvoSquad to view it.', reminderBody:'You have not responded yet. Choose available, unavailable or backup.', pendingBody:'A call-up is awaiting your response. Open ConvoSquad to respond.', available:'Available', unavailable:'Unavailable', backup:'Backup', player:'A player', voted:'voted' },
+ de: { cancelled:'Aufgebot abgesagt', vote:'Neue Antwort auf dein Aufgebot', published:'Neues Aufgebot', reminder:'Letzte Erinnerung zur Abstimmung', pending:'Bestätige deine Verfügbarkeit', cancelledBody:'Dein Verein hat dieses Aufgebot abgesagt. Eine Abstimmung ist nicht mehr möglich.', publishedBody:'Wähle direkt in dieser Benachrichtigung Verfügbar, Nicht verfügbar oder Ersatz.', readOnly:'Dein Verein hat ein Aufgebot erstellt. Öffne ConvoSquad, um es anzusehen.', reminderBody:'Du hast noch nicht geantwortet. Wähle Verfügbar, Nicht verfügbar oder Ersatz.', pendingBody:'Ein Aufgebot wartet auf deine Antwort. Öffne ConvoSquad, um zu antworten.', available:'Verfügbar', unavailable:'Nicht verfügbar', backup:'Ersatz', player:'Ein Spieler', voted:'hat abgestimmt' },
+ fr: { cancelled:'Convocation annulée', vote:'Nouvelle réponse à votre convocation', published:'Nouvelle convocation', reminder:'Dernier rappel pour voter', pending:'Confirmez votre disponibilité', cancelledBody:'Votre club a annulé cette convocation. Le vote est fermé.', publishedBody:'Choisissez Disponible, Indisponible ou Remplaçant depuis cette notification.', readOnly:'Votre club a une convocation. Ouvrez ConvoSquad pour la consulter.', reminderBody:'Vous n’avez pas encore répondu. Choisissez Disponible, Indisponible ou Remplaçant.', pendingBody:'Une convocation attend votre réponse. Ouvrez ConvoSquad pour répondre.', available:'Disponible', unavailable:'Indisponible', backup:'Remplaçant', player:'Un joueur', voted:'a voté' },
+} as const;
+export function pushCopy(language: string | null | undefined) { return copy[language === 'en' || language === 'de' || language === 'fr' ? language : 'es']; }
+
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PushEventInput = { clubId: string; callUpId: string; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled'; actorEaId?: string | null; availability?: string | null };
 export function parsePushEvent(data: unknown): PushEventInput | null {
@@ -16,17 +24,20 @@ export function authorizedWorker(header: string | null, secret: string | undefin
   const digest = (value: string) => createHash('sha256').update(value).digest();
   return timingSafeEqual(digest(header.slice(7)), digest(secret));
 }
-export function pushMessage(event: PushEventInput, token: string, recipientUserId?: string | null, canVote = true) {
+export function pushMessage(event: PushEventInput, token: string, recipientUserId?: string | null, canVote = true, language = 'es') {
+  const text = pushCopy(language);
   return {
-    to: token, title: event.kind === 'cancelled' ? 'Convocatoria cancelada' : event.kind === 'vote' ? 'Nueva respuesta en tu convocatoria' : event.kind === 'published' ? 'Nueva convocatoria' : event.kind === 'reminder' ? 'Último aviso para votar' : 'Confirma tu disponibilidad',
-    body: event.kind === 'cancelled' ? 'Tu club ha cancelado esta convocatoria. Ya no se puede votar.' : event.kind === 'vote' ? `${event.actorEaId?.slice(0, 100) ?? 'Un jugador'} ha votado: ${event.availability === 'available' ? 'Disponible' : event.availability === 'unavailable' ? 'No disponible' : 'Backup'}.` : event.kind === 'published' ? (canVote ? 'Responde Disponible, No disponible o Backup desde este aviso.' : 'Tu club tiene una convocatoria. Abre ConvoSquad para consultarla.') : event.kind === 'reminder' ? 'Aún no has respondido. Indica si estás disponible, no disponible o backup.' : 'Hay una convocatoria pendiente de tu respuesta. Abre ConvoSquad para responder.',
+    to: token, title: text[event.kind],
+    body: event.kind === 'cancelled' ? text.cancelledBody : event.kind === 'vote'
+      ? `${event.actorEaId?.slice(0, 100) ?? text.player} ${text.voted}: ${event.availability === 'available' ? text.available : event.availability === 'unavailable' ? text.unavailable : text.backup}.`
+      : event.kind === 'published' ? (canVote ? text.publishedBody : text.readOnly) : event.kind === 'reminder' ? text.reminderBody : text.pendingBody,
     channelId: 'call-ups', sound: 'default', ...(event.kind !== 'cancelled' && canVote ? { categoryId: 'call_up_availability' } : {}),
     data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, ...(recipientUserId ? { userId: recipientUserId } : {}), ...(event.kind === 'cancelled' ? { kind: 'cancelled' } : {}) },
   };
 }
 
 type Event = { id: string; club_id: string; call_up_id: string; event_key: string; kind?: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled'; actor_ea_id?: string | null; vote_availability?: string | null };
-type Delivery = { id: string; token_snapshot: string; user_id?: string | null; can_vote?: boolean };
+type Delivery = { id: string; token_snapshot: string; user_id?: string | null; can_vote?: boolean; preferred_language?: string | null };
 type State = 'sent' | 'failed' | 'unknown';
 export type ReminderStore = {
   prepare: () => Promise<void>;
@@ -44,7 +55,7 @@ export async function dispatchReminders(store: ReminderStore, submit: (messages:
     counts.attempted += deliveries.length;
     let tickets: unknown[] = [];
     try {
-      const response = await submit(deliveries.map(delivery => pushMessage({ clubId: event.club_id, callUpId: event.call_up_id, eventKey: event.event_key, kind: event.kind ?? 'reminder', actorEaId: event.actor_ea_id ?? null, availability: event.vote_availability ?? null }, delivery.token_snapshot, delivery.user_id, delivery.can_vote ?? true)));
+      const response = await submit(deliveries.map(delivery => pushMessage({ clubId: event.club_id, callUpId: event.call_up_id, eventKey: event.event_key, kind: event.kind ?? 'reminder', actorEaId: event.actor_ea_id ?? null, availability: event.vote_availability ?? null }, delivery.token_snapshot, delivery.user_id, delivery.can_vote ?? true, delivery.preferred_language ?? 'es')));
       if (response && typeof response === 'object' && 'data' in response && Array.isArray(response.data) && response.data.length === deliveries.length) tickets = response.data;
     } catch { /* Una respuesta ambigua nunca se reenvía automáticamente. */ }
     for (const [index, delivery] of deliveries.entries()) {
@@ -82,7 +93,11 @@ Deno.serve(async request => {
     async claim(id) {
       const { data, error } = await client.rpc('claim_push_deliveries', { p_event_id: id, p_limit: 100 });
       if (error || !data) throw new Error('No se pudieron reservar avisos');
-      return data;
+      const deliveries = data as Awaited<ReturnType<ReminderStore['claim']>>;
+      const ids = [...new Set(deliveries.flatMap(delivery => delivery.user_id ? [delivery.user_id] : []))];
+      const { data: profiles } = await client.from('profiles').select('id,preferred_language').in('id', ids);
+      const languages = new Map<string, string | null>((profiles ?? []).map((profile: { id: string; preferred_language: string | null }) => [profile.id, profile.preferred_language]));
+      return deliveries.map(delivery => ({ ...delivery, preferred_language: delivery.user_id ? languages.get(delivery.user_id) ?? 'es' : 'es' }));
     },
     async finish(id, state, ticketId) {
       const { error } = await client.rpc('finish_push_delivery', { p_delivery_id: id, p_state: state, p_ticket_id: ticketId });

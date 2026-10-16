@@ -33,9 +33,10 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, expandPanels = true } = {}) {
-  const context = await browser.newContext({ viewport: { width, height: 844 } });
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, expandPanels = true, closesAt = null, clockTime = null } = {}) {
+  const context = await browser.newContext({ locale: 'es-ES', viewport: { width, height: 844 } });
   const page = await context.newPage();
+  if (clockTime !== null) await page.clock.install({time: clockTime});
   page.setDefaultTimeout(10000);
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
@@ -43,7 +44,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
+  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
   const pastId = '00000000-0000-4000-8000-000000000004';
   const pastCall = { ...call, id: pastId, local_date: '2020-01-01', starts_at: '2020-01-01T20:00:00Z' };
   const players = empty ? [] : Array.from({ length: 24 }, (_, index) => ({
@@ -86,6 +87,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'set_preferred_language') return route.fulfill({json: null});
       if (endpoint === 'save_call_up_contact') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();
@@ -378,7 +380,7 @@ test('enlace push verifica sesión/club y abre la convocatoria; otro club no obt
 });
 
 test('enlace push sin sesión permite iniciar sesión; payload inválido no navega a recursos externos', async () => {
-  const context = await browser.newContext(); const page = await context.newPage(); let requests = 0;
+  const context = await browser.newContext({locale:'es-ES'}); const page = await context.newPage(); let requests = 0;
   await context.route('https://auth.example.test/**', route => { requests++; return route.abort(); });
   try {
     await page.goto(`${origin}/notification?club=${clubId}&call=${callId}`);
@@ -543,4 +545,18 @@ test('jugadores no solicitan teléfonos privados ni ven campos de contacto o acc
     assert.equal(await f.page.getByRole('textbox', {name: /Teléfono/}).count(), 0);
     assert.equal(await f.page.getByRole('button', {name: /WhatsApp de|Quitar prueba|Eliminar ayuda/}).count(), 0);
   } finally { await f.close(); }
+});
+
+
+test('cierre de votación oculta acciones al vencer sin esperar Realtime ni Cron', async () => {
+  const now=Date.now();
+  const f=await fixture({closesAt:new Date(now+60000).toISOString(),clockTime:now});
+  try {
+    const button=f.page.getByRole('button',{name:'Disponible para Jugador_4',exact:true});
+    await button.waitFor();
+    await f.page.clock.fastForward(61000);
+    await f.page.getByText('El plazo para votar ha terminado.',{exact:true}).waitFor();
+    assert.equal(await button.count(),0);
+    assert.equal(f.data.writes,0);
+  }finally{await f.close();}
 });

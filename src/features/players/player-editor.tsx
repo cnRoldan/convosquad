@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Field, Heading, Message, Options, Screen } from '@/components/ui';
@@ -14,6 +15,7 @@ import { PlayerActivityDialog } from './player-activity-dialog';
 
 export type EditablePlayer = { id: string; eaId: string; jerseyNumber: number | null; category: RosterCategory; userId: string | null; isActive: boolean };
 export function PlayerEditor({ player = null }: { player?: EditablePlayer | null }) {
+  useLanguage();
   const { session, isDemo } = useAuth();
   const { activeClub, currentMembership, refreshRoster } = useClub();
   const clubId = activeClub?.id;
@@ -36,8 +38,8 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
   async function save() {
     if (!clubId || !admin || isDemo || busy) return;
     const trimmed = eaId.trim();
-    if (!trimmed || trimmed.length > 64) return setMessage('El EA ID debe tener entre 1 y 64 caracteres.');
-    if (jersey.trim() && (!/^[0-9]{1,2}$/.test(jersey.trim()) || Number(jersey) < 1 || Number(jersey) > 99)) return setMessage('El dorsal debe estar entre 1 y 99 o quedar vacío.');
+    if (!trimmed || trimmed.length > 64) return setMessage(t("El EA ID debe tener entre 1 y 64 caracteres."));
+    if (jersey.trim() && (!/^[0-9]{1,2}$/.test(jersey.trim()) || Number(jersey) < 1 || Number(jersey) > 99)) return setMessage(t("El dorsal debe estar entre 1 y 99 o quedar vacío."));
     setBusy(true);
     setMessage('');
     try {
@@ -55,7 +57,7 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
     try {
       const result = await linkPlayerAccount(player.id, pendingLink.userId);
       setLinkedUserId(result.user_id);
-      setMessage('Cuenta vinculada. Se conserva la ficha, su dorsal, posición y EA ID.');
+      setMessage(t("Cuenta vinculada. Se conserva la ficha, su dorsal, posición y EA ID."));
       refreshRoster();
     } catch (error) { setMessage(backendErrorMessage(error)); accounts.reload(); }
     finally { setBusy(false); setPendingLink(null); }
@@ -63,31 +65,31 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
   const dirty = Boolean(player && (eaId.trim() !== player.eaId || jersey.trim() !== (player.jerseyNumber?.toString() ?? '') || category !== player.category));
   const freeAccounts = accounts.data?.members.filter((member) => !accounts.data?.players.some((existing) => existing.user_id === member.user_id)) ?? [];
   return <Screen>
-    <Heading title={player ? 'Editar ficha' : 'Añadir jugador'} subtitle={activeClub?.name ?? ''} />
+    <Heading title={player ? t("Editar ficha") : t("Añadir jugador")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
-    <Field label="ID de EA Sports FC" value={eaId} onChangeText={setEaId} maxLength={64} autoCapitalize="none" editable={!busy} />
-    <Field label="Dorsal (opcional)" value={jersey} onChangeText={setJersey} maxLength={2} keyboardType="number-pad" editable={!busy} />
-    <Body>Categoría principal · {categoryLabels[category]}</Body>
-    <Options value={category} options={categories.map((value) => ({ value, label: categoryLabels[value] }))} onChange={setCategory} disabled={busy} />
-    {player && !player.isActive ? <Message>Jugador inactivo · no se incluye en nuevas convocatorias.</Message> : null}
-    <Body>{linkedUserId ? 'Registrado · cuenta vinculada' : 'Sin registrar · la ficha es independiente de una cuenta'}</Body>
+    <Field label={t("ID de EA Sports FC")} value={eaId} onChangeText={setEaId} maxLength={64} autoCapitalize="none" editable={!busy} />
+    <Field label={t("Dorsal (opcional)")} value={jersey} onChangeText={setJersey} maxLength={2} keyboardType="number-pad" editable={!busy} />
+    <Body>{t("Categoría principal · {{v0}}", { v0: t(categoryLabels[category]) })}</Body>
+    <Options value={category} options={categories.map((value) => ({ value, label: t(categoryLabels[value]) }))} onChange={setCategory} disabled={busy} />
+    {player && !player.isActive ? <Message>{t("Jugador inactivo · no se incluye en nuevas convocatorias.")}</Message> : null}
+    <Body>{linkedUserId ? t("Registrado · cuenta vinculada") : t("Sin registrar · la ficha es independiente de una cuenta")}</Body>
     {message ? <Message>{message}</Message> : null}
-    <Button label={busy ? 'Guardando…' : 'Guardar jugador'} disabled={busy || isDemo || !admin} onPress={() => { void save(); }} />
+    <Button label={busy ? t("Guardando…") : t("Guardar jugador")} disabled={busy || isDemo || !admin} onPress={() => { void save(); }} />
     {player && admin ? <>
-      {dirty ? <Body>Guarda los cambios de ficha antes de quitar o reincorporar al jugador.</Body> : null}
-      <Button secondary label={player.isActive ? 'Quitar de la plantilla' : 'Reincorporar a la plantilla'} disabled={busy || isDemo || dirty} onPress={() => setDeactivating(true)} />
-      {!linkedUserId ? <Card title="Vincular con una cuenta">
-        <Body>Elige un miembro activo del club que todavía no tenga una ficha vinculada. No se creará otro jugador.</Body>
-        {dirty ? <Body>Guarda los cambios de ficha antes de vincular la cuenta.</Body> : null}
-        {accounts.isLoading ? <Body>Cargando miembros…</Body> : null}
-        {accounts.error ? <><Message error>{accounts.error}</Message><Button secondary label="Reintentar" onPress={accounts.reload} /></> : null}
+      {dirty ? <Body>{t("Guarda los cambios de ficha antes de quitar o reincorporar al jugador.")}</Body> : null}
+      <Button secondary label={player.isActive ? t("Quitar de la plantilla") : t("Reincorporar a la plantilla")} disabled={busy || isDemo || dirty} onPress={() => setDeactivating(true)} />
+      {!linkedUserId ? <Card title={t("Vincular con una cuenta")}>
+        <Body>{t("Elige un miembro activo del club que todavía no tenga una ficha vinculada. No se creará otro jugador.")}</Body>
+        {dirty ? <Body>{t("Guarda los cambios de ficha antes de vincular la cuenta.")}</Body> : null}
+        {accounts.isLoading ? <Body>{t("Cargando miembros…")}</Body> : null}
+        {accounts.error ? <><Message error>{accounts.error}</Message><Button secondary label={t("Reintentar")} onPress={accounts.reload} /></> : null}
         {freeAccounts.map((member) => <Button secondary key={member.id} disabled={busy || isDemo || dirty}
-          label={`Vincular con ${member.profiles?.username ?? 'miembro del club'}`} onPress={() => setPendingLink({ userId: member.user_id, username: member.profiles?.username ?? 'miembro del club' })} />)}
-        {!isDemo && accounts.data && freeAccounts.length === 0 ? <Body>No hay miembros activos sin ficha. Aprueba su incorporación antes de vincularlos.</Body> : null}
+          label={t("Vincular con {{v0}}", { v0: member.profiles?.username ?? t("miembro del club") })} onPress={() => setPendingLink({ userId: member.user_id, username: member.profiles?.username ?? t("miembro del club") })} />)}
+        {!isDemo && accounts.data && freeAccounts.length === 0 ? <Body>{t("No hay miembros activos sin ficha. Aprueba su incorporación antes de vincularlos.")}</Body> : null}
       </Card> : null}
     </> : null}
-    <ConfirmDialog visible={Boolean(pendingLink)} title="Vincular esta ficha" description={`${eaId} se vinculará con ${pendingLink?.username ?? ''}. Esta cuenta será la titular de la ficha.`}
-      confirmLabel="Vincular cuenta" busy={busy} onCancel={() => setPendingLink(null)} onConfirm={() => { void link(); }} />
+    <ConfirmDialog visible={Boolean(pendingLink)} title={t("Vincular esta ficha")} description={t("{{v0}} se vinculará con {{v1}}. Esta cuenta será la titular de la ficha.", { v0: eaId, v1: pendingLink?.username ?? '' })}
+      confirmLabel={t("Vincular cuenta")} busy={busy} onCancel={() => setPendingLink(null)} onConfirm={() => { void link(); }} />
     {deactivating && player && admin ? <PlayerActivityDialog key={`${session?.user.id}:${clubId}:${player.id}`} player={player}
       onCancel={() => setDeactivating(false)} onSuccess={() => {
         setDeactivating(false);

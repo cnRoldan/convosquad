@@ -1,3 +1,4 @@
+import { useLanguage } from '@/features/i18n/runtime';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { router, useRootNavigationState } from 'expo-router';
@@ -9,6 +10,7 @@ import { usePendingPush } from './pending-push-context';
 import { readNotificationResponse } from './actions';
 
 export function NativePushLifecycle() {
+  const language = useLanguage();
   const { session, isDemo } = useAuth(); const userId = session?.user.id;
   const { rememberPush } = usePendingPush(); const navigation = useRootNavigationState();
   const [open, setOpen] = useState<string | null>(null); const navigated = useRef<string | null>(null);
@@ -47,6 +49,6 @@ export function NativePushLifecycle() {
     }).catch(() => undefined);
     subscriptions.push(AppState.addEventListener('change', state => { if (state === 'active' && active && userId) void syncInstallation(userId, true).catch(() => undefined); }));
     return () => { active = false; subscriptions.forEach(subscription => subscription.remove()); };
-  }, [userId, isDemo, rememberPush]);
+  }, [userId, isDemo, rememberPush, language]);
   return null;
 }

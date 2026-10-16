@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Body, Button, Message, Screen } from '@/components/ui';
@@ -9,6 +10,7 @@ import { PlayerEditor } from '@/features/players/player-editor';
 import { useResource } from '@/hooks/use-resource';
 
 export default function EditPlayerScreen() {
+  useLanguage();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { session, isDemo } = useAuth();
   const { activeClub, roster } = useClub();
@@ -23,11 +25,11 @@ export default function EditPlayerScreen() {
     id: result.data.id, eaId: result.data.ea_id, jerseyNumber: result.data.jersey_number, category: result.data.category,
     userId: result.data.user_id, isActive: result.data.is_active,
   } : null;
-  if (result.isLoading) return <LoadingScreen label="Cargando ficha…" />;
+  if (result.isLoading) return <LoadingScreen label={t("Cargando ficha…")} />;
   if (!player) return <Screen>
-    <Message error>{result.error ?? 'La ficha no existe en este club.'}</Message>
-    <Button secondary label="Volver a la plantilla" onPress={() => router.replace('/roster')} />
-    {!isDemo ? <Button secondary label="Reintentar" onPress={result.reload} /> : <Body>La demo solo permite abrir sus fichas de ejemplo.</Body>}
+    <Message error>{result.error ?? t("La ficha no existe en este club.")}</Message>
+    <Button secondary label={t("Volver a la plantilla")} onPress={() => router.replace('/roster')} />
+    {!isDemo ? <Button secondary label={t("Reintentar")} onPress={result.reload} /> : <Body>{t("La demo solo permite abrir sus fichas de ejemplo.")}</Body>}
   </Screen>;
   return <PlayerEditor key={`${session?.user.id}:${clubId}:${player.id}`} player={player} />;
 }

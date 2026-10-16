@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useRef, useState } from 'react';
 import { Redirect, router } from 'expo-router';
 import { Body, Button, Field, Heading, Message, Screen } from '@/components/ui';
@@ -5,6 +6,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { changeAccountPassword, authErrorMessage } from '@/features/auth/service';
 
 export default function ChangePasswordScreen() {
+  useLanguage();
   const { session, isDemo } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -28,15 +30,15 @@ export default function ChangePasswordScreen() {
     }
   }
   return <Screen>
-    <Heading title="Cambiar mi contraseña" />
-    {done ? <Message>Contraseña actualizada. Utiliza la nueva contraseña la próxima vez que inicies sesión.</Message> : <>
-      <Body>Introduce tu contraseña actual y elige una nueva de al menos 8 caracteres.</Body>
-      <Field label="Contraseña actual" value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry autoComplete="current-password" autoCapitalize="none" autoCorrect={false} editable={!busy} />
-      <Field label="Nueva contraseña" value={newPassword} onChangeText={setNewPassword} secureTextEntry autoComplete="new-password" autoCapitalize="none" autoCorrect={false} editable={!busy} />
-      <Field label="Confirmar nueva contraseña" value={confirmation} onChangeText={setConfirmation} secureTextEntry autoComplete="new-password" autoCapitalize="none" autoCorrect={false} editable={!busy} />
+    <Heading title={t("Cambiar mi contraseña")} />
+    {done ? <Message>{t("Contraseña actualizada. Utiliza la nueva contraseña la próxima vez que inicies sesión.")}</Message> : <>
+      <Body>{t("Introduce tu contraseña actual y elige una nueva de al menos 8 caracteres.")}</Body>
+      <Field label={t("Contraseña actual")} value={currentPassword} onChangeText={setCurrentPassword} secureTextEntry autoComplete="current-password" autoCapitalize="none" autoCorrect={false} editable={!busy} />
+      <Field label={t("Nueva contraseña")} value={newPassword} onChangeText={setNewPassword} secureTextEntry autoComplete="new-password" autoCapitalize="none" autoCorrect={false} editable={!busy} />
+      <Field label={t("Confirmar nueva contraseña")} value={confirmation} onChangeText={setConfirmation} secureTextEntry autoComplete="new-password" autoCapitalize="none" autoCorrect={false} editable={!busy} />
       {message ? <Message error>{message}</Message> : null}
-      <Button label={busy ? 'Guardando…' : 'Guardar contraseña'} disabled={busy || !currentPassword || !newPassword || !confirmation} onPress={() => { void submit(); }} />
+      <Button label={busy ? t("Guardando…") : t("Guardar contraseña")} disabled={busy || !currentPassword || !newPassword || !confirmation} onPress={() => { void submit(); }} />
     </>}
-    <Button secondary label="Volver a mis clubes" disabled={busy} onPress={() => router.replace('/clubs')} />
+    <Button secondary label={t("Volver a mis clubes")} disabled={busy} onPress={() => router.replace('/clubs')} />
   </Screen>;
 }

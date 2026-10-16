@@ -1,18 +1,20 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { Stack } from 'expo-router';
 import { ClubAccess } from '@/components/access';
 
 export default function ManageLayout() {
+  useLanguage();
   return <ClubAccess admin><Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
-    <Stack.Screen name="club-info" options={{ title: 'Editar información' }} />
-    <Stack.Screen name="club-settings" options={{ title: 'Capitanes' }} />
-    <Stack.Screen name="call-up-history" options={{ title: 'Historial de convocatorias' }} />
-    <Stack.Screen name="create-call-up" options={{ title: 'Crear convocatoria' }} />
-    <Stack.Screen name="trials/[id]" options={{ title: 'Pruebas' }} />
-    <Stack.Screen name="inactive-players" options={{ title: 'Jugadores inactivos' }} />
-    <Stack.Screen name="players/new" options={{ title: 'Añadir jugador' }} />
-    <Stack.Screen name="players/[id]" options={{ title: 'Editar jugador' }} />
-    <Stack.Screen name="roster-import" options={{ title: 'Importar plantilla' }} />
-    <Stack.Screen name="join-requests" options={{ title: 'Solicitudes pendientes' }} />
-    <Stack.Screen name="invitations" options={{ title: 'Invitaciones' }} />
+    <Stack.Screen name="club-info" options={{ title: t("Editar información") }} />
+    <Stack.Screen name="club-settings" options={{ title: t("Capitanes") }} />
+    <Stack.Screen name="call-up-history" options={{ title: t("Historial de convocatorias") }} />
+    <Stack.Screen name="create-call-up" options={{ title: t("Crear convocatoria") }} />
+    <Stack.Screen name="trials/[id]" options={{ title: t("Pruebas") }} />
+    <Stack.Screen name="inactive-players" options={{ title: t("Jugadores inactivos") }} />
+    <Stack.Screen name="players/new" options={{ title: t("Añadir jugador") }} />
+    <Stack.Screen name="players/[id]" options={{ title: t("Editar jugador") }} />
+    <Stack.Screen name="roster-import" options={{ title: t("Importar plantilla") }} />
+    <Stack.Screen name="join-requests" options={{ title: t("Solicitudes pendientes") }} />
+    <Stack.Screen name="invitations" options={{ title: t("Invitaciones") }} />
   </Stack></ClubAccess>;
 }

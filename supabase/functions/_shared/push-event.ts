@@ -1,3 +1,4 @@
+import { pushCopy } from './push-language.ts';
 import { createHash, timingSafeEqual } from 'node:crypto';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type PushEventInput = { clubId: string; callUpId: string; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled'; actorEaId?: string | null; availability?: string | null };
@@ -13,10 +14,13 @@ export function authorizedWorker(header: string | null, secret: string | undefin
   const digest = (value: string) => createHash('sha256').update(value).digest();
   return timingSafeEqual(digest(header.slice(7)), digest(secret));
 }
-export function pushMessage(event: PushEventInput, token: string, recipientUserId?: string | null, canVote = true) {
+export function pushMessage(event: PushEventInput, token: string, recipientUserId?: string | null, canVote = true, language = 'es') {
+  const text = pushCopy(language);
   return {
-    to: token, title: event.kind === 'cancelled' ? 'Convocatoria cancelada' : event.kind === 'vote' ? 'Nueva respuesta en tu convocatoria' : event.kind === 'published' ? 'Nueva convocatoria' : event.kind === 'reminder' ? 'Último aviso para votar' : 'Confirma tu disponibilidad',
-    body: event.kind === 'cancelled' ? 'Tu club ha cancelado esta convocatoria. Ya no se puede votar.' : event.kind === 'vote' ? `${event.actorEaId?.slice(0, 100) ?? 'Un jugador'} ha votado: ${event.availability === 'available' ? 'Disponible' : event.availability === 'unavailable' ? 'No disponible' : 'Backup'}.` : event.kind === 'published' ? (canVote ? 'Responde Disponible, No disponible o Backup desde este aviso.' : 'Tu club tiene una convocatoria. Abre ConvoSquad para consultarla.') : event.kind === 'reminder' ? 'Aún no has respondido. Indica si estás disponible, no disponible o backup.' : 'Hay una convocatoria pendiente de tu respuesta. Abre ConvoSquad para responder.',
+    to: token, title: text[event.kind],
+    body: event.kind === 'cancelled' ? text.cancelledBody : event.kind === 'vote'
+      ? `${event.actorEaId?.slice(0, 100) ?? text.player} ${text.voted}: ${event.availability === 'available' ? text.available : event.availability === 'unavailable' ? text.unavailable : text.backup}.`
+      : event.kind === 'published' ? (canVote ? text.publishedBody : text.readOnly) : event.kind === 'reminder' ? text.reminderBody : text.pendingBody,
     channelId: 'call-ups', sound: 'default', ...(event.kind !== 'cancelled' && canVote ? { categoryId: 'call_up_availability' } : {}),
     data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, ...(recipientUserId ? { userId: recipientUserId } : {}), ...(event.kind === 'cancelled' ? { kind: 'cancelled' } : {}) },
   };

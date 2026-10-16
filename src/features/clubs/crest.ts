@@ -1,3 +1,4 @@
+import { createCrestCache } from './crest-cache';
 import { requireSupabase } from '@/lib/supabase';
 export type ClubCrestImage = { uri: string; base64: string };
 export async function pickClubCrest(): Promise<ClubCrestImage | null> {
@@ -19,10 +20,11 @@ export async function uploadClubCrest(clubId: string, image: ClubCrestImage) {
   const client = requireSupabase();
   const bytes = Uint8Array.from(atob(image.base64), character => character.charCodeAt(0));
   if (bytes.length > 5 * 1024 * 1024) throw new Error('El escudo es demasiado grande.');
-  const { error } = await client.storage.from('club-crests').upload(`${clubId}/crest.png`, bytes.buffer, { contentType: 'image/png', upsert: true, cacheControl: '0' });
+  const { error } = await client.storage.from('club-crests').upload(`${clubId}/crest.png`, bytes.buffer, { contentType: 'image/png', upsert: true, cacheControl: '3600' });
   if (error) throw error;
   const result = await client.rpc('set_club_crest', { p_club_id: clubId, p_has_crest: true });
   if (result.error) throw result.error;
+  clubCrestCache.invalidate(`${clubId}/crest.png`);
 }
 export async function removeClubCrest(clubId: string) {
   const client = requireSupabase();
@@ -30,9 +32,12 @@ export async function removeClubCrest(clubId: string) {
   if (error) throw error;
   const result = await client.storage.from('club-crests').remove([`${clubId}/crest.png`]);
   if (result.error) throw result.error;
+  clubCrestCache.invalidate(`${clubId}/crest.png`);
 }
 export async function getClubCrestUrl(path: string) {
   const { data, error } = await requireSupabase().storage.from('club-crests').createSignedUrl(path, 3600);
   if (error) throw error;
   return data.signedUrl;
 }
+
+export const clubCrestCache = createCrestCache(getClubCrestUrl);

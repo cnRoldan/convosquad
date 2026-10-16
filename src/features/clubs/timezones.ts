@@ -1,3 +1,4 @@
+import { t } from '../i18n/runtime.ts';
 export const defaultClubTimezone = 'Europe/Madrid';
 export const clubTimezones = [
   { value: 'Europe/Madrid', label: 'Madrid · Península y Baleares' },
@@ -31,5 +32,5 @@ export function isClubTimezone(value: string): boolean {
 export function timezoneLabel(zone: { value: string; label: string }, date = new Date()): string {
   const offset = new Intl.DateTimeFormat('en-GB', { timeZone: zone.value, timeZoneName: 'longOffset' })
     .formatToParts(date).find(part => part.type === 'timeZoneName')?.value?.replace(/^GMT$/, 'GMT+00:00');
-  return offset ? `${zone.label} (${offset})` : zone.label;
+  return offset ? `${t(zone.label)} (${offset})` : t(zone.label);
 }

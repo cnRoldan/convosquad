@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useState } from 'react';
 import type { PropsWithChildren, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -8,6 +9,7 @@ import { colors } from '@/theme';
 import { SessionIdentity } from './session-identity';
 
 export function Screen({ children, compact = false, footer }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode }>) {
+  useLanguage();
   const [footerHeight, setFooterHeight] = useState(0);
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -21,9 +23,10 @@ export function Screen({ children, compact = false, footer }: PropsWithChildren<
 }
 
 export function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
+  useLanguage();
   return (
     <View style={styles.heading}>
-      <Text style={styles.eyebrow}>CONVOSQUAD · CLUBES PRO</Text>
+      <Text style={styles.eyebrow}>{t("CONVOSQUAD · CLUBES PRO")}</Text>
       <Text accessibilityRole="header" style={styles.title}>{title}</Text>
       {subtitle ? <Text style={styles.body}>{subtitle}</Text> : null}
     </View>
@@ -31,10 +34,12 @@ export function Heading({ title, subtitle }: { title: string; subtitle?: string 
 }
 
 export function Body({ children }: PropsWithChildren) {
+  useLanguage();
   return <Text style={styles.body}>{children}</Text>;
 }
 
 export function Card({ title, children }: PropsWithChildren<{ title?: string }>) {
+  useLanguage();
   return (
     <View style={styles.card}>
       {title ? <Text style={styles.cardTitle}>{title}</Text> : null}
@@ -49,6 +54,7 @@ export function Button({ label, onPress, secondary = false, disabled = false }: 
   secondary?: boolean;
   disabled?: boolean;
 }) {
+  useLanguage();
   return (
     <Pressable
       accessibilityRole="button"
@@ -61,15 +67,16 @@ export function Button({ label, onPress, secondary = false, disabled = false }: 
         (pressed || disabled) && styles.dimmed,
       ]}
     >
-      <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{label}</Text>
+      <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{t(label)}</Text>
     </Pressable>
   );
 }
 
 export function Field({ label, ...props }: TextInputProps & { label: string }) {
+  useLanguage();
   return (
     <View style={styles.field}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={styles.fieldLabel}>{t(label)}</Text>
       <TextInput
         {...props}
         accessibilityLabel={label}
@@ -107,19 +114,22 @@ export function Options<T extends string>({ options, value, onChange, disabled =
   onChange: (value: T) => void;
   disabled?: boolean;
 }) {
+  useLanguage();
   return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
     {options.map((option) => <Pressable key={option.value} accessibilityRole="button"
       disabled={disabled} accessibilityState={{ selected: value === option.value, disabled }} onPress={() => onChange(option.value)}
       style={{ minHeight: 44, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: value === option.value ? colors.primary : colors.border, backgroundColor: colors.surface }}>
-      <Text style={{ color: value === option.value ? colors.primary : colors.text, fontWeight: '600' }}>{option.label}</Text>
+      <Text style={{ color: value === option.value ? colors.primary : colors.text, fontWeight: '600' }}>{t(option.label)}</Text>
     </Pressable>)}
   </View>;
 }
 
 export function Message({ children, error = false }: PropsWithChildren<{ error?: boolean }>) {
-  return <Text accessibilityLiveRegion="polite" style={[styles.body, { color: error ? colors.danger : colors.primary }]}>{children}</Text>;
+  useLanguage();
+  return <Text accessibilityLiveRegion="polite" style={[styles.body, { color: error ? colors.danger : colors.primary }]}>{typeof children === 'string' ? t(children) : children}</Text>;
 }
 
 export function DemoNotice() {
-  return <Body>Modo demo. Explora un club de ejemplo. Crea una cuenta para organizar tu equipo.</Body>;
+  useLanguage();
+  return <Body>{t("Modo demo. Explora un club de ejemplo. Crea una cuenta para organizar tu equipo.")}</Body>;
 }

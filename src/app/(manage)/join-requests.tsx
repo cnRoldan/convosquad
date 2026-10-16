@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { Body, Button, Card, DemoNotice, Heading, Message, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
@@ -7,6 +8,7 @@ import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 
 export default function JoinRequestsScreen() {
+  useLanguage();
   const { session, isDemo } = useAuth();
   const { activeClub, refreshRoster } = useClub();
   const clubId = activeClub?.id;
@@ -20,24 +22,24 @@ export default function JoinRequestsScreen() {
     setMessage('');
     try {
       await reviewJoinRequest(id, approve);
-      setMessage(approve ? 'Solicitud aprobada. El usuario ya puede acceder al club.' : 'Solicitud rechazada.');
+      setMessage(approve ? t("Solicitud aprobada. El usuario ya puede acceder al club.") : t("Solicitud rechazada."));
       requests.reload();
       refreshRoster();
     } catch (error) { setMessage(backendErrorMessage(error)); requests.reload(); }
     finally { setBusy(null); }
   }
   return <Screen>
-    <Heading title="Solicitudes pendientes" subtitle={activeClub?.name ?? ''} />
+    <Heading title={t("Solicitudes pendientes")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
-    {requests.isLoading ? <Body>Cargando solicitudes…</Body> : null}
+    {requests.isLoading ? <Body>{t("Cargando solicitudes…")}</Body> : null}
     {requests.error ? <Message error>{requests.error}</Message> : null}
     {message ? <Message>{message}</Message> : null}
-    {requests.data?.map((request) => <Card key={request.id} title={request.profiles?.username ?? 'Usuario solicitante'}>
-      <Body>Quiere incorporarse como jugador.</Body>
-      <Button label="Aprobar" disabled={Boolean(busy)} onPress={() => { void review(request.id, true); }} />
-      <Button secondary label="Rechazar" disabled={Boolean(busy)} onPress={() => { void review(request.id, false); }} />
+    {requests.data?.map((request) => <Card key={request.id} title={request.profiles?.username ?? t("Usuario solicitante")}>
+      <Body>{t("Quiere incorporarse como jugador.")}</Body>
+      <Button label={t("Aprobar")} disabled={Boolean(busy)} onPress={() => { void review(request.id, true); }} />
+      <Button secondary label={t("Rechazar")} disabled={Boolean(busy)} onPress={() => { void review(request.id, false); }} />
     </Card>)}
-    {requests.data?.length === 0 ? <Body>No hay solicitudes pendientes.</Body> : null}
-    <Button secondary label="Actualizar" disabled={isDemo || requests.isLoading} onPress={requests.reload} />
+    {requests.data?.length === 0 ? <Body>{t("No hay solicitudes pendientes.")}</Body> : null}
+    <Button secondary label={t("Actualizar")} disabled={isDemo || requests.isLoading} onPress={requests.reload} />
   </Screen>;
 }

@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, Share } from 'react-native';
 import * as Linking from 'expo-linking';
@@ -11,6 +12,7 @@ import { formatMatchDate } from '@/lib/format';
 import { backendErrorMessage } from '@/lib/backend-result';
 
 export default function InvitationsScreen() {
+  useLanguage();
   const { session, isDemo } = useAuth();
   const { activeClub } = useClub();
   const clubId = activeClub?.id;
@@ -28,21 +30,21 @@ export default function InvitationsScreen() {
   const invitations = useResource(`invitations:${session?.user.id}:${clubId}`, load, Boolean(session && clubId) && !isDemo);
   async function create() {
     if (!clubId || isDemo || busy) return;
-    if (!/^[0-9]+$/.test(hours) || Number(hours) < 1 || Number(hours) > 720) return setMessage('La caducidad debe estar entre 1 y 720 horas.');
-    if (!/^[0-9]+$/.test(uses) || Number(uses) < 1 || Number(uses) > 100) return setMessage('Permite entre 1 y 100 incorporaciones.');
+    if (!/^[0-9]+$/.test(hours) || Number(hours) < 1 || Number(hours) > 720) return setMessage(t("La caducidad debe estar entre 1 y 720 horas."));
+    if (!/^[0-9]+$/.test(uses) || Number(uses) < 1 || Number(uses) > 100) return setMessage(t("Permite entre 1 y 100 incorporaciones."));
     setBusy(true);
     setMessage('');
     try {
       const origin = process.env.EXPO_PUBLIC_INVITE_BASE_URL;
       const local = Linking.createURL('/invite');
       if (!origin && Platform.OS === 'web' && new URL(local).protocol !== 'https:') {
-        setMessage('Configura una dirección web HTTPS accesible para compartir invitaciones desde esta versión web.');
+        setMessage(t("Configura una dirección web HTTPS accesible para compartir invitaciones desde esta versión web."));
         return;
       }
       const base = origin ? webInviteBase(origin) : local;
       const invitation = await createClubInvitation(clubId, Number(hours), Number(uses));
       setLink({ id: invitation.id, url: invitationUrl(base, { clubId, token: invitation.token }) });
-      setMessage('Invitación creada. Comparte este enlace; no podrás recuperarlo al salir de esta pantalla.');
+      setMessage(t("Invitación creada. Comparte este enlace; no podrás recuperarlo al salir de esta pantalla."));
       invitations.reload();
     } catch (error) { setMessage(backendErrorMessage(error)); }
     finally { setBusy(false); }
@@ -50,41 +52,41 @@ export default function InvitationsScreen() {
   async function revoke(id: string) {
     if (isDemo || busy) return;
     setBusy(true);
-    try { await revokeClubInvitation(id); if (link?.id === id) setLink(null); setMessage('Invitación revocada.'); invitations.reload(); }
+    try { await revokeClubInvitation(id); if (link?.id === id) setLink(null); setMessage(t("Invitación revocada.")); invitations.reload(); }
     catch (error) { setMessage(backendErrorMessage(error)); }
     finally { setBusy(false); }
   }
   async function share() {
     if (!link) return;
-    try { await Share.share({ message: `Únete a ${activeClub?.name ?? 'mi club'} en ConvoSquad: ${link.url}` }); }
-    catch { setMessage('No se pudo abrir el menú para compartir. Prueba «Abrir WhatsApp».'); }
+    try { await Share.share({ message: t("Únete a {{v0}} en ConvoSquad: {{v1}}", { v0: activeClub?.name ?? t("mi club"), v1: link.url }) }); }
+    catch { setMessage(t("No se pudo abrir el menú para compartir. Prueba «Abrir WhatsApp».")); }
   }
   return <Screen>
-    <Heading title="Invita a tu equipo" subtitle={activeClub?.name ?? ''} />
+    <Heading title={t("Invita a tu equipo")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
-    <Field label="Caducidad en horas" value={hours} onChangeText={setHours} keyboardType="number-pad" editable={!busy} />
-    <Field label="Número máximo de incorporaciones" value={uses} onChangeText={setUses} keyboardType="number-pad" editable={!busy} />
-    <Button label={busy ? 'Un momento…' : 'Generar invitación'} disabled={isDemo || busy} onPress={() => { void create(); }} />
+    <Field label={t("Caducidad en horas")} value={hours} onChangeText={setHours} keyboardType="number-pad" editable={!busy} />
+    <Field label={t("Número máximo de incorporaciones")} value={uses} onChangeText={setUses} keyboardType="number-pad" editable={!busy} />
+    <Button label={busy ? t("Un momento…") : t("Generar invitación")} disabled={isDemo || busy} onPress={() => { void create(); }} />
     {message ? <Message>{message}</Message> : null}
-    {link ? <Card title="Comparte tu invitación">
-      <Body>El enlace permite incorporarse sin aprobación adicional. Compártelo solo con los jugadores que quieres invitar.</Body>
-      {!process.env.EXPO_PUBLIC_INVITE_BASE_URL ? <Body>Este enlace se abre con ConvoSquad instalada en el móvil.</Body> : null}
-      <Button label="Compartir enlace" onPress={() => { void share(); }} />
-      <Button secondary label="Abrir WhatsApp" onPress={() => {
-        void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(`Únete a ${activeClub?.name ?? 'mi club'}: ${link.url}`)}`)
-          .catch(() => setMessage('No se pudo abrir WhatsApp en este dispositivo.'));
+    {link ? <Card title={t("Comparte tu invitación")}>
+      <Body>{t("El enlace permite incorporarse sin aprobación adicional. Compártelo solo con los jugadores que quieres invitar.")}</Body>
+      {!process.env.EXPO_PUBLIC_INVITE_BASE_URL ? <Body>{t("Este enlace se abre con ConvoSquad instalada en el móvil.")}</Body> : null}
+      <Button label={t("Compartir enlace")} onPress={() => { void share(); }} />
+      <Button secondary label={t("Abrir WhatsApp")} onPress={() => {
+        void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(t("Únete a {{v0}}: {{v1}}", { v0: activeClub?.name ?? t("mi club"), v1: link.url }))}`)
+          .catch(() => setMessage(t("No se pudo abrir WhatsApp en este dispositivo.")));
       }} />
     </Card> : null}
-    {invitations.isLoading ? <Body>Cargando invitaciones…</Body> : null}
+    {invitations.isLoading ? <Body>{t("Cargando invitaciones…")}</Body> : null}
     {invitations.error ? <Message error>{invitations.error}</Message> : null}
     {invitations.data?.map((invitation) => {
       const expired = new Date(invitation.expires_at).getTime() <= now;
-      const status = invitation.revoked_at ? 'Revocada' : expired ? 'Caducada' : invitation.uses >= invitation.max_uses ? 'Agotada' : 'Activa';
+      const status = invitation.revoked_at ? t("Revocada") : expired ? t("Caducada") : invitation.uses >= invitation.max_uses ? t("Agotada") : t("Activa");
       return <Card key={invitation.id} title={status}>
-        <Body>{invitation.uses} de {invitation.max_uses} incorporaciones · caduca {formatMatchDate(invitation.expires_at, activeClub?.timezone)}</Body>
-        {!invitation.revoked_at ? <Button secondary label="Revocar invitación" disabled={busy} onPress={() => { void revoke(invitation.id); }} /> : null}
+        <Body>{invitation.uses} {t("de")} {invitation.max_uses} {t("incorporaciones · caduca")} {formatMatchDate(invitation.expires_at, activeClub?.timezone)}</Body>
+        {!invitation.revoked_at ? <Button secondary label={t("Revocar invitación")} disabled={busy} onPress={() => { void revoke(invitation.id); }} /> : null}
       </Card>;
     })}
-    {invitations.data?.length === 0 ? <Body>Aún no hay invitaciones.</Body> : null}
+    {invitations.data?.length === 0 ? <Body>{t("Aún no hay invitaciones.")}</Body> : null}
   </Screen>;
 }
