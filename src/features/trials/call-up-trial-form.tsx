@@ -1,3 +1,4 @@
+import { PrivatePhoneField } from '@/features/call-ups/private-phone-field';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Button, Field, Message } from '@/components/ui';
@@ -26,7 +27,7 @@ export function CallUpTrialForm({ callUpId, onSaved }: { callUpId: string; onSav
   }
   return <View style={{ gap: 12, marginTop: 12 }}>
     <Field label="Nueva prueba" value={name} onChangeText={setName} maxLength={64} editable={!busy} />
-    <Field label="Teléfono de la prueba (solo capitanes, opcional)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={30} editable={!busy} />
+    <PrivatePhoneField label="Teléfono de la prueba (solo capitanes, opcional)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={30} editable={!busy} />
     <Button label="Añadir prueba" disabled={busy} onPress={() => { void save(); }} />
     {message ? <Message error={failed}>{message}</Message> : null}
   </View>;

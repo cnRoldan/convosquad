@@ -501,6 +501,17 @@ test('capitanes guardan teléfonos privados, abren WhatsApp y quitan pruebas y a
     assert.equal(await page.getByText('WhatsApp de Contacto de prueba', {exact: true}).count(), 0);
     await editContact.click();
     await page.getByRole('textbox', {name: 'Teléfono', exact: true}).waitFor();
+    const nameBounds = await page.getByText('Contacto de prueba', {exact: true}).boundingBox();
+    const labelBounds = await page.getByText('Teléfono', {exact: true}).boundingBox();
+    assert.ok(labelBounds.y - nameBounds.y - nameBounds.height >= 12);
+    const privacyNotice = page.getByRole('textbox', {name: 'Teléfono', exact: true}).locator('../..');
+    await privacyNotice.getByText('Solo los capitanes pueden ver este número.', {exact: true}).waitFor();
+    const whatsappIcon = page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).locator('svg');
+    assert.equal(await whatsappIcon.getAttribute('fill'), '#25D366');
+    assert.equal(await whatsappIcon.getAttribute('stroke'), 'none');
+    assert.equal(await whatsappIcon.getAttribute('width'), '24');
+    mkdirSync('test-results', {recursive: true});
+    await page.screenshot({path: 'test-results/private-phone-editor.png', fullPage: true});
     await page.getByRole('button', {name: 'Guardar teléfono de Contacto de prueba', exact: true}).click();
     await page.getByRole('button', {name: 'Editar teléfono de Contacto de prueba', exact: true}).waitFor();
     await page.evaluate(() => { window.open = url => { window.__contactUrl = String(url); return null; }; });
@@ -527,6 +538,7 @@ test('jugadores no solicitan teléfonos privados ni ven campos de contacto o acc
   const f = await fixture();
   try {
     assert.equal(f.data.privateReads, 0);
+    assert.equal(await f.page.getByText('Solo los capitanes pueden ver este número.', {exact: true}).count(), 0);
     assert.equal(await f.page.getByRole('textbox', {name: /Teléfono/}).count(), 0);
     assert.equal(await f.page.getByRole('button', {name: /WhatsApp de|Quitar prueba|Eliminar ayuda/}).count(), 0);
   } finally { await f.close(); }

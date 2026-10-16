@@ -1,3 +1,4 @@
+import { PrivatePhoneField } from '@/features/call-ups/private-phone-field';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Body, Button, Field, Message } from '@/components/ui';
@@ -56,7 +57,7 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
     {message ? <Message error>{message}</Message> : null}
     {result.data?.map((aid, index) => <AidRow key={`${aid.id}:${aid.body}:${contacts.data?.find(contact => contact.aid_id === aid.id)?.phone ?? ''}`} aid={aid} phone={contacts.data?.find(contact => contact.aid_id === aid.id)?.phone ?? ''} captain={admin} ordinal={index + 1} editable={editable} disabled={busy || isDemo || result.isLoading || (admin && (contacts.isLoading || Boolean(contacts.error)))} first={index === 0} last={index === (result.data?.length ?? 0) - 1} save={(body, phoneValue) => save(body, phoneValue, aid.id)} remove={() => setDeleting(aid.id)} move={direction => move(aid.id, direction)} />)}
     {!result.isLoading && !result.error && !result.data?.length ? <Body>Esta convocatoria no tiene ayudas.</Body> : null}
-    {editable ? <View style={{ gap: 12 }}><Field label="Nueva ayuda" value={text} onChangeText={setText} maxLength={500} multiline editable={!busy} /><Field label="Teléfono de la ayuda (solo capitanes, opcional)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={30} editable={!busy} /><Button label="Añadir ayuda" disabled={busy || isDemo || result.isLoading || Boolean(result.error)} onPress={() => save(text, phone)} /></View> : null}
+    {editable ? <View style={{ gap: 12 }}><Field label="Nueva ayuda" value={text} onChangeText={setText} maxLength={500} multiline editable={!busy} /><PrivatePhoneField label="Teléfono de la ayuda (solo capitanes, opcional)" value={phone} onChangeText={setPhone} keyboardType="phone-pad" maxLength={30} editable={!busy} /><Button label="Añadir ayuda" disabled={busy || isDemo || result.isLoading || Boolean(result.error)} onPress={() => save(text, phone)} /></View> : null}
     <ConfirmDialog visible={Boolean(deleting)} title="Eliminar anotación" description="Se eliminará únicamente esta ayuda de la convocatoria seleccionada." busy={busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting) void mutate(() => deleteAid(deleting, callUpId)); }} />
   </CompactPanel>;
 }

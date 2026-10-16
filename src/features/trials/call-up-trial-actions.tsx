@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Linking, View } from 'react-native';
 import { IconButton } from '@/components/icon-button';
 import { ConfirmDialog } from '@/components/confirm-dialog';
-import { Field, Message } from '@/components/ui';
+import { Message } from '@/components/ui';
+import { PrivatePhoneField } from '@/features/call-ups/private-phone-field';
 import { normalizePhone, whatsappUrl } from '@/features/call-ups/phone';
 import { saveCallUpContact } from '@/features/call-ups/contacts';
 import { backendErrorMessage } from '@/lib/backend-result';
@@ -23,8 +24,8 @@ export function CallUpTrialActions({ trial, phone, editable, disabled, onSaved }
     } catch (error) { setMessage(error instanceof Error ? error.message : backendErrorMessage(error)); }
     finally { setBusy(false); }
   }
-  return <View style={{gap: 8}}>
-    {editable && editing ? <Field label="Teléfono" value={value} onChangeText={setValue} keyboardType="phone-pad" maxLength={30} editable={!disabled && !busy} /> : null}
+  return <View style={{ gap: 12, paddingTop: 12 }}>
+    {editable && editing ? <PrivatePhoneField label="Teléfono" value={value} onChangeText={setValue} keyboardType="phone-pad" maxLength={30} editable={!disabled && !busy} /> : null}
     <View style={{flexDirection: 'row', gap: 4}}>
       {editable ? <>
         <IconButton icon={editing ? 'save' : 'edit'} label={`${editing ? 'Guardar' : 'Editar'} teléfono de ${trial.ea_id_snapshot}`} disabled={busy || disabled} onPress={() => {
