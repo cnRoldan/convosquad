@@ -1,6 +1,6 @@
 # Escudos de clubes
 
-En Crear club se puede elegir una imagen de la galería y revisar su vista previa. El escudo es opcional. Para clubes existentes, un capitán puede usar Capitanes → Escudo del club para añadirlo, cambiarlo o quitarlo.
+En Crear club se puede elegir una imagen de la galería y revisar su vista previa. El escudo es opcional. Para clubes existentes, un capitán puede usar Editar información → Escudo del club para añadirlo, cambiarlo o quitarlo.
 
 El selector admite imágenes de la biblioteca. Los formatos que el dispositivo/navegador pueda decodificar se convierten a PNG, conservando proporciones y transparencia y limitando el lado mayor a 512 píxeles. PNG y JPEG son compatibles; HEIC/HEIF depende del soporte del dispositivo y se convierte en los móviles compatibles. No se promete decodificación universal de SVG, RAW, archivos dañados o formatos no soportados por el sistema. Una imagen no compatible muestra un error y permite elegir otra. No se solicita acceso a cámara ni micrófono.
 
