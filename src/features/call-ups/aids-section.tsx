@@ -44,7 +44,7 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
     {message ? <Message error>{message}</Message> : null}
     {result.data?.map((aid, index) => <AidRow key={`${aid.id}:${aid.body}`} aid={aid} ordinal={index + 1} editable={editable} disabled={busy || isDemo || result.isLoading} first={index === 0} last={index === (result.data?.length ?? 0) - 1} save={body => save(body, aid.id)} remove={() => setDeleting(aid.id)} move={direction => move(aid.id, direction)} />)}
     {!result.isLoading && !result.error && !result.data?.length ? <Body>Esta convocatoria no tiene ayudas.</Body> : null}
-    {editable ? <><Field label="Nueva ayuda" value={text} onChangeText={setText} maxLength={500} multiline editable={!busy} /><Button label="Añadir ayuda" disabled={busy || isDemo || result.isLoading || Boolean(result.error)} onPress={() => save(text)} /></> : null}
+    {editable ? <View style={{ gap: 12 }}><Field label="Nueva ayuda" value={text} onChangeText={setText} maxLength={500} multiline editable={!busy} /><Button label="Añadir ayuda" disabled={busy || isDemo || result.isLoading || Boolean(result.error)} onPress={() => save(text)} /></View> : null}
     <ConfirmDialog visible={Boolean(deleting)} title="Eliminar anotación" description="Se eliminará únicamente esta ayuda de la convocatoria seleccionada." busy={busy} onCancel={() => setDeleting(null)} onConfirm={() => { if (deleting) void mutate(() => deleteAid(deleting, callUpId)); }} />
   </CompactPanel>;
 }
