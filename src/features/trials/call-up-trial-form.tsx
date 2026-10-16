@@ -17,14 +17,14 @@ export function CallUpTrialForm({ callUpId, onSaved }: { callUpId: string; onSav
   async function save() {
     if (busy) return;
     setFailed(true);
-    if (!name.trim() || name.trim().length > 64) return setMessage(t("Introduce un nombre de hasta 64 caracteres."));
+    if (!name.trim() || name.trim().length > 64) return setMessage("Introduce un nombre de hasta 64 caracteres.");
     setBusy(true); setMessage('');
     try {
       await addCallUpTrialWithContact(callUpId, name.trim(), normalizePhone(phone));
-      setName(''); setPhone(''); setFailed(false); setMessage(t("Prueba añadida a la convocatoria y guardada en la plantilla.")); onSaved();
+      setName(''); setPhone(''); setFailed(false); setMessage("Prueba añadida a la convocatoria y guardada en la plantilla."); onSaved();
     } catch (error) {
       setMessage(error && typeof error === 'object' && 'code' in error && error.code === '23505'
-        ? t("Ya existe una prueba activa con ese nombre en el club.") : error instanceof Error ? error.message : backendErrorMessage(error));
+        ? "Ya existe una prueba activa con ese nombre en el club." : error instanceof Error ? error.message : backendErrorMessage(error));
     } finally { setBusy(false); }
   }
   return <View style={{ gap: 12, marginTop: 12 }}>
