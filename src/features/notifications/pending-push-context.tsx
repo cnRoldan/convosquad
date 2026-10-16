@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { Platform } from 'react-native';
@@ -7,6 +8,7 @@ import type { PushIntent } from './intent';
 const key = 'convosquad:pending-push';
 const Context = createContext<{ pendingPush: PushIntent | null; rememberPush: (intent: PushIntent) => void; clearPush: () => void } | null>(null);
 export function PendingPushProvider({ children }: PropsWithChildren) {
+  useLanguage();
   const [pendingPush, setPendingPush] = useState<PushIntent | null>(null);
   const [changed, setChanged] = useState(false);
   useEffect(() => {
@@ -28,5 +30,5 @@ export function PendingPushProvider({ children }: PropsWithChildren) {
   return <Context.Provider value={{ pendingPush, rememberPush, clearPush }}>{children}</Context.Provider>;
 }
 export function usePendingPush() {
-  const context = useContext(Context); if (!context) throw new Error('Falta PendingPushProvider'); return context;
+  const context = useContext(Context); if (!context) throw new Error(t("Falta PendingPushProvider")); return context;
 }

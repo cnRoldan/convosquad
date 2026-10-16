@@ -24,8 +24,8 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false } = {}) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, browserLanguage = 'es-ES' } = {}) {
+  const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
   const club = { id: '00000000-0000-4000-8000-000000000903', name: 'Club de prueba', timezone: 'UTC', created_by: creator ? userId : '00000000-0000-4000-8000-000000000904', reminder_minutes: null };
@@ -46,6 +46,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     {id: 'trial-two', club_id: club.id, ea_id: 'Prueba segunda', status: 'active', sort_order: 1, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
     {id: 'trial-retired', club_id: club.id, ea_id: 'Prueba retirada', status: 'withdrawn', sort_order: 2, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
   ] : [];
+  let preferredLanguage = null;
   let voteNotifications = true;
   const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
   const page = await context.newPage(); const requests = []; const errors = [];
@@ -57,7 +58,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     if (url.hostname !== 'auth.example.test') throw new Error('External request blocked');
     if (url.pathname.includes('/storage/v1/object/')) {
       if (req.method() === 'GET') return route.fulfill({contentType: 'image/png', body: transparentPng});
-      if (url.pathname.includes('/object/sign/')) return route.fulfill({json: {signedURL: `/object/sign/club-crests/${club.id}/crest.png?token=fixture`}});
+      if (url.pathname.includes('/object/sign/')) { requests.push({endpoint:'crest-sign',body:null}); return route.fulfill({json: {signedURL: `/object/sign/club-crests/${club.id}/crest.png?token=fixture`}}); }
       const bytes = req.postDataBuffer();
       requests.push({endpoint: 'crest-upload', body: {contentType: req.headers()['content-type'], pngSignature: bytes?.subarray(0,8).toString('hex'), bytes: bytes?.toString('base64')}});
       if (failCrestUploadOnce) { failCrestUploadOnce = false; return route.fulfill({status: 500, json: {message: 'Fixture upload failure'}}); }
@@ -69,7 +70,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
-    if (endpoint === 'create_call_up_with_notice') return route.fulfill({ json: { id: 'new-call' } });
+    if (endpoint === 'create_call_up_with_schedule') return route.fulfill({ json: { id: 'new-call' } });
     if (clubRole) {
       if (endpoint === 'club_trials') return route.fulfill({json: trials.filter(trial => url.searchParams.get('status') !== 'eq.active' || trial.status === 'active').sort((a,b) => a.sort_order - b.sort_order)});
       if (endpoint === 'club_trial_contacts') {
@@ -108,7 +109,8 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
       const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.fixture`;
       return route.fulfill({ json: { user, access_token: token, refresh_token: 'fixture-refresh', expires_in: 3600, token_type: 'bearer' } });
     }
-    if (endpoint === 'profiles') return route.fulfill({ json: { id: '00000000-0000-4000-8000-000000000901', username: 'EA-Player_9' } });
+    if (endpoint === 'set_preferred_language') { preferredLanguage = body.p_language; return route.fulfill({json: null}); }
+    if (endpoint === 'profiles') return route.fulfill({ json: { id: '00000000-0000-4000-8000-000000000901', username: 'EA-Player_9', preferred_language: preferredLanguage } });
     if (['clubs', 'club_members', 'search_clubs', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
     throw new Error(`Unexpected fixture endpoint: ${endpoint}`);
   });
@@ -256,14 +258,15 @@ test('convocatoria propone último aviso a las 18:45, valida hora y lo envía en
     await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('18:00');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByText('El último aviso debe ser anterior a la hora de la convocatoria.',{exact:true}).waitFor();
-    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_notice'),false);
+    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_schedule'),false);
     await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('21:50');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
     await f.page.waitForURL('**/call-up*');
-    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_notice');
+    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_schedule');
     assert.equal(request.body.p_last_notice_at,'2035-06-01T18:45:00.000Z');
     assert.equal(request.body.p_status,'open');
+    assert.equal(request.body.p_closes_at,'2035-06-01T21:50:00.000Z');
   }finally{await f.close();}
 });
 test('preferencia personal de votos se guarda sin pedir datos de otras cuentas',async()=>{
@@ -446,4 +449,40 @@ test('plantilla: jugadores no reciben teléfonos ni acciones de gestión de prue
     assert.equal(await f.page.getByRole('button', {name: /WhatsApp de Prueba|Quitar prueba de|Editar prueba de|Subir prueba de/}).count(), 0);
     assert.equal(await f.page.getByText('Prueba retirada', {exact: true}).count(), 0);
   } finally { await f.close(); }
+});
+
+
+test('idioma junto al ID cambia en modal, se conserva al recargar y no cambia nombres del club', async () => {
+ const f=await fixture({clubRole:'admin'});
+ try {
+  const {page}=f;await page.goto(`${origin}/home`);
+  await page.getByRole('button',{name:'Cambiar idioma',exact:true}).click();
+  await page.getByRole('radio',{name:'English',exact:true}).click();
+  await page.getByRole('button',{name:'Edit information',exact:true}).waitFor();
+  await page.getByText('Club de prueba',{exact:true}).waitFor();
+  assert.equal(f.requests.filter(r=>r.endpoint==='set_preferred_language').at(-1).body.p_language,'en');
+  await page.reload();await page.getByRole('button',{name:'Change language',exact:true}).click();
+  await page.getByRole('radio',{name:'Deutsch',exact:true}).click();
+  await page.getByRole('button',{name:'Sprache ändern',exact:true}).click();
+  await page.getByRole('radio',{name:'Français',exact:true}).click();
+  await page.getByRole('button',{name:'Changer de langue',exact:true}).waitFor();
+  await page.getByText('Club de prueba',{exact:true}).waitFor();
+ }finally{await f.close();}
+});
+
+test('escudos reutilizan URL al navegar y se invalidan al guardar una sustitución', async () => {
+ const f=await fixture({clubRole:'admin'});
+ try {
+  const {page}=f;await page.goto(`${origin}/home`);await page.getByRole('button',{name:'Editar información',exact:true}).click();
+  const choosing=page.waitForEvent('filechooser');await page.getByRole('button',{name:'Añadir escudo (opcional)',exact:true}).click();
+  await (await choosing).setFiles({name:'escudo.png',mimeType:'image/png',buffer:f.crestFixture});
+  await page.getByRole('button',{name:'Guardar escudo',exact:true}).click();await page.getByText('Escudo actualizado.',{exact:true}).waitFor();
+  await page.getByRole('img',{name:/Club de prueba/}).last().waitFor();
+  const signedBefore=f.requests.filter(r=>r.endpoint==='crest-sign').length;
+  await page.goBack();await page.getByRole('img',{name:/Club de prueba/}).waitFor();
+  await page.getByRole('button',{name:'Cambiar idioma',exact:true}).click();
+  await page.getByRole('radio',{name:'English',exact:true}).click();
+  await page.getByRole('tab',{name:'Roster',exact:true}).click();await page.getByRole('img',{name:/Club de prueba/}).waitFor();
+  assert.equal(f.requests.filter(r=>r.endpoint==='crest-sign').length,signedBefore);
+ }finally{await f.close();}
 });

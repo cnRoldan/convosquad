@@ -22,7 +22,11 @@ Deno.serve(async request => {
     async claim(id) {
       const { data, error } = await client.rpc('claim_push_deliveries', { p_event_id: id, p_limit: 100 });
       if (error || !data) throw new Error('No se pudieron reservar avisos');
-      return data;
+      const deliveries = data as Awaited<ReturnType<ReminderStore['claim']>>;
+      const ids = [...new Set(deliveries.flatMap(delivery => delivery.user_id ? [delivery.user_id] : []))];
+      const { data: profiles } = await client.from('profiles').select('id,preferred_language').in('id', ids);
+      const languages = new Map<string, string | null>((profiles ?? []).map((profile: { id: string; preferred_language: string | null }) => [profile.id, profile.preferred_language]));
+      return deliveries.map(delivery => ({ ...delivery, preferred_language: delivery.user_id ? languages.get(delivery.user_id) ?? 'es' : 'es' }));
     },
     async finish(id, state, ticketId) {
       const { error } = await client.rpc('finish_push_delivery', { p_delivery_id: id, p_state: state, p_ticket_id: ticketId });

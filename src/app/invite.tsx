@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useState } from 'react';
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -11,6 +12,7 @@ import { redeemClubInvitation } from '@/features/invitations/service';
 import { backendErrorMessage } from '@/lib/backend-result';
 
 export default function InviteScreen() {
+  useLanguage();
   const incomingUrl = Linking.useURL();
   const params = useLocalSearchParams<{ club?: string; token?: string }>();
   const { session, isLoading, isDemo, exitDemo } = useAuth();
@@ -20,7 +22,7 @@ export default function InviteScreen() {
   const invitation = params.club || params.token ? incoming : pendingInvite;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  if (isLoading) return <LoadingScreen label="Comprobando tu sesión…" />;
+  if (isLoading) return <LoadingScreen label={t("Comprobando tu sesión…")} />;
   const ownClub = availableClubs.find((club) => club.id === invitation?.clubId);
   function authenticate() {
     if (!invitation) return;
@@ -39,18 +41,18 @@ export default function InviteScreen() {
       router.replace('/home');
     } catch (error) {
       setMessage(typeof error === 'object' && error !== null && 'code' in error && error.code === '22023'
-        ? 'La invitación no es válida, ha caducado, está revocada o se han agotado sus usos. Solicita un enlace nuevo.'
+        ? t("La invitación no es válida, ha caducado, está revocada o se han agotado sus usos. Solicita un enlace nuevo.")
         : backendErrorMessage(error));
     } finally { setBusy(false); }
   }
   return <Screen>
-    <Heading title={ownClub ? `Ya formas parte de ${ownClub.name}` : 'Te han invitado a un club'} />
-    {!invitation ? <Message error>El enlace está incompleto o no es válido. Pide una invitación nueva al administrador.</Message> : <>
-      <Body>{session && !isDemo ? 'La incorporación utilizará tu cuenta actual.' : 'Inicia sesión o crea una cuenta antes de aceptar la invitación.'}</Body>
-      {session && !isDemo ? <Button label={busy ? 'Comprobando invitación…' : ownClub ? 'Abrir mi club' : 'Aceptar invitación'} disabled={busy} onPress={() => { void accept(); }} />
-        : <Button label="Iniciar sesión para continuar" onPress={authenticate} />}
+    <Heading title={ownClub ? t("Ya formas parte de {{v0}}", { v0: ownClub.name }) : t("Te han invitado a un club")} />
+    {!invitation ? <Message error>{t("El enlace está incompleto o no es válido. Pide una invitación nueva al administrador.")}</Message> : <>
+      <Body>{session && !isDemo ? t("La incorporación utilizará tu cuenta actual.") : t("Inicia sesión o crea una cuenta antes de aceptar la invitación.")}</Body>
+      {session && !isDemo ? <Button label={busy ? t("Comprobando invitación…") : ownClub ? t("Abrir mi club") : t("Aceptar invitación")} disabled={busy} onPress={() => { void accept(); }} />
+        : <Button label={t("Iniciar sesión para continuar")} onPress={authenticate} />}
     </>}
     {message ? <Message error>{message}</Message> : null}
-    <Button secondary label="Cancelar" disabled={busy} onPress={() => { clearInvite(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
+    <Button secondary label={t("Cancelar")} disabled={busy} onPress={() => { clearInvite(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
   </Screen>;
 }

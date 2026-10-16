@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -39,6 +40,7 @@ type Selection = { scope: string; id: string | null };
 const ClubContext = createContext<ClubContextValue | null>(null);
 
 export function ClubProvider({ children }: PropsWithChildren) {
+  useLanguage();
   const { session, isDemo, isLoading: authLoading, isRecovery } = useAuth();
   const userId = session?.user.id;
   const scope = isDemo ? 'demo' : userId ?? 'guest';
@@ -68,7 +70,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
       selectionRef.current = next;
       setSelection(next);
       if (chosen) await AsyncStorage.setItem(`convosquad:club:${userId}`, chosen).catch(() => undefined);
-      if (preferredId && chosen !== preferredId) throw new Error('No se pudo cargar el club seleccionado.');
+      if (preferredId && chosen !== preferredId) throw new Error(t("No se pudo cargar el club seleccionado."));
     } catch (error) {
       if (version === requestId.current) setLiveClubs({ userId, eaId: null, clubs: [], memberships: [], error: backendErrorMessage(error) });
       throw error;
@@ -96,8 +98,8 @@ export function ClubProvider({ children }: PropsWithChildren) {
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
         displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
         role: memberRows.find((member) => member.user_id === player.user_id)?.role ?? null })),
-      callUp: next ? { id: next.id, clubId: next.club_id, title: 'Convocatoria del club', startsAt: next.starts_at,
-        timezone: next.timezone, opponent: 'Por confirmar', slots: responses.length,
+      callUp: next ? { id: next.id, clubId: next.club_id, title: t("Convocatoria del club"), startsAt: next.starts_at,
+        timezone: next.timezone, opponent: t("Por confirmar"), slots: responses.length,
         responses: responses.map((entry) => ({ id: entry.id, displayName: entry.ea_id_snapshot, status: entry.availability, category: entry.category_snapshot, sortOrder: entry.sort_order_snapshot })) } : null,
     };
   }, [clubId, activeClub?.timezone]);
@@ -134,6 +136,6 @@ export function ClubProvider({ children }: PropsWithChildren) {
 }
 export function useClub() {
   const context = useContext(ClubContext);
-  if (!context) throw new Error('useClub requiere ClubProvider');
+  if (!context) throw new Error(t("useClub requiere ClubProvider"));
   return context;
 }

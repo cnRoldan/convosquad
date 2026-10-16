@@ -198,6 +198,7 @@ export type Database = {
           updated_at: string;
           last_notice_at: string | null;
           status_version: number;
+          closes_at: string | null;
         };
         Insert: {
           id?: string;
@@ -211,6 +212,7 @@ export type Database = {
           updated_at?: string;
           last_notice_at?: string | null;
           status_version?: number;
+          closes_at?: string | null;
         };
         Update: {
           id?: string;
@@ -224,6 +226,7 @@ export type Database = {
           updated_at?: string;
           last_notice_at?: string | null;
           status_version?: number;
+          closes_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'call_ups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -526,16 +529,19 @@ export type Database = {
           id: string;
           username: string;
           created_at: string;
+          preferred_language: string | null;
         };
         Insert: {
           id: string;
           username: string;
           created_at?: string;
+          preferred_language?: string | null;
         };
         Update: {
           id?: string;
           username?: string;
           created_at?: string;
+          preferred_language?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'profiles_id_fkey'; columns: ["id"]; isOneToOne: true; referencedRelation: 'users'; referencedColumns: ["id"]; },
@@ -707,6 +713,16 @@ export type Database = {
           p_starts_at: string;
           p_last_notice_at?: string;
           p_status?: Database['public']['Enums']['call_up_status'];
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      create_call_up_with_schedule: {
+        Args: {
+          p_club_id: string;
+          p_starts_at: string;
+          p_last_notice_at?: string;
+          p_status?: Database['public']['Enums']['call_up_status'];
+          p_closes_at?: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
@@ -952,6 +968,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['notification_preferences']['Row'][];
       };
+      set_preferred_language: {
+        Args: {
+          p_language: string;
+        };
+        Returns: undefined;
+      };
       update_call_up: {
         Args: {
           p_call_up_id: string;
@@ -966,6 +988,16 @@ export type Database = {
           p_starts_at: string;
           p_status: Database['public']['Enums']['call_up_status'];
           p_last_notice_at?: string;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      update_call_up_with_schedule: {
+        Args: {
+          p_call_up_id: string;
+          p_starts_at: string;
+          p_status: Database['public']['Enums']['call_up_status'];
+          p_last_notice_at?: string;
+          p_closes_at?: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };

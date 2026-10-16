@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
@@ -9,6 +10,7 @@ import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 
 export default function SearchClubsScreen() {
+  useLanguage();
   const { session, isDemo } = useAuth();
   const { availableClubs } = useClub();
   const [query, setQuery] = useState('');
@@ -25,18 +27,18 @@ export default function SearchClubsScreen() {
     if (isDemo || busyId) return;
     setBusyId(clubId);
     setMessage('');
-    try { await requestToJoin(clubId); setMessage('Solicitud enviada. El administrador decidirá tu incorporación.'); result.reload(); }
+    try { await requestToJoin(clubId); setMessage(t("Solicitud enviada. El administrador decidirá tu incorporación.")); result.reload(); }
     catch (error) {
-      setMessage(typeof error === 'object' && error !== null && 'code' in error && error.code === '23505' ? 'Ya tienes una solicitud pendiente para ese club.' : backendErrorMessage(error));
+      setMessage(typeof error === 'object' && error !== null && 'code' in error && error.code === '23505' ? t("Ya tienes una solicitud pendiente para ese club.") : backendErrorMessage(error));
       result.reload();
     } finally { setBusyId(null); }
   }
   return <Screen>
-    <Heading title="Encuentra tu equipo" subtitle="Solo se muestran los clubes que han elegido aparecer en el buscador." />
+    <Heading title={t("Encuentra tu equipo")} subtitle={t("Solo se muestran los clubes que han elegido aparecer en el buscador.")} />
     {isDemo ? <DemoNotice /> : null}
-    <Field label="Nombre del club" value={query} onChangeText={setQuery} maxLength={80} returnKeyType="search" onSubmitEditing={() => setSearched(query.trim())} />
-    <Button label="Buscar" disabled={isDemo || result.isLoading} onPress={() => { setMessage(''); setSearched(query.trim()); result.reload(); }} />
-    {result.isLoading ? <Body>Buscando clubes…</Body> : null}
+    <Field label={t("Nombre del club")} value={query} onChangeText={setQuery} maxLength={80} returnKeyType="search" onSubmitEditing={() => setSearched(query.trim())} />
+    <Button label={t("Buscar")} disabled={isDemo || result.isLoading} onPress={() => { setMessage(''); setSearched(query.trim()); result.reload(); }} />
+    {result.isLoading ? <Body>{t("Buscando clubes…")}</Body> : null}
     {result.error ? <Message error>{result.error}</Message> : null}
     {message ? <Message>{message}</Message> : null}
     {result.data?.clubs.map((club) => {
@@ -44,11 +46,11 @@ export default function SearchClubsScreen() {
       const pending = result.data?.requests.some((request) => request.club_id === club.club_id && request.status === 'pending');
       return <Card key={club.club_id} title={club.name}>
         {club.description ? <Body>{club.description}</Body> : null}
-        <Button label={belongs ? 'Ya perteneces al club' : pending ? 'Solicitud pendiente' : busyId === club.club_id ? 'Enviando…' : 'Solicitar unirme'}
+        <Button label={belongs ? t("Ya perteneces al club") : pending ? t("Solicitud pendiente") : busyId === club.club_id ? t("Enviando…") : t("Solicitar unirme")}
           disabled={belongs || pending || Boolean(busyId)} onPress={() => { void request(club.club_id); }} />
       </Card>;
     })}
-    {searched !== null && result.data?.clubs.length === 0 && !result.isLoading ? <Body>No se han encontrado clubes públicos con ese nombre.</Body> : null}
-    <Button secondary label="Ver mis solicitudes" onPress={() => router.push('/my-requests')} />
+    {searched !== null && result.data?.clubs.length === 0 && !result.isLoading ? <Body>{t("No se han encontrado clubes públicos con ese nombre.")}</Body> : null}
+    <Button secondary label={t("Ver mis solicitudes")} onPress={() => router.push('/my-requests')} />
   </Screen>;
 }

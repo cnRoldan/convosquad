@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { StyleSheet, Text, View } from 'react-native';
 import { IconButton } from '@/components/icon-button';
 import { ReorderButtons } from '@/components/reorder-buttons';
@@ -8,15 +9,16 @@ export function PlayerCard({ player, actions }: {
   player: { eaId: string; jerseyNumber: number | null; userId: string | null };
   actions?: { first: boolean; last: boolean; orderingDisabled: boolean; disabled: boolean; move: (direction: -1 | 1) => void; edit: () => void; remove: () => void };
 }) {
+  useLanguage();
   return <View style={styles.card}>
     <View style={styles.details}>
       <Text style={styles.name}>{player.eaId}</Text>
-      <Text style={styles.meta}><Text accessibilityLabel={jerseyAccessibilityLabel(player.jerseyNumber)}>{jerseyLabel(player.jerseyNumber)}</Text> · {player.userId ? 'Registrado' : 'Sin registrar'}</Text>
+      <Text style={styles.meta}><Text accessibilityLabel={jerseyAccessibilityLabel(player.jerseyNumber)}>{jerseyLabel(player.jerseyNumber)}</Text> · {player.userId ? t("Registrado") : t("Sin registrar")}</Text>
     </View>
     {actions ? <View style={styles.actions}>
       <ReorderButtons label={player.eaId} first={actions.first} last={actions.last} disabled={actions.orderingDisabled || actions.disabled} move={actions.move} />
-      <IconButton icon="edit" label={`Editar ${player.eaId}`} disabled={actions.disabled} onPress={actions.edit} />
-      <IconButton icon="trash" label={`Quitar de la plantilla a ${player.eaId}`} danger disabled={actions.disabled} onPress={actions.remove} />
+      <IconButton icon="edit" label={t("Editar {{v0}}", { v0: player.eaId })} disabled={actions.disabled} onPress={actions.edit} />
+      <IconButton icon="trash" label={t("Quitar de la plantilla a {{v0}}", { v0: player.eaId })} danger disabled={actions.disabled} onPress={actions.remove} />
     </View> : null}
   </View>;
 }

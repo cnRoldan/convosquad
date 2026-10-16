@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import type { ReactNode } from 'react';
@@ -18,6 +19,7 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
   players: readonly CallUpPlayer[];
   trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode; trialEditor?: ReactNode; trialActions?: ((trial: Tables<'call_up_trials'>) => ReactNode) | undefined;
 }) {
+  useLanguage();
   const [filter, setFilter] = useState<AvailabilityFilter>('all');
   const [expandedPanels, setExpandedPanels] = useState<ReadonlySet<string>>(() => new Set());
   useFocusEffect(useCallback(() => { setExpandedPanels(new Set()); }, []));
@@ -27,40 +29,40 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
   return <View style={styles.stack}>
     <View style={styles.counters}>
       {availabilityStates.map(status => <Pressable key={status} accessibilityRole="button"
-        accessibilityLabel={`${filterLabels[status]}: ${model.counts[status]}. Filtrar convocatoria`}
+        accessibilityLabel={t("{{v0}}: {{v1}}. Filtrar convocatoria", { v0: t(filterLabels[status]), v1: model.counts[status] })}
         {...(Platform.OS === 'web' ? { 'aria-pressed': filter === status } : {})} accessibilityState={{ selected: filter === status }} onPress={() => setFilter(current => current === status ? 'all' : status)}
         style={({ pressed }) => [styles.counter, width < 360 && styles.halfCounter, filter === status && styles.selected, pressed && styles.pressed]}>
         <Text style={[styles.count, { color: statusColors[status] }]}>{availabilityIcons[status]} {model.counts[status]}</Text>
-        <Text style={styles.counterLabel}>{shortLabels[status]}</Text>
+        <Text style={styles.counterLabel}>{t(shortLabels[status])}</Text>
       </Pressable>)}
     </View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} accessibilityLabel="Filtros de disponibilidad">
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} accessibilityLabel={t("Filtros de disponibilidad")}>
       {(['all', ...availabilityStates] as const).map(value => <Pressable key={value} accessibilityRole="button"
-        accessibilityLabel={`${filterLabels[value]} (${value === 'all' ? model.total : model.counts[value]})`}
+        accessibilityLabel={`${t(filterLabels[value])} (${value === 'all' ? model.total : model.counts[value]})`}
         {...(Platform.OS === 'web' ? { 'aria-pressed': filter === value } : {})} accessibilityState={{ selected: filter === value }} onPress={() => setFilter(value)}
         style={({ pressed }) => [styles.chip, filter === value && styles.selected, pressed && styles.pressed]}>
-        <Text style={[styles.chipText, filter === value && styles.selectedText]}>{filterLabels[value]} ({value === 'all' ? model.total : model.counts[value]})</Text>
+        <Text style={[styles.chipText, filter === value && styles.selectedText]}>{t(filterLabels[value])} ({value === 'all' ? model.total : model.counts[value]})</Text>
       </Pressable>)}
     </ScrollView>
-    <Text style={styles.help}>Disponible no significa seleccionado para el once.</Text>
-    {model.groups.map(group => <CompactPanel key={group.category} title={`${categoryLabels[group.category]} (${group.total})`}
+    <Text style={styles.help}>{t("Disponible no significa seleccionado para el once.")}</Text>
+    {model.groups.map(group => <CompactPanel key={group.category} title={`${t(categoryLabels[group.category])} (${group.total})`}
       summary={availabilityStates.map(status => `${availabilityIcons[status]} ${group.counts[status]}`).join(' · ')}
       expanded={expandedPanels.has(group.category)} onToggle={() => toggle(group.category)}>
       {group.players.map(player => <AvailabilityRow key={player.id} player={player} />)}
-      {!group.players.length ? <Text style={styles.empty}>Sin jugadores.</Text> : null}
+      {!group.players.length ? <Text style={styles.empty}>{t("Sin jugadores.")}</Text> : null}
     </CompactPanel>)}
     {!model.visibleTotal ? <View style={styles.emptyResults}>
-      <Text style={styles.empty}>{filter === 'all' ? 'Esta convocatoria no contiene jugadores de la plantilla oficial.' : `No hay jugadores en ${filterLabels[filter].toLowerCase()}.`}</Text>
-      {filter !== 'all' ? <Pressable accessibilityRole="button" onPress={() => setFilter('all')} style={styles.chip}><Text style={styles.selectedText}>Mostrar todos</Text></Pressable> : null}
+      <Text style={styles.empty}>{filter === 'all' ? t("Esta convocatoria no contiene jugadores de la plantilla oficial.") : t("No hay jugadores en {{v0}}.", { v0: t(filterLabels[filter]).toLowerCase() })}</Text>
+      {filter !== 'all' ? <Pressable accessibilityRole="button" onPress={() => setFilter('all')} style={styles.chip}><Text style={styles.selectedText}>{t("Mostrar todos")}</Text></Pressable> : null}
     </View> : null}
     <View style={filter !== 'all' ? styles.hidden : undefined}>
-      <CompactPanel title={`PRUEBAS (${trials.length})`} expanded={expandedPanels.has('trials')} onToggle={() => toggle('trials')} subtle>
+      <CompactPanel title={t("PRUEBAS ({{v0}})", { v0: trials.length })} expanded={expandedPanels.has('trials')} onToggle={() => toggle('trials')} subtle>
         {trials.map(trial => <View key={trial.id} style={styles.trial}>
           <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
           {trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
           {trialActions?.(trial)}
         </View>)}
-        {!trials.length ? <Text style={styles.empty}>No se incluyeron pruebas.</Text> : null}
+        {!trials.length ? <Text style={styles.empty}>{t("No se incluyeron pruebas.")}</Text> : null}
         {trialEditor}
       </CompactPanel>
       <View style={styles.aids}>{aids}</View>
@@ -69,13 +71,14 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
 }
 
 const AvailabilityRow = memo(function AvailabilityRow({ player }: { player: CallUpPlayer }) {
+  useLanguage();
   return <View style={styles.row} testID={`call-up-player-${player.id}`}>
     <View style={styles.line}>
       <Text style={styles.name}>{player.eaId}</Text>
       {player.jersey !== null ? <Text accessibilityLabel={jerseyAccessibilityLabel(player.jersey)} style={styles.jersey}>{jerseyLabel(player.jersey)}</Text> : null}
-      <Text style={[styles.status, { color: statusColors[player.availability] }]}>{availabilityIcons[player.availability]} {availabilityLabels[player.availability]}</Text>
+      <Text style={[styles.status, { color: statusColors[player.availability] }]}>{availabilityIcons[player.availability]} {t(availabilityLabels[player.availability])}</Text>
     </View>
-    {!player.userId ? <Text style={styles.meta}>Sin registrar</Text> : null}
+    {!player.userId ? <Text style={styles.meta}>{t("Sin registrar")}</Text> : null}
   </View>;
 });
 

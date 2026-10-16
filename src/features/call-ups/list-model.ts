@@ -1,3 +1,4 @@
+import { votingDeadlinePassed } from './closing-time.ts';
 import { categories, compareRoster, isCategory } from '../players/categories.ts';
 import type { RosterCategory } from '../players/categories.ts';
 import { countAvailability } from './availability.ts';
@@ -22,6 +23,6 @@ export function callUpList(players: readonly CallUpPlayer[], filter: Availabilit
   };
 }
 
-export function canRespondToPlayer(player: Pick<CallUpPlayer, 'userId'>, userId: string | undefined, call: Pick<Tables<'call_ups'>, 'status' | 'local_date'>, localDate: string, isDemo: boolean) {
-  return !isDemo && Boolean(userId && player.userId && player.userId === userId) && call.status === 'open' && call.local_date >= localDate;
+export function canRespondToPlayer(player: Pick<CallUpPlayer, 'userId'>, userId: string | undefined, call: Pick<Tables<'call_ups'>, 'status' | 'local_date'> & { closes_at?: string | null }, localDate: string, isDemo: boolean, now = Date.now()) {
+  return !isDemo && Boolean(userId && player.userId && player.userId === userId) && call.status === 'open' && call.local_date >= localDate && !votingDeadlinePassed(call, now);
 }

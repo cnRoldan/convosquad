@@ -1,3 +1,4 @@
+import { LanguageProvider } from '@/features/i18n/language-provider';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
@@ -17,6 +18,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={theme}>
       <AuthProvider>
+      <LanguageProvider>
         <PendingPushProvider>
         <PendingInviteProvider>
           <ClubProvider>
@@ -37,6 +39,7 @@ export default function RootLayout() {
           </ClubProvider>
         </PendingInviteProvider>
         </PendingPushProvider>
+      </LanguageProvider>
       </AuthProvider>
     </ThemeProvider>
   );

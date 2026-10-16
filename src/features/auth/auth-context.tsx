@@ -1,3 +1,5 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
+import { clubCrestCache } from '@/features/clubs/crest';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import type { Session } from '@supabase/supabase-js';
@@ -22,6 +24,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  useLanguage();
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setLoading] = useState(Boolean(supabase));
   const [isDemo, setDemo] = useState(false);
@@ -66,6 +69,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
+  useEffect(() => () => { clubCrestCache.clear(); }, [session?.user.id]);
+
   const enterDemo = useCallback(() => setDemo(true), []);
   const exitDemo = useCallback(() => setDemo(false), []);
   const getRecoveryMode = useCallback(() => recoveryRef.current?.current ?? false, []);
@@ -87,6 +92,6 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth requiere AuthProvider');
+  if (!context) throw new Error(t("useAuth requiere AuthProvider"));
   return context;
 }

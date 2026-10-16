@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/theme';
 import { availabilityLabels, responseOptions } from './availability';
@@ -11,20 +12,21 @@ export function AvailabilityActions({ player, disabled, feedback, onRespond }: {
   feedback: { text: string; error: boolean } | null;
   onRespond: (id: string, availability: typeof responseOptions[number]) => void;
 }) {
+  useLanguage();
   return <View pointerEvents="box-none" style={styles.position}>
     <View style={styles.card} testID="availability-actions">
       <Text accessibilityLiveRegion="polite" style={[styles.status, feedback?.error && { color: colors.danger }]}>
-        {feedback?.text ?? `Tu disponibilidad: ${availabilityLabels[player.availability]}`}
+        {t(feedback?.text ?? t("Tu disponibilidad: {{v0}}", { v0: t(availabilityLabels[player.availability]) }))}
       </Text>
       <View style={styles.buttons}>
         {responseOptions.map(status => <Pressable key={status} accessibilityRole="button"
-          accessibilityLabel={`${availabilityLabels[status]} para ${player.eaId}`}
+          accessibilityLabel={t("{{v0}} para {{v1}}", { v0: t(availabilityLabels[status]), v1: player.eaId })}
           {...(Platform.OS === 'web' ? { 'aria-pressed': player.availability === status } : {})}
           aria-disabled={disabled} accessibilityState={{ selected: player.availability === status, disabled }} disabled={disabled}
           onPress={() => { if (!disabled && player.availability !== status) onRespond(player.id, status); }}
           style={({ pressed }) => [styles.button, player.availability === status && { borderColor: statusColors[status], backgroundColor: '#243622' }, (pressed || disabled) && { opacity: 0.6 }]}>
           <Text style={styles.icon}>{availabilityIcons[status]}</Text>
-          <Text style={[styles.label, { color: statusColors[status] }]}>{availabilityLabels[status]}</Text>
+          <Text style={[styles.label, { color: statusColors[status] }]}>{t(availabilityLabels[status])}</Text>
         </Pressable>)}
       </View>
     </View>

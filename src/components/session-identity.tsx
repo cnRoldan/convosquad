@@ -1,3 +1,5 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
+import { LanguageSelector } from '@/features/i18n/language-selector';
 import { useSegments } from 'expo-router';
 import { ClubCrest } from '@/features/clubs/club-crest';
 import { StyleSheet, Text, View } from 'react-native';
@@ -7,6 +9,7 @@ import { eaIdPattern } from '@/features/auth/ea-account';
 import { colors } from '@/theme';
 
 export function SessionIdentity({ compact }: { compact: boolean }) {
+  useLanguage();
   const { session, isDemo } = useAuth();
   const segments = useSegments();
   const { accountEaId, activeClub } = useClub();
@@ -15,7 +18,7 @@ export function SessionIdentity({ compact }: { compact: boolean }) {
   if (!session || isDemo || !eaId) return null;
   return <View style={[styles.row, compact && styles.compact]}>
     <View>{activeClub && segments.some(segment => segment === '(club)' || segment === '(manage)') ? <ClubCrest path={activeClub.crestPath} name={activeClub.name} size={32} /> : null}</View>
-    <Text accessibilityLabel={`Sesión iniciada como ${eaId}`} numberOfLines={1} ellipsizeMode="tail" style={styles.badge}>ID: {eaId}</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 }}><Text accessibilityLabel={t("Sesión iniciada como {{v0}}", { v0: eaId })} numberOfLines={1} ellipsizeMode="tail" style={styles.badge}>ID: {eaId}</Text><LanguageSelector /></View>
   </View>;
 }
 

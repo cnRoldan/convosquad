@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Body, Button, Heading, Message, Screen } from '@/components/ui';
@@ -10,6 +11,7 @@ import { availabilityLabels, callUpErrorMessage } from '@/features/call-ups/avai
 import { getCallUp, respondFromNotification } from '@/features/call-ups/service';
 import { useResource } from '@/hooks/use-resource';
 export default function NotificationScreen() {
+  useLanguage();
   const params = useLocalSearchParams<{ club?: string; call?: string }>();
   const { session, isDemo, isLoading, exitDemo, isRecovery } = useAuth(); const { availableClubs, isLoading: loadingClubs, selectClub, error: clubError, refresh } = useClub();
   const { pendingPush, rememberPush, clearPush } = usePendingPush();
@@ -39,26 +41,26 @@ export default function NotificationScreen() {
     if (response) {
       if (wrongAccount || closed) return;
       void respondFromNotification(clubId, callUpId, response.availability, response.actionId).then(result => {
-        setActionResult({ key: actionKey, text: `Tu respuesta: ${availabilityLabels[result.availability]}.`, error: false });
+        setActionResult({ key: actionKey, text: t("Tu respuesta: {{v0}}.", { v0: t(availabilityLabels[result.availability]) }), error: false });
       }).catch(error => { setActionResult({ key: actionKey, text: callUpErrorMessage(error), error: true }); });
       return;
     }
     selectClub(clubId); clearPush(); router.replace({ pathname: '/call-up', params: { id: callUpId } });
   }, [clubId, callUpId, destination, isRecovery, selectClub, clearPush, session?.user.id, intent?.response, call.data?.status, wrongAccount, closed, actionKey]);
-  if (!result && (isLoading || loadingClubs || call.isLoading)) return <LoadingScreen label="Comprobando acceso a la convocatoria…" />;
-  if (clubError) return <Screen><Message error>No se pudo comprobar el club. Comprueba tu conexión.</Message><Button label="Reintentar" onPress={refresh} /></Screen>;
+  if (!result && (isLoading || loadingClubs || call.isLoading)) return <LoadingScreen label={t("Comprobando acceso a la convocatoria…")} />;
+  if (clubError) return <Screen><Message error>{t("No se pudo comprobar el club. Comprueba tu conexión.")}</Message><Button label={t("Reintentar")} onPress={refresh} /></Screen>;
   return <Screen>
-    <Heading title="Aviso de convocatoria" />
-    {result ? <><Message error={result.error}>{result.text}</Message><Button label="Abrir convocatoria" onPress={() => { if (clubId && callUpId) { selectClub(clubId); clearPush(); router.replace({ pathname: '/call-up', params: { id: callUpId } }); } }} /></>
-      : wrongAccount ? <Message error>Este aviso pertenece a otra cuenta. Abre la convocatoria con tu cuenta para responder.</Message>
-      : closed ? <Message>Esta convocatoria está cerrada. No puedes modificar tu voto.</Message>
-      : response && destination === 'call-up' ? <Body>Guardando tu respuesta…</Body>
-      : destination === 'login' ? <><Body>Inicia sesión para comprobar el club y continuar.</Body><Button label="Iniciar sesión y continuar" onPress={login} /></>
-      : isRecovery ? <><Message>Completa la recuperación de tu cuenta antes de continuar.</Message><Button label="Continuar recuperación" onPress={login} /></>
-      : destination === 'no-membership' ? <Message error>Ya no perteneces al club de esta convocatoria o no tienes acceso.</Message>
-      : destination === 'cancelled' ? <Message>Esta convocatoria se ha cancelado.</Message>
-      : destination !== 'call-up' ? <><Message>La convocatoria puede haberse cancelado o cerrado, o ya no tienes acceso. También puede haber un problema de conexión.</Message><Button secondary label="Reintentar" onPress={call.reload} /></>
-      : <><Body>Convocatoria verificada. Al abrirla cambiarás al club correspondiente.</Body><LoadingScreen label="Abriendo convocatoria…" /></>}
-    <Button secondary label="Cerrar aviso" onPress={() => { clearPush(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
+    <Heading title={t("Aviso de convocatoria")} />
+    {result ? <><Message error={result.error}>{result.text}</Message><Button label={t("Abrir convocatoria")} onPress={() => { if (clubId && callUpId) { selectClub(clubId); clearPush(); router.replace({ pathname: '/call-up', params: { id: callUpId } }); } }} /></>
+      : wrongAccount ? <Message error>{t("Este aviso pertenece a otra cuenta. Abre la convocatoria con tu cuenta para responder.")}</Message>
+      : closed ? <Message>{t("Esta convocatoria está cerrada. No puedes modificar tu voto.")}</Message>
+      : response && destination === 'call-up' ? <Body>{t("Guardando tu respuesta…")}</Body>
+      : destination === 'login' ? <><Body>{t("Inicia sesión para comprobar el club y continuar.")}</Body><Button label={t("Iniciar sesión y continuar")} onPress={login} /></>
+      : isRecovery ? <><Message>{t("Completa la recuperación de tu cuenta antes de continuar.")}</Message><Button label={t("Continuar recuperación")} onPress={login} /></>
+      : destination === 'no-membership' ? <Message error>{t("Ya no perteneces al club de esta convocatoria o no tienes acceso.")}</Message>
+      : destination === 'cancelled' ? <Message>{t("Esta convocatoria se ha cancelado.")}</Message>
+      : destination !== 'call-up' ? <><Message>{t("La convocatoria puede haberse cancelado o cerrado, o ya no tienes acceso. También puede haber un problema de conexión.")}</Message><Button secondary label={t("Reintentar")} onPress={call.reload} /></>
+      : <><Body>{t("Convocatoria verificada. Al abrirla cambiarás al club correspondiente.")}</Body><LoadingScreen label={t("Abriendo convocatoria…")} /></>}
+    <Button secondary label={t("Cerrar aviso")} onPress={() => { clearPush(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
   </Screen>;
 }

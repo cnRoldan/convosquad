@@ -3,7 +3,7 @@ import process from 'node:process';
 
 const root = new URL('../supabase/functions/', import.meta.url);
 const config = JSON.parse(await readFile(new URL('deno.json', root), 'utf8'));
-const files = ['_shared/push-event.ts', '_shared/reminder-worker.ts', 'send-reminders/index.ts'];
+const files = ['_shared/push-language.ts', '_shared/push-event.ts', '_shared/reminder-worker.ts', 'send-reminders/index.ts'];
 const parts = [];
 for (const file of files) {
   const source = await readFile(new URL(file, root), 'utf8');

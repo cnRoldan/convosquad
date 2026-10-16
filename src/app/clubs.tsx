@@ -1,3 +1,4 @@
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { Text, View } from 'react-native';
 import { ClubCrest } from '@/features/clubs/club-crest';
 import { colors } from '@/theme';
@@ -12,16 +13,18 @@ import { usePendingInvite } from '@/features/invitations/pending-invite-context'
 import { backendErrorMessage } from '@/lib/backend-result';
 
 export default function ClubsScreen() {
+  useLanguage();
   return <AuthAccess><ClubSelection /></AuthAccess>;
 }
 function ClubSelection() {
+  useLanguage();
   const { auto } = useLocalSearchParams<{ auto?: string }>();
   const { availableClubs, ownMemberships, activeClub, selectClub, clearClub, isLoading, error, refresh } = useClub();
   const { isDemo, signOut, exitDemo } = useAuth();
   const { pendingInvite, clearInvite } = usePendingInvite();
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  if (isLoading) return <LoadingScreen label="Cargando tus clubes…" />;
+  if (isLoading) return <LoadingScreen label={t("Cargando tus clubes…")} />;
   if (auto === '1' && availableClubs.length === 1 && activeClub) return <Redirect href="/home" />;
 
   async function leave() {
@@ -35,23 +38,23 @@ function ClubSelection() {
     finally { setBusy(false); }
   }
   return <Screen>
-    <Heading title="Elige tu club" subtitle={isDemo ? 'Hola, Álex. Estos son tus vestuarios en la demo.' : 'Una cuenta, varios vestuarios independientes.'} />
-    {error ? <Card title="No se pudieron cargar los clubes"><Message error>{error}</Message><Button label="Reintentar" onPress={refresh} /></Card> : null}
-    {pendingInvite ? <Button label="Continuar invitación" onPress={() => router.push('/invite')} /> : null}
+    <Heading title={t("Elige tu club")} subtitle={isDemo ? t("Hola, Álex. Estos son tus vestuarios en la demo.") : t("Una cuenta, varios vestuarios independientes.")} />
+    {error ? <Card title={t("No se pudieron cargar los clubes")}><Message error>{error}</Message><Button label={t("Reintentar")} onPress={refresh} /></Card> : null}
+    {pendingInvite ? <Button label={t("Continuar invitación")} onPress={() => router.push('/invite')} /> : null}
     {availableClubs.map((club) => <Card key={club.id}>
       <View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}><Text style={{flex: 1, color: colors.text, fontSize: 20, fontWeight: '700'}}>{club.name}</Text><ClubCrest path={club.crestPath} name={club.name} /></View>
       {club.description ? <Body>{club.description}</Body> : null}
-      <Body>{ownMemberships.find((member) => member.clubId === club.id)?.role === 'admin' ? 'Capitán' : 'Jugador'} · {club.timezone}</Body>
-      <Button label="Entrar al club" onPress={() => { selectClub(club.id); router.replace('/home'); }} />
+      <Body>{ownMemberships.find((member) => member.clubId === club.id)?.role === 'admin' ? t("Capitán") : t("Jugador")} · {club.timezone}</Body>
+      <Button label={t("Entrar al club")} onPress={() => { selectClub(club.id); router.replace('/home'); }} />
     </Card>)}
-    {!availableClubs.length && !error ? <Body>Aún no perteneces a ningún club. Crea uno, busca tu equipo o abre una invitación.</Body> : null}
-    <Button label="Crear un club" onPress={() => router.push('/create-club')} />
-    <Button secondary label="Buscar clubes" onPress={() => router.push('/search-clubs')} />
-    <Button secondary label="Notificaciones" onPress={() => router.push('/notifications')} />
-    {!isDemo ? <Button secondary label="Cambiar mi contraseña" onPress={() => router.push('/change-password')} /> : null}
-    <Button secondary label="Mis solicitudes" onPress={() => router.push('/my-requests')} />
-    {!isDemo ? <Button secondary label="Actualizar mis clubes" onPress={refresh} /> : null}
+    {!availableClubs.length && !error ? <Body>{t("Aún no perteneces a ningún club. Crea uno, busca tu equipo o abre una invitación.")}</Body> : null}
+    <Button label={t("Crear un club")} onPress={() => router.push('/create-club')} />
+    <Button secondary label={t("Buscar clubes")} onPress={() => router.push('/search-clubs')} />
+    <Button secondary label={t("Notificaciones")} onPress={() => router.push('/notifications')} />
+    {!isDemo ? <Button secondary label={t("Cambiar mi contraseña")} onPress={() => router.push('/change-password')} /> : null}
+    <Button secondary label={t("Mis solicitudes")} onPress={() => router.push('/my-requests')} />
+    {!isDemo ? <Button secondary label={t("Actualizar mis clubes")} onPress={refresh} /> : null}
     {message ? <Message error>{message}</Message> : null}
-    <Button secondary disabled={busy} label={isDemo ? 'Volver a la bienvenida' : 'Cerrar sesión'} onPress={() => { void leave(); }} />
+    <Button secondary disabled={busy} label={isDemo ? t("Volver a la bienvenida") : t("Cerrar sesión")} onPress={() => { void leave(); }} />
   </Screen>;
 }
