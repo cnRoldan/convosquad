@@ -67,3 +67,12 @@ Pruebas SQL sobre PostgreSQL/PGlite: creación/snapshots, exclusión de inactivo
 Pruebas unitarias: fecha/hora por zona, medianoche y DST, contadores, errores en español, lectura inicial y al suscribirse, ráfagas, reconexión, descarte de canales antiguos, sondeo, recuperación y limpieza al desmontar. No sustituyen la validación del servidor Realtime alojado ni una prueba en dispositivos nativos.
 
 La comprobación de Chromium utiliza dos sesiones completamente simuladas y transporte Supabase HTTP/WebSocket interceptado en local: valida respuesta de un toque visible en la otra sesión mediante el protocolo Realtime, contadores, pendientes, edición horaria, cierre, pérdida de acceso, permisos de historial y fecha inicial. No contacta con Supabase remoto y no demuestra Realtime de producción.
+
+
+## Recuperar el historial cuando la API no encuentra su función
+
+Si la llamada al historial devuelve `PGRST202` para `list_call_up_history(p_club_id)`, la API no encuentra la función en su catálogo. Puede faltar la función en la base de datos desplegada o estar desactualizado el catálogo de la API.
+
+Desde Supabase → SQL Editor, ejecutar únicamente `supabase/migrations/20261016180000_restore_call_up_history.sql` para esta corrección, con las migraciones anteriores ya aplicadas. Crea o reemplaza la función, restaura sus permisos y solicita refrescar el catálogo PostgREST. No modifica convocatorias, plantillas ni votos, y no requiere repetir las migraciones iniciales. Es segura si la función ya existe con la firma original.
+
+Volver a pulsar **Actualizar historial** con una cuenta de capitán. Si no hay convocatorias de días anteriores en la zona horaria del club, debe aparecer el historial vacío. Los jugadores normales y miembros de otros clubes continúan sin acceso; se conservan el límite de diez y los datos históricos.

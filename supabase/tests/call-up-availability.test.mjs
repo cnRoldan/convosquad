@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
+import { readFile } from 'node:fs/promises';
 import { createTestDatabase, asUser } from '../../scripts/database-test-utils.mjs';
 const admin='60000000-0000-4000-8000-000000000001', member='60000000-0000-4000-8000-000000000002', other='60000000-0000-4000-8000-000000000003';
 let db, club, foreign, own, unsigned, inactive, call;
@@ -100,4 +101,15 @@ test('publicación Realtime incluye solo las cuatro tablas de convocatorias con 
   assert.deepEqual(published,['call_up_aids','call_up_players','call_up_trials','call_ups']);
   const tables=(await db.query("select relname,relrowsecurity from pg_class where relnamespace='public'::regnamespace and relname=any($1)",[published])).rows;
   assert.equal(tables.length,4);assert.ok(tables.every(x=>x.relrowsecurity));
+});
+
+test('restaurar historial recupera la función ausente, admite repetición y mantiene datos y permisos', async () => {
+  const before = (await query(admin, 'select * from public.list_call_up_history($1)', [club.id])).rows;
+  const migration = await readFile(new URL('../migrations/20261016180000_restore_call_up_history.sql', import.meta.url), 'utf8');
+  await db.exec('drop function public.list_call_up_history(uuid)');
+  await db.exec(migration);
+  await db.exec(migration);
+  assert.deepEqual((await query(admin, 'select * from public.list_call_up_history($1)', [club.id])).rows, before);
+  for (const actor of [member, other]) await reject(actor, 'select * from public.list_call_up_history($1)', [club.id], '42501');
+  await assert.rejects(asUser(db, null, tx => tx.query('select * from public.list_call_up_history($1)', [club.id]), 'anon'), e => e.code === '42501');
 });
