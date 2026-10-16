@@ -593,6 +593,7 @@ test('mensajes de voto y cierre siguen el idioma actual sin repetir acciones', a
   async function change(next, name) {
     await f.page.getByRole('button', {name: catalogs[language]['Cambiar idioma'], exact: true}).click();
     await f.page.getByRole('radio', {name, exact: true}).click();
+    await f.page.getByRole('radio', {name, exact: true}).waitFor({state: 'hidden'});
     await f.page.getByRole('button', {name: catalogs[next]['Cambiar idioma'], exact: true}).waitFor();
     language = next;
   }
