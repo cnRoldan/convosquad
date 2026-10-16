@@ -67,6 +67,7 @@ function RosterImportEditor() {
           <Field label={t("{{v0}} línea {{v1}}", { v0: row.kind === 'trial' ? t("Nombre de la prueba") : t("EA ID"), v1: row.lineNumber })} value={row.eaId} onChangeText={eaId => edit(row.id, { eaId })} autoCapitalize="none" editable={!busy} />
           {row.kind === 'player' ? <Options value={row.category} options={categories.map(value => ({ value, label: t(categoryLabels[value]) }))} onChange={category => edit(row.id, { category })} disabled={busy} /> : <>
             <Field label={t("Observaciones línea {{v0}}", { v0: row.lineNumber })} value={row.notes} onChangeText={notes => edit(row.id, { notes })} maxLength={1000} multiline editable={!busy} />
+            <Body>{t("Solo los capitanes pueden ver estas observaciones.")}</Body>
           </>}
           {row.availability ? <Body>{t("Disponibilidad detectada:")}{row.availability === 'available' ? t("Disponible") : row.availability === 'unavailable' ? t("No disponible") : t("Backup")} {t("· no se guardará.")}</Body> : null}
           {row.requiresReview ? <Button secondary label={t("Confirmar interpretación línea {{v0}}", { v0: row.lineNumber })} disabled={busy} onPress={() => edit(row.id, { requiresReview: false })} /> : null}

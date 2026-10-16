@@ -93,7 +93,7 @@ test('historial conserva fotografía, respuesta, pruebas y ayudas al cambiar pla
   await query(admin,"update public.players set ea_id='Changed Phase',jersey_number=44,category='goalkeepers',is_active=false where id=$1",[own.id]);
   await query(admin,"update public.club_trials set notes='Changed' where club_id=$1",[club.id]);
   assert.deepEqual((await query(admin,'select * from public.call_up_players where call_up_id=$1 order by id',[call.id])).rows,before);
-  assert.equal((await row(admin,'select notes_snapshot from public.call_up_trials where call_up_id=$1',[call.id])).notes_snapshot,'Original');
+  assert.equal((await row(admin,'select notes from public.call_up_trial_notes where call_up_id=$1',[call.id])).notes,'Original');
   assert.equal((await row(admin,'select body from public.call_up_aids where call_up_id=$1',[call.id])).body,'Original aid');
 });
 test('publicación Realtime incluye solo las cuatro tablas de convocatorias con RLS y claves primarias',async()=>{

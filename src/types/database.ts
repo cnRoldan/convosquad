@@ -143,6 +143,29 @@ export type Database = {
           { foreignKeyName: 'call_up_trial_exclusions_club_id_source_trial_id_fkey'; columns: ["club_id","source_trial_id"]; isOneToOne: false; referencedRelation: 'club_trials'; referencedColumns: ["club_id","id"]; },
         ];
       };
+      call_up_trial_notes: {
+        Row: {
+          trial_id: string;
+          club_id: string;
+          call_up_id: string;
+          notes: string;
+        };
+        Insert: {
+          trial_id: string;
+          club_id: string;
+          call_up_id: string;
+          notes: string;
+        };
+        Update: {
+          trial_id?: string;
+          club_id?: string;
+          call_up_id?: string;
+          notes?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'call_up_trial_notes_club_id_call_up_id_trial_id_fkey'; columns: ["club_id","call_up_id","trial_id"]; isOneToOne: true; referencedRelation: 'call_up_trials'; referencedColumns: ["club_id","call_up_id","id"]; },
+        ];
+      };
       call_up_trials: {
         Row: {
           id: string;
@@ -340,6 +363,26 @@ export type Database = {
         };
         Relationships: [
           { foreignKeyName: 'club_trial_contacts_club_id_trial_id_fkey'; columns: ["club_id","trial_id"]; isOneToOne: true; referencedRelation: 'club_trials'; referencedColumns: ["club_id","id"]; },
+        ];
+      };
+      club_trial_notes: {
+        Row: {
+          trial_id: string;
+          club_id: string;
+          notes: string;
+        };
+        Insert: {
+          trial_id: string;
+          club_id: string;
+          notes: string;
+        };
+        Update: {
+          trial_id?: string;
+          club_id?: string;
+          notes?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_trial_notes_club_id_trial_id_fkey'; columns: ["club_id","trial_id"]; isOneToOne: true; referencedRelation: 'club_trials'; referencedColumns: ["club_id","id"]; },
         ];
       };
       club_trials: {

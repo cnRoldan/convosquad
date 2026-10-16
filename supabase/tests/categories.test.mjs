@@ -55,7 +55,8 @@ describe('Categorías, pruebas y ayudas',{concurrency:false},()=>{
   assert.equal(players.length,3); assert.ok(players.every(x=>x.availability==='unanswered' && x.responded_at===null));
   assert.equal(players.find(x=>x.source_player_id===linked.id).category_snapshot,'backups');
   const trials=(await query(member,'select * from public.call_up_trials where call_up_id=$1 order by sort_order_snapshot',[first.id])).rows;
-  assert.equal(trials.length,2); assert.equal(trials[0].ea_id_snapshot,'Trial Two'); assert.equal(trials[1].notes_snapshot,'Actualizado');
+  assert.equal(trials.length,2); assert.equal(trials[0].ea_id_snapshot,'Trial Two'); assert.equal(trials[1].notes_snapshot,null);
+  assert.equal((await row(admin,'select notes from public.call_up_trial_notes where trial_id=$1',[trials[1].id])).notes,'Actualizado');
   assert.equal((await query(member,'select * from public.call_up_aids where call_up_id=$1',[first.id])).rows.length,0);
   assert.equal((await query(outsider,'select * from public.call_up_trials where call_up_id=$1',[first.id])).rows.length,0);
  });
@@ -72,7 +73,8 @@ describe('Categorías, pruebas y ayudas',{concurrency:false},()=>{
   assert.equal(player.user_id,null); assert.equal(player.ea_id,'Trial One'); assert.equal(player.jersey_number,23);
   const converted=await row(admin,'select * from public.club_trials where id=$1',[trial.id]); assert.equal(converted.status,'incorporated'); assert.equal(converted.player_id,player.id); assert.ok(converted.incorporated_at);
   assert.equal(Number((await db.query('select count(*) as n from auth.users')).rows[0].n),before);
-  const snapshot=await row(member,'select * from public.call_up_trials where call_up_id=$1 and source_trial_id=$2',[first.id,trial.id]); assert.equal(snapshot.ea_id_snapshot,'Trial One'); assert.equal(snapshot.position_snapshot,'central zurdo'); assert.equal(snapshot.notes_snapshot,'Actualizado');
+  const snapshot=await row(member,'select * from public.call_up_trials where call_up_id=$1 and source_trial_id=$2',[first.id,trial.id]); assert.equal(snapshot.ea_id_snapshot,'Trial One'); assert.equal(snapshot.position_snapshot,'central zurdo'); assert.equal(snapshot.notes_snapshot,null);
+  assert.equal((await row(admin,'select notes from public.call_up_trial_notes where trial_id=$1',[snapshot.id])).notes,'Actualizado');
   assert.equal((await query(member,'select * from public.call_up_players where call_up_id=$1',[first.id])).rows.length,3);
   await reject(admin,"select * from public.promote_trial($1,'attackers')",[trial.id],'22023');
  });

@@ -52,10 +52,10 @@ export default function CallUpScreen() {
   const load = useCallback(async () => {
     if (!clubId || !callId) return null;
     const call = await getCallUp(clubId, callId);
-    const [players, trials] = await Promise.all([listCallUpPlayers(callId), listCallUpTrials(callId)]);
+    const [players, trials] = await Promise.all([listCallUpPlayers(callId), listCallUpTrials(callId, admin)]);
     return { call, players, trials };
-  }, [clubId, callId]);
-  const snapshots = useResource(`call-snapshot:${scope}:${callId}:${rosterVersion}`, load, enabled && Boolean(callId));
+  }, [clubId, callId, admin]);
+  const snapshots = useResource(`call-snapshot:${scope}:${admin}:${callId}:${rosterVersion}`, load, enabled && Boolean(callId));
   const loadContacts = useCallback(() => callId ? listCallUpContacts(callId) : Promise.resolve([]), [callId]);
   const contacts = useResource(`contacts:${scope}:${callId}:${rosterVersion}`, loadContacts, enabled && admin && Boolean(callId));
   const latestSnapshot = useRef(snapshots.data);
@@ -131,7 +131,7 @@ export default function CallUpScreen() {
       {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? t("Convocatoria actualizada. La fotografía y respuestas se conservan.")); refreshRoster(); refresh(); }} /> : null}
       {admin && contacts.error ? <Message error>{t("No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.")}</Message> : null}
       {snapshots.error ? <Body>{t("Respuestas no disponibles.")}</Body> : <CompactRoster key={responseScope} players={players}
-        trials={snapshots.data?.trials ?? []}
+        trials={snapshots.data?.trials ?? []} showTrialNotes={admin}
         trialActions={admin && !isDemo ? trial => <CallUpTrialActions key={`${trial.id}:${contacts.data?.find(contact => contact.trial_id === trial.id)?.phone ?? ''}`} trial={trial}
           phone={contacts.data?.find(contact => contact.trial_id === trial.id)?.phone ?? ''}
           editable={!historical && (call.status === 'open' || call.status === 'draft')} disabled={contacts.isLoading || Boolean(contacts.error)} onSaved={refresh} /> : undefined}

@@ -47,6 +47,7 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     {id: 'trial-retired', club_id: club.id, ea_id: 'Prueba retirada', status: 'withdrawn', sort_order: 2, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
   ] : [];
   const trialContacts = rosterTrials ? [{trial_id: 'trial-one', phone: '+34600000000'}] : [];
+  const trialNotes = rosterTrials ? [{trial_id: 'trial-one', notes: 'Valoración privada del capitán'}] : [];
   let preferredLanguage = null;
   let voteNotifications = true;
   const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
@@ -74,6 +75,10 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     if (endpoint === 'create_call_up_with_schedule') return route.fulfill({ json: { id: 'new-call' } });
     if (clubRole) {
       if (endpoint === 'club_trials') return route.fulfill({json: trials.filter(trial => url.searchParams.get('status') !== 'eq.active' || trial.status === 'active').sort((a,b) => a.sort_order - b.sort_order)});
+      if (endpoint === 'club_trial_notes') {
+        assert.equal(clubRole, 'admin');
+        return route.fulfill({json: trialNotes});
+      }
       if (endpoint === 'club_trial_contacts') {
         assert.equal(clubRole, 'admin');
         if (failTrialContacts) return route.fulfill({status: 400, json: {message: 'Contacts unavailable'}});
@@ -83,7 +88,10 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
         assert.equal(clubRole, 'admin');
         let trial = trials.find(row => row.id === body.p_trial_id);
         if (!trial) { trial = {id: 'trial-new', club_id: club.id, status: 'active', sort_order: trials.length, created_at: '2026-10-16T12:00:00Z'}; trials.push(trial); }
-        Object.assign(trial, {ea_id: body.p_name, notes: body.p_notes});
+        Object.assign(trial, {ea_id: body.p_name, notes: null});
+        const previousNote = trialNotes.findIndex(row => row.trial_id === trial.id);
+        if (previousNote >= 0) trialNotes.splice(previousNote, 1);
+        if (body.p_notes) trialNotes.push({trial_id: trial.id, notes: body.p_notes});
         const previous = trialContacts.findIndex(row => row.trial_id === trial.id);
         if (previous >= 0) trialContacts.splice(previous, 1);
         if (body.p_phone) trialContacts.push({trial_id: trial.id, phone: body.p_phone});
@@ -457,7 +465,8 @@ test('plantilla: jugadores no reciben teléfonos ni acciones de gestión de prue
   try {
     await f.page.goto(`${origin}/roster`);
     await f.page.getByText('Prueba primera', {exact: true}).waitFor();
-    assert.equal(f.requests.some(r => r.endpoint === 'club_trial_contacts'), false);
+    assert.equal(f.requests.some(r => r.endpoint === 'club_trial_contacts' || r.endpoint === 'club_trial_notes'), false);
+    assert.equal(await f.page.getByText('Valoración privada del capitán', {exact: true}).count(), 0);
     assert.equal(await f.page.getByRole('button', {name: /WhatsApp de Prueba|Quitar prueba de|Editar prueba de|Subir prueba de/}).count(), 0);
     assert.equal(await f.page.getByText('Prueba retirada', {exact: true}).count(), 0);
   } finally { await f.close(); }
@@ -517,6 +526,9 @@ test('gestionar prueba: carga teléfono privado y guarda con prefijo normalizado
     await page.getByRole('button', {name: 'Editar prueba de Prueba primera', exact: true}).click();
     const phone = page.getByLabel('Teléfono de la prueba (solo capitanes, opcional)', {exact: true});
     await phone.waitFor(); assert.equal(await phone.inputValue(), '+34600000000');
+    assert.equal(await page.getByLabel('Observaciones', {exact: true}).inputValue(), 'Valoración privada del capitán');
+    await page.getByText('Solo los capitanes pueden ver estas observaciones.', {exact: true}).waitFor();
+    await page.getByLabel('Observaciones', {exact: true}).fill('Seguir observando');
     await page.getByText('Solo los capitanes pueden ver este número.', {exact: true}).waitFor();
     await phone.fill('666666666');
     await page.getByRole('button', {name: 'Guardar prueba', exact: true}).click();
@@ -526,6 +538,8 @@ test('gestionar prueba: carga teléfono privado y guarda con prefijo normalizado
     await page.getByRole('button', {name: 'Guardar prueba', exact: true}).click();
     await page.getByRole('button', {name: 'WhatsApp de Prueba primera', exact: true, disabled: false}).waitFor();
     assert.equal(f.requests.find(r => r.endpoint === 'save_club_trial_with_contact').body.p_phone, '+34612345678');
+    assert.equal(f.requests.find(r => r.endpoint === 'save_club_trial_with_contact').body.p_notes, 'Seguir observando');
+    await page.getByText('Seguir observando', {exact: true}).filter({visible: true}).waitFor();
     await page.evaluate(() => { window.open = url => { window.__trialWhatsapp = String(url); return null; }; });
     await page.getByRole('button', {name: 'WhatsApp de Prueba primera', exact: true, disabled: false}).click();
     await page.waitForFunction(() => window.__trialWhatsapp === 'https://wa.me/34612345678');

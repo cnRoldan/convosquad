@@ -19,7 +19,7 @@ export function TrialSection() {
   const { activeClub, currentMembership, rosterVersion } = useClub();
   const clubId = activeClub?.id;
   const admin = currentMembership?.role === 'admin';
-  const load = useCallback(() => clubId ? listTrials(clubId) : Promise.resolve([]), [clubId]);
+  const load = useCallback(() => clubId ? listTrials(clubId, false, admin) : Promise.resolve([]), [clubId, admin]);
   const trials = useResource(`trials:${session?.user.id}:${clubId}:${admin}:${rosterVersion}`, load, Boolean(session && clubId) && !isDemo);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -56,7 +56,7 @@ export function TrialSection() {
     {notice ? <Message>{notice}</Message> : null}
     {admin && contacts.error ? <><Message error>{t("No se pudieron cargar los teléfonos privados.")}</Message><Button secondary label={t("Reintentar teléfonos")} onPress={contacts.reload} /></> : null}
     {trials.data?.map(trial => <Card key={trial.id} title={trial.ea_id}>
-      {trial.notes ? <Body>{trial.notes}</Body> : null}
+      {admin && trial.notes ? <Body>{trial.notes}</Body> : null}
       <Body>{t("Desde")} {new Date(trial.created_at).toLocaleDateString(intlLocale(), { timeZone: activeClub?.timezone ?? 'Europe/Madrid' })} · {trial.status === 'active' ? t("En pruebas") : trial.status === 'withdrawn' ? t("Retirado de pruebas") : t("Incorporado a la plantilla")}</Body>
       {admin && trial.player_id ? <Button secondary label={t("Ver ficha incorporada")} onPress={() => router.push({ pathname: '/players/[id]', params: { id: trial.player_id! } })} /> : null}
       {admin && trial.status === 'active' ? <>
