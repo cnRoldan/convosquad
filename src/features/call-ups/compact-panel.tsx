@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { colors } from '@/theme';
 
 export function CompactPanel({ title, summary, expanded, onToggle, children, subtle = false }: PropsWithChildren<{
@@ -12,7 +13,11 @@ export function CompactPanel({ title, summary, expanded, onToggle, children, sub
         <Text style={[styles.title, subtle && styles.muted]}>{title}</Text>
         {summary ? <Text style={styles.summary}>{summary}</Text> : null}
       </View>
-      <Text accessible={false} style={styles.chevron}>{expanded ? '⌃' : '⌄'}</Text>
+      <View pointerEvents="none" accessible={false} style={styles.chevron}>
+        <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" accessible={false}>
+          <Path d={expanded ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} />
+        </Svg>
+      </View>
     </Pressable>
     <View style={[styles.body, !expanded && styles.hidden]} accessibilityElementsHidden={!expanded} importantForAccessibility={expanded ? 'auto' : 'no-hide-descendants'}>{children}</View>
   </View>;
@@ -24,6 +29,6 @@ const styles = StyleSheet.create({
   titles: { flex: 1, minWidth: 0, gap: 3 },
   title: { color: colors.text, fontSize: 14, fontWeight: '700', lineHeight: 20 },
   summary: { color: colors.muted, fontSize: 12, lineHeight: 18 },
-  muted: { color: colors.muted }, chevron: { color: colors.primary, fontSize: 22 },
+  muted: { color: colors.muted }, chevron: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   body: { paddingHorizontal: 12, paddingBottom: 6 }, hidden: { display: 'none' }, pressed: { opacity: 0.7 },
 });

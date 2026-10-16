@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Switch, View } from 'react-native';
 import { Body, DemoNotice, Field, Message } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -20,6 +21,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   const [noticeTime, setNoticeTime] = useState(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45');
   const [noticeEnabled, setNoticeEnabled] = useState(Boolean(call.last_notice_at));
   const [expanded, setExpanded] = useState(false);
+  useFocusEffect(useCallback(() => { setExpanded(false); }, []));
   const [action, setAction] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const admin = currentMembership?.role === 'admin' && activeClub?.id === call.club_id;

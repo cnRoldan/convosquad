@@ -1,3 +1,4 @@
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Body, Button, Field, Message } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
@@ -20,7 +21,8 @@ export function AidsSection({ callUpId, editable, revision = 0 }: { callUpId: st
   const { reload } = result;
   useEffect(() => { if (revision) reload(); }, [revision, reload]);
   const [text, setText] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  useFocusEffect(useCallback(() => { setExpanded(false); }, []));
   const [deleting, setDeleting] = useState<string | null>(null);
   async function mutate(action: () => Promise<unknown>) {
     if (!editable || !clubId || isDemo || busy) return false;

@@ -33,7 +33,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, expandPanels = true } = {}) {
   const context = await browser.newContext({ viewport: { width, height: 844 } });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -153,6 +153,11 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   await initialReload;
   await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
   if (!historical && !empty && linked && status === 'open' && !cooldown) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
+  if (expandPanels) {
+    for (const panel of await page.getByRole('button', {name: /^(PORTEROS|CENTRALES|LATERALES \/ CARRILEROS|CENTROCAMPISTAS|ATACANTES|BACKUPS|PRUEBAS|AYUDAS) \(\d+\)$/}).all()) {
+      if (await panel.getAttribute('aria-expanded') === 'false') await panel.click();
+    }
+  }
   async function close() { assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); await context.close(); }
   return { context, page, data, players, emit, close };
 }
@@ -324,6 +329,7 @@ test('enlace push verifica sesión/club y abre la convocatoria; otro club no obt
   const f = await fixture();
   try {
     await f.page.goto(`${origin}/notification?club=${clubId}&call=${callId}`);
+    await f.page.getByRole('button', {name: 'PORTEROS (4)', exact: true}).click();
     await f.page.getByTestId('call-up-player-snapshot-3').waitFor();
     assert.equal(new URL(f.page.url()).pathname, '/call-up');
     assert.equal(new URL(f.page.url()).searchParams.get('id'), callId);
@@ -389,6 +395,9 @@ test('capitán añade prueba por nombre desde convocatoria sin EA ID ni dorsal y
     const {page} = f;
     await page.getByRole('textbox', {name: 'Nueva prueba', exact: true}).fill('Amigo de Selu');
     await page.getByRole('button', {name: 'Añadir prueba', exact: true}).click();
+    const trialsPanel = page.getByRole('button', {name: 'PRUEBAS (2)', exact: true});
+    await trialsPanel.waitFor();
+    if (await trialsPanel.getAttribute('aria-expanded') === 'false') await trialsPanel.click();
     await page.getByText('Amigo de Selu', {exact: true}).waitFor();
     assert.equal(f.data.trialAdds, 1);
     assert.equal(await page.getByRole('button', {name: 'Todos (24)', exact: true}).count(), 1);
@@ -412,5 +421,27 @@ test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina voto
     await page.getByRole('button', {name: 'Disponible para Jugador_4', exact: true, disabled: false}).waitFor();
     assert.equal(f.data.restarts, 1);
     assert.equal(await page.getByText('Ayuda fuera del total', {exact: true}).count(), 1);
+  } finally { await f.close(); }
+});
+
+test('todos los paneles empiezan cerrados, se abren a petición y la flecha está centrada', async () => {
+  const f = await fixture({role: 'admin', expandPanels: false});
+  try {
+    const {page} = f;
+    const panels = page.getByRole('button', {name: /^(PORTEROS|CENTRALES|LATERALES \/ CARRILEROS|CENTROCAMPISTAS|ATACANTES|BACKUPS|PRUEBAS|AYUDAS) \(\d+\)$/});
+    assert.equal(await panels.count(), 8);
+    for (const panel of await panels.all()) assert.equal(await panel.getAttribute('aria-expanded'), 'false');
+    const admin = page.getByRole('button', {name: 'Administrar convocatoria', exact: true});
+    assert.equal(await admin.getAttribute('aria-expanded'), 'false');
+    assert.equal(await page.getByTestId('call-up-player-snapshot-1').isVisible(), false);
+    const buttonBox = await admin.boundingBox();
+    const arrowBox = await admin.locator('svg').boundingBox();
+    assert.ok(Math.abs(buttonBox.y + buttonBox.height / 2 - arrowBox.y - arrowBox.height / 2) <= 1);
+    await page.getByRole('button', {name: 'PORTEROS (4)', exact: true}).click();
+    assert.equal(await page.getByTestId('call-up-player-snapshot-1').isVisible(), true);
+    assert.equal(await page.getByRole('button', {name: 'CENTRALES (4)', exact: true}).getAttribute('aria-expanded'), 'false');
+    await page.getByRole('tab', {name: 'Plantilla', exact: true}).click();
+    await page.getByRole('tab', {name: 'Convocatoria', exact: true}).click();
+    assert.equal(await page.getByRole('button', {name: 'PORTEROS (4)', exact: true}).getAttribute('aria-expanded'), 'false');
   } finally { await f.close(); }
 });

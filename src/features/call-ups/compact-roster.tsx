@@ -1,4 +1,5 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import type { ReactNode } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { colors } from '@/theme';
@@ -18,10 +19,11 @@ export function CompactRoster({ players, trials, aids, trialEditor }: {
   trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode; trialEditor?: ReactNode;
 }) {
   const [filter, setFilter] = useState<AvailabilityFilter>('all');
-  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
+  const [expandedPanels, setExpandedPanels] = useState<ReadonlySet<string>>(() => new Set());
+  useFocusEffect(useCallback(() => { setExpandedPanels(new Set()); }, []));
   const model = useMemo(() => callUpList(players, filter), [players, filter]);
   const { width } = useWindowDimensions();
-  function toggle(key: string) { setCollapsed(current => { const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next; }); }
+  function toggle(key: string) { setExpandedPanels(current => { const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next; }); }
   return <View style={styles.stack}>
     <View style={styles.counters}>
       {availabilityStates.map(status => <Pressable key={status} accessibilityRole="button"
@@ -43,7 +45,7 @@ export function CompactRoster({ players, trials, aids, trialEditor }: {
     <Text style={styles.help}>Disponible no significa seleccionado para el once.</Text>
     {model.groups.map(group => <CompactPanel key={group.category} title={`${categoryLabels[group.category]} (${group.total})`}
       summary={availabilityStates.map(status => `${availabilityIcons[status]} ${group.counts[status]}`).join(' · ')}
-      expanded={!collapsed.has(group.category)} onToggle={() => toggle(group.category)}>
+      expanded={expandedPanels.has(group.category)} onToggle={() => toggle(group.category)}>
       {group.players.map(player => <AvailabilityRow key={player.id} player={player} />)}
       {!group.players.length ? <Text style={styles.empty}>Sin jugadores.</Text> : null}
     </CompactPanel>)}
@@ -52,7 +54,7 @@ export function CompactRoster({ players, trials, aids, trialEditor }: {
       {filter !== 'all' ? <Pressable accessibilityRole="button" onPress={() => setFilter('all')} style={styles.chip}><Text style={styles.selectedText}>Mostrar todos</Text></Pressable> : null}
     </View> : null}
     <View style={filter !== 'all' ? styles.hidden : undefined}>
-      <CompactPanel title={`PRUEBAS (${trials.length})`} expanded={!collapsed.has('trials')} onToggle={() => toggle('trials')} subtle>
+      <CompactPanel title={`PRUEBAS (${trials.length})`} expanded={expandedPanels.has('trials')} onToggle={() => toggle('trials')} subtle>
         {trials.map(trial => <View key={trial.id} style={styles.trial}>
           <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
           {trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
