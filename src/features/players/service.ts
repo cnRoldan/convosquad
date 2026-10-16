@@ -36,7 +36,7 @@ export async function linkPlayerAccount(playerId: string, userId: string) {
 export async function importRoster(clubId: string, players: ImportPlayer[], trials: ImportTrial[]) {
   const result = unwrap(await requireSupabase().rpc('import_roster', { p_club_id: clubId,
     p_players: players.map(player => ({ ea_id: player.eaId, jersey_number: player.jerseyNumber, category: player.category })),
-    p_trials: trials.map(trial => ({ ea_id: trial.eaId, jersey_number: trial.jerseyNumber, position: trial.position, notes: trial.notes })),
+    p_trials: trials.map(trial => ({ ea_id: trial.eaId, jersey_number: null, position: null, notes: trial.notes })),
   }));
   if (!result || typeof result !== 'object' || Array.isArray(result) || typeof result.players !== 'number' || typeof result.trials !== 'number') throw new Error('Resultado de importación no válido.');
   return { players: result.players, trials: result.trials };

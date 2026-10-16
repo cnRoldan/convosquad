@@ -10,6 +10,7 @@ import { responseCooldown } from '@/features/call-ups/last-notice';
 import { AvailabilityActions } from '@/features/call-ups/availability-actions';
 import { canRespondToPlayer } from '@/features/call-ups/list-model';
 import type { CallUpPlayer } from '@/features/call-ups/list-model';
+import { CallUpTrialForm } from '@/features/trials/call-up-trial-form';
 import { AidsSection } from '@/features/call-ups/aids-section';
 import { CallUpAdministration } from '@/features/call-ups/administration';
 import { availabilityLabels, callStatusLabels, responseOptions, callUpErrorMessage } from '@/features/call-ups/availability';
@@ -121,6 +122,7 @@ export default function CallUpScreen() {
       {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={message => { setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
       {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []}
+        trialEditor={!historical && admin && !isDemo && (call.status === 'open' || call.status === 'draft') ? <CallUpTrialForm key={responseScope} callUpId={call.id} onSaved={() => { refreshRoster(); refresh(); }} /> : null}
         aids={<AidsSection key={responseScope} callUpId={call.id} revision={aidsRevision} editable={!historical && admin && (call.status === 'open' || call.status === 'draft')} />} />}
       {isDemo ? <Body>Convocatoria simulada · los cambios no se guardan.</Body> : null}
     </> : !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <Body>No hay convocatorias accesibles en este club.</Body> : null}

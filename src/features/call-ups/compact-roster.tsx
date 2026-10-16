@@ -13,9 +13,9 @@ import type { Tables } from '@/types/database';
 const statusColors = { available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
 const shortLabels = { available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
 
-export function CompactRoster({ players, trials, aids }: {
+export function CompactRoster({ players, trials, aids, trialEditor }: {
   players: readonly CallUpPlayer[];
-  trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode;
+  trials: readonly Tables<'call_up_trials'>[]; aids: ReactNode; trialEditor?: ReactNode;
 }) {
   const [filter, setFilter] = useState<AvailabilityFilter>('all');
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() => new Set());
@@ -54,10 +54,11 @@ export function CompactRoster({ players, trials, aids }: {
     <View style={filter !== 'all' ? styles.hidden : undefined}>
       <CompactPanel title={`PRUEBAS (${trials.length})`} expanded={!collapsed.has('trials')} onToggle={() => toggle('trials')} subtle>
         {trials.map(trial => <View key={trial.id} style={styles.trial}>
-          <Text style={styles.name}>{trial.ea_id_snapshot} · <Text accessibilityLabel={jerseyAccessibilityLabel(trial.jersey_number_snapshot)} style={styles.jersey}>{jerseyLabel(trial.jersey_number_snapshot)}</Text></Text>
-          <Text style={styles.meta}>{trial.position_snapshot ?? 'Posición sin indicar'}{trial.notes_snapshot ? ` · ${trial.notes_snapshot}` : ''}</Text>
+          <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
+          {trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
         </View>)}
         {!trials.length ? <Text style={styles.empty}>No se incluyeron pruebas.</Text> : null}
+        {trialEditor}
       </CompactPanel>
       <View style={styles.aids}>{aids}</View>
     </View>

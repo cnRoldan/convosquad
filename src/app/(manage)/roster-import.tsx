@@ -60,10 +60,9 @@ function RosterImportEditor() {
         <Options value={row.kind} options={[{ value: 'player', label: 'Plantilla' }, { value: 'trial', label: 'PRUEBAS' }, { value: 'aid', label: 'AYUDAS' }]} onChange={kind => edit(row.id, { kind, selected: kind !== 'aid', requiresReview: true })} disabled={busy} />
         {row.kind === 'aid' ? <><Field label={`Ayuda línea ${row.lineNumber}`} value={row.eaId} onChangeText={eaId => edit(row.id, { eaId })} multiline editable={!busy} /><Body>Solo vista previa. Añade esta anotación a la convocatoria que corresponda; no se importa a la plantilla.</Body></> : <>
           <Switch accessibilityLabel={`Incluir línea ${row.lineNumber}`} value={row.selected} onValueChange={selected => edit(row.id, { selected })} disabled={busy} />
-          <Field label={`Dorsal línea ${row.lineNumber}`} keyboardType="number-pad" value={row.jerseyText} onChangeText={jerseyText => edit(row.id, { jerseyText })} editable={!busy} />
-          <Field label={`EA ID línea ${row.lineNumber}`} value={row.eaId} onChangeText={eaId => edit(row.id, { eaId })} autoCapitalize="none" editable={!busy} />
+          {row.kind === 'player' ? <Field label={`Dorsal línea ${row.lineNumber}`} keyboardType="number-pad" value={row.jerseyText} onChangeText={jerseyText => edit(row.id, { jerseyText })} editable={!busy} /> : null}
+          <Field label={`${row.kind === 'trial' ? 'Nombre de la prueba' : 'EA ID'} línea ${row.lineNumber}`} value={row.eaId} onChangeText={eaId => edit(row.id, { eaId })} autoCapitalize="none" editable={!busy} />
           {row.kind === 'player' ? <Options value={row.category} options={categories.map(value => ({ value, label: categoryLabels[value] }))} onChange={category => edit(row.id, { category })} disabled={busy} /> : <>
-            <Field label={`Posición libre línea ${row.lineNumber}`} value={row.positionText} onChangeText={positionText => edit(row.id, { positionText })} maxLength={80} editable={!busy} />
             <Field label={`Observaciones línea ${row.lineNumber}`} value={row.notes} onChangeText={notes => edit(row.id, { notes })} maxLength={1000} multiline editable={!busy} />
           </>}
           {row.availability ? <Body>Disponibilidad detectada: {row.availability === 'available' ? 'Disponible' : row.availability === 'unavailable' ? 'No disponible' : 'Backup'} · no se guardará.</Body> : null}

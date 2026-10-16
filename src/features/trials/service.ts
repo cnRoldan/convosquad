@@ -6,9 +6,10 @@ export async function listTrials(clubId: string, all = false) {
   if (!all) query = query.eq('status', 'active');
   return unwrap(await query);
 }
-export async function saveTrial(clubId: string, input: { ea_id: string; jersey_number: number | null; position: string | null; notes: string | null }, id?: string) {
-  return unwrap(await (id ? requireSupabase().from('club_trials').update(input).eq('id', id).eq('club_id', clubId)
-    : requireSupabase().from('club_trials').insert({ club_id: clubId, ...input })).select().single());
+export async function saveTrial(clubId: string, input: { name: string; notes: string | null }, id?: string) {
+  const values = { ea_id: input.name, jersey_number: null, position: null, notes: input.notes };
+  return unwrap(await (id ? requireSupabase().from('club_trials').update(values).eq('id', id).eq('club_id', clubId)
+    : requireSupabase().from('club_trials').insert({ club_id: clubId, ...values })).select().single());
 }
 export async function withdrawTrial(id: string) { return unwrap(await requireSupabase().rpc('withdraw_trial', { p_trial_id: id }).single()); }
 export async function promoteTrial(id: string, category: RosterCategory, existingId?: string) {
@@ -16,4 +17,8 @@ export async function promoteTrial(id: string, category: RosterCategory, existin
 }
 export async function reorderTrials(clubId: string, ids: string[]) {
   const { error } = await requireSupabase().rpc('reorder_trials', { p_club_id: clubId, p_ids: ids }); if (error) throw error;
+}
+
+export async function addCallUpTrial(callUpId: string, name: string, notes: string | null) {
+  return unwrap(await requireSupabase().rpc('add_call_up_trial', { p_call_up_id: callUpId, p_name: name, ...(notes ? { p_notes: notes } : {}) }));
 }
