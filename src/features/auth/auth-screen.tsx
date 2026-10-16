@@ -24,7 +24,7 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
     if (!eaIdPattern.test(eaId.trim())) return setMessage('El ID de EA debe tener entre 3 y 24 letras, números, guiones o guiones bajos.');
     if (isRegister && password.length < 8) return setMessage('La contraseña debe tener al menos 8 caracteres.');
     if (!password) return setMessage('Introduce tu contraseña.');
-    if (!isSupabaseConfigured) return setMessage('Supabase no está configurado. Puedes explorar la demo sin crear una cuenta.');
+    if (!isSupabaseConfigured) return setMessage('El acceso no está disponible en este momento. Inténtalo más tarde.');
     setBusy(true);
     setMessage('');
     try {
@@ -55,7 +55,6 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
       <Body>Si olvidas la contraseña o tu ID ya está ocupado, contacta con el administrador. No hay recuperación automática.</Body>
       <Button secondary disabled={busy} label="Explorar la demo" onPress={() => { setPassword(''); enterDemo(); router.replace('/clubs'); }} />
       <Button secondary disabled={busy} label={isRegister ? 'Ya tengo una cuenta' : 'Quiero registrarme'} onPress={() => router.replace(isRegister ? '/login' : '/register')} />
-      <Body>{isSupabaseConfigured ? 'Acceso gestionado por Supabase Auth.' : 'Acceso real pendiente de configuración. La demo es independiente.'}</Body>
     </Screen>
   );
 }

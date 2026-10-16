@@ -2,7 +2,6 @@ import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/auth-context';
 
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
-import { isSupabaseConfigured } from '@/lib/supabase';
 
 export default function WelcomeScreen() {
   const { enterDemo } = useAuth();
@@ -15,7 +14,7 @@ export default function WelcomeScreen() {
       <Button label="Iniciar sesión" onPress={() => router.push('/login')} />
       <Button secondary label="Crear una cuenta" onPress={() => router.push('/register')} />
       <Button secondary label="Explorar la demo" onPress={() => { enterDemo(); router.push('/clubs'); }} />
-      <Body>{isSupabaseConfigured ? 'El acceso utiliza Supabase. La demo es independiente y utiliza datos simulados.' : 'La demo utiliza datos simulados. El acceso real requiere configurar Supabase.'}</Body>
+      <Body>Prueba la demo sin crear una cuenta. Los equipos y jugadores son de ejemplo.</Body>
     </Screen>
   );
 }

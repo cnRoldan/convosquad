@@ -13,7 +13,7 @@ export default function NotificationsScreen() {
       if (!enabled) { await deactivateInstallation(session.user.id); setMessage('Notificaciones desactivadas en este dispositivo.'); }
       else {
         const result = await enableInstallation(session.user.id);
-        setMessage(result === 'enabled' ? 'Notificaciones de convocatoria activadas.' : result === 'denied' ? 'No has concedido permiso. Puedes habilitarlo en los ajustes del dispositivo.' : result === 'cancelled' ? 'La sesión ha cambiado. Vuelve a intentarlo.' : 'Usa un dispositivo físico y una compilación EAS; Expo Go no es compatible.');
+        setMessage(result === 'enabled' ? 'Notificaciones de convocatoria activadas.' : result === 'denied' ? 'No has concedido permiso. Puedes habilitarlo en los ajustes del dispositivo.' : result === 'cancelled' ? 'La sesión ha cambiado. Vuelve a intentarlo.' : 'Las notificaciones no están disponibles en este dispositivo.');
       }
     } catch { setMessage('No se pudieron activar las notificaciones. Comprueba tu conexión y los permisos del dispositivo.'); }
     finally { setBusy(false); }
