@@ -796,6 +796,13 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_up_players']['Row'][];
       };
+      restart_call_up: {
+        Args: {
+          p_call_up_id: string;
+          p_expected_version: number;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
       review_join_request: {
         Args: {
           p_request_id: string;

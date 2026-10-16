@@ -88,3 +88,10 @@ Los capitanes pueden escribir un nombre libre y pulsar **Añadir prueba** en la 
 Aplicar manualmente `20261016190000_add_call_up_trial.sql` después de las migraciones anteriores. No se ejecuta automáticamente. La función comprueba permisos de capitán y protege convocatorias cerradas, canceladas y antiguas. RLS sigue habilitado y las copias no admiten escritura directa del cliente.
 
 Por compatibilidad con los datos y RPC anteriores se conserva la columna interna `ea_id` de pruebas para almacenar el nombre libre, sin validarlo ni vincularlo como identidad EA. La interfaz de pruebas muestra nombre y observaciones, sin dorsal, EA ID o conversión automática a ficha oficial. Los campos históricos existentes no se eliminan; los nuevos registros e importaciones de la app dejan dorsal y posición vacíos.
+
+
+## Reiniciar una convocatoria
+
+**Administrar convocatoria → Reiniciar convocatoria** muestra una confirmación: «¿Estás seguro de que deseas reiniciar la convocatoria? Los votos anteriores se eliminarán». Si se confirma, la operación actualiza jugadores y PRUEBAS desde la plantilla activa, borra los votos y sus tiempos de respuesta, conserva las AYUDAS, fecha y hora, y deja la convocatoria abierta. Conserva el mismo registro y la regla de una convocatoria por día. Las convocatorias de días anteriores no admiten reinicios y no se modifican.
+
+La migración incremental `20261016200000_restart_call_up.sql` añade esta operación atómica, solo para capitanes. Aplicarla después de las anteriores; no se ejecuta remotamente desde el repositorio. La versión esperada evita que una doble confirmación con datos antiguos reinicie dos veces. El nuevo evento de publicación conserva las reglas de destinatarios: sin categoría BACKUPS, PRUEBAS o AYUDAS. El emisor proporciona las tres acciones de voto a los jugadores registrados elegibles. No se puede retirar un aviso que ya haya sido enviado o reservado; se omiten los avisos anteriores que sigan pendientes en la cola. La recepción y las acciones en el móvil siguen requiriendo validación física con la nueva APK y emisor.

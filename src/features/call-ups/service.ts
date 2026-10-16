@@ -56,3 +56,7 @@ export async function listCallUpHistory(clubId: string) {
 export async function respondFromNotification(clubId: string, callUpId: string, availability: 'available' | 'unavailable' | 'backup', actionId: string) {
   return unwrap(await requireSupabase().rpc('respond_from_notification', { p_club_id: clubId, p_call_up_id: callUpId, p_availability: availability, p_action_id: actionId }).single());
 }
+
+export async function restartCallUp(callUpId: string, expectedVersion: number) {
+  return unwrap(await requireSupabase().rpc('restart_call_up', { p_call_up_id: callUpId, p_expected_version: expectedVersion }).single());
+}

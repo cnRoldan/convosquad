@@ -40,10 +40,10 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, restarts: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
+  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
   const pastId = '00000000-0000-4000-8000-000000000004';
   const pastCall = { ...call, id: pastId, local_date: '2020-01-01', starts_at: '2020-01-01T20:00:00Z' };
   const players = empty ? [] : Array.from({ length: 24 }, (_, index) => ({
@@ -84,6 +84,16 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'restart_call_up') {
+        assert.equal(role, 'admin');
+        const body = request.postDataJSON();
+        assert.equal(body.p_call_up_id, callId);
+        assert.equal(body.p_expected_version, call.status_version);
+        data.restarts++; call.status = 'open'; call.status_version += 2;
+        call.updated_at = new Date().toISOString();
+        for (const player of players) { player.availability = 'unanswered'; player.responded_at = null; }
+        return route.fulfill({json: call});
+      }
       if (endpoint === 'add_call_up_trial') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();
@@ -361,6 +371,7 @@ test('consulta histórica es de solo lectura y vuelve a la convocatoria actual s
     assert.equal(await page.getByText('Administrar convocatoria', {exact: true}).count(), 0);
     assert.equal(await page.getByRole('button', {name: 'Añadir ayuda', exact: true}).count(), 0);
     assert.equal(await page.getByRole('button', {name: 'Añadir prueba', exact: true}).count(), 0);
+    assert.equal(await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).count(), 0);
     assert.equal(await page.getByTestId('availability-actions').count(), 0);
     assert.equal(f.data.writes, 0);
     await page.getByRole('button', {name: 'Volver a la convocatoria actual', exact: true}).click();
@@ -383,5 +394,23 @@ test('capitán añade prueba por nombre desde convocatoria sin EA ID ni dorsal y
     assert.equal(await page.getByRole('button', {name: 'Todos (24)', exact: true}).count(), 1);
     assert.equal(await page.getByText('PRUEBAS (2)', {exact: true}).count(), 1);
     assert.equal(await page.getByText('#99', {exact: true}).count(), 0);
+  } finally { await f.close(); }
+});
+
+test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina votos y desbloquea respuesta', async () => {
+  const f = await fixture({role: 'admin', cooldown: true});
+  try {
+    const {page} = f;
+    await page.getByRole('button', {name: 'Administrar convocatoria', exact: true}).click();
+    await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
+    await page.getByText(/¿Estás seguro de que deseas reiniciar la convocatoria\?/).waitFor();
+    await page.getByRole('button', {name: 'Cancelar', exact: true}).click();
+    assert.equal(f.data.restarts, 0);
+    await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
+    await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).last().click();
+    await page.getByRole('button', {name: 'Pendientes (24)', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Disponible para Jugador_4', exact: true, disabled: false}).waitFor();
+    assert.equal(f.data.restarts, 1);
+    assert.equal(await page.getByText('Ayuda fuera del total', {exact: true}).count(), 1);
   } finally { await f.close(); }
 });

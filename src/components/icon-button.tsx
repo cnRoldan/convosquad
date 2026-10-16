@@ -3,6 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 import { colors } from '@/theme';
 
 const paths = {
+  restart: 'M3 4v7h7M3 11a9 9 0 119 10M12 7v5l3 2',
   back: 'M19 12H5M12 19l-7-7 7-7',
   up: 'M12 19V5M5 12l7-7 7 7',
   down: 'M12 5v14M5 12l7 7 7-7',

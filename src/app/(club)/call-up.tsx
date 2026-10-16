@@ -119,7 +119,7 @@ export default function CallUpScreen() {
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {callStatusLabels[call.status]}</Text>
       {call.last_notice_at ? <Body>Último aviso para votar: {clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} · solo pendientes</Body> : null}
-      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={message => { setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
+      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? 'Convocatoria actualizada. La fotografía y respuestas se conservan.'); refreshRoster(); refresh(); }} /> : null}
       {snapshots.error ? <Body>Respuestas no disponibles.</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []}
         trialEditor={!historical && admin && !isDemo && (call.status === 'open' || call.status === 'draft') ? <CallUpTrialForm key={responseScope} callUpId={call.id} onSaved={() => { refreshRoster(); refresh(); }} /> : null}
