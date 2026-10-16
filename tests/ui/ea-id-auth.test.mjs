@@ -468,7 +468,16 @@ test('idioma junto al ID cambia en modal, se conserva al recargar y no cambia no
  const f=await fixture({clubRole:'admin'});
  try {
   const {page}=f;await page.goto(`${origin}/home`);
-  await page.getByRole('button',{name:'Cambiar idioma',exact:true}).click();
+  const languageButton = page.getByRole('button',{name:'Cambiar idioma',exact:true});
+  await languageButton.waitFor();
+  assert.equal(await languageButton.locator('svg').count(), 1);
+  assert.equal((await languageButton.textContent()).trim(), '');
+  await languageButton.click();
+  for (const name of ['Español', 'English', 'Deutsch', 'Français']) {
+    assert.equal(await page.getByRole('radio',{name,exact:true}).locator('svg').count(), 1);
+  }
+  await page.evaluate(() => Promise.all(document.getAnimations().filter(animation => animation.effect?.getTiming().iterations !== Infinity).map(animation => animation.finished)));
+  await page.screenshot({path: 'test-results/language-flags.png'});
   await page.getByRole('radio',{name:'English',exact:true}).click();
   await page.getByRole('button',{name:'Edit information',exact:true}).waitFor();
   await page.getByText('Club de prueba',{exact:true}).waitFor();
