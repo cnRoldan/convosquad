@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { performNotificationAction, submitNotificationAction } from '../src/features/notifications/perform-action.ts';
-import { readNotificationResponse, notificationActions } from '../src/features/notifications/actions.ts';
+import { readNotificationResponse, notificationActions, availabilityCategory } from '../src/features/notifications/actions.ts';
 import { notificationDestination, readPushIntent } from '../src/features/notifications/intent.ts';
 import { pushMessage } from '../supabase/functions/_shared/push-event.ts';
 const clubId='b0000000-0000-4000-8000-000000000001',callUpId='b0000000-0000-4000-8000-000000000002',userId='b0000000-0000-4000-8000-000000000003';
@@ -34,7 +34,7 @@ test('errores de red, cooldown y convocatoria cerrada no anuncian un voto guarda
 });
 test('publicación tiene botones para fichas vinculadas; cancelación informa sin acciones y mantiene el club',async()=>{
   const event={clubId,callUpId,eventKey:'lifecycle',kind:'published'};
-  assert.equal(pushMessage(event,'ExpoPushToken[fixture]',userId,true).categoryId,'call-up-availability');
+  assert.equal(pushMessage(event,'ExpoPushToken[fixture]',userId,true).categoryId,'call_up_availability');
   assert.equal(pushMessage(event,'ExpoPushToken[fixture]',userId,false).categoryId,undefined);
   const cancelled=pushMessage({...event,kind:'cancelled'},'ExpoPushToken[fixture]',userId,false);
   assert.equal(cancelled.categoryId,undefined);assert.match(cancelled.title,/cancelada/);
@@ -66,5 +66,19 @@ test('respuesta inválida o rechazo de Auth no se trata como éxito ni expone el
   for(const reply of [Response.json({unexpected:true}),Response.json({code:'42501',message:'private-server-detail'},{status:403})]){
     const result=await performNotificationAction(intent(),{async session(){return session;},respond:(action,account)=>submitNotificationAction(config,action,account,async()=>reply)});
     assert.equal(result.saved,false);assert.equal(result.message.includes('private-server-detail'),false);
+  }
+});
+
+test('la categoría del emisor coincide con la registrada y usa un identificador compatible con Expo', () => {
+  assert.match(availabilityCategory, /^[A-Za-z0-9_]+$/);
+  assert.equal(notificationActions.length, 3);
+  assert.equal(new Set(notificationActions.map(action => action.identifier)).size, 3);
+  for (const kind of ['published', 'pending', 'reminder', 'vote']) {
+    const message = pushMessage({clubId, callUpId, eventKey: 'actions', kind}, 'ExpoPushToken[fixture]', userId, true);
+    assert.equal(message.categoryId, availabilityCategory);
+    for (const action of notificationActions) {
+      const intent = readNotificationResponse(message.data, action.identifier, 'notification', 'default');
+      assert.equal(intent.response.availability, action.availability);
+    }
   }
 });
