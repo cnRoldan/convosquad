@@ -796,6 +796,10 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      account_deletion_blockers: {
+        Args: Record<string, never>;
+        Returns: { club_id: string; club_name: string }[];
+      };
       add_call_up_trial: {
         Args: {
           p_call_up_id: string;
@@ -899,6 +903,12 @@ export type Database = {
       delete_club: {
         Args: {
           p_club_id: string;
+        };
+        Returns: undefined;
+      };
+      delete_my_account: {
+        Args: {
+          p_confirmation: string;
         };
         Returns: undefined;
       };

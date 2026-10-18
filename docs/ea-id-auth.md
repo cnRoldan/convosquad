@@ -1,6 +1,6 @@
 # Registro y acceso con ID de EA
 
-Las nuevas cuentas utilizan únicamente **ID de EA + contraseña**, sin correo, confirmación ni recuperación automática. Si un ID está ocupado o se pierde una contraseña, el usuario contacta con el administrador. La aplicación no verifica la propiedad del ID en EA ni elimina cuentas automáticamente.
+Las nuevas cuentas utilizan únicamente **ID de EA + contraseña**, sin correo, confirmación ni recuperación automática. Si un ID está ocupado o se pierde una contraseña, el usuario contacta con el administrador. La aplicación no verifica la propiedad del ID en EA. La eliminación voluntaria está disponible en Mis clubes → Eliminar mi cuenta.
 
 ## Activación en Supabase desde el navegador
 
@@ -35,7 +35,7 @@ Para probarlo con una cuenta autorizada: intenta primero una contraseña actual 
 
 El formulario solo admite ID de EA y contraseña. Se ha retirado la compatibilidad de acceso y recuperación por correo, incluidos los formularios de las rutas antiguas. Las cuentas de desarrollo previas no se eliminan ni convierten automáticamente: si se quiere conservar el club de una cuenta antigua, soporte debe adaptar su identificador de Auth y su perfil al ID de EA elegido, conservando el mismo UUID. Crear otra cuenta no transfiere clubes ni permisos.
 
-Las cuentas nuevas muestran que deben contactar con el administrador si olvidan la contraseña o su ID está ocupado. No se enviarán recuperaciones a los identificadores internos. No añadas contraseñas, correos técnicos ni detalles de sesión a logs o tickets. Antes de eliminar una cuenta en Authentication → Users, revisa sus clubes: una cuenta que sea el último administrador requiere transferir antes ese rol. El soporte y las eliminaciones son manuales, nunca parte del formulario de registro.
+Las cuentas nuevas muestran que deben contactar con el administrador si olvidan la contraseña o su ID está ocupado. No se enviarán recuperaciones a los identificadores internos. No añadas contraseñas, correos técnicos ni detalles de sesión a logs o tickets. Antes de eliminar una cuenta en Authentication → Users, revisa sus clubes: una cuenta que sea el último administrador requiere transferir antes ese rol. La recuperación sigue siendo manual. Para eliminar una cuenta se debe usar el flujo autenticado de [eliminación de cuenta](account-deletion.md), que limpia también sus datos vinculados; borrar únicamente el usuario en Authentication no realiza esa limpieza.
 
 ## Prueba manual
 
