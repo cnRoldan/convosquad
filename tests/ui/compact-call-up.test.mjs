@@ -484,6 +484,9 @@ test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina voto
     await page.getByRole('button', {name: 'Pendientes (24)', exact: true}).waitFor();
     await page.getByRole('button', {name: 'Disponible para Jugador_4', exact: true, disabled: false}).waitFor();
     assert.equal(f.data.restarts, 1);
+    const aids=page.getByRole('button',{name:'AYUDAS (1)',exact:true});
+    await aids.waitFor();
+    if(await aids.getAttribute('aria-expanded')==='false') await aids.click();
     await page.getByText('Ayuda fuera del total', {exact: true}).waitFor();
     assert.equal(await page.getByText('Ayuda fuera del total', {exact: true}).count(), 1);
   } finally { await f.close(); }
