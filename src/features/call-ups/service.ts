@@ -67,3 +67,8 @@ export async function restartCallUp(callUpId: string, expectedVersion: number) {
 export async function saveAidWithContact(callUpId: string, body: string, phone: string | null, id?: string) {
   return unwrap(await requireSupabase().rpc('save_call_up_aid_with_contact', { p_call_up_id: callUpId, p_body: body, ...(phone ? { p_phone: phone } : {}), ...(id ? { p_aid_id: id } : {}) }));
 }
+
+export async function deleteCancelledCallUp(callUpId: string, expectedVersion: number) {
+  const { error } = await requireSupabase().rpc('delete_cancelled_call_up', { p_call_up_id: callUpId, p_expected_version: expectedVersion });
+  if (error) throw error;
+}

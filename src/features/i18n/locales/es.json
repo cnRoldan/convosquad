@@ -677,5 +677,8 @@
   "Volver al club": "Volver al club",
   "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "A esa hora avisaremos a los capitanes para que valoren a los jugadores.",
   "Hora de convocatoria (HH:mm)": "Hora de convocatoria (HH:mm)",
-  "Hora de cierre de votación (HH:mm)": "Hora de cierre de votación (HH:mm)"
+  "Hora de cierre de votación (HH:mm)": "Hora de cierre de votación (HH:mm)",
+  "Eliminar convocatoria": "Eliminar convocatoria",
+  "¿Eliminar definitivamente esta convocatoria? Se borrarán sus votos, ayudas, pruebas y valoraciones. No se puede deshacer. Después podrás crear otra para la misma fecha.": "¿Eliminar definitivamente esta convocatoria? Se borrarán sus votos, ayudas, pruebas y valoraciones. No se puede deshacer. Después podrás crear otra para la misma fecha.",
+  "La convocatoria ha cambiado. Actualízala antes de continuar.": "La convocatoria ha cambiado. Actualízala antes de continuar."
 }
