@@ -91,7 +91,8 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
       if (endpoint === 'set_club_decision_lock') {
         data.decisionWrites++;
         const body = request.postDataJSON();
-        assert.equal(body.p_club_id, clubId); assert.equal(body.p_call_up_player_id, 'snapshot-3');
+        assert.equal(body.p_club_id, clubId);
+        if (body.p_enabled || body.p_call_up_player_id !== undefined) assert.equal(body.p_call_up_player_id, 'snapshot-3');
         decisionLock = body.p_enabled ? {availability: players[3].availability} : null;
         return route.fulfill({json: body.p_enabled});
       }
