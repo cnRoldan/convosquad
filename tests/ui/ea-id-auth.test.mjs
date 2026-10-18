@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, browserLanguage = 'es-ES' } = {}) {
+async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -36,6 +36,8 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
   ];
   const players = [userId, candidateId].map((user_id, i) => ({ id: `player-${i}`, club_id: club.id, user_id, ea_id: i ? 'Candidate' : 'EA-Player_9', category: 'backups', sort_order: i, jersey_number: i + 1, is_active: true }));
   if (clubRole) await context.addInitScript(({ userId }) => {
+    if (sessionStorage.getItem('fixture-session-initialized')) return;
+    sessionStorage.setItem('fixture-session-initialized','1');
     const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'ea.player@accounts.convosquad.invalid', user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() };
     const expires_at = Math.floor(Date.now() / 1000) + 3600;
     const token = `${btoa('{}')}.${btoa(JSON.stringify({ sub: userId, exp: expires_at }))}.fixture`;
@@ -161,6 +163,9 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
         return route.fulfill({ json: account });
       }
     }
+    if (endpoint === 'account_deletion_blockers') return route.fulfill({json: deletionBlocked ? [{club_id:club.id,club_name:club.name}] : []});
+    if (endpoint === 'delete_my_account') return route.fulfill(deletionRace
+      ? {status:400,json:{code:'P4002',message:'Private server details'}} : {status:204});
     if (endpoint === 'settings') return route.fulfill({ json: { mailer_autoconfirm: confirmed, disable_signup: false } });
     if (endpoint === 'is_ea_id_available') return route.fulfill({ json: available });
     if (endpoint === 'user') return route.fulfill({ json: { id: userId, aud: 'authenticated', role: 'authenticated', email: 'ea.player@accounts.convosquad.invalid', user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() } });
@@ -691,4 +696,65 @@ test('visibilidad: por defecto privada, capitán puede compartir y el modo perso
       assert.equal(await page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),0);
     } finally {await f.close();}
   }
+});
+
+
+test('eliminar cuenta: confirmación cancelable, contraseña y cierre de sesión sin modificar a otros',async()=>{
+ const f=await fixture({clubRole:'player'});
+ try {
+  await f.page.goto(`${origin}/clubs`);
+  await f.page.getByRole('button',{name:'Eliminar mi cuenta',exact:true}).click();
+  await f.page.getByText('Cuenta: EA-Player_9',{exact:true}).waitFor();
+  const remove=f.page.getByRole('button',{name:'Eliminar mi cuenta',exact:true});
+  assert.equal(await remove.getAttribute('aria-disabled'),'true');
+  await f.page.getByLabel('Contraseña actual',{exact:true}).fill('test-only-password');
+  await f.page.getByLabel('Escribe tu ID de EA para confirmar',{exact:true}).fill('EA-Player_9');
+  await remove.click();
+  await f.page.getByRole('button',{name:'Cancelar',exact:true}).click();
+  assert.equal(f.requests.some(r=>r.endpoint==='delete_my_account'),false);
+  await remove.click();
+  await f.page.getByRole('button',{name:'Eliminar definitivamente',exact:true}).click();
+  await f.page.getByText('Tu cuenta y sus datos vinculados se han eliminado. Se ha cerrado tu sesión.',{exact:true}).waitFor();
+  assert.deepEqual(f.requests.filter(r=>r.endpoint==='delete_my_account').map(r=>r.body),[{p_confirmation:'EA-Player_9'}]);
+  assert.equal(await f.page.evaluate(()=>localStorage.getItem('sb-auth-auth-token')),null);
+  await f.page.reload();
+  await f.page.getByRole('button',{name:'Iniciar sesión para eliminar mi cuenta',exact:true}).waitFor();
+ } finally {await f.close();}
+});
+test('eliminar cuenta: último capitán, contraseña incorrecta y cambio de permisos impiden anunciar éxito',async()=>{
+ for(const options of [{deletionBlocked:true},{wrongPassword:true},{deletionRace:true}]) {
+  const f=await fixture({clubRole:'admin',...options});
+  try {
+   await f.page.goto(`${origin}/delete-account`);
+   await f.page.getByText('Cuenta: EA-Player_9',{exact:true}).waitFor();
+   if(options.deletionBlocked) {
+    await f.page.getByText('Antes de eliminar tu cuenta',{exact:true}).waitFor();
+    assert.equal(await f.page.getByRole('button',{name:'Eliminar mi cuenta',exact:true}).count(),0);
+    await f.page.getByRole('button',{name:'Club de prueba',exact:true}).click();
+    await f.page.waitForURL('**/home');
+   } else {
+    await f.page.getByLabel('Contraseña actual',{exact:true}).fill('test-only-password');
+    await f.page.getByLabel('Escribe tu ID de EA para confirmar',{exact:true}).fill('EA-Player_9');
+    await f.page.getByRole('button',{name:'Eliminar mi cuenta',exact:true}).click();
+    await f.page.getByRole('button',{name:'Eliminar definitivamente',exact:true}).click();
+    await f.page.getByText(options.wrongPassword ? 'Introduce tu contraseña actual correctamente.' : 'Eres el único capitán de un club. Nombra a otro capitán o elimina ese club antes de borrar tu cuenta.',{exact:true}).waitFor();
+    assert.equal(await f.page.getByText('Tu cuenta y sus datos vinculados se han eliminado. Se ha cerrado tu sesión.',{exact:true}).count(),0);
+   }
+   if(!options.deletionRace) assert.equal(f.requests.some(r=>r.endpoint==='delete_my_account'),false);
+  } finally {await f.close();}
+ }
+});
+test('página pública de eliminación permite autenticarse sin instalar la app y no borra al iniciar sesión',async()=>{
+ const f=await fixture();
+ try {
+  await f.page.goto(`${origin}/delete-account`);
+  await f.page.getByText('Puedes eliminar tu cuenta desde esta página, sin tener la app instalada.',{exact:true}).waitFor();
+  await f.page.getByLabel('ID de EA',{exact:true}).fill('EA-Player_9');
+  await f.page.getByLabel('Contraseña',{exact:true}).fill('test-only-password');
+  await f.page.getByRole('button',{name:'Iniciar sesión para eliminar mi cuenta',exact:true}).click();
+  await f.page.getByText('Cuenta: EA-Player_9',{exact:true}).waitFor();
+  assert.ok(f.page.url().endsWith('/delete-account'));
+  assert.equal(f.requests.some(r=>r.endpoint==='delete_my_account'),false);
+  await f.page.screenshot({path:'test-results/delete-account.png',fullPage:true});
+ } finally {await f.close();}
 });

@@ -1,3 +1,5 @@
+import { deleteOwnAccount } from './account-deletion';
+import type { Database } from '@/types/database';
 import { createClient } from '@supabase/supabase-js';
 import { changeOwnPassword, type PasswordChangeInput } from './password-change';
 import { requireSupabase } from '@/lib/supabase';
@@ -29,4 +31,12 @@ export async function changeAccountPassword(userId: string, input: PasswordChang
     { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'convosquad-password-check' } },
   );
   return changeOwnPassword(client, verifier, userId, input);
+}
+
+export async function deleteAccount(userId: string, password: string, confirmation: string) {
+  const verifier = createClient<Database>(
+    process.env.EXPO_PUBLIC_SUPABASE_URL!, process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'convosquad-deletion-check' } },
+  );
+  return deleteOwnAccount(requireSupabase(), verifier, userId, password, confirmation);
 }

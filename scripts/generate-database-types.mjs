@@ -54,12 +54,12 @@ try {
     p.pronargdefaults, p.prorettype, p.proallargtypes, p.proargmodes from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' order by p.proname`);
   for (const fn of functions) {
-    lines.push(`      ${fn.proname}: {`, '        Args: {');
+    lines.push(`      ${fn.proname}: {`, fn.input_types.length ? '        Args: {' : '        Args: Record<string, never>;');
     fn.input_types.forEach((oid, index) => {
       const optional = index >= fn.input_types.length - fn.pronargdefaults;
       lines.push(`          ${fn.proargnames[index]}${optional ? '?' : ''}: ${tsType(oid)};`);
     });
-    lines.push('        };');
+    if (fn.input_types.length) lines.push('        };');
     if (fn.proargmodes?.includes('t')) {
       const fields = fn.proargmodes.flatMap((mode, index) => mode === 't' ? [`${fn.proargnames[index]}: ${tsType(fn.proallargtypes[index])}`] : []);
       lines.push(`        Returns: { ${fields.join('; ')} }[];`);

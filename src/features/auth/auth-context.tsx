@@ -20,6 +20,7 @@ type AuthContextValue = {
   enterDemo: () => void;
   exitDemo: () => void;
   signOut: () => Promise<void>;
+  finishAccountDeletion: () => Promise<void>;
 };
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -85,7 +86,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setDemo(false);
   }
 
-  return <AuthContext.Provider value={{ session, isLoading, isDemo, isRecovery, getRecoveryMode, enterDemo, exitDemo, signOut }}>
+  async function finishAccountDeletion() {
+    const userId = session?.user.id;
+    if (userId) pauseDeviceRegistration(userId);
+    // The server has already removed devices and all sessions. Do not call the
+    // ordinary logout path, which first tries to update the deleted device row.
+    await supabase?.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    setSession(null); setDemo(false);
+    clubCrestCache.clear();
+    await recoveryRef.current!.handle('SIGNED_OUT', null).catch(() => undefined);
+    if (userId) await AsyncStorage.multiRemove([
+      `convosquad:club:${userId}`, `convosquad:language:${userId}`, `convosquad:push-enabled:${userId}`,
+    ]).catch(() => undefined);
+  }
+
+  return <AuthContext.Provider value={{ session, isLoading, isDemo, isRecovery, getRecoveryMode, enterDemo, exitDemo, signOut, finishAccountDeletion }}>
     {children}
   </AuthContext.Provider>;
 }

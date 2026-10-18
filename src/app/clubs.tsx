@@ -55,6 +55,7 @@ function ClubSelection() {
     <Button secondary label={t("Mis solicitudes")} onPress={() => router.push('/my-requests')} />
     {!isDemo ? <Button secondary label={t("Actualizar mis clubes")} onPress={refresh} /> : null}
     {message ? <Message error>{message}</Message> : null}
+    {!isDemo ? <Button secondary label={t("Eliminar mi cuenta")} onPress={() => router.push('/delete-account')} /> : null}
     <Button secondary disabled={busy} label={isDemo ? t("Volver a la bienvenida") : t("Cerrar sesión")} onPress={() => { void leave(); }} />
   </Screen>;
 }
