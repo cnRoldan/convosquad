@@ -38,7 +38,7 @@ export function AvailabilityActions({ player, disabled, feedback, onRespond, dec
 
 const styles = StyleSheet.create({
   position: { padding: 12 },
-  card: { width: '100%', maxWidth: 600, alignSelf: 'center', gap: 8, padding: 10, borderRadius: 18, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface, boxShadow: '0 4px 16px rgba(0,0,0,0.35)' },
+  card: { width: '100%', maxWidth: 600, alignSelf: 'center', gap: 8, padding: 10, borderRadius: 18, borderWidth: 1, borderColor: '#66816C', backgroundColor: '#2D4434', boxShadow: '0 4px 16px rgba(0,0,0,0.35)' },
   status: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   buttons: { flexDirection: 'row', gap: 8 },
   button: { flex: 1, minWidth: 0, minHeight: 58, gap: 4, padding: 6, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
