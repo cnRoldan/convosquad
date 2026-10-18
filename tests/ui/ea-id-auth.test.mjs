@@ -310,25 +310,33 @@ test('cambiar contraseña exige iniciar sesión', async () => {
   } finally { await f.close(); }
 });
 
-test('convocatoria propone último aviso a las 18:45, valida hora y lo envía en el RPC atómico', async () => {
+test('convocatoria mantiene inicio y cierre independientes, valida el último aviso y guarda cada hora', async () => {
   const f=await fixture({clubRole:'admin'});
   try {
     await f.page.goto(`${origin}/create-call-up`);
     const notice=f.page.getByLabel('Último aviso para votar (HH:mm)',{exact:true});
     assert.equal(await notice.inputValue(),'18:45');
     await f.page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).fill('2035-06-01');
-    await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('18:00');
+    const start=f.page.getByLabel('Hora de convocatoria (HH:mm)',{exact:true});
+    const closing=f.page.getByLabel('Hora de cierre de votación (HH:mm)',{exact:true});
+    await start.fill('18:00');
+    assert.equal(await closing.inputValue(),'21:50');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByText('El último aviso debe ser anterior a la hora de la convocatoria.',{exact:true}).waitFor();
     assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_evaluation'),false);
-    await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('21:50');
+    await closing.fill('20:45');
+    await start.fill('22:15');
+    assert.equal(await closing.inputValue(),'20:45');
+    await closing.fill('21:00');
+    assert.equal(await start.inputValue(),'22:15');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
     await f.page.waitForURL('**/call-up*');
     const request=f.requests.find(r=>r.endpoint==='create_call_up_with_evaluation');
     assert.equal(request.body.p_last_notice_at,'2035-06-01T18:45:00.000Z');
     assert.equal(request.body.p_status,'open');
-    assert.equal(request.body.p_closes_at,'2035-06-01T21:50:00.000Z');
+    assert.equal(request.body.p_starts_at,'2035-06-01T22:15:00.000Z');
+    assert.equal(request.body.p_closes_at,'2035-06-01T21:00:00.000Z');
   }finally{await f.close();}
 });
 test('preferencia personal de votos se guarda sin pedir datos de otras cuentas',async()=>{

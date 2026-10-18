@@ -675,5 +675,7 @@
   "Los miembros del club pueden ver las valoraciones.": "Clubmitglieder können die Bewertungen sehen.",
   "Cada jugador puede ver las suyas; los capitanes pueden ver todas.": "Jeder Spieler sieht seine eigenen Bewertungen; Kapitäne sehen alle.",
   "Volver al club": "Zurück zum Club",
-  "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "Zu dieser Zeit erinnern wir die Kapitäne daran, die Spieler zu bewerten."
+  "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "Zu dieser Zeit erinnern wir die Kapitäne daran, die Spieler zu bewerten.",
+  "Hora de convocatoria (HH:mm)": "Aufgebotszeit (HH:mm)",
+  "Hora de cierre de votación (HH:mm)": "Abstimmungsende (HH:mm)"
 }
