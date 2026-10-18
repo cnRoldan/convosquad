@@ -309,8 +309,8 @@ test('barra flotante permite responder con la ficha oculta y no tapa el final de
   } finally { await f.close(); }
 });
 
-test('barra oculta sin ficha vinculada y en convocatorias no abiertas', async () => {
-  for (const options of [{ linked: false }, { status: 'closed', role: 'admin' }, { status: 'cancelled', role: 'admin' }, { status: 'draft', role: 'admin' }]) {
+test('barra oculta sin ficha vinculada, en canceladas y en borradores', async () => {
+  for (const options of [{ linked: false }, { status: 'cancelled', role: 'admin' }, { status: 'draft', role: 'admin' }]) {
     const f = await fixture(options);
     try {
       assert.equal(await f.page.getByTestId('availability-actions').count(), 0);
@@ -578,7 +578,7 @@ test('jugadores no solicitan teléfonos privados ni ven campos de contacto o acc
 });
 
 
-test('cierre de votación oculta acciones al vencer sin esperar Realtime ni Cron', async () => {
+test('cierre de votación mantiene las acciones deshabilitadas al vencer sin esperar Realtime ni Cron', async () => {
   const now=Date.now();
   const f=await fixture({closesAt:new Date(now+60000).toISOString(),clockTime:now});
   try {
@@ -586,7 +586,8 @@ test('cierre de votación oculta acciones al vencer sin esperar Realtime ni Cron
     await button.waitFor();
     await f.page.clock.fastForward(61000);
     await f.page.getByText('El plazo para votar ha terminado.',{exact:true}).waitFor();
-    assert.equal(await button.count(),0);
+    assert.equal(await button.getAttribute('aria-disabled'),'true');
+    await f.page.getByText('Convocatoria finalizada. Espera a la siguiente.',{exact:true}).waitFor();
     assert.equal(f.data.writes,0);
   }finally{await f.close();}
 });
@@ -637,7 +638,8 @@ test('mensajes de voto y cierre siguen el idioma actual sin repetir acciones', a
       await change(next,name);
       await page.getByText(catalogs[next][noticeKey], {exact: true}).waitFor();
       await page.getByText(catalogs[next][responseKey].replace('{{v0}}',catalogs[next].Disponible), {exact: true}).waitFor();
-      assert.equal(await page.getByTestId('availability-actions').count(),0);
+      await page.getByText(catalogs[next]['Convocatoria finalizada. Espera a la siguiente.'],{exact:true}).waitFor();
+      assert.equal(await page.getByTestId('availability-actions').getByRole('button',{disabled:true}).count(),3);
     }
     assert.equal(f.data.writes,1);
     assert.equal(f.data.updates,1);
@@ -665,7 +667,7 @@ test('mantener decisión: hay que votar, el candado se guarda y puede quitarse c
     await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
     await page.getByRole('button',{name:'Cerrar convocatoria',exact:true}).click();
     await page.getByRole('button',{name:'Cerrar convocatoria',exact:true}).last().click();
-    await page.getByTestId('availability-actions').waitFor({state:'detached'});
+    await page.getByText('Convocatoria finalizada. Espera a la siguiente.',{exact:true}).waitFor();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:true,disabled:false}).click();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:false}).waitFor();
     assert.equal(f.data.writes,1);assert.equal(f.data.updates,1);
@@ -707,6 +709,28 @@ test('eliminar convocatoria: vuelve a Convocatoria vacía, limpia el enlace y pe
     try {
       if(options.role==='admin') await f.page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
       assert.equal(await f.page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).count(),0);
+    } finally {await f.close();}
+  }
+});
+
+test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilitados y no envía respuestas',async()=>{
+  for(const options of [{role:'player',status:'closed'},{role:'admin',status:'closed'},{role:'player',status:'closed',linked:false}]) {
+    const f=await fixture(options);
+    try {
+      const {page}=f;
+      await page.getByText('Convocatoria finalizada. Espera a la siguiente.',{exact:true}).waitFor();
+      assert.equal(await page.getByText('Vota primero para mantener tu decisión.',{exact:true}).count(),0);
+      const panel=page.getByTestId('availability-actions');
+      if(options.linked===false) assert.equal(await panel.count(),0);
+      else {
+        assert.equal(await panel.getByRole('button').count(),3);
+        for(const button of await panel.getByRole('button').all()) {
+          assert.equal(await button.getAttribute('aria-disabled'),'true');
+          await button.evaluate(node=>node.click());
+        }
+        if(options.role==='player') await page.screenshot({path:'test-results/closed-voting-panel.png'});
+      }
+      assert.equal(f.data.writes,0);
     } finally {await f.close();}
   }
 });

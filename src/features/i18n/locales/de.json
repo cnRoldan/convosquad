@@ -682,5 +682,6 @@
   "¿Eliminar definitivamente esta convocatoria? Se borrarán sus votos, ayudas, pruebas y valoraciones. No se puede deshacer. Después podrás crear otra para la misma fecha.": "Dieses Aufgebot endgültig löschen? Die Antworten, Aushilfen, Testspieler und Bewertungen werden gelöscht. Dies kann nicht rückgängig gemacht werden. Danach kannst du ein neues Aufgebot für dasselbe Datum erstellen.",
   "La convocatoria ha cambiado. Actualízala antes de continuar.": "Das Aufgebot hat sich geändert. Aktualisiere es, bevor du fortfährst.",
   "Convocatoria eliminada.": "Aufgebot gelöscht.",
-  "Volver a convocatoria": "Zurück zum Aufgebot"
+  "Volver a convocatoria": "Zurück zum Aufgebot",
+  "Convocatoria finalizada. Espera a la siguiente.": "Dieses Aufgebot ist beendet. Warte auf das nächste."
 }
