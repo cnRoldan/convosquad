@@ -677,5 +677,8 @@
   "Volver al club": "Zurück zum Club",
   "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "Zu dieser Zeit erinnern wir die Kapitäne daran, die Spieler zu bewerten.",
   "Hora de convocatoria (HH:mm)": "Aufgebotszeit (HH:mm)",
-  "Hora de cierre de votación (HH:mm)": "Abstimmungsende (HH:mm)"
+  "Hora de cierre de votación (HH:mm)": "Abstimmungsende (HH:mm)",
+  "Eliminar convocatoria": "Aufgebot löschen",
+  "¿Eliminar definitivamente esta convocatoria? Se borrarán sus votos, ayudas, pruebas y valoraciones. No se puede deshacer. Después podrás crear otra para la misma fecha.": "Dieses Aufgebot endgültig löschen? Die Antworten, Aushilfen, Testspieler und Bewertungen werden gelöscht. Dies kann nicht rückgängig gemacht werden. Danach kannst du ein neues Aufgebot für dasselbe Datum erstellen.",
+  "La convocatoria ha cambiado. Actualízala antes de continuar.": "Das Aufgebot hat sich geändert. Aktualisiere es, bevor du fortfährst."
 }

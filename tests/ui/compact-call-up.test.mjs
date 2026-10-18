@@ -41,7 +41,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, restarts: 0, deletions: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
@@ -88,6 +88,12 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'delete_cancelled_call_up') {
+        assert.equal(role,'admin');assert.equal(call.status,'cancelled');
+        assert.deepEqual(request.postDataJSON(),{p_call_up_id:callId,p_expected_version:call.status_version});
+        data.deletions++;
+        return route.fulfill({json:null});
+      }
       if (endpoint === 'set_club_decision_lock') {
         data.decisionWrites++;
         const body = request.postDataJSON();
@@ -183,7 +189,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'club_members') result = [{ id: 'member', club_id: clubId, user_id: userId, role, is_active: true }];
     else if (endpoint === 'profiles') result = { id: userId, username: 'fixture' };
     else if (endpoint === 'players') result = players.map(row => ({ id: row.source_player_id, club_id: clubId, ea_id: row.ea_id_snapshot, jersey_number: row.jersey_number_snapshot, category: row.category_snapshot, sort_order: row.sort_order_snapshot, position: row.position_snapshot, user_id: row.user_id, is_active: true }));
-    else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : [call];
+    else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : data.deletions ? [] : [call];
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
     else if (endpoint === 'club_decision_locks') { assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); assert.equal(url.searchParams.get('user_id'), `eq.${userId}`); result = decisionLock ? [decisionLock] : []; }
     else if (endpoint === 'call_up_trials') result = trialSnapshots;
@@ -478,6 +484,7 @@ test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina voto
     await page.getByRole('button', {name: 'Pendientes (24)', exact: true}).waitFor();
     await page.getByRole('button', {name: 'Disponible para Jugador_4', exact: true, disabled: false}).waitFor();
     assert.equal(f.data.restarts, 1);
+    await page.getByText('Ayuda fuera del total', {exact: true}).waitFor();
     assert.equal(await page.getByText('Ayuda fuera del total', {exact: true}).count(), 1);
   } finally { await f.close(); }
 });
@@ -661,4 +668,28 @@ test('mantener decisión: hay que votar, el candado se guarda y puede quitarse c
     assert.equal(f.data.writes,1);assert.equal(f.data.updates,1);
     await page.screenshot({path:'test-results/retained-decision.png'});
   } finally {await f.close();}
+});
+
+test('eliminar convocatoria: solo cancelada, confirmar borra y abre la creación; cancelar conserva los datos',async()=>{
+  const f=await fixture({role:'admin',status:'cancelled'});
+  try {
+    const {page}=f;
+    await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
+    await page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).click();
+    await page.getByText(/¿Eliminar definitivamente esta convocatoria\?/).waitFor();
+    await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    assert.equal(f.data.deletions,0);
+    await page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).click();
+    await page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).last().click();
+    await page.waitForURL('**/create-call-up');
+    assert.equal(f.data.deletions,1);
+    assert.equal(await page.getByLabel('Hora de cierre de votación (HH:mm)',{exact:true}).inputValue(),'19:00');
+  } finally {await f.close();}
+  for(const options of [{role:'admin',status:'open'},{role:'player',status:'cancelled'}]) {
+    const f=await fixture(options);
+    try {
+      if(options.role==='admin') await f.page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
+      assert.equal(await f.page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).count(),0);
+    } finally {await f.close();}
+  }
 });

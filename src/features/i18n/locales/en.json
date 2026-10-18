@@ -677,5 +677,8 @@
   "Volver al club": "Back to club",
   "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "At that time we will remind captains to rate the players.",
   "Hora de convocatoria (HH:mm)": "Call-up time (HH:mm)",
-  "Hora de cierre de votación (HH:mm)": "Voting closing time (HH:mm)"
+  "Hora de cierre de votación (HH:mm)": "Voting closing time (HH:mm)",
+  "Eliminar convocatoria": "Delete call-up",
+  "¿Eliminar definitivamente esta convocatoria? Se borrarán sus votos, ayudas, pruebas y valoraciones. No se puede deshacer. Después podrás crear otra para la misma fecha.": "Permanently delete this call-up? Its votes, helpers, trials and ratings will be deleted. This cannot be undone. Afterwards you can create another for the same date.",
+  "La convocatoria ha cambiado. Actualízala antes de continuar.": "The call-up has changed. Refresh it before continuing."
 }

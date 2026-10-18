@@ -889,6 +889,13 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_cancelled_call_up: {
+        Args: {
+          p_call_up_id: string;
+          p_expected_version: number;
+        };
+        Returns: undefined;
+      };
       delete_club: {
         Args: {
           p_club_id: string;
