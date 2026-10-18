@@ -1,3 +1,4 @@
+import { ratingVisibility } from '@/features/ratings/visibility';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
@@ -61,7 +62,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
       if (version !== requestId.current) return;
       const own = memberRows.map((member) => ({ id: member.id, clubId: member.club_id, userId: member.user_id, role: member.role, displayName: profile.username }));
       const available = clubRows.filter((club) => own.some((member) => member.clubId === club.id))
-        .map((club) => ({ id: club.id, name: club.name, description: club.description, timezone: club.timezone, crestPath: club.crest_path ?? null }));
+        .map((club) => ({ id: club.id, name: club.name, description: club.description, timezone: club.timezone, crestPath: club.crest_path ?? null, ratingsVisibility: ratingVisibility(club.ratings_visibility) }));
       const current = selectionRef.current.scope === userId ? selectionRef.current.id : null;
       const candidate = preferredId ?? current ?? savedId;
       const chosen = available.find((club) => club.id === candidate)?.id ?? (available.length === 1 ? available[0]?.id ?? null : null);

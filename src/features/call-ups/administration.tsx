@@ -1,4 +1,5 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
+import { evaluationInstant } from '@/features/ratings/schedule';
 import { closingInstant } from './closing-time';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -25,17 +26,19 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   const [closingEnabled, setClosingEnabled] = useState(Boolean(call.closes_at));
   const [closingTime, setClosingTime] = useState(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : initial.time);
   const [noticeEnabled, setNoticeEnabled] = useState(Boolean(call.last_notice_at));
+  const [evaluationEnabled, setEvaluationEnabled] = useState(Boolean(call.evaluation_at));
+  const [evaluationTime, setEvaluationTime] = useState(call.evaluation_at ? clubLocalDateTime(call.timezone, new Date(call.evaluation_at)).time : '23:45');
   const [expanded, setExpanded] = useState(false);
   useFocusEffect(useCallback(() => { setExpanded(false); }, []));
   const [action, setAction] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const admin = currentMembership?.role === 'admin' && activeClub?.id === call.club_id;
-  function choose(value: Action) { setError(''); setClosingEnabled(Boolean(call.closes_at)); setClosingTime(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : initial.time); setDate(initial.date); setTime(initial.time); setNoticeEnabled(Boolean(call.last_notice_at)); setNoticeTime(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45'); setAction(value); }
+  function choose(value: Action) { setError(''); setEvaluationEnabled(Boolean(call.evaluation_at)); setEvaluationTime(call.evaluation_at ? clubLocalDateTime(call.timezone, new Date(call.evaluation_at)).time : '23:45'); setClosingEnabled(Boolean(call.closes_at)); setClosingTime(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : initial.time); setDate(initial.date); setTime(initial.time); setNoticeEnabled(Boolean(call.last_notice_at)); setNoticeTime(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45'); setAction(value); }
   async function save() {
     if (!admin || isDemo || busy || !action) return;
-    let instant = call.starts_at; let noticeAt = call.last_notice_at; let closesAt = call.closes_at;
+    let instant = call.starts_at; let noticeAt = call.last_notice_at; let closesAt = call.closes_at; let evaluationAt = call.evaluation_at;
     if (action === 'edit') {
-      try { instant = clubLocalTimeToInstant(date.trim(), time.trim(), call.timezone); noticeAt = lastNoticeInstant(noticeEnabled, date, noticeTime, call.timezone, instant); closesAt = closingInstant(closingEnabled, date, closingTime, call.timezone, instant, noticeAt); }
+      try { instant = clubLocalTimeToInstant(date.trim(), time.trim(), call.timezone); noticeAt = lastNoticeInstant(noticeEnabled, date, noticeTime, call.timezone, instant); closesAt = closingInstant(closingEnabled, date, closingTime, call.timezone, instant, noticeAt); evaluationAt = evaluationInstant(evaluationEnabled, date, evaluationTime, call.timezone, instant); }
       catch (cause) { setError(cause instanceof Error ? cause.message : "Revisa la fecha y hora."); return; }
     }
     setBusy(true); setError('');
@@ -43,9 +46,9 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
       const refreshing = action === 'refresh' || (action === 'open' && call.status === 'cancelled');
       if (action === 'restart') await restartCallUp(call.id, call.status_version);
       else if (refreshing) await refreshCallUpRoster(call.id, action === 'open');
-      else await updateCallUp(call.id, instant, action === 'edit' ? call.status : action, noticeAt, closesAt);
+      else await updateCallUp(call.id, instant, action === 'edit' ? call.status : action, noticeAt, closesAt, evaluationAt);
       setAction(null);
-      onSaved(action === 'restart' ? "Convocatoria reiniciada. Todos los jugadores están sin responder y se ha preparado un nuevo aviso." : refreshing ? "Plantilla de la convocatoria actualizada. Se conservan las respuestas de quienes continúan y las AYUDAS." : undefined, action === 'restart');
+      onSaved(action === 'restart' ? "Convocatoria reiniciada. Se respetan las decisiones mantenidas y se ha preparado un nuevo aviso." : refreshing ? "Plantilla de la convocatoria actualizada. Se conservan las respuestas de quienes continúan y las AYUDAS." : undefined, action === 'restart');
     }
     catch (cause) { setError(callUpErrorMessage(cause)); }
     finally { setBusy(false); }
@@ -66,9 +69,11 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
       {call.status !== 'cancelled' ? <IconButton icon="cancel" label={t("Cancelar convocatoria")} danger disabled={busy} onPress={() => choose('cancelled')} /> : null}
     </View>
     </View>
-    <ConfirmDialog visible={action !== null} title={title} description={action === 'restart' ? t("¿Estás seguro de que deseas reiniciar la convocatoria? Los votos anteriores se eliminarán. Se actualizará la plantilla, la convocatoria quedará abierta y se enviará un nuevo aviso. Las AYUDAS se conservarán.") : action === 'refresh' || resuming ? t("Se incorporarán los jugadores, categorías, dorsales, orden y PRUEBAS de la plantilla actual. Se conservarán las respuestas de quienes continúen y las AYUDAS. Los nuevos empezarán sin responder y los retirados dejarán de aparecer en esta convocatoria.") : action === 'edit' ? t("Horario del club: {{v0}}. Solo puede existir una convocatoria por fecha local; la fotografía y respuestas se conservarán.", { v0: call.timezone }) : t("Se conservarán los jugadores, respuestas, PRUEBAS y AYUDAS. Solo una convocatoria abierta permite responder.")}
+    <ConfirmDialog visible={action !== null} title={title} description={action === 'restart' ? t("¿Deseas reiniciar la convocatoria? Se eliminarán los votos sin «Mantener decisión» activo. Se actualizará la plantilla y se abrirá la convocatoria con un nuevo aviso. Las AYUDAS se conservarán.") : action === 'refresh' || resuming ? t("Se incorporarán los jugadores, categorías, dorsales, orden y PRUEBAS de la plantilla actual. Se conservarán las respuestas de quienes continúen y las AYUDAS. Los nuevos empezarán sin responder y los retirados dejarán de aparecer en esta convocatoria.") : action === 'edit' ? t("Horario del club: {{v0}}. Solo puede existir una convocatoria por fecha local; la fotografía y respuestas se conservarán.", { v0: call.timezone }) : t("Se conservarán los jugadores, respuestas, PRUEBAS y AYUDAS. Solo una convocatoria abierta permite responder.")}
       confirmLabel={title} busy={busy} disabled={isDemo} onCancel={() => setAction(null)} onConfirm={() => { void save(); }}>
       {action === 'edit' ? <><Field label={t("Nueva fecha (AAAA-MM-DD)")} value={date} onChangeText={setDate} maxLength={10} editable={!busy} /><Field label={t("Nueva hora (HH:mm)")} value={time} onChangeText={setTime} maxLength={5} editable={!busy} /><Body>{t("Cerrar la votación automáticamente")}</Body><Switch accessibilityLabel={t("Cierre automático de votación")} value={closingEnabled} onValueChange={setClosingEnabled} disabled={busy} />{closingEnabled ? <Field label={t("Cierre de votación (HH:mm)")} value={closingTime} onChangeText={setClosingTime} maxLength={5} editable={!busy} /> : null}<Body>{t("Enviar último aviso para votar")}</Body><Switch accessibilityLabel={t("Enviar último aviso para votar")} value={noticeEnabled} onValueChange={setNoticeEnabled} disabled={busy} />{noticeEnabled ? <Field label={t("Último aviso para votar (HH:mm)")} value={noticeTime} onChangeText={setNoticeTime} maxLength={5} editable={!busy} /> : null}</> : null}
+      {action === 'edit' ? <><Body>{t("Programar valoración de jugadores")}</Body><Switch accessibilityLabel={t("Programar valoración de jugadores")} value={evaluationEnabled} onValueChange={setEvaluationEnabled} disabled={busy} />
+        {evaluationEnabled ? <><Field label={t("Hora de valoración (HH:mm)")} value={evaluationTime} onChangeText={setEvaluationTime} maxLength={5} editable={!busy} /><Body>{t("Hora del club. Si es anterior al partido, se usará el día siguiente. Solo los capitanes podrán valorar a partir de esa hora.")}</Body><Body>{t("A esa hora avisaremos a los capitanes para que valoren a los jugadores.")}</Body></> : null}</> : null}
       {isDemo ? <DemoNotice /> : null}
       {error ? <Message error>{error}</Message> : null}
     </ConfirmDialog>

@@ -1,7 +1,7 @@
 import type { Enums } from '@/types/database';
 
 export type ClubRole = Enums<'club_role'>;
-export type Club = { id: string; name: string; description: string | null; timezone: string; crestPath?: string | null };
+export type Club = { id: string; name: string; description: string | null; timezone: string; ratingsVisibility?: 'captains' | 'self' | 'members'; crestPath?: string | null };
 export type Membership = { id: string; clubId: string; userId: string; displayName: string; role: ClubRole };
 export type RosterPlayer = {
   id: string;
