@@ -24,8 +24,8 @@ export function PlayerCard({ player, actions }: {
 }
 
 const styles = StyleSheet.create({
-  card: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 12 },
-  details: { flexBasis: 140, flexGrow: 1, flexShrink: 1, minWidth: 0, gap: 4 },
+  card: { flexDirection: 'column', alignItems: 'stretch', gap: 12, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 12 },
+  details: { minWidth: 0, gap: 4 },
   name: { color: colors.text, fontSize: 16, fontWeight: '700' },
   meta: { color: colors.muted, fontSize: 14, lineHeight: 20 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
