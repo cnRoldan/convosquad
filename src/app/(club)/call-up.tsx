@@ -35,6 +35,7 @@ export default function CallUpScreen() {
   const clubId = activeClub?.id; const admin = currentMembership?.role === 'admin';
   const scope = `${session?.user.id}:${clubId}:${isDemo}`;
   const selectionScope = `${scope}:${id ?? ''}`;
+  const [deletedCallIds, setDeletedCallIds] = useState<string[]>([]);
   const [selection, setSelection] = useState<{ scope: string; id: string } | null>(null);
   const [clock, setClock] = useState(Date.now);
   useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
@@ -48,8 +49,11 @@ export default function CallUpScreen() {
   const enabled = Boolean(session && clubId && !isDemo);
   const loadCalls = useCallback(() => clubId ? listCurrentCallUps(clubId, localDate) : Promise.resolve([]), [clubId, localDate]);
   const calls = useResource(`calls:${scope}:${localDate}:${rosterVersion}`, loadCalls, enabled);
-  const chosen = selection?.scope === selectionScope ? selection.id : id;
-  const callId = isDemo ? upcomingCallUp?.id : chosen ?? calls.data?.find(row => row.status === 'open')?.id ?? calls.data?.[0]?.id;
+  // Discard deleted IDs even before the list refresh and route updates finish.
+  const availableCalls = calls.data?.filter(row => !deletedCallIds.includes(row.id));
+  const candidate = selection?.scope === selectionScope ? selection.id : id;
+  const chosen = candidate && !deletedCallIds.includes(candidate) ? candidate : undefined;
+  const callId = isDemo ? upcomingCallUp?.id : chosen ?? availableCalls?.find(row => row.status === 'open')?.id ?? availableCalls?.[0]?.id;
   const load = useCallback(async () => {
     if (!clubId || !callId) return null;
     const call = await getCallUp(clubId, callId);
@@ -79,6 +83,13 @@ export default function CallUpScreen() {
   const players = useMemo(() => currentPending && (currentPending.saving || currentPending.source === snapshots.data) ? sourcePlayers.map(player => player.id === currentPending.id ? { ...player, availability: currentPending.availability } : player) : sourcePlayers, [sourcePlayers, currentPending, snapshots.data]);
   const { reload: reloadCalls } = calls; const { reload: reloadSnapshots } = snapshots; const { reload: reloadContacts } = contacts;
   const refresh = useCallback(() => { reloadCalls(); reloadSnapshots(); reloadContacts(); setAidsRevision(value => value + 1); }, [reloadCalls, reloadSnapshots, reloadContacts]);
+  function handleDeleted(deletedId: string) {
+    setDeletedCallIds(ids => [...ids, deletedId]);
+    returnToCurrent();
+    setLastResponse(null); setPending(null);
+    setNotice('Convocatoria eliminada.');
+    refreshRoster(); reloadCalls();
+  }
   const syncStatus = useCallUpSync(scope, clubId, enabled, refresh);
   const respond = useCallback(async (entryId: string, availability: typeof responseOptions[number]) => {
     const player = sourcePlayers.find(row => row.id === entryId);
@@ -129,7 +140,7 @@ export default function CallUpScreen() {
       {!isDemo ? <IconButton icon="refresh" label={t("Actualizar convocatoria")} disabled={calls.isLoading || snapshots.isLoading} onPress={refresh} /> : null}
       {!isDemo ? <Text accessibilityLiveRegion="polite" style={styles.sync}>{syncStatus === 'live' ? t("Actualización en directo") : syncStatus === 'connecting' ? t("Conectando actualizaciones…") : t("Recuperando conexión. Puedes actualizar manualmente.")}</Text> : null}
     </View> : null}
-    {!historical && calls.data && calls.data.length > 1 ? <Options value={callId ?? ''} options={calls.data.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${t(callStatusLabels[row.status])}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
+    {!historical && availableCalls && availableCalls.length > 1 ? <Options value={callId ?? ''} options={availableCalls.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${t(callStatusLabels[row.status])}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
     {calls.isLoading || snapshots.isLoading ? <Body>{t("Cargando convocatoria…")}</Body> : null}
     {calls.error || snapshots.error ? <><Message error>{calls.error ?? snapshots.error}</Message><Button label={t("Reintentar")} onPress={refresh} /></> : null}
     {responseFeedback && !availabilityFooter ? <Message error={responseFeedback.error}>{responseFeedback.text}</Message> : null}
@@ -141,7 +152,7 @@ export default function CallUpScreen() {
       {call.closes_at ? <Body>{t("Cierre de votación:")}{clubLocalDateTime(call.timezone, new Date(call.closes_at)).time} · {call.timezone}</Body> : null}
       {call.status !== 'cancelled' && votingDeadlinePassed(call, clock) ? <Body>{t("El plazo para votar ha terminado.")}</Body> : null}
       {call.last_notice_at ? <Body>{t("Último aviso para votar:")}{clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} {t("· solo pendientes")}</Body> : null}
-      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onDeleted={() => { refreshRoster(); router.replace('/create-call-up'); }} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? "Convocatoria actualizada. La fotografía y respuestas se conservan."); refreshRoster(); refresh(); }} /> : null}
+      {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onDeleted={() => handleDeleted(call.id)} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? "Convocatoria actualizada. La fotografía y respuestas se conservan."); refreshRoster(); refresh(); }} /> : null}
       {admin && contacts.error ? <Message error>{t("No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.")}</Message> : null}
       {snapshots.error ? <Body>{t("Respuestas no disponibles.")}</Body> : <CompactRoster key={responseScope} players={players}
         trials={snapshots.data?.trials ?? []} showTrialNotes={admin}

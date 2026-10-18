@@ -66,6 +66,7 @@ export default function CreateCallUpScreen() {
       <Body>{t("Hora del club. Si es anterior al partido, se usará el día siguiente. Solo los capitanes podrán valorar a partir de esa hora.")}</Body><Body>{t("A esa hora avisaremos a los capitanes para que valoren a los jugadores.")}</Body></> : null}
     {message ? <Message error>{message}</Message> : null}
     <Button label={t("Revisar convocatoria")} disabled={busy || isDemo} onPress={preview} />
+    <Button secondary label={t("Volver a convocatoria")} disabled={busy} onPress={() => router.dismissTo('/call-up')} />
     <ConfirmDialog visible={Boolean(instant)} title={t("Crear convocatoria abierta")} description={t("Partido el {{v0}} a las {{v1}}, en {{v2}}. {{v3}}{{v4}}{{v5}}", { v0: date, v1: time, v2: activeClub?.timezone, v5: (evaluationAt ? t("Valoraciones desde {{v0}}. ", { v0: new Date(evaluationAt).toLocaleString(intlLocale(), { timeZone: activeClub?.timezone ?? 'Europe/Madrid' }) }) : '') + t("Se respetarán las decisiones mantenidas; el resto comenzará sin responder. Las pruebas serán informativas."), v3: closingEnabled ? t("Cierre de votación a las {{v0}}. ", { v0: closingTime }) : t("Sin cierre automático. "), v4: noticeEnabled ? t("Último aviso para votar a las {{v0}}. ", { v0: noticeTime }) : t("Sin último aviso. ") })} busy={busy} confirmLabel={t("Crear convocatoria")} onCancel={() => setInstant(null)} onConfirm={() => { void submit(); }} />
   </Screen>;
 }
