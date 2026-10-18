@@ -469,7 +469,7 @@ test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina voto
     const {page} = f;
     await page.getByRole('button', {name: 'Administrar convocatoria', exact: true}).click();
     await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
-    await page.getByText(/¿Estás seguro de que deseas reiniciar la convocatoria\?/).waitFor();
+    await page.getByText(/¿Deseas reiniciar la convocatoria\? Se eliminarán los votos sin «Mantener decisión» activo/).waitFor();
     await page.getByRole('button', {name: 'Cancelar', exact: true}).click();
     assert.equal(f.data.restarts, 0);
     await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
