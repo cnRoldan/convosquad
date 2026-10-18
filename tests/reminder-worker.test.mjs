@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { dispatchReminders } from '../supabase/functions/_shared/reminder-worker.ts';
+import { pushMessage } from '../supabase/functions/_shared/push-event.ts';
 
 function fixture() {
   const event = { id: 'event', club_id: 'club', call_up_id: 'call', event_key: 'reminder' };
@@ -31,4 +32,14 @@ test('fallos de red y respuestas ambiguas no provocan reenvíos automáticos', a
     assert.ok(f.results.every(row => row.state === 'unknown'));
     const retry = await dispatchReminders(f.store, send); assert.equal(retry.attempted, 0);
   }
+});
+test('el recordatorio de valoración se traduce y abre la convocatoria sin botones de voto', () => {
+  const titles = new Set();
+  for (const language of ['es','en','de','fr']) {
+    const message = pushMessage({ clubId:'club',callUpId:'call',eventKey:'evaluation',kind:'evaluation' },'token','captain',true,language);
+    assert.equal('categoryId' in message,false);
+    assert.deepEqual(message.data,{type:'call_up',clubId:'club',callUpId:'call',userId:'captain'});
+    assert.ok(message.body.length>20);titles.add(message.title);
+  }
+  assert.equal(titles.size,4);
 });

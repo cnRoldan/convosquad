@@ -9,6 +9,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { CompactRoster } from '@/features/call-ups/compact-roster';
 import { responseCooldown } from '@/features/call-ups/last-notice';
+import { DecisionLock } from '@/features/call-ups/decision-lock';
 import { AvailabilityActions } from '@/features/call-ups/availability-actions';
 import { canRespondToPlayer } from '@/features/call-ups/list-model';
 import type { CallUpPlayer } from '@/features/call-ups/list-model';
@@ -63,7 +64,7 @@ export default function CallUpScreen() {
   const demoCall: Tables<'call_ups'> | null = isDemo && upcomingCallUp ? {
     id: upcomingCallUp.id, club_id: upcomingCallUp.clubId, starts_at: upcomingCallUp.startsAt,
     local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date,
-    status_version: 0, last_notice_at: null, closes_at: null, timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
+    evaluation_at: null, status_version: 0, last_notice_at: null, closes_at: null, timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
   } : null;
   const call = isDemo ? demoCall : snapshots.data?.call;
   const historical = history === '1' || Boolean(call && call.local_date < clubLocalDateTime(call.timezone).date);
@@ -83,7 +84,7 @@ export default function CallUpScreen() {
     const player = sourcePlayers.find(row => row.id === entryId);
     if (historical || mutationLock.current || !call || !player || snapshots.isLoading || snapshots.error || !canRespondToPlayer(player, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo)) return;
     const ownSnapshot = snapshots.data?.players.find(row => row.id === entryId);
-    if (Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null), responseCooldown(ownSnapshot?.responded_at))) return;
+    if (Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null), responseCooldown(ownSnapshot?.auto_response ? null : ownSnapshot?.responded_at))) return;
     mutationLock.current = true;
     setPending({ scope: responseScope, id: entryId, availability, saving: true, source: snapshots.data });
     setResponseMessage({ scope: responseScope, text: "Guardando respuesta…", error: false });
@@ -100,15 +101,19 @@ export default function CallUpScreen() {
     } finally { mutationLock.current = false; }
   }, [historical, sourcePlayers, call, snapshots.isLoading, snapshots.error, snapshots.data, session?.user.id, isDemo, responseScope, reloadSnapshots, refresh, lastResponse]);
   const ownPlayer = players.find(player => player.userId === session?.user.id);
-  const remaining = Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null, clock), responseCooldown(snapshots.data?.players.find(row => row.user_id === session?.user.id)?.responded_at, clock));
+  const ownSnapshot = snapshots.data?.players.find(row => row.user_id === session?.user.id);
+  const remaining = Math.max(responseCooldown(lastResponse?.scope === responseScope ? lastResponse.at : null, clock), responseCooldown(ownSnapshot?.auto_response ? null : ownSnapshot?.responded_at, clock));
   // Keep keys and domain values in state; translate only when rendering so
   // existing feedback follows language changes, even after the vote is closed.
   const responseFeedback = responseMessage?.scope === responseScope ? {
     ...responseMessage,
     text: t(responseMessage.text, responseMessage.availability ? { v0: t(availabilityLabels[responseMessage.availability]) } : undefined),
   } : null;
+  const decisionLock = !isDemo && !historical && clubId ? <DecisionLock clubId={clubId} entryId={ownPlayer?.id}
+    availability={ownPlayer?.availability ?? 'unanswered'} canEnable={Boolean(ownPlayer && ownPlayer.availability !== 'unanswered' && call?.status !== 'cancelled')}
+    pendingVote={Boolean(currentPending?.saving)} revision={ownSnapshot?.updated_at ?? ''} /> : null;
   const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock)
-    ? <AvailabilityActions player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
+    ? <AvailabilityActions decisionLock={decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;
   return <Screen compact footer={availabilityFooter}>
     {historical ? <View style={styles.toolbar}>
@@ -129,8 +134,10 @@ export default function CallUpScreen() {
     {calls.error || snapshots.error ? <><Message error>{calls.error ?? snapshots.error}</Message><Button label={t("Reintentar")} onPress={refresh} /></> : null}
     {responseFeedback && !availabilityFooter ? <Message error={responseFeedback.error}>{responseFeedback.text}</Message> : null}
     {notice ? <Message>{notice}</Message> : null}
+    {!availabilityFooter ? decisionLock : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callStatusLabels[call.status === 'open' && votingDeadlinePassed(call, clock) ? 'closed' : call.status])}</Text>
+      {admin && call.evaluation_at ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
       {call.closes_at ? <Body>{t("Cierre de votación:")}{clubLocalDateTime(call.timezone, new Date(call.closes_at)).time} · {call.timezone}</Body> : null}
       {call.status !== 'cancelled' && votingDeadlinePassed(call, clock) ? <Body>{t("El plazo para votar ha terminado.")}</Body> : null}
       {call.last_notice_at ? <Body>{t("Último aviso para votar:")}{clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} {t("· solo pendientes")}</Body> : null}

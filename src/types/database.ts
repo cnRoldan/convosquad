@@ -81,6 +81,7 @@ export type Database = {
           category_snapshot: Database['public']['Enums']['roster_category'];
           sort_order_snapshot: number;
           availability_version: number;
+          auto_response: boolean;
         };
         Insert: {
           id?: string;
@@ -98,6 +99,7 @@ export type Database = {
           category_snapshot?: Database['public']['Enums']['roster_category'];
           sort_order_snapshot?: number;
           availability_version?: number;
+          auto_response?: boolean;
         };
         Update: {
           id?: string;
@@ -115,6 +117,7 @@ export type Database = {
           category_snapshot?: Database['public']['Enums']['roster_category'];
           sort_order_snapshot?: number;
           availability_version?: number;
+          auto_response?: boolean;
         };
         Relationships: [
           { foreignKeyName: 'call_up_players_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
@@ -222,6 +225,7 @@ export type Database = {
           last_notice_at: string | null;
           status_version: number;
           closes_at: string | null;
+          evaluation_at: string | null;
         };
         Insert: {
           id?: string;
@@ -236,6 +240,7 @@ export type Database = {
           last_notice_at?: string | null;
           status_version?: number;
           closes_at?: string | null;
+          evaluation_at?: string | null;
         };
         Update: {
           id?: string;
@@ -250,10 +255,37 @@ export type Database = {
           last_notice_at?: string | null;
           status_version?: number;
           closes_at?: string | null;
+          evaluation_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'call_ups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
           { foreignKeyName: 'call_ups_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      club_decision_locks: {
+        Row: {
+          club_id: string;
+          user_id: string;
+          availability: Database['public']['Enums']['availability_status'];
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          club_id: string;
+          user_id: string;
+          availability: Database['public']['Enums']['availability_status'];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          user_id?: string;
+          availability?: Database['public']['Enums']['availability_status'];
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_decision_locks_club_id_user_id_fkey'; columns: ["club_id","user_id"]; isOneToOne: true; referencedRelation: 'club_members'; referencedColumns: ["club_id","user_id"]; },
         ];
       };
       club_directory: {
@@ -441,6 +473,7 @@ export type Database = {
           created_at: string;
           reminder_minutes: number | null;
           crest_path: string | null;
+          ratings_visibility: string;
         };
         Insert: {
           id?: string;
@@ -452,6 +485,7 @@ export type Database = {
           created_at?: string;
           reminder_minutes?: number | null;
           crest_path?: string | null;
+          ratings_visibility?: string;
         };
         Update: {
           id?: string;
@@ -463,6 +497,7 @@ export type Database = {
           created_at?: string;
           reminder_minutes?: number | null;
           crest_path?: string | null;
+          ratings_visibility?: string;
         };
         Relationships: [
           { foreignKeyName: 'clubs_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
@@ -523,6 +558,45 @@ export type Database = {
         };
         Relationships: [
           { foreignKeyName: 'notification_preferences_user_id_fkey'; columns: ["user_id"]; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      player_ratings: {
+        Row: {
+          call_up_player_id: string;
+          club_id: string;
+          call_up_id: string;
+          player_id: string;
+          player_name: string;
+          score: number | null;
+          not_selected: boolean;
+          rated_by: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          call_up_player_id: string;
+          club_id: string;
+          call_up_id: string;
+          player_id: string;
+          player_name: string;
+          score?: number | null;
+          not_selected?: boolean;
+          rated_by?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          call_up_player_id?: string;
+          club_id?: string;
+          call_up_id?: string;
+          player_id?: string;
+          player_name?: string;
+          score?: number | null;
+          not_selected?: boolean;
+          rated_by?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'player_ratings_club_id_call_up_id_call_up_player_id_fkey'; columns: ["club_id","call_up_id","call_up_player_id"]; isOneToOne: true; referencedRelation: 'call_up_players'; referencedColumns: ["club_id","call_up_id","id"]; },
+          { foreignKeyName: 'player_ratings_rated_by_fkey'; columns: ["rated_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
       players: {
@@ -680,6 +754,7 @@ export type Database = {
           actor_ea_id: string | null;
           vote_availability: Database['public']['Enums']['availability_status'] | null;
           call_status_version: number | null;
+          evaluation_at: string | null;
         };
         Insert: {
           id?: string;
@@ -695,6 +770,7 @@ export type Database = {
           actor_ea_id?: string | null;
           vote_availability?: Database['public']['Enums']['availability_status'] | null;
           call_status_version?: number | null;
+          evaluation_at?: string | null;
         };
         Update: {
           id?: string;
@@ -710,6 +786,7 @@ export type Database = {
           actor_ea_id?: string | null;
           vote_availability?: Database['public']['Enums']['availability_status'] | null;
           call_status_version?: number | null;
+          evaluation_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'push_events_actor_user_id_fkey'; columns: ["actor_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
@@ -747,6 +824,17 @@ export type Database = {
           p_club_id: string;
           p_starts_at: string;
           p_status?: Database['public']['Enums']['call_up_status'];
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      create_call_up_with_evaluation: {
+        Args: {
+          p_club_id: string;
+          p_starts_at: string;
+          p_last_notice_at?: string;
+          p_status?: Database['public']['Enums']['call_up_status'];
+          p_closes_at?: string;
+          p_evaluation_at?: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
@@ -815,6 +903,20 @@ export type Database = {
         };
         Returns: undefined;
       };
+      get_player_performance: {
+        Args: {
+          p_club_id: string;
+          p_period?: string;
+        };
+        Returns: { player_id: string; player_name: string; average_score: number; rated_matches: number; not_selected_matches: number; last_match_at: string }[];
+      };
+      get_player_rating_history: {
+        Args: {
+          p_club_id: string;
+          p_player_id: string;
+        };
+        Returns: { call_up_id: string; starts_at: string; timezone: string; score: number; not_selected: boolean; updated_at: string }[];
+      };
       import_players: {
         Args: {
           p_club_id: string;
@@ -844,6 +946,12 @@ export type Database = {
         Returns: Database['public']['Tables']['players']['Row'][];
       };
       list_call_up_history: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      list_rating_call_ups: {
         Args: {
           p_club_id: string;
         };
@@ -993,6 +1101,13 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['club_trials']['Row'][];
       };
+      save_player_ratings: {
+        Args: {
+          p_call_up_id: string;
+          p_ratings: Json;
+        };
+        Returns: number;
+      };
       search_clubs: {
         Args: {
           p_query: string;
@@ -1005,6 +1120,14 @@ export type Database = {
           p_has_crest: boolean;
         };
         Returns: Database['public']['Tables']['clubs']['Row'][];
+      };
+      set_club_decision_lock: {
+        Args: {
+          p_club_id: string;
+          p_enabled: boolean;
+          p_call_up_player_id?: string;
+        };
+        Returns: boolean;
       };
       set_club_member: {
         Args: {
@@ -1027,11 +1150,29 @@ export type Database = {
         };
         Returns: undefined;
       };
+      set_rating_visibility: {
+        Args: {
+          p_club_id: string;
+          p_visibility: string;
+        };
+        Returns: undefined;
+      };
       update_call_up: {
         Args: {
           p_call_up_id: string;
           p_starts_at: string;
           p_status: Database['public']['Enums']['call_up_status'];
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      update_call_up_with_evaluation: {
+        Args: {
+          p_call_up_id: string;
+          p_starts_at: string;
+          p_status: Database['public']['Enums']['call_up_status'];
+          p_last_notice_at?: string;
+          p_closes_at?: string;
+          p_evaluation_at?: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };

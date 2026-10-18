@@ -1,4 +1,5 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
+import type { ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors } from '@/theme';
 import { availabilityLabels, responseOptions } from './availability';
@@ -6,8 +7,9 @@ import { availabilityIcons, type CallUpPlayer } from './list-model';
 
 const statusColors = { available: colors.primary, unavailable: colors.danger, backup: '#F2D478' };
 
-export function AvailabilityActions({ player, disabled, feedback, onRespond }: {
+export function AvailabilityActions({ player, disabled, feedback, onRespond, decisionLock }: {
   player: CallUpPlayer;
+  decisionLock?: ReactNode;
   disabled: boolean;
   feedback: { text: string; error: boolean } | null;
   onRespond: (id: string, availability: typeof responseOptions[number]) => void;
@@ -29,6 +31,7 @@ export function AvailabilityActions({ player, disabled, feedback, onRespond }: {
           <Text style={[styles.label, { color: statusColors[status] }]}>{t(availabilityLabels[status])}</Text>
         </Pressable>)}
       </View>
+      {decisionLock}
     </View>
   </View>;
 }

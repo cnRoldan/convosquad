@@ -41,7 +41,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, updates: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, restarts: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
@@ -56,6 +56,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   }));
   if (cooldown && players[3]) { players[3].availability = 'available'; players[3].responded_at = new Date().toISOString(); }
   const privateContacts = [];
+  let decisionLock = null;
   const aids = [{id: 'aid', body: 'Ayuda fuera del total', sort_order: 0}];
   const trialSnapshots = [{ id: 'trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, last_sign_in_at: new Date().toISOString(), created_at: call.created_at };
@@ -87,6 +88,14 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'set_club_decision_lock') {
+        data.decisionWrites++;
+        const body = request.postDataJSON();
+        assert.equal(body.p_club_id, clubId);
+        if (body.p_enabled || body.p_call_up_player_id !== undefined) assert.equal(body.p_call_up_player_id, 'snapshot-3');
+        decisionLock = body.p_enabled ? {availability: players[3].availability} : null;
+        return route.fulfill({json: body.p_enabled});
+      }
       if (endpoint === 'set_preferred_language') return route.fulfill({json: null});
       if (endpoint === 'save_call_up_contact') {
         assert.equal(role, 'admin');
@@ -119,7 +128,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         aids.splice(index, 1);
         return route.fulfill({status: 204});
       }
-      if (endpoint === 'update_call_up_with_schedule') {
+      if (endpoint === 'update_call_up_with_evaluation') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();
         assert.equal(body.p_call_up_id, callId);
@@ -176,6 +185,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'players') result = players.map(row => ({ id: row.source_player_id, club_id: clubId, ea_id: row.ea_id_snapshot, jersey_number: row.jersey_number_snapshot, category: row.category_snapshot, sort_order: row.sort_order_snapshot, position: row.position_snapshot, user_id: row.user_id, is_active: true }));
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : [call];
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
+    else if (endpoint === 'club_decision_locks') { assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); assert.equal(url.searchParams.get('user_id'), `eq.${userId}`); result = decisionLock ? [decisionLock] : []; }
     else if (endpoint === 'call_up_trials') result = trialSnapshots;
     else if (endpoint === 'call_up_trial_notes') { assert.equal(role, 'admin'); result = [{trial_id: 'trial', notes: 'Valoración privada de la convocatoria'}]; }
     else if (endpoint === 'call_up_aids') result = aids;
@@ -460,7 +470,7 @@ test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina voto
     const {page} = f;
     await page.getByRole('button', {name: 'Administrar convocatoria', exact: true}).click();
     await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
-    await page.getByText(/¿Estás seguro de que deseas reiniciar la convocatoria\?/).waitFor();
+    await page.getByText(/¿Deseas reiniciar la convocatoria\? Se eliminarán los votos sin «Mantener decisión» activo/).waitFor();
     await page.getByRole('button', {name: 'Cancelar', exact: true}).click();
     assert.equal(f.data.restarts, 0);
     await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
@@ -626,4 +636,29 @@ test('mensajes de voto y cierre siguen el idioma actual sin repetir acciones', a
     assert.equal(f.data.refreshes,0);
     assert.equal(f.data.restarts,0);
   } finally { await f.close(); }
+});
+
+
+test('mantener decisión: hay que votar, el candado se guarda y puede quitarse con la convocatoria cerrada',async()=>{
+  const f=await fixture({role:'admin'});
+  try {
+    const {page}=f;
+    const lock=page.getByRole('switch',{name:'Mantener decisión',exact:true});
+    await lock.waitFor();assert.equal(await lock.getAttribute('aria-disabled'),'true');
+    await page.getByRole('button',{name:'No disponible para Jugador_4',exact:true}).click();
+    await page.getByText('Guardando respuesta…',{exact:true}).waitFor();f.data.release();
+    await page.getByText('Tu respuesta: No disponible.',{exact:true}).waitFor();
+    await page.getByRole('switch',{name:'Mantener decisión',exact:true,disabled:false}).click();
+    await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:true}).waitFor();
+    assert.equal(f.data.decisionWrites,1);
+    await page.getByText('Se mantendrá «No disponible» en las próximas convocatorias de este club hasta que lo desactives.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
+    await page.getByRole('button',{name:'Cerrar convocatoria',exact:true}).click();
+    await page.getByRole('button',{name:'Cerrar convocatoria',exact:true}).last().click();
+    await page.getByTestId('availability-actions').waitFor({state:'detached'});
+    await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:true,disabled:false}).click();
+    await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:false}).waitFor();
+    assert.equal(f.data.writes,1);assert.equal(f.data.updates,1);
+    await page.screenshot({path:'test-results/retained-decision.png'});
+  } finally {await f.close();}
 });

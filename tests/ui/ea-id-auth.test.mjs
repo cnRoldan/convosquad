@@ -24,11 +24,11 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, browserLanguage = 'es-ES' } = {}) {
+async function fixture({ confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
-  const club = { id: '00000000-0000-4000-8000-000000000903', name: 'Club de prueba', timezone: 'UTC', created_by: creator ? userId : '00000000-0000-4000-8000-000000000904', reminder_minutes: null };
+  const club = { id: '00000000-0000-4000-8000-000000000903', name: 'Club de prueba', timezone: 'UTC', ratings_visibility: ratingsVisibility, created_by: creator ? userId : '00000000-0000-4000-8000-000000000904', reminder_minutes: null };
   const accounts = [
     { id: 'own', club_id: club.id, user_id: userId, role: clubRole, is_active: true, profiles: { username: 'EA-Player_9' } },
     { id: 'candidate', club_id: club.id, user_id: candidateId, role: 'player', is_active: true, profiles: { username: 'Candidate' } },
@@ -48,6 +48,14 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
   ] : [];
   const trialContacts = rosterTrials ? [{trial_id: 'trial-one', phone: '+34600000000'}] : [];
   const trialNotes = rosterTrials ? [{trial_id: 'trial-one', notes: 'Valoración privada del capitán'}] : [];
+  let createdCall = null;
+  const matchAt = new Date(Date.now() - 86400000).toISOString();
+  const ratingCall = {id: '00000000-0000-4000-8000-000000000906', club_id: club.id, starts_at: matchAt, local_date: matchAt.slice(0,10),
+    timezone: 'UTC', status: 'closed', evaluation_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), closes_at: null};
+  const ratingPlayers = players.map((player,index) => ({id: `rated-${index}`, club_id: club.id, call_up_id: ratingCall.id, source_player_id: player.id,
+    user_id: player.user_id, ea_id_snapshot: player.ea_id, category_snapshot: player.category, sort_order_snapshot: index,
+    availability: 'available', responded_at: matchAt, auto_response: false}));
+  const ratings = seedRatings ? ratingPlayers.map((entry,index)=>({call_up_player_id:entry.id,call_up_id:ratingCall.id,club_id:club.id,player_id:entry.source_player_id,player_name:entry.ea_id_snapshot,score:index?4:8,not_selected:false,updated_at:matchAt})) : [];
   let preferredLanguage = null;
   let voteNotifications = true;
   const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
@@ -68,11 +76,39 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
     }
     const endpoint = url.pathname.split('/').at(-1); const body = req.postData() ? req.postDataJSON() : null;
     requests.push({ endpoint, body });
+    if (endpoint === 'club_decision_locks') return route.fulfill({json: []});
     if (endpoint === 'create_club') { club.name = body.p_name; club.timezone = body.p_timezone; return route.fulfill({json: club}); }
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
-    if (endpoint === 'create_call_up_with_schedule') return route.fulfill({ json: { id: 'new-call' } });
+    if (endpoint === 'create_call_up_with_evaluation') {
+      createdCall = {id: 'new-call', club_id: club.id, starts_at: body.p_starts_at, local_date: body.p_starts_at.slice(0,10), timezone: club.timezone,
+        status: body.p_status, last_notice_at: body.p_last_notice_at ?? null, closes_at: body.p_closes_at ?? null, evaluation_at: body.p_evaluation_at ?? null};
+      return route.fulfill({json: createdCall});
+    }
+    if (endpoint === 'set_rating_visibility') { assert.equal(clubRole,'admin'); club.ratings_visibility=body.p_visibility; return route.fulfill({json:null}); }
+    if (['list_rating_call_ups','get_player_performance','get_player_rating_history','save_player_ratings','player_ratings'].includes(endpoint)) {
+      const visibleRatings = clubRole === 'admin' || club.ratings_visibility === 'members' ? ratings : club.ratings_visibility === 'self' ? ratings.filter(rating=>rating.player_id==='player-0') : [];
+      if (['list_rating_call_ups','save_player_ratings'].includes(endpoint)) assert.equal(clubRole,'admin');
+      else assert.ok(clubRole === 'admin' || club.ratings_visibility !== 'captains');
+      if (endpoint === 'list_rating_call_ups') return route.fulfill({json: performance ? [ratingCall] : []});
+      if (endpoint === 'player_ratings') return route.fulfill({json: visibleRatings});
+      if (endpoint === 'save_player_ratings') {
+        if (ratingConflict) return route.fulfill({status:409,json:{code:'40001',message:'Changed'}});
+        for (const value of body.p_ratings) {
+          const entry=ratingPlayers.find(player=>player.id===value.entry_id);
+          const existing=ratings.findIndex(rating=>rating.call_up_player_id===entry.id);
+          if (existing>=0) ratings.splice(existing,1);
+          if (!value.clear) ratings.push({call_up_player_id:entry.id,call_up_id:ratingCall.id,club_id:club.id,player_id:entry.source_player_id,
+            player_name:entry.ea_id_snapshot,score:value.not_selected?null:value.score,not_selected:Boolean(value.not_selected),updated_at:new Date().toISOString()});
+        }
+        return route.fulfill({json:body.p_ratings.length});
+      }
+      if (endpoint === 'get_player_performance') return route.fulfill({json: visibleRatings.map(rating=>({player_id:rating.player_id,player_name:rating.player_name,
+        average_score:rating.score,rated_matches:rating.not_selected?0:1,not_selected_matches:rating.not_selected?1:0,last_match_at:ratingCall.starts_at}))});
+      if (endpoint === 'get_player_rating_history') return route.fulfill({json:visibleRatings.filter(rating=>rating.player_id===body.p_player_id).map(rating=>({
+        call_up_id:ratingCall.id,starts_at:ratingCall.starts_at,timezone:ratingCall.timezone,score:rating.score,not_selected:rating.not_selected,updated_at:rating.updated_at}))});
+    }
     if (clubRole) {
       if (endpoint === 'club_trials') return route.fulfill({json: trials.filter(trial => url.searchParams.get('status') !== 'eq.active' || trial.status === 'active').sort((a,b) => a.sort_order - b.sort_order)});
       if (endpoint === 'club_trial_notes') {
@@ -112,7 +148,13 @@ async function fixture({ confirmed = true, available = true, clubRole = null, cr
       }
       if (endpoint === 'club_members') return route.fulfill({ json: accounts });
       if (endpoint === 'players') return route.fulfill({ json: players });
-      if (endpoint === 'call_ups') return route.fulfill({ json: [] });
+      if (endpoint === 'call_ups') {
+        const current = createdCall ?? (performance ? ratingCall : null);
+        return route.fulfill({json:req.headers().accept?.includes('object') ? current : current ? [current] : []});
+      }
+      if (endpoint === 'call_up_players') return route.fulfill({json:performance ? ratingPlayers : []});
+      if (['call_up_trials','call_up_aids'].includes(endpoint)) return route.fulfill({json:[]});
+      if (['call_up_trial_notes','call_up_contacts'].includes(endpoint)) { assert.equal(clubRole,'admin'); return route.fulfill({json:[]}); }
       if (endpoint === 'set_club_member') {
         const account = accounts.find(row => row.user_id === body.p_user_id);
         account.role = body.p_role;
@@ -278,12 +320,12 @@ test('convocatoria propone último aviso a las 18:45, valida hora y lo envía en
     await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('18:00');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByText('El último aviso debe ser anterior a la hora de la convocatoria.',{exact:true}).waitFor();
-    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_schedule'),false);
+    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_evaluation'),false);
     await f.page.getByLabel('Hora del club (HH:mm)',{exact:true}).fill('21:50');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
     await f.page.waitForURL('**/call-up*');
-    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_schedule');
+    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_evaluation');
     assert.equal(request.body.p_last_notice_at,'2035-06-01T18:45:00.000Z');
     assert.equal(request.body.p_status,'open');
     assert.equal(request.body.p_closes_at,'2035-06-01T21:50:00.000Z');
@@ -565,4 +607,80 @@ test('nueva prueba admite teléfono opcional; fallo al cargar contacto impide so
     assert.equal(await failed.page.getByRole('button', {name: 'Guardar prueba', exact: true}).count(), 0);
     assert.equal(failed.requests.some(r => r.endpoint === 'save_club_trial_with_contact'), false);
   } finally { await failed.close(); }
+});
+
+
+test('valoraciones: capitán guarda cero y No convocado, consulta media e historial privados', async()=>{
+  const f=await fixture({clubRole:'admin',performance:true});
+  try {
+    const {page}=f;await page.goto(`${origin}/home`);
+    await page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
+    await page.getByRole('button',{name:/^Valorar convocatoria del /}).click();
+    await page.getByText('Solo los capitanes del club pueden ver estas valoraciones.',{exact:true}).filter({visible:true}).waitFor();
+    await page.getByLabel('Valoración de EA-Player_9',{exact:true}).selectOption('0');
+    await page.getByLabel('Valoración de Candidate',{exact:true}).selectOption('not_selected');
+    await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
+    await page.getByText('Valoraciones guardadas.',{exact:true}).waitFor();
+    const saved=f.requests.find(request=>request.endpoint==='save_player_ratings');
+    assert.equal(saved.body.p_ratings[0].score,0);assert.equal(saved.body.p_ratings[1].not_selected,true);
+    assert.equal(saved.body.p_ratings[0].expected_updated_at,null);
+    assert.equal(await page.getByLabel('Valoración de EA-Player_9',{exact:true}).inputValue(),'0');
+    await page.getByRole('button',{name:'Ver rendimiento del club',exact:true}).click();
+    await page.getByText('Media: 0 / 10',{exact:true}).filter({visible:true}).waitFor();
+    await page.getByText('Sin media',{exact:true}).filter({visible:true}).waitFor();
+    await page.getByRole('button',{name:'Ver historial de EA-Player_9',exact:true}).click();
+    await page.getByText(/ · 0 \/ 10$/).filter({visible:true}).waitFor();
+    await page.screenshot({path:'test-results/player-performance.png'});
+  } finally {await f.close();}
+});
+test('valoraciones: hora futura bloquea notas y jugadores no entran a la gestión',async()=>{
+  const f=await fixture({clubRole:'admin',performance:true,ratingFuture:true});
+  try {
+    await f.page.goto(`${origin}/home`);await f.page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
+    await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).click();
+    await f.page.getByText('Las valoraciones se habilitan a la hora programada y se conservan durante tres meses.',{exact:true}).waitFor();
+    assert.equal(await f.page.getByLabel('Valoración de EA-Player_9',{exact:true}).isDisabled(),true);
+    assert.equal(f.requests.some(request=>request.endpoint==='save_player_ratings'),false);
+  } finally {await f.close();}
+  const player=await fixture({clubRole:'player',performance:true});
+  try {
+    await player.page.goto(`${origin}/performance`);await player.page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();
+    assert.equal(player.requests.some(request=>['get_player_performance','list_rating_call_ups','player_ratings'].includes(request.endpoint)),false);
+    assert.equal(await player.page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).count(),0);
+  } finally {await player.close();}
+});
+test('crear convocatoria programa valoración tras medianoche usando la zona del club',async()=>{
+  const f=await fixture({clubRole:'admin'});
+  try {
+    const {page}=f;await page.goto(`${origin}/create-call-up`);
+    await page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).fill('2038-01-10');
+    await page.getByRole('switch',{name:'Programar valoración de jugadores',exact:true}).click();
+    await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).fill('01:00');
+    await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
+    await page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
+    await page.waitForURL('**/call-up*');
+    assert.equal(f.requests.find(request=>request.endpoint==='create_call_up_with_evaluation').body.p_evaluation_at,'2038-01-11T01:00:00.000Z');
+  } finally {await f.close();}
+});
+
+
+test('visibilidad: por defecto privada, capitán puede compartir y el modo personal filtra las notas',async()=>{
+  const captain=await fixture({clubRole:'admin',performance:true});
+  try {
+    const {page}=captain;await page.goto(`${origin}/home`);await page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
+    await page.getByRole('button',{name:'Todos los miembros del club',exact:true}).click();
+    await page.getByRole('button',{name:'Guardar visibilidad',exact:true}).click();
+    await page.getByText('Los miembros del club pueden ver las valoraciones.',{exact:true}).waitFor();
+    assert.equal(captain.requests.find(request=>request.endpoint==='set_rating_visibility').body.p_visibility,'members');
+  } finally {await captain.close();}
+  for (const visibility of ['self','members']) {
+    const f=await fixture({clubRole:'player',performance:true,ratingsVisibility:visibility,seedRatings:true});
+    try {
+      const {page}=f;await page.goto(`${origin}/home`);await page.getByRole('button',{name:'Ver rendimiento del club',exact:true}).click();
+      await page.getByText('Media: 8 / 10',{exact:true}).waitFor();
+      assert.equal(await page.getByText('Media: 4 / 10',{exact:true}).count(),visibility==='self'?0:1);
+      assert.equal(await page.getByRole('button',{name:'Guardar visibilidad',exact:true}).count(),0);
+      assert.equal(await page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),0);
+    } finally {await f.close();}
+  }
 });

@@ -8,6 +8,7 @@ export default function ManageLayout() {
     <Stack.Screen name="club-info" options={{ title: t("Editar información") }} />
     <Stack.Screen name="club-settings" options={{ title: t("Capitanes") }} />
     <Stack.Screen name="call-up-history" options={{ title: t("Historial de convocatorias") }} />
+    <Stack.Screen name="call-up-ratings" options={{ title: t("Valorar jugadores") }} />
     <Stack.Screen name="create-call-up" options={{ title: t("Crear convocatoria") }} />
     <Stack.Screen name="trials/[id]" options={{ title: t("Pruebas") }} />
     <Stack.Screen name="inactive-players" options={{ title: t("Jugadores inactivos") }} />

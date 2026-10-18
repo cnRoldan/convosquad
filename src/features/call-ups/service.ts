@@ -10,12 +10,12 @@ export async function listCallUpPlayers(callUpId: string) {
   return unwrap(await requireSupabase().from('call_up_players').select('*').eq('call_up_id', callUpId).order('category_snapshot').order('sort_order_snapshot').order('id'));
 }
 
-export async function createCallUp(clubId: string, startsAt: string, status: 'draft' | 'open' = 'draft', lastNoticeAt: string | null = null, closesAt: string | null = null) {
-  return unwrap(await requireSupabase().rpc('create_call_up_with_schedule', { p_club_id: clubId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}) }).single());
+export async function createCallUp(clubId: string, startsAt: string, status: 'draft' | 'open' = 'draft', lastNoticeAt: string | null = null, closesAt: string | null = null, evaluationAt: string | null = null) {
+  return unwrap(await requireSupabase().rpc('create_call_up_with_evaluation', { p_club_id: clubId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}), ...(evaluationAt ? { p_evaluation_at: evaluationAt } : {}) }).single());
 }
 
-export async function updateCallUp(callUpId: string, startsAt: string, status: Enums<'call_up_status'>, lastNoticeAt: string | null, closesAt: string | null = null) {
-  return unwrap(await requireSupabase().rpc('update_call_up_with_schedule', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}) }).single());
+export async function updateCallUp(callUpId: string, startsAt: string, status: Enums<'call_up_status'>, lastNoticeAt: string | null, closesAt: string | null = null, evaluationAt: string | null = null) {
+  return unwrap(await requireSupabase().rpc('update_call_up_with_evaluation', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}), ...(evaluationAt ? { p_evaluation_at: evaluationAt } : {}) }).single());
 }
 
 export async function refreshCallUpRoster(callUpId: string, reopen = false) {
