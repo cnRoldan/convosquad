@@ -33,7 +33,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, expandPanels = true, closesAt = null, clockTime = null } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, selectedCall = false, expandPanels = true, closesAt = null, clockTime = null } = {}) {
   const context = await browser.newContext({ locale: 'es-ES', viewport: { width, height: 844 } });
   const page = await context.newPage();
   if (clockTime !== null) await page.clock.install({time: clockTime});
@@ -210,7 +210,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
       channel.send('postgres_changes', { ids: [binding.id], data: { schema: 'public', table: 'call_up_players', type: 'UPDATE', columns: [], record: players[index], old_record: {}, commit_timestamp: new Date().toISOString() } });
     }
   }
-  await page.goto(`${origin}/call-up${historical ? `?id=${pastId}&history=1` : ''}`);
+  await page.goto(`${origin}/call-up${historical ? `?id=${pastId}&history=1` : selectedCall ? `?id=${callId}` : ''}`);
   await page.getByRole('button', { name: `Todos (${players.length})`, exact: true }).waitFor();
   if (!historical) await page.getByText('Actualización en directo', { exact: true }).waitFor();
   // Club context, screen snapshot, then the initial Realtime reconciliation.
@@ -673,8 +673,9 @@ test('mantener decisión: hay que votar, el candado se guarda y puede quitarse c
   } finally {await f.close();}
 });
 
-test('eliminar convocatoria: solo cancelada, confirmar borra y abre la creación; cancelar conserva los datos',async()=>{
-  const f=await fixture({role:'admin',status:'cancelled'});
+test('eliminar convocatoria: vuelve a Convocatoria vacía, limpia el enlace y permite salir sin crear otra',async()=>{
+  for(const selectedCall of [false,true]) {
+  const f=await fixture({role:'admin',status:'cancelled',selectedCall});
   try {
     const {page}=f;
     await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
@@ -684,10 +685,23 @@ test('eliminar convocatoria: solo cancelada, confirmar borra y abre la creación
     assert.equal(f.data.deletions,0);
     await page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).click();
     await page.getByRole('button',{name:'Eliminar convocatoria',exact:true}).last().click();
-    await page.waitForURL('**/create-call-up');
+    await page.getByText('No hay convocatorias accesibles en este club.',{exact:true}).waitFor();
+    await page.waitForURL(url=>url.pathname==='/call-up'&&!url.searchParams.has('id'));
+    await page.getByText('Convocatoria eliminada.',{exact:true}).waitFor();
     assert.equal(f.data.deletions,1);
-    assert.equal(await page.getByLabel('Hora de cierre de votación (HH:mm)',{exact:true}).inputValue(),'19:00');
+    assert.equal(await page.getByRole('button',{name:'Crear convocatoria',exact:true}).count(),1);
+    assert.equal(await page.getByLabel('Hora de convocatoria (HH:mm)',{exact:true}).count(),0);
+    assert.equal(await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).count(),0);
+    await page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
+    await page.waitForURL('**/create-call-up');
+    await page.getByRole('button',{name:'Volver a convocatoria',exact:true}).click();
+    await page.waitForURL('**/call-up');
+    await page.getByText('No hay convocatorias accesibles en este club.',{exact:true}).waitFor();
+    await page.getByText('Inicio',{exact:true}).click();
+    await page.waitForURL('**/home');
+    await page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();
   } finally {await f.close();}
+  }
   for(const options of [{role:'admin',status:'open'},{role:'player',status:'cancelled'}]) {
     const f=await fixture(options);
     try {

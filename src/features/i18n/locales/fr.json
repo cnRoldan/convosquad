@@ -680,5 +680,7 @@
   "Hora de cierre de votación (HH:mm)": "Heure de clôture du vote (HH:mm)",
   "Eliminar convocatoria": "Supprimer la convocation",
   "¿Eliminar definitivamente esta convocatoria? Se borrarán sus votos, ayudas, pruebas y valoraciones. No se puede deshacer. Después podrás crear otra para la misma fecha.": "Supprimer définitivement cette convocation ? Ses votes, renforts, joueurs à l’essai et évaluations seront supprimés. Cette action est irréversible. Tu pourras ensuite en créer une autre pour la même date.",
-  "La convocatoria ha cambiado. Actualízala antes de continuar.": "La convocation a changé. Actualise-la avant de continuer."
+  "La convocatoria ha cambiado. Actualízala antes de continuar.": "La convocation a changé. Actualise-la avant de continuer.",
+  "Convocatoria eliminada.": "Convocation supprimée.",
+  "Volver a convocatoria": "Retour à la convocation"
 }
