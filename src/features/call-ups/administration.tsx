@@ -24,7 +24,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   const [date, setDate] = useState(initial.date); const [time, setTime] = useState(initial.time);
   const [noticeTime, setNoticeTime] = useState(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45');
   const [closingEnabled, setClosingEnabled] = useState(Boolean(call.closes_at));
-  const [closingTime, setClosingTime] = useState(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : initial.time);
+  const [closingTime, setClosingTime] = useState(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : '19:00');
   const [noticeEnabled, setNoticeEnabled] = useState(Boolean(call.last_notice_at));
   const [evaluationEnabled, setEvaluationEnabled] = useState(Boolean(call.evaluation_at));
   const [evaluationTime, setEvaluationTime] = useState(call.evaluation_at ? clubLocalDateTime(call.timezone, new Date(call.evaluation_at)).time : '23:45');
@@ -33,7 +33,7 @@ export function CallUpAdministration({ call, onSaved }: { call: Tables<'call_ups
   const [action, setAction] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const admin = currentMembership?.role === 'admin' && activeClub?.id === call.club_id;
-  function choose(value: Action) { setError(''); setEvaluationEnabled(Boolean(call.evaluation_at)); setEvaluationTime(call.evaluation_at ? clubLocalDateTime(call.timezone, new Date(call.evaluation_at)).time : '23:45'); setClosingEnabled(Boolean(call.closes_at)); setClosingTime(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : initial.time); setDate(initial.date); setTime(initial.time); setNoticeEnabled(Boolean(call.last_notice_at)); setNoticeTime(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45'); setAction(value); }
+  function choose(value: Action) { setError(''); setEvaluationEnabled(Boolean(call.evaluation_at)); setEvaluationTime(call.evaluation_at ? clubLocalDateTime(call.timezone, new Date(call.evaluation_at)).time : '23:45'); setClosingEnabled(Boolean(call.closes_at)); setClosingTime(call.closes_at ? clubLocalDateTime(call.timezone, new Date(call.closes_at)).time : '19:00'); setDate(initial.date); setTime(initial.time); setNoticeEnabled(Boolean(call.last_notice_at)); setNoticeTime(call.last_notice_at ? clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time : '18:45'); setAction(value); }
   async function save() {
     if (!admin || isDemo || busy || !action) return;
     let instant = call.starts_at; let noticeAt = call.last_notice_at; let closesAt = call.closes_at; let evaluationAt = call.evaluation_at;

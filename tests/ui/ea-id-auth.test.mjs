@@ -320,7 +320,7 @@ test('convocatoria mantiene inicio y cierre independientes, valida el último av
     const start=f.page.getByLabel('Hora de convocatoria (HH:mm)',{exact:true});
     const closing=f.page.getByLabel('Hora de cierre de votación (HH:mm)',{exact:true});
     await start.fill('18:00');
-    assert.equal(await closing.inputValue(),'21:50');
+    assert.equal(await closing.inputValue(),'19:00');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByText('El último aviso debe ser anterior a la hora de la convocatoria.',{exact:true}).waitFor();
     assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_evaluation'),false);

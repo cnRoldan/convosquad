@@ -19,7 +19,7 @@ export default function CreateCallUpScreen() {
   const [noticeTime, setNoticeTime] = useState('18:45'); const [noticeEnabled, setNoticeEnabled] = useState(true);
   const [noticeInstant, setNoticeInstant] = useState<string | null>(null);
   const [closingEnabled, setClosingEnabled] = useState(true);
-  const [closingTime, setClosingTime] = useState('21:50');
+  const [closingTime, setClosingTime] = useState('19:00');
   const [closesAt, setClosesAt] = useState<string | null>(null);
   const [evaluationEnabled, setEvaluationEnabled] = useState(false);
   const [evaluationTime, setEvaluationTime] = useState('23:45');
