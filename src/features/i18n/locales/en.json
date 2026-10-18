@@ -675,5 +675,7 @@
   "Los miembros del club pueden ver las valoraciones.": "Club members can see the ratings.",
   "Cada jugador puede ver las suyas; los capitanes pueden ver todas.": "Each player can see their own ratings; captains can see all ratings.",
   "Volver al club": "Back to club",
-  "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "At that time we will remind captains to rate the players."
+  "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "At that time we will remind captains to rate the players.",
+  "Hora de convocatoria (HH:mm)": "Call-up time (HH:mm)",
+  "Hora de cierre de votación (HH:mm)": "Voting closing time (HH:mm)"
 }

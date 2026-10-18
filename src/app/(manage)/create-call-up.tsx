@@ -51,10 +51,10 @@ export default function CreateCallUpScreen() {
     {isDemo ? <DemoNotice /> : null}
     <Body>{t("Horario del club: {{v0}}. Se conservará una fotografía de la plantilla y las pruebas activas. AYUDAS comenzará vacía.", { v0: activeClub?.timezone })}</Body>
     <Field label={t("Fecha (AAAA-MM-DD)")} value={date} onChangeText={setDate} placeholder={t("AAAA-MM-DD")} maxLength={10} editable={!busy} />
-    <Field label={t("Hora del club (HH:mm)")} value={time} onChangeText={value => { setTime(value); if (closingTime === time) setClosingTime(value); }} placeholder="21:50" maxLength={5} editable={!busy} />
+    <Field label={t("Hora de convocatoria (HH:mm)")} value={time} onChangeText={setTime} placeholder="21:50" maxLength={5} editable={!busy} />
     <Body>{t("Cerrar la votación automáticamente")}</Body>
     <Switch accessibilityLabel={t("Cierre automático de votación")} value={closingEnabled} onValueChange={setClosingEnabled} disabled={busy} />
-    {closingEnabled ? <Field label={t("Cierre de votación (HH:mm)")} value={closingTime} onChangeText={setClosingTime} maxLength={5} editable={!busy} /> : null}
+    {closingEnabled ? <Field label={t("Hora de cierre de votación (HH:mm)")} value={closingTime} onChangeText={setClosingTime} maxLength={5} editable={!busy} /> : null}
     <Body>{t("Se usa la zona horaria de la convocatoria. Al cerrar ya no se podrán enviar ni cambiar votos.")}</Body>
     <Body>{t("Enviar un último aviso a quienes sigan sin responder")}</Body>
     <Switch accessibilityLabel={t("Enviar último aviso para votar")} value={noticeEnabled} onValueChange={setNoticeEnabled} disabled={busy} />

@@ -675,5 +675,7 @@
   "Los miembros del club pueden ver las valoraciones.": "Los miembros del club pueden ver las valoraciones.",
   "Cada jugador puede ver las suyas; los capitanes pueden ver todas.": "Cada jugador puede ver las suyas; los capitanes pueden ver todas.",
   "Volver al club": "Volver al club",
-  "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "A esa hora avisaremos a los capitanes para que valoren a los jugadores."
+  "A esa hora avisaremos a los capitanes para que valoren a los jugadores.": "A esa hora avisaremos a los capitanes para que valoren a los jugadores.",
+  "Hora de convocatoria (HH:mm)": "Hora de convocatoria (HH:mm)",
+  "Hora de cierre de votación (HH:mm)": "Hora de cierre de votación (HH:mm)"
 }
