@@ -702,5 +702,9 @@
   "Escribe tu ID de EA para confirmar la eliminación.": "Gib deine EA-ID ein, um die Löschung zu bestätigen.",
   "Eres el único capitán de un club. Nombra a otro capitán o elimina ese club antes de borrar tu cuenta.": "Du bist der einzige Kapitän eines Clubs. Ernenne einen anderen Kapitän oder lösche diesen Club, bevor du dein Konto löschst.",
   "Vuelve a introducir tu contraseña para confirmar la eliminación.": "Gib dein Passwort erneut ein, um die Löschung zu bestätigen.",
-  "Introduce tu contraseña actual correctamente.": "Gib dein aktuelles Passwort korrekt ein."
+  "Introduce tu contraseña actual correctamente.": "Gib dein aktuelles Passwort korrekt ein.",
+  "Política de privacidad": "Datenschutzerklärung",
+  "Última actualización: {{v0}}": "Zuletzt aktualisiert: {{v0}}",
+  "Políticas de los proveedores": "Datenschutzinformationen der Anbieter",
+  "Volver": "Zurück"
 }

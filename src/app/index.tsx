@@ -17,6 +17,7 @@ export default function WelcomeScreen() {
       <Button secondary label={t("Crear una cuenta")} onPress={() => router.push('/register')} />
       <Button secondary label={t("Explorar la demo")} onPress={() => { enterDemo(); router.push('/clubs'); }} />
       <Body>{t("Prueba la demo sin crear una cuenta. Los equipos y jugadores son de ejemplo.")}</Body>
+      <Button secondary label={t("Política de privacidad")} onPress={() => router.push('/privacy')} />
     </Screen>
   );
 }

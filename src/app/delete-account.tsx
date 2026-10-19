@@ -93,5 +93,6 @@ export default function DeleteAccountScreen() {
         description={t('Se borrarán tu cuenta y sus datos vinculados. No podrás recuperarlos. Esta acción no elimina las cuentas de otros jugadores.')}
         confirmLabel={t('Eliminar definitivamente')} onCancel={() => setConfirming(false)} onConfirm={() => { void remove(); }} />
     </>}
+    <Button secondary label={t("Política de privacidad")} onPress={() => router.push('/privacy')} />
   </Screen>;
 }
