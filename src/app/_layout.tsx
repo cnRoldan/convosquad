@@ -29,6 +29,7 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="clubs" />
               <Stack.Screen name="delete-account" />
+              <Stack.Screen name="privacy" />
               <Stack.Screen name="(account)" />
               <Stack.Screen name="(manage)" />
               <Stack.Screen name="notification" />

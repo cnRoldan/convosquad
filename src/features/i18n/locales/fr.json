@@ -702,5 +702,9 @@
   "Escribe tu ID de EA para confirmar la eliminación.": "Saisis ton identifiant EA pour confirmer la suppression.",
   "Eres el único capitán de un club. Nombra a otro capitán o elimina ese club antes de borrar tu cuenta.": "Tu es le seul capitaine d’un club. Nomme un autre capitaine ou supprime ce club avant de supprimer ton compte.",
   "Vuelve a introducir tu contraseña para confirmar la eliminación.": "Saisis à nouveau ton mot de passe pour confirmer la suppression.",
-  "Introduce tu contraseña actual correctamente.": "Saisis correctement ton mot de passe actuel."
+  "Introduce tu contraseña actual correctamente.": "Saisis correctement ton mot de passe actuel.",
+  "Política de privacidad": "Politique de confidentialité",
+  "Última actualización: {{v0}}": "Dernière mise à jour : {{v0}}",
+  "Políticas de los proveedores": "Politiques des prestataires",
+  "Volver": "Retour"
 }

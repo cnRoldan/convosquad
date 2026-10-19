@@ -758,3 +758,57 @@ test('página pública de eliminación permite autenticarse sin instalar la app 
   await f.page.screenshot({path:'test-results/delete-account.png',fullPage:true});
  } finally {await f.close();}
 });
+
+test('privacidad pública: acceso sin cuenta, contacto, eliminación y vuelta a bienvenida sin consultar datos privados',async()=>{
+ const f=await fixture();
+ try {
+  await f.page.goto(`${origin}/privacy`);
+  await f.page.getByRole('heading',{name:'Política de privacidad',exact:true}).waitFor();
+  await f.page.getByText('El responsable del servicio es Claudio Roldán Ramos, particular establecido en España.',{exact:false}).waitFor();
+  assert.equal(await f.page.getByRole('link',{name:'convosquad.soporte@gmail.com',exact:true}).getAttribute('href'),'mailto:convosquad.soporte@gmail.com');
+  assert.equal(await f.page.getByRole('link',{name:'Eliminar mi cuenta',exact:true}).getAttribute('href'),'/delete-account');
+  await f.page.reload();
+  await f.page.getByRole('heading',{name:'Política de privacidad',exact:true}).waitFor();
+  assert.equal(f.requests.length,0);
+  await f.page.getByRole('link',{name:'Eliminar mi cuenta',exact:true}).click();
+  await f.page.getByRole('button',{name:'Iniciar sesión para eliminar mi cuenta',exact:true}).waitFor();
+  await f.page.getByRole('button',{name:'Política de privacidad',exact:true}).click();
+  await f.page.getByRole('heading',{name:'Política de privacidad',exact:true}).waitFor();
+ } finally {await f.close();}
+});
+
+test('privacidad sigue los cuatro idiomas y conserva responsable y contacto',async()=>{
+ const f=await fixture();
+ try {
+  await f.page.goto(`${origin}/privacy`);
+  for(const [button,language,title,section] of [
+   ['Cambiar idioma','English','Privacy policy','8. Retention and deletion'],
+   ['Change language','Deutsch','Datenschutzerklärung','8. Aufbewahrung und Löschung'],
+   ['Sprache ändern','Français','Politique de confidentialité','8. Conservation et suppression'],
+   ['Changer de langue','Español','Política de privacidad','8. Conservación y eliminación'],
+  ]) {
+   await f.page.getByRole('button',{name:button,exact:true}).click();
+   await f.page.getByRole('radio',{name:language,exact:true}).click();
+   await f.page.getByRole('radio',{name:language,exact:true}).waitFor({state:'hidden'});
+   await f.page.getByRole('heading',{name:title,exact:true}).waitFor();
+   await f.page.getByRole('heading',{name:section,exact:true}).waitFor({state:'attached'});
+   assert.equal(await f.page.getByRole('link',{name:'convosquad.soporte@gmail.com',exact:true}).count(),1);
+  }
+  assert.equal(f.requests.length,0);
+  await f.page.screenshot({path:'test-results/privacy-policy.png'});
+ } finally {await f.close();}
+});
+
+test('privacidad accesible desde bienvenida, registro, login y clubes con sesión',async()=>{
+ for(const [route,options] of [['/',{}],['/register',{}],['/login',{}],['/clubs',{clubRole:'player'}]]) {
+  const f=await fixture(options);
+  try {
+   await f.page.goto(`${origin}${route}`);
+   await f.page.getByRole('button',{name:'Política de privacidad',exact:true}).click();
+   await f.page.getByRole('heading',{name:'Política de privacidad',exact:true}).waitFor();
+   await f.page.getByRole('button',{name:'Volver',exact:true}).click();
+   await f.page.getByRole('button',{name:'Política de privacidad',exact:true}).waitFor();
+   assert.equal(new URL(f.page.url()).pathname,route);
+  } finally {await f.close();}
+ }
+});

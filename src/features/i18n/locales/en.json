@@ -702,5 +702,9 @@
   "Escribe tu ID de EA para confirmar la eliminación.": "Enter your EA ID to confirm deletion.",
   "Eres el único capitán de un club. Nombra a otro capitán o elimina ese club antes de borrar tu cuenta.": "You are the only captain of a club. Appoint another captain or delete that club before deleting your account.",
   "Vuelve a introducir tu contraseña para confirmar la eliminación.": "Enter your password again to confirm deletion.",
-  "Introduce tu contraseña actual correctamente.": "Enter your current password correctly."
+  "Introduce tu contraseña actual correctamente.": "Enter your current password correctly.",
+  "Política de privacidad": "Privacy policy",
+  "Última actualización: {{v0}}": "Last updated: {{v0}}",
+  "Políticas de los proveedores": "Provider policies",
+  "Volver": "Back"
 }
