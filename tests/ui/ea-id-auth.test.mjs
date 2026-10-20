@@ -858,3 +858,21 @@ test('aviso de admisión actualiza clubes y abre el admitido; otra cuenta o club
   } finally {await f.close();}
  }
 });
+
+test('actualizar plantilla muestra un alta remota sin salir del club ni reiniciar el filtro',async()=>{
+ const f=await fixture({clubRole:'player'});
+ try {
+  const {page}=f;await page.goto(`${origin}/roster`);
+  await page.getByText('EA-Player_9',{exact:true}).first().waitFor();
+  await page.getByRole('button',{name:'Sin registrar',exact:true}).click();
+  let reads=0;
+  await page.route('**/rest/v1/players?*',async route=>{
+   reads++;
+   return route.fulfill({json:[{id:'remote-player',club_id:'00000000-0000-4000-8000-000000000903',ea_id:'NuevoDesdeWeb',jersey_number:9,category:'attackers',sort_order:10,user_id:null,is_active:true},{id:'remote-registered',club_id:'00000000-0000-4000-8000-000000000903',ea_id:'RegistradoRemoto',jersey_number:10,category:'attackers',sort_order:11,user_id:'00000000-0000-4000-8000-000000000902',is_active:true}]});
+  });
+  await page.getByRole('button',{name:'Actualizar plantilla',exact:true}).click();
+  await page.getByText('NuevoDesdeWeb',{exact:true}).waitFor();
+  assert.ok(reads>0);assert.ok(page.url().endsWith('/roster'));
+  assert.equal(await page.getByText('RegistradoRemoto',{exact:true}).count(),0);
+ } finally {await f.close();}
+});

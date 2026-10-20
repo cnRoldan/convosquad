@@ -749,3 +749,15 @@ test('editar convocatoria: panel largo desplaza hasta valoración y botones sin 
   await cancel.click();assert.equal(f.data.writes,0);
  } finally {await f.close();}
 });
+
+test('actualizar convocatoria incorpora candidato añadido desde otro dispositivo sin recrearla',async()=>{
+ const f=await fixture({expandPanels:false});
+ try {
+  const before=f.data.snapshotReads;
+  f.players.push({...f.players[0],id:'remote-snapshot',source_player_id:'remote-player',user_id:null,ea_id_snapshot:'AltaRemota',availability:'unanswered',responded_at:null});
+  await f.page.getByRole('button',{name:'Actualizar convocatoria',exact:true}).click();
+  await f.page.getByRole('button',{name:`Todos (${f.players.length})`,exact:true}).waitFor();
+  assert.ok(f.data.snapshotReads>before);assert.equal(f.data.writes,0);
+  assert.ok(new URL(f.page.url()).pathname==='/call-up');
+ } finally {await f.close();}
+});

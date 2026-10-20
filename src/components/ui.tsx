@@ -1,7 +1,7 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useState } from 'react';
 import type { PropsWithChildren, ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 import { useSegments } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/theme';
 import { SessionIdentity } from './session-identity';
 
-export function Screen({ children, compact = false, footer }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode }>) {
+export function Screen({ children, compact = false, footer, onRefresh, refreshing = false }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode; onRefresh?: (() => void) | undefined; refreshing?: boolean }>) {
   useLanguage();
   const segments = useSegments();
   const hasHeader = segments.some(segment => segment === '(account)' || segment === '(manage)');
@@ -17,7 +17,7 @@ export function Screen({ children, compact = false, footer }: PropsWithChildren<
   return (
     <SafeAreaView style={styles.safe} edges={hasHeader ? ['left', 'right'] : ['top', 'left', 'right']}>
       <SessionIdentity compact={compact} />
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.content, compact && styles.compactContent, footer ? { paddingBottom: footerHeight + 24 } : undefined]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustContentInsets={false} contentInsetAdjustmentBehavior="never" automaticallyAdjustKeyboardInsets>
+      <ScrollView alwaysBounceVertical={onRefresh ? true : undefined} refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} /> : undefined} style={{ flex: 1 }} contentContainerStyle={[styles.content, compact && styles.compactContent, footer ? { paddingBottom: footerHeight + 24 } : undefined]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustContentInsets={false} contentInsetAdjustmentBehavior="never" automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>
       {footer ? <View pointerEvents="box-none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }} onLayout={event => setFooterHeight(Math.ceil(event.nativeEvent.layout.height))}>{footer}</View> : null}
