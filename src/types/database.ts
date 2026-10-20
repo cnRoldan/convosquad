@@ -226,6 +226,7 @@ export type Database = {
           status_version: number;
           closes_at: string | null;
           evaluation_at: string | null;
+          ends_at: string;
         };
         Insert: {
           id?: string;
@@ -241,6 +242,7 @@ export type Database = {
           status_version?: number;
           closes_at?: string | null;
           evaluation_at?: string | null;
+          ends_at: string;
         };
         Update: {
           id?: string;
@@ -256,6 +258,7 @@ export type Database = {
           status_version?: number;
           closes_at?: string | null;
           evaluation_at?: string | null;
+          ends_at?: string;
         };
         Relationships: [
           { foreignKeyName: 'call_ups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -851,6 +854,18 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      create_call_up_with_end: {
+        Args: {
+          p_club_id: string;
+          p_starts_at: string;
+          p_ends_at?: string;
+          p_last_notice_at?: string;
+          p_status?: Database['public']['Enums']['call_up_status'];
+          p_closes_at?: string;
+          p_ratings_enabled?: boolean;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
       create_call_up_with_evaluation: {
         Args: {
           p_club_id: string;
@@ -1199,6 +1214,18 @@ export type Database = {
           p_call_up_id: string;
           p_starts_at: string;
           p_status: Database['public']['Enums']['call_up_status'];
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      update_call_up_with_end: {
+        Args: {
+          p_call_up_id: string;
+          p_starts_at: string;
+          p_status: Database['public']['Enums']['call_up_status'];
+          p_ends_at: string;
+          p_last_notice_at?: string;
+          p_closes_at?: string;
+          p_ratings_enabled?: boolean;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };

@@ -20,3 +20,13 @@ test('el cambio de día utiliza la zona horaria del club y no UTC',()=>{
  assert.equal(callUpStatusLabel({...call,status:'closed'},Date.parse('2026-10-20T22:00:00Z')),'Finalizada');
  assert.equal(callUpStatusLabel({...call,status:'closed',timezone:'Atlantic/Canary'},Date.parse('2026-10-20T22:00:00Z')),'Activa · Votación cerrada');
 });
+
+test('la finalización exacta sustituye al cambio de día y cierra incluso sin plazo de voto',()=>{
+ const extended={...call,status:'closed',ends_at:'2026-10-20T23:00:00Z'};
+ assert.equal(callUpStatusLabel(extended,Date.parse('2026-10-20T22:30:00Z')),'Activa · Votación cerrada');
+ assert.equal(callUpStatusLabel(extended,Date.parse(extended.ends_at)-1),'Activa · Votación cerrada');
+ assert.equal(callUpStatusLabel(extended,Date.parse(extended.ends_at)),'Finalizada');
+ assert.equal(callUpStatusLabel({...extended,status:'open',closes_at:null},Date.parse(extended.ends_at)),'Finalizada');
+ const early={...call,ends_at:'2026-10-20T21:30:00Z'};
+ assert.equal(callUpStatusLabel(early,Date.parse('2026-10-20T21:30:00Z')),'Finalizada');
+});

@@ -51,7 +51,7 @@ function PlayerRatingsScreen() {
     {admin ? <Card title={t('Convocatorias para valorar')}>
       {result.data?.calls.map(call => <Button key={call.id} secondary label={t('Valorar convocatoria del {{v0}}', { v0: formatMatchDate(call.starts_at, call.timezone) })}
         onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} />)}
-      {!result.isLoading && !result.data?.calls.length ? <Body>{t('Programa una hora de valoración al crear o editar una convocatoria.')}</Body> : null}
+      {!result.isLoading && !result.data?.calls.length ? <Body>{t('No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.')}</Body> : null}
     </Card> : null}
     <Button secondary label={t('Volver al club')} onPress={() => router.dismissTo('/home')} />
     <Button secondary label={t('Actualizar rendimiento')} onPress={() => { result.reload(); history.reload(); }} />

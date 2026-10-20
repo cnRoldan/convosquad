@@ -1,0 +1,72 @@
+import assert from 'node:assert/strict';
+import {before,after,test} from 'node:test';
+import {createTestDatabase,asUser} from '../../scripts/database-test-utils.mjs';
+const [captain,member,outsider]=[1,2,3].map(n=>`8e000000-0000-4000-8000-${String(n).padStart(12,'0')}`);
+let db,club;
+const query=(actor,sql,args=[])=>asUser(db,actor,tx=>tx.query(sql,args));
+const row=async(...args)=>(await query(...args)).rows[0];
+const iso=value=>value.toISOString();
+before(async()=>{
+ db=await createTestDatabase();
+ for(const [i,id] of [captain,member,outsider].entries())await db.query('insert into auth.users(id,raw_user_meta_data) values($1,$2)',[id,{username:`EndTime_${i}`}]);
+ club=await row(captain,"select * from public.create_club('End Time Club',null,'Europe/Madrid')");
+ await db.query("insert into public.club_members(club_id,user_id) values($1,$2)",[club.id,member]);
+ await db.query("insert into public.players(club_id,user_id,ea_id,category) values($1,$2,'End Player','midfielders')",[club.id,member]);
+});
+after(async()=>{await db?.close();});
+test('finalización por defecto a medianoche local y valoraciones habilitadas, también al cambiar de año',async()=>{
+ const call=await row(captain,"select * from public.create_call_up_with_end($1,'2035-12-31T20:50:00Z',null,null,'open')",[club.id]);
+ assert.equal(iso(call.ends_at),'2035-12-31T23:00:00.000Z');
+ assert.equal(iso(call.evaluation_at),iso(call.ends_at));
+ const disabled=await row(captain,"select * from public.create_call_up_with_end($1,'2036-01-01T20:50:00Z','2036-01-02T00:00:00Z',null,'open',null,false)",[club.id]);
+ assert.equal(iso(disabled.ends_at),'2036-01-02T00:00:00.000Z');assert.equal(disabled.evaluation_at,null);
+ const edited=await row(captain,"select * from public.update_call_up_with_end($1,$2,'closed','2036-01-02T01:30:00Z',null,null,true)",[disabled.id,disabled.starts_at]);
+ assert.equal(iso(edited.ends_at),'2036-01-02T01:30:00.000Z');assert.equal(iso(edited.evaluation_at),iso(edited.ends_at));
+ const switchedOff=await row(captain,"select * from public.update_call_up_with_end($1,$2,'closed',$3,null,null,false)",[edited.id,edited.starts_at,edited.ends_at]);
+ assert.equal(switchedOff.evaluation_at,null);assert.equal(iso(switchedOff.ends_at),iso(edited.ends_at));
+});
+test('horas inválidas son atómicas; jugador, otro club y escritura directa no alteran finalización',async()=>{
+ const before=(await db.query('select count(*)::int n from public.call_ups')).rows[0].n;
+ for(const actor of [member,outsider])await assert.rejects(query(actor,"select public.create_call_up_with_end($1,'2037-01-01T20:00Z')",[club.id]),e=>e.code==='42501');
+ await assert.rejects(query(captain,"select public.create_call_up_with_end($1,'2037-01-01T20:00Z','2037-01-01T19:00Z')",[club.id]),e=>e.code==='22023');
+ assert.equal((await db.query('select count(*)::int n from public.call_ups')).rows[0].n,before);
+ const call=await row(captain,'select * from public.call_ups where club_id=$1 order by starts_at desc limit 1',[club.id]);
+ for(const actor of [member,outsider])await assert.rejects(query(actor,"select public.update_call_up_with_end($1,$2,'closed',$3)",[call.id,call.starts_at,call.ends_at]),e=>e.code==='42501');
+ await assert.rejects(query(captain,'update public.call_ups set ends_at=now() where id=$1',[call.id]),e=>e.code==='42501');
+ await assert.rejects(query(captain,"select public.update_call_up_with_end($1,$2,'closed',$2)",[call.id,call.starts_at]),e=>e.code==='22023');
+ assert.equal(iso((await row(captain,'select * from public.call_ups where id=$1',[call.id])).ends_at),iso(call.ends_at));
+});
+test('medianoche no archiva antes de la hora elegida; miembros ven la votación cerrada y solo valoran tras finalizar',async()=>{
+ // Put the club in its first local hour, independent of the UTC hour running CI.
+ let offset=-new Date().getUTCHours();if(offset < -12)offset+=24;
+ const zone=offset===0?'UTC':`Etc/GMT${offset>0?'-':'+'}${Math.abs(offset)}`;
+ const late=await row(captain,'select * from public.create_club($1,null,$2)',['After midnight',zone]);
+ await db.query('insert into public.club_members(club_id,user_id) values($1,$2)',[late.id,member]);
+ await db.query("insert into public.players(club_id,user_id,ea_id,category) values($1,$2,'Late Player','midfielders')",[late.id,member]);
+ const call=await row(captain,"select * from public.create_call_up_with_end($1,((now() at time zone $2)::date-1+time '21:50') at time zone $2,((now() at time zone $2)::date+time '02:00') at time zone $2,null,'open')",[late.id,zone]);
+ const closed=await row(captain,"select * from public.update_call_up_with_end($1,$2,'closed',$3)",[call.id,call.starts_at,call.ends_at]);
+ assert.ok(closed.ends_at>new Date());
+ assert.equal((await query(captain,'select * from public.list_rating_call_ups($1)',[late.id])).rows.length,0);
+ assert.equal((await query(captain,'select * from public.list_call_up_history($1)',[late.id])).rows.length,0);
+ assert.equal((await query(member,'select * from public.call_ups where id=$1',[call.id])).rows.length,1);
+ const entry=await row(member,'select * from public.call_up_players where call_up_id=$1',[call.id]);
+ await assert.rejects(query(member,"select public.respond_to_call_up($1,'available')",[entry.id]),e=>e.code==='42501');
+ const rating=[{entry_id:entry.id,score:8,expected_updated_at:null}];
+ await assert.rejects(query(captain,'select public.save_player_ratings($1,$2)',[call.id,rating]),e=>e.code==='P0041');
+ await db.query("update public.call_ups set ends_at=clock_timestamp()-interval '1 second' where id=$1",[call.id]);
+ assert.equal((await query(captain,'select * from public.list_call_up_history($1)',[late.id])).rows.length,1);
+ assert.equal((await query(captain,'select * from public.list_rating_call_ups($1)',[late.id])).rows[0].id,call.id);
+ assert.equal((await query(member,'select * from public.call_ups where id=$1',[call.id])).rows.length,0);
+ await assert.rejects(query(captain,"select public.update_call_up_with_end($1,$2,'open',$3)",[call.id,call.starts_at,call.ends_at]),e=>e.code==='P0042');
+ assert.equal((await row(captain,'select public.save_player_ratings($1,$2) n',[call.id,rating])).n,1);
+});
+test('finalización detiene votos aunque no haya cierre automático y Cron todavía no haya actuado',async()=>{
+ const call=await row(captain,"select * from public.create_call_up_with_end($1,now()-interval '1 hour',now()+interval '1 hour',null,'open',null,false)",[club.id]);
+ const entry=await row(member,'select * from public.call_up_players where call_up_id=$1',[call.id]);
+ await query(member,"select public.respond_to_call_up($1,'available')",[entry.id]);
+ await db.query("update public.call_ups set ends_at=now()-interval '1 second' where id=$1",[call.id]);
+ await assert.rejects(query(member,"select public.respond_to_call_up($1,'backup')",[entry.id]),e=>e.code==='42501');
+ await assert.rejects(query(member,"select public.respond_from_notification($1,$2,'backup','after-end')",[club.id,call.id]),e=>e.code==='42501');
+ await assert.rejects(query(captain,'select public.restart_call_up($1,$2)',[call.id,call.status_version]),e=>e.code==='42501');
+ const actual=await row(captain,'select * from public.call_up_players where id=$1',[entry.id]);assert.equal(actual.availability,'available');
+});

@@ -33,7 +33,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, selectedCall = false, expandPanels = true, noCall = false, retained = false, closesAt = null, clockTime = null } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, selectedCall = false, expandPanels = true, noCall = false, retained = false, closesAt = null, clockTime = null, endsAt = null, ratingsEnabled = false } = {}) {
   const context = await browser.newContext({ locale: 'es-ES', viewport: { width, height: 844 } });
   const page = await context.newPage();
   if (clockTime !== null) await page.clock.install({time: clockTime});
@@ -41,12 +41,12 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, restarts: 0, deletions: 0, privateReads: 0, decisionReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, scheduleUpdates: [], restarts: 0, deletions: 0, privateReads: 0, decisionReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
+  const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, ends_at: endsAt ?? new Date(Date.parse(`${date}T22:00:00Z`)).toISOString(), evaluation_at: ratingsEnabled ? endsAt ?? `${date}T22:00:00Z` : null, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
   const pastId = '00000000-0000-4000-8000-000000000004';
-  const pastCall = { ...call, id: pastId, local_date: '2020-01-01', starts_at: '2020-01-01T20:00:00Z' };
+  const pastCall = { ...call, id: pastId, local_date: '2020-01-01', starts_at: '2020-01-01T20:00:00Z', ends_at: '2020-01-01T22:00:00Z' };
   const players = empty ? [] : Array.from({ length: 24 }, (_, index) => ({
     id: `snapshot-${index}`, club_id: clubId, call_up_id: callId, source_player_id: `player-${index}`,
     user_id: index === 3 ? (linked ? userId : null) : index === 4 ? null : `other-${index}`,
@@ -60,7 +60,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const aids = [{id: 'aid', body: 'Ayuda fuera del total', sort_order: 0}];
   const trialSnapshots = [{ id: 'trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, last_sign_in_at: new Date().toISOString(), created_at: call.created_at };
-  const expiry = Math.floor(Date.now() / 1000) + 3600;
+  const expiry = Math.floor((clockTime === null ? Date.now() : new Date(clockTime).getTime()) / 1000) + 7200;
   const jwt = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: userId, exp: expiry })).toString('base64url')}.fixture`;
   await context.addInitScript(({ user, jwt, expiry }) => {
     localStorage.setItem('sb-auth-auth-token', JSON.stringify({ access_token: jwt, refresh_token: 'fixture-refresh', token_type: 'bearer', expires_in: 3600, expires_at: expiry, user }));
@@ -134,12 +134,12 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         aids.splice(index, 1);
         return route.fulfill({status: 204});
       }
-      if (endpoint === 'update_call_up_with_evaluation') {
+      if (endpoint === 'update_call_up_with_end') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();
         assert.equal(body.p_call_up_id, callId);
-        call.status = body.p_status; call.status_version++; call.updated_at = new Date().toISOString();
-        data.updates++;
+        call.status = body.p_status; call.starts_at = body.p_starts_at; call.ends_at = body.p_ends_at; call.evaluation_at = body.p_ratings_enabled ? body.p_ends_at : null; call.status_version++; call.updated_at = new Date().toISOString();
+        data.updates++; data.scheduleUpdates.push(body);
         return route.fulfill({json: call});
       }
       if (endpoint === 'restart_call_up') {
@@ -759,8 +759,8 @@ test('editar convocatoria: panel largo desplaza hasta valoración y botones sin 
   const {page}=f;await page.setViewportSize({width:320,height:568});
   await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
   await page.getByRole('button',{name:'Modificar fecha y hora',exact:true}).click();
-  await page.getByLabel('Programar valoración de jugadores',{exact:true}).click();
-  await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).fill('23:55');
+  await page.getByLabel('Habilitar valoración de jugadores',{exact:true}).click();
+  await page.getByLabel('Hora de finalización (HH:mm)',{exact:true}).fill('23:55');
   const cancel=page.getByRole('button',{name:'Cancelar',exact:true});await cancel.scrollIntoViewIfNeeded();
   const box=await cancel.boundingBox();assert.ok(box.y>=0 && box.y+box.height<=568);
   await page.screenshot({path:'test-results/scrollable-call-up-editor.png'});
@@ -794,4 +794,41 @@ test('mantener decisión solo se muestra dentro del cuadro de voto y no sin conv
  try {
   await active.page.getByTestId('availability-actions').getByRole('switch',{name:'Mantener decisión',exact:true,checked:true}).waitFor();
  } finally {await active.close();}
+});
+
+
+test('editar finalización guarda el fin y la valoración vinculada, sin hora independiente',async()=>{
+ const f=await fixture({role:'admin',expandPanels:false});
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
+  await page.getByRole('button',{name:'Modificar fecha y hora',exact:true}).click();
+  assert.equal(await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).count(),0);
+  await page.getByLabel('Hora de finalización (HH:mm)',{exact:true}).fill('01:00');
+  await page.getByRole('switch',{name:'Habilitar valoración de jugadores',exact:true}).click();
+  await page.getByRole('button',{name:'Modificar fecha y hora',exact:true}).last().click();
+  await page.getByText('Convocatoria actualizada. La fotografía y respuestas se conservan.',{exact:true}).waitFor();
+  const saved=f.data.scheduleUpdates[0];
+  assert.equal(saved.p_ratings_enabled,true);
+  assert.ok(!('p_evaluation_at' in saved));
+  const end=new Date(saved.p_ends_at);
+  assert.equal(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(end),'01:00');
+  assert.ok(end>new Date(saved.p_starts_at));
+ } finally {await f.close();}
+});
+
+test('convocatoria sigue activa pasada medianoche y abre valoración al llegar a su finalización',async()=>{
+ const date=new Date(Date.now()+86400000).toISOString().slice(0,10);
+ const end=`${date}T23:00:00Z`;
+ const f=await fixture({role:'admin',status:'closed',selectedCall:true,expandPanels:false,endsAt:end,ratingsEnabled:true,clockTime:new Date(`${date}T22:30:00Z`)});
+ try {
+  const {page}=f;
+  await page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Valorar jugadores',exact:true}).count(),0);
+  await page.clock.fastForward(30*60*1000+1000);
+  await page.getByText('Convocatoria finalizada.',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Valorar jugadores',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Mantener decisión',exact:true}).count(),0);
+ } finally {await f.close();}
 });

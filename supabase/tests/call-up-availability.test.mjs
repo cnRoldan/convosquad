@@ -59,7 +59,7 @@ test('cerrar, cancelar y reabrir protege respuestas y administración; otros clu
   for(const status of ['closed','cancelled']){
     await query(admin,'select * from public.update_call_up($1,$2,$3)',[call.id,call.starts_at,status]);
     await reject(member,"select * from public.respond_to_call_up($1,'available')",[mine.id],'42501');
-    assert.equal((await query(member,'select * from public.call_up_players where call_up_id=$1',[call.id])).rows.length,0);
+    assert.equal((await query(member,'select * from public.call_up_players where call_up_id=$1',[call.id])).rows.length,status==='closed'?2:0);
   }
   for(const actor of [member,other]){
     await reject(actor,'select * from public.update_call_up($1,$2,$3)',[call.id,call.starts_at,'open'],'42501');

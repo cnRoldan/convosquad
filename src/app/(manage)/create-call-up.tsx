@@ -1,6 +1,6 @@
 import { DateTimeField } from '@/components/date-time-field';
 import { t, useLanguage, intlLocale } from '@/features/i18n/runtime';
-import { evaluationInstant } from '@/features/ratings/schedule';
+import { endInstant } from '@/features/call-ups/end-time';
 import { closingInstant } from '@/features/call-ups/closing-time';
 import { useState } from 'react';
 import { Switch } from 'react-native';
@@ -22,9 +22,9 @@ export default function CreateCallUpScreen() {
   const [closingEnabled, setClosingEnabled] = useState(true);
   const [closingTime, setClosingTime] = useState('19:00');
   const [closesAt, setClosesAt] = useState<string | null>(null);
-  const [evaluationEnabled, setEvaluationEnabled] = useState(false);
-  const [evaluationTime, setEvaluationTime] = useState('23:45');
-  const [evaluationAt, setEvaluationAt] = useState<string | null>(null);
+  const [evaluationEnabled, setEvaluationEnabled] = useState(true);
+  const [endTime, setEndTime] = useState('00:00');
+  const [endsAt, setEndsAt] = useState<string | null>(null);
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   function preview() {
     if (!activeClub) return;
@@ -34,7 +34,7 @@ export default function CreateCallUpScreen() {
       const notice = lastNoticeInstant(noticeEnabled, date, noticeTime, activeClub.timezone, start);
       const closing = closingInstant(closingEnabled, date, closingTime, activeClub.timezone, start, notice);
       if (closing && Date.parse(closing) <= Date.now()) throw new Error(t("Elige una hora de cierre que todavía no haya pasado."));
-      setEvaluationAt(evaluationInstant(evaluationEnabled, date, evaluationTime, activeClub.timezone, start));
+      setEndsAt(endInstant(date, endTime, activeClub.timezone, start));
       setNoticeInstant(notice); setClosesAt(closing);
       setInstant(start);
     }
@@ -43,7 +43,7 @@ export default function CreateCallUpScreen() {
   async function submit() {
     if (!activeClub || !instant || isDemo || busy) return;
     setBusy(true);
-    try { const call = await createCallUp(activeClub.id, instant, 'open', noticeInstant, closesAt, evaluationAt); refreshRoster(); router.replace({ pathname: '/call-up', params: { id: call.id } }); }
+    try { const call = await createCallUp(activeClub.id, instant, 'open', noticeInstant, closesAt, endsAt, evaluationEnabled); refreshRoster(); router.replace({ pathname: '/call-up', params: { id: call.id } }); }
     catch (error) { setMessage(callUpErrorMessage(error)); }
     finally { setBusy(false); setInstant(null); }
   }
@@ -61,13 +61,14 @@ export default function CreateCallUpScreen() {
     <Switch accessibilityLabel={t("Enviar último aviso para votar")} value={noticeEnabled} onValueChange={setNoticeEnabled} disabled={busy} />
     {noticeEnabled ? <DateTimeField mode="time" label={t("Último aviso para votar (HH:mm)")} value={noticeTime} onChange={setNoticeTime} disabled={busy} /> : null}
     <Body>{t("Hora del club. Si el aviso ya ha pasado, se enviará en la próxima ejecución del servicio, antes de la convocatoria.")}</Body>
-    <Body>{t("Programar valoración de jugadores")}</Body>
-    <Switch accessibilityLabel={t("Programar valoración de jugadores")} value={evaluationEnabled} onValueChange={setEvaluationEnabled} disabled={busy} />
-    {evaluationEnabled ? <><DateTimeField mode="time" label={t("Hora de valoración (HH:mm)")} value={evaluationTime} onChange={setEvaluationTime} disabled={busy} />
-      <Body>{t("Hora del club. Si es anterior al partido, se usará el día siguiente. Solo los capitanes podrán valorar a partir de esa hora.")}</Body><Body>{t("A esa hora avisaremos a los capitanes para que valoren a los jugadores.")}</Body></> : null}
+    <DateTimeField mode="time" label={t("Hora de finalización (HH:mm)")} value={endTime} onChange={setEndTime} disabled={busy} />
+    <Body>{t("Hora del club. Si es anterior o igual al inicio, se usará el día siguiente. A esa hora la convocatoria pasará al historial.")}</Body>
+    <Body>{t("Habilitar valoración de jugadores")}</Body>
+    <Switch accessibilityLabel={t("Habilitar valoración de jugadores")} value={evaluationEnabled} onValueChange={setEvaluationEnabled} disabled={busy} />
+    {evaluationEnabled ? <Body>{t("Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.")}</Body> : null}
     {message ? <Message error>{message}</Message> : null}
     <Button label={t("Revisar convocatoria")} disabled={busy || isDemo} onPress={preview} />
     <Button secondary label={t("Volver a convocatoria")} disabled={busy} onPress={() => router.dismissTo('/call-up')} />
-    <ConfirmDialog visible={Boolean(instant)} title={t("Crear convocatoria abierta")} description={t("Partido el {{v0}} a las {{v1}}, en {{v2}}. {{v3}}{{v4}}{{v5}}", { v0: date, v1: time, v2: activeClub?.timezone, v5: (evaluationAt ? t("Valoraciones desde {{v0}}. ", { v0: new Date(evaluationAt).toLocaleString(intlLocale(), { timeZone: activeClub?.timezone ?? 'Europe/Madrid' }) }) : '') + t("Se respetarán las decisiones mantenidas; el resto comenzará sin responder. Las pruebas serán informativas."), v3: closingEnabled ? t("Cierre de votación a las {{v0}}. ", { v0: closingTime }) : t("Sin cierre automático. "), v4: noticeEnabled ? t("Último aviso para votar a las {{v0}}. ", { v0: noticeTime }) : t("Sin último aviso. ") })} busy={busy} confirmLabel={t("Crear convocatoria")} onCancel={() => setInstant(null)} onConfirm={() => { void submit(); }} />
+    <ConfirmDialog visible={Boolean(instant)} title={t("Crear convocatoria abierta")} description={t("Partido el {{v0}} a las {{v1}}, en {{v2}}. {{v3}}{{v4}}{{v5}}", { v0: date, v1: time, v2: activeClub?.timezone, v5: (endsAt ? t("Finalización: {{v0}}. ", { v0: new Date(endsAt).toLocaleString(intlLocale(), { timeZone: activeClub?.timezone ?? 'Europe/Madrid' }) }) : '') + (evaluationEnabled ? t("Las valoraciones se abrirán al finalizar la convocatoria. ") : '') + t("Se respetarán las decisiones mantenidas; el resto comenzará sin responder. Las pruebas serán informativas."), v3: closingEnabled ? t("Cierre de votación a las {{v0}}. ", { v0: closingTime }) : t("Sin cierre automático. "), v4: noticeEnabled ? t("Último aviso para votar a las {{v0}}. ", { v0: noticeTime }) : t("Sin último aviso. ") })} busy={busy} confirmLabel={t("Crear convocatoria")} onCancel={() => setInstant(null)} onConfirm={() => { void submit(); }} />
   </Screen>;
 }

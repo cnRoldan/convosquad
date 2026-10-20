@@ -10,7 +10,8 @@ export async function saveRatings(callId: string, changes: RatingChange[]) {
   return unwrap(await requireSupabase().rpc('save_player_ratings', { p_call_up_id: callId, p_ratings: changes }));
 }
 export async function listRatingCalls(clubId: string) {
-  return unwrap(await requireSupabase().rpc('list_rating_call_ups', { p_club_id: clubId }));
+  const calls = unwrap(await requireSupabase().rpc('list_rating_call_ups', { p_club_id: clubId }));
+  return calls.filter(call => Date.parse(call.ends_at) <= Date.now() && call.evaluation_at && Date.parse(call.evaluation_at) <= Date.now());
 }
 export async function getPerformance(clubId: string, period: '7d' | '1m' | '3m') {
   return unwrap(await requireSupabase().rpc('get_player_performance', { p_club_id: clubId, p_period: period }));

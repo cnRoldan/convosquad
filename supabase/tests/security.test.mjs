@@ -155,10 +155,10 @@ describe('Modelo multiclub y seguridad PostgreSQL', { concurrency: false }, () =
     await sqlAs(adminA, "select * from public.set_club_member($1, $2, 'player', true)", [clubA.id, teammate]);
   });
 
-  test('históricos y borradores son privados para administradores', async () => {
+  test('votación cerrada sigue visible para miembros, pero no permite responder', async () => {
     await sqlAs(adminA, 'select * from public.update_call_up($1, $2, $3)', [callUp.id, callUp.starts_at, 'closed']);
-    assert.equal((await sqlAs(player, 'select * from public.call_ups where id = $1', [callUp.id])).rows.length, 0);
-    assert.equal((await sqlAs(player, 'select * from public.call_up_players where call_up_id = $1', [callUp.id])).rows.length, 0);
+    assert.equal((await sqlAs(player, 'select * from public.call_ups where id = $1', [callUp.id])).rows.length, 1);
+    assert.equal((await sqlAs(player, 'select * from public.call_up_players where call_up_id = $1', [callUp.id])).rows.length, 3);
     await rejectsAs(player, "select * from public.respond_to_call_up($1, 'available')", [response.id], '42501');
     assert.equal((await sqlAs(adminA, 'select * from public.call_up_players where call_up_id = $1', [callUp.id])).rows.length, 3);
   });

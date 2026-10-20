@@ -10,12 +10,12 @@ export async function listCallUpPlayers(callUpId: string) {
   return unwrap(await requireSupabase().from('call_up_players').select('*').eq('call_up_id', callUpId).order('category_snapshot').order('sort_order_snapshot').order('id'));
 }
 
-export async function createCallUp(clubId: string, startsAt: string, status: 'draft' | 'open' = 'draft', lastNoticeAt: string | null = null, closesAt: string | null = null, evaluationAt: string | null = null) {
-  return unwrap(await requireSupabase().rpc('create_call_up_with_evaluation', { p_club_id: clubId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}), ...(evaluationAt ? { p_evaluation_at: evaluationAt } : {}) }).single());
+export async function createCallUp(clubId: string, startsAt: string, status: 'draft' | 'open' = 'draft', lastNoticeAt: string | null = null, closesAt: string | null = null, endsAt: string | null = null, ratingsEnabled = true) {
+  return unwrap(await requireSupabase().rpc('create_call_up_with_end', { p_club_id: clubId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}), p_ratings_enabled: ratingsEnabled, ...(endsAt ? { p_ends_at: endsAt } : {}) }).single());
 }
 
-export async function updateCallUp(callUpId: string, startsAt: string, status: Enums<'call_up_status'>, lastNoticeAt: string | null, closesAt: string | null = null, evaluationAt: string | null = null) {
-  return unwrap(await requireSupabase().rpc('update_call_up_with_evaluation', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}), ...(evaluationAt ? { p_evaluation_at: evaluationAt } : {}) }).single());
+export async function updateCallUp(callUpId: string, startsAt: string, status: Enums<'call_up_status'>, lastNoticeAt: string | null, closesAt: string | null, endsAt: string, ratingsEnabled: boolean) {
+  return unwrap(await requireSupabase().rpc('update_call_up_with_end', { p_call_up_id: callUpId, p_starts_at: startsAt, p_status: status, ...(lastNoticeAt ? { p_last_notice_at: lastNoticeAt } : {}), ...(closesAt ? { p_closes_at: closesAt } : {}), p_ratings_enabled: ratingsEnabled, p_ends_at: endsAt }).single());
 }
 
 export async function refreshCallUpRoster(callUpId: string, reopen = false) {
@@ -46,8 +46,8 @@ export async function reorderAids(callUpId: string, ids: string[]) {
   const { error } = await requireSupabase().rpc('reorder_aids', { p_call_up_id: callUpId, p_ids: ids }); if (error) throw error;
 }
 
-export async function listCurrentCallUps(clubId: string, localDate: string) {
-  return unwrap(await requireSupabase().from('call_ups').select('*').eq('club_id', clubId).gte('local_date', localDate).order('starts_at'));
+export async function listCurrentCallUps(clubId: string) {
+  return unwrap(await requireSupabase().from('call_ups').select('*').eq('club_id', clubId).gt('ends_at', new Date().toISOString()).order('starts_at'));
 }
 export async function getCallUp(clubId: string, callUpId: string) {
   return unwrap(await requireSupabase().from('call_ups').select('*').eq('club_id', clubId).eq('id', callUpId).single());

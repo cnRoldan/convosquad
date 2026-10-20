@@ -734,5 +734,15 @@
   "Cerrar votación": "Abstimmung schließen",
   "Abrir votación": "Abstimmung öffnen",
   "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "Status: {{v0}}. Nach dem Schließen der Abstimmung bleibt das Aufgebot aktiv; durch Absagen wird es aufgehoben.",
-  "La votación está cerrada. No puedes modificar tu voto.": "Die Abstimmung ist geschlossen. Du kannst deine Antwort nicht ändern."
+  "La votación está cerrada. No puedes modificar tu voto.": "Die Abstimmung ist geschlossen. Du kannst deine Antwort nicht ändern.",
+  "Finalización: {{v0}}": "Ende: {{v0}}",
+  "Finalización: {{v0}}. ": "Ende: {{v0}}. ",
+  "Habilitar valoración de jugadores": "Spielerbewertungen aktivieren",
+  "Hora de finalización (HH:mm)": "Endzeit (HH:mm)",
+  "Hora del club. Si es anterior o igual al inicio, se usará el día siguiente. A esa hora la convocatoria pasará al historial.": "Vereinszeit. Liegt die Uhrzeit vor oder auf dem Beginn, gilt der Folgetag. Zu dieser Zeit wird die Aufstellung archiviert.",
+  "La convocatoria ha finalizado. Consulta el historial para verla o valorar a sus jugadores.": "Die Aufstellung ist beendet. Öffne den Verlauf, um sie anzusehen oder die Spieler zu bewerten.",
+  "Las valoraciones se abrirán al finalizar la convocatoria. ": "Die Bewertungen werden am Ende der Aufstellung freigeschaltet. ",
+  "Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.": "Die Bewertungen werden am Ende der Aufstellung freigeschaltet. Die Kapitäne werden dann benachrichtigt.",
+  "Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.": "Die Bewertungen werden am Ende der Aufstellung freigeschaltet und drei Monate lang gespeichert.",
+  "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.": "Es gibt keine beendeten Aufstellungen zu bewerten. Aufstellungen mit aktivierten Bewertungen erscheinen nach ihrem Ende."
 }

@@ -1,5 +1,6 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
+import { endInstant } from '@/features/call-ups/end-time';
+import { callUpHasEnded, callUpStatusLabel } from '@/features/call-ups/lifecycle';
 import { votingDeadlinePassed } from '@/features/call-ups/closing-time';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -48,10 +49,10 @@ export default function CallUpScreen() {
   const [aidsRevision, setAidsRevision] = useState(0);
   const localDate = clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date;
   const enabled = Boolean(session && clubId && !isDemo);
-  const loadCalls = useCallback(() => clubId ? listCurrentCallUps(clubId, localDate) : Promise.resolve([]), [clubId, localDate]);
+  const loadCalls = useCallback(() => clubId ? listCurrentCallUps(clubId) : Promise.resolve([]), [clubId]);
   const calls = useResource(`calls:${scope}:${localDate}:${rosterVersion}`, loadCalls, enabled);
   // Discard deleted IDs even before the list refresh and route updates finish.
-  const availableCalls = calls.data?.filter(row => !deletedCallIds.includes(row.id));
+  const availableCalls = calls.data?.filter(row => !deletedCallIds.includes(row.id) && !callUpHasEnded(row, clock));
   const candidate = selection?.scope === selectionScope ? selection.id : id;
   const chosen = candidate && !deletedCallIds.includes(candidate) ? candidate : undefined;
   const callId = isDemo ? upcomingCallUp?.id : chosen ?? availableCalls?.find(row => row.status === 'open' || row.status === 'closed')?.id ?? availableCalls?.[0]?.id;
@@ -69,10 +70,10 @@ export default function CallUpScreen() {
   const demoCall: Tables<'call_ups'> | null = isDemo && upcomingCallUp ? {
     id: upcomingCallUp.id, club_id: upcomingCallUp.clubId, starts_at: upcomingCallUp.startsAt,
     local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date,
-    evaluation_at: null, status_version: 0, last_notice_at: null, closes_at: null, timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
+    ends_at: upcomingCallUp.endsAt ?? endInstant(clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date, '00:00', upcomingCallUp.timezone, upcomingCallUp.startsAt), evaluation_at: null, status_version: 0, last_notice_at: null, closes_at: null, timezone: upcomingCallUp.timezone, status: 'open', created_by: null, created_at: upcomingCallUp.startsAt, updated_at: upcomingCallUp.startsAt,
   } : null;
   const call = isDemo ? demoCall : snapshots.data?.call;
-  const historical = history === '1' || Boolean(call && call.local_date < clubLocalDateTime(call.timezone).date);
+  const historical = history === '1' || Boolean(call && callUpHasEnded(call, clock));
   function returnToCurrent() {
     setSelection(null); setResponseMessage(null); setNotice('');
     router.setParams({ id: undefined, history: undefined });
@@ -121,7 +122,7 @@ export default function CallUpScreen() {
     ...responseMessage,
     text: t(responseMessage.text, responseMessage.availability ? { v0: t(availabilityLabels[responseMessage.availability]) } : undefined),
   } : null;
-  const votingClosed = Boolean(call && (call.status === 'closed' || (call.status === 'open' && (votingDeadlinePassed(call, clock) || call.local_date < clubLocalDateTime(call.timezone).date))));
+  const votingClosed = Boolean(call && (call.status === 'closed' || (call.status === 'open' && (votingDeadlinePassed(call, clock) || callUpHasEnded(call, clock)))));
   const decisionLock = !isDemo && !historical && clubId && call && ownPlayer && !snapshots.error ? <DecisionLock votingClosed={votingClosed} clubId={clubId} entryId={ownPlayer?.id}
     availability={ownPlayer?.availability ?? 'unanswered'} canEnable={Boolean(ownPlayer && ownPlayer.availability !== 'unanswered' && call?.status !== 'cancelled')}
     pendingVote={Boolean(currentPending?.saving)} revision={ownSnapshot?.updated_at ?? ''} /> : null;
@@ -150,7 +151,8 @@ export default function CallUpScreen() {
     {votingClosed && !availabilityFooter ? <Text accessibilityLiveRegion="polite" style={styles.finishedNotice}>{historical ? t("Convocatoria finalizada.") : t("Votación cerrada. La convocatoria sigue activa.")}</Text> : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callUpStatusLabel(call, clock, historical))}</Text>
-      {admin && call.evaluation_at ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
+      <Body>{t('Finalización: {{v0}}', { v0: formatMatchDate(call.ends_at, call.timezone) })}</Body>
+      {admin && call.evaluation_at && historical ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
       {call.closes_at ? <Body>{t("Cierre de votación:")}{clubLocalDateTime(call.timezone, new Date(call.closes_at)).time} · {call.timezone}</Body> : null}
       {call.status !== 'cancelled' && votingDeadlinePassed(call, clock) ? <Body>{t("El plazo para votar ha terminado.")}</Body> : null}
       {call.last_notice_at ? <Body>{t("Último aviso para votar:")}{clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} {t("· solo pendientes")}</Body> : null}
