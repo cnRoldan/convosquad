@@ -1,0 +1,11 @@
+# Finalización y valoraciones
+
+La convocatoria tiene tres momentos independientes: inicio, cierre opcional de votación y finalización. En creación y edición se elige la hora de finalización (00:00 por defecto) en la zona horaria del club. Una hora anterior o igual al inicio corresponde al día siguiente. Los selectores no convierten la fecha del club a la zona del teléfono; se rechazan horas inexistentes por cambio de horario.
+
+La valoración está habilitada por defecto al crear. No tiene un campo horario: `evaluation_at` es `ends_at` si se habilita y `null` si se deshabilita. La base de datos impide adelantar la valoración al final. El aviso a capitanes utiliza la cola existente; su procesamiento sigue siendo cada minuto, por lo que la entrega push puede ser posterior a la hora de apertura.
+
+Cerrar votos mantiene la convocatoria activa y visible para sus miembros hasta `ends_at`. A partir de ese instante pasa al historial, se bloquean votos y cambios de la convocatoria y se habilitan las valoraciones. Esto se comprueba en servidor y cliente, sin depender de que Cron modifique el estado. `closed` sigue significando votación cerrada; no se añade otro estado ni un botón manual de finalizar.
+
+La migración `20261020000400_call_up_end_time.sql` conserva como finalización la hora de valoración que ya tenían las convocatorias existentes. Las que no tenían valoración finalizan a la siguiente medianoche local. No cambia respuestas ni notas guardadas. Las RPC antiguas siguen disponibles: su hora de valoración pasa a representar también su finalización. Los clientes nuevos utilizan las RPC `create_call_up_with_end` y `update_call_up_with_end`. La política RLS permite a miembros ver convocatorias con votación cerrada mientras sigan activas; los históricos continúan reservados a capitanes.
+
+Validación: pruebas SQL de creación/edición atómicas, permisos, transición después de medianoche, votos y notas antes/después del fin; pruebas unitarias de calendario, zonas y cambios de horario; pruebas de navegador para valores por defecto, desactivación de notas, edición y transición al historial. No se crean datos ni se envían notificaciones de prueba en producción. Las apps instaladas necesitan la próxima compilación para incorporar el formulario y el reloj de finalización.

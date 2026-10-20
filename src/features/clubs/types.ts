@@ -22,6 +22,7 @@ export type CallUp = {
   startsAt: string;
   status?: Enums<'call_up_status'>;
   closesAt?: string | null;
+  endsAt?: string | null;
   timezone: string;
   opponent: string;
   slots: number;

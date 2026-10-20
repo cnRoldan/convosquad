@@ -9,7 +9,8 @@ const snapshot = async (call,player) => (await db.query('select * from public.ca
 before(async()=>{
  db=await createTestDatabase();
  for(const [i,id] of [owner,member,outsider].entries()) await db.query('insert into auth.users(id,raw_user_meta_data) values($1,$2)',[id,{username:`AutoSync${i}`}]);
- club=await row(owner,"select * from public.create_club('Sync',null,'UTC')");
+ const zone=new Date().getUTCHours()<22?'UTC':'Pacific/Honolulu';
+ club=await row(owner,"select * from public.create_club('Sync',null,$1)",[zone]);
  await db.query('insert into public.club_members(club_id,user_id) values($1,$2)',[club.id,member]);
  original=await add(owner,'Original');
  await row(owner,'select * from public.link_player_account($1,$2)',[original.id,owner]);

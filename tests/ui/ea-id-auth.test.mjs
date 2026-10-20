@@ -72,7 +72,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
   let createdCall = null;
   const matchAt = new Date(Date.now() - 86400000).toISOString();
   const ratingCall = {id: '00000000-0000-4000-8000-000000000906', club_id: club.id, starts_at: matchAt, local_date: matchAt.slice(0,10),
-    timezone: 'UTC', status: 'closed', evaluation_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), closes_at: null};
+    timezone: 'UTC', status: 'closed', ends_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), evaluation_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), closes_at: null};
   const ratingPlayers = players.map((player,index) => ({id: `rated-${index}`, club_id: club.id, call_up_id: ratingCall.id, source_player_id: player.id,
     user_id: player.user_id, ea_id_snapshot: player.ea_id, category_snapshot: player.category, sort_order_snapshot: index,
     availability: ratingAvailability[index], responded_at: matchAt, auto_response: false}));
@@ -109,9 +109,9 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
-    if (endpoint === 'create_call_up_with_evaluation') {
+    if (endpoint === 'create_call_up_with_end') {
       createdCall = {id: 'new-call', club_id: club.id, starts_at: body.p_starts_at, local_date: body.p_starts_at.slice(0,10), timezone: club.timezone,
-        status: body.p_status, last_notice_at: body.p_last_notice_at ?? null, closes_at: body.p_closes_at ?? null, evaluation_at: body.p_evaluation_at ?? null};
+        status: body.p_status, last_notice_at: body.p_last_notice_at ?? null, closes_at: body.p_closes_at ?? null, ends_at: body.p_ends_at, evaluation_at: body.p_ratings_enabled ? body.p_ends_at : null};
       return route.fulfill({json: createdCall});
     }
     if (endpoint === 'set_rating_visibility') { assert.equal(clubRole,'admin'); club.ratings_visibility=body.p_visibility; return route.fulfill({json:null}); }
@@ -354,7 +354,7 @@ test('convocatoria mantiene inicio y cierre independientes, valida el último av
     assert.equal(await closing.inputValue(),'19:00');
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByText('El último aviso debe ser anterior a la hora de la convocatoria.',{exact:true}).waitFor();
-    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_evaluation'),false);
+    assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_end'),false);
     await closing.fill('20:45');
     await start.fill('22:15');
     assert.equal(await closing.inputValue(),'20:45');
@@ -363,7 +363,7 @@ test('convocatoria mantiene inicio y cierre independientes, valida el último av
     await f.page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await f.page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
     await f.page.waitForURL('**/call-up*');
-    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_evaluation');
+    const request=f.requests.find(r=>r.endpoint==='create_call_up_with_end');
     assert.equal(request.body.p_last_notice_at,'2035-06-01T18:45:00.000Z');
     assert.equal(request.body.p_status,'open');
     assert.equal(request.body.p_starts_at,'2035-06-01T22:15:00.000Z');
@@ -677,7 +677,7 @@ test('valoraciones: hora futura bloquea notas y jugadores no entran a la gestió
   try {
     await f.page.goto(`${origin}/home`);await f.page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
     await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).click();
-    await f.page.getByText('Las valoraciones se habilitan a la hora programada y se conservan durante tres meses.',{exact:true}).waitFor();
+    await f.page.getByText('Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.',{exact:true}).waitFor();
     assert.equal(await f.page.getByLabel('Valoración de EA-Player_9',{exact:true}).isDisabled(),true);
     assert.equal(f.requests.some(request=>request.endpoint==='save_player_ratings'),false);
   } finally {await f.close();}
@@ -754,17 +754,19 @@ test('valoraciones: conserva notas previas de no disponibles y bloquea añadir a
     assert.equal(future.requests.some(r=>r.endpoint==='save_player_ratings'),false);
   } finally {await future.close();}
 });
-test('crear convocatoria programa valoración tras medianoche usando la zona del club',async()=>{
+test('crear convocatoria programa finalización tras medianoche y activa las valoraciones por defecto',async()=>{
   const f=await fixture({clubRole:'admin'});
   try {
     const {page}=f;await page.goto(`${origin}/create-call-up`);
     await page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).fill('2038-01-10');
-    await page.getByRole('switch',{name:'Programar valoración de jugadores',exact:true}).click();
-    await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).fill('01:00');
+    assert.equal(await page.getByRole('switch',{name:'Habilitar valoración de jugadores',exact:true}).isChecked(),true);
+    assert.equal(await page.getByLabel('Hora de finalización (HH:mm)',{exact:true}).inputValue(),'00:00');
+    assert.equal(await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).count(),0);
+    await page.getByLabel('Hora de finalización (HH:mm)',{exact:true}).fill('01:00');
     await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
     await page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
     await page.waitForURL('**/call-up*');
-    assert.equal(f.requests.find(request=>request.endpoint==='create_call_up_with_evaluation').body.p_evaluation_at,'2038-01-11T01:00:00.000Z');
+    assert.equal(f.requests.find(request=>request.endpoint==='create_call_up_with_end').body.p_ends_at,'2038-01-11T01:00:00.000Z');
   } finally {await f.close();}
 });
 
@@ -928,8 +930,8 @@ test('fecha y hora usan controles específicos y el formulario expandido permite
   const {page}=f;await page.goto(`${origin}/create-call-up`);
   assert.equal(await page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).getAttribute('type'),'date');
   assert.equal(await page.getByLabel('Hora de convocatoria (HH:mm)',{exact:true}).getAttribute('type'),'time');
-  await page.getByLabel('Programar valoración de jugadores',{exact:true}).click();
-  await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).fill('23:50');
+  await page.getByLabel('Habilitar valoración de jugadores',{exact:true}).click();
+  await page.getByLabel('Hora de finalización (HH:mm)',{exact:true}).fill('23:50');
   await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).scrollIntoViewIfNeeded();
   assert.ok(await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).isVisible());
  } finally {await f.close();}
@@ -1009,4 +1011,22 @@ test('solicitudes: jugador no muestra pendientes de otros y al tocar push solo c
    assert.equal(f.requests.some(r=>r.endpoint==='review_join_request'),false);
   }finally{await f.close();}
  }
+});
+
+
+test('desactivar valoraciones conserva la finalización y no envía una hora de valoración',async()=>{
+ const f=await fixture({clubRole:'admin'});
+ try {
+  const {page}=f;await page.goto(`${origin}/create-call-up`);
+  await page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).fill('2038-01-12');
+  await page.getByRole('switch',{name:'Habilitar valoración de jugadores',exact:true}).click();
+  assert.equal(await page.getByLabel('Hora de finalización (HH:mm)',{exact:true}).inputValue(),'00:00');
+  await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();
+  await page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();
+  await page.waitForURL('**/call-up*');
+  const request=f.requests.find(r=>r.endpoint==='create_call_up_with_end');
+  assert.equal(request.body.p_ends_at,'2038-01-13T00:00:00.000Z');
+  assert.equal(request.body.p_ratings_enabled,false);
+  assert.ok(!('p_evaluation_at' in request.body));
+ } finally {await f.close();}
 });

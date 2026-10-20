@@ -37,7 +37,7 @@ export default function HomeScreen() {
         {upcomingCallUp ? <>
           <Body>{upcomingCallUp.title}</Body>
           <Body>{formatMatchDate(upcomingCallUp.startsAt, upcomingCallUp.timezone)} · {upcomingCallUp.timezone}</Body>
-          <Body>{t(callUpStatusLabel({ status: upcomingCallUp.status ?? 'open', closes_at: upcomingCallUp.closesAt ?? null,
+          <Body>{t(callUpStatusLabel({ status: upcomingCallUp.status ?? 'open', closes_at: upcomingCallUp.closesAt ?? null, ends_at: upcomingCallUp.endsAt ?? null,
             local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date, timezone: upcomingCallUp.timezone }, clock))}</Body>
           <Button label={t("Ver convocatoria")} onPress={() => router.navigate({ pathname: '/call-up', params: { id: upcomingCallUp.id } })} />
         </> : !rosterLoading && !rosterError ? <Body>{t("Todavía no hay convocatorias.")}</Body> : null}

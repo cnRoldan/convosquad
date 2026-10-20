@@ -734,5 +734,14 @@
   "Cerrar votación": "Clore les votes",
   "Abrir votación": "Ouvrir les votes",
   "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "État : {{v0}}. Clore les votes laisse la convocation active ; l’annuler la supprime du programme.",
-  "La votación está cerrada. No puedes modificar tu voto.": "Les votes sont clos. Tu ne peux plus modifier ta réponse."
+  "La votación está cerrada. No puedes modificar tu voto.": "Les votes sont clos. Tu ne peux plus modifier ta réponse.",
+  "Finalización: {{v0}}": "Fin : {{v0}}",
+  "Finalización: {{v0}}. ": "Fin : {{v0}}. ",
+  "Habilitar valoración de jugadores": "Activer les évaluations des joueurs",
+  "Hora de finalización (HH:mm)": "Heure de fin (HH:mm)",
+  "Hora del club. Si es anterior o igual al inicio, se usará el día siguiente. A esa hora la convocatoria pasará al historial.": "Heure du club. Si elle précède le début ou lui est égale, le jour suivant sera utilisé. La convocation passera alors dans l’historique.",
+  "La convocatoria ha finalizado. Consulta el historial para verla o valorar a sus jugadores.": "La convocation est terminée. Consultez l’historique pour la voir ou évaluer ses joueurs.",
+  "Las valoraciones se abrirán al finalizar la convocatoria. ": "Les évaluations seront ouvertes à la fin de la convocation. ",
+  "Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.": "Les évaluations seront ouvertes à la fin de la convocation. Les capitaines seront alors avertis.",
+  "Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.": "Les évaluations sont disponibles à la fin de la convocation et conservées pendant trois mois."
 }

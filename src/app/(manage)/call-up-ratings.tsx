@@ -48,7 +48,7 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
   })));
   const [clock, setClock] = useState(Date.now); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
-  const available = call.evaluation_at && Date.parse(call.evaluation_at) <= clock && Date.parse(call.starts_at) <= clock
+  const available = call.evaluation_at && Date.parse(call.evaluation_at) <= clock && Date.parse(call.ends_at) <= clock && Date.parse(call.starts_at) <= clock
     && Date.parse(call.starts_at) >= ratingCutoff(clock) && (call.status === 'closed' || call.status === 'open');
   const changes: RatingChange[] = visiblePlayers.flatMap(player => {
     const previous = ratings.find(rating => rating.call_up_player_id === player.id);
@@ -70,8 +70,8 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
     <Body>{t(ratingVisibilityMessage(ratingVisibility(activeClub?.ratingsVisibility)))}</Body>
     <Body>{t('Puntúa de 0 a 10. «No convocado» no cuenta como un cero ni entra en la media.')}</Body>
     <Body>{t('Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.')}</Body>
-    {call.evaluation_at ? <Body>{t('Hora de valoración: {{v0}}', { v0: formatMatchDate(call.evaluation_at, call.timezone) })}</Body> : null}
-    {!available ? <Message>{t('Las valoraciones se habilitan a la hora programada y se conservan durante tres meses.')}</Message> : null}
+    {call.evaluation_at ? <Body>{t('Finalización: {{v0}}', { v0: formatMatchDate(call.ends_at, call.timezone) })}</Body> : null}
+    {!available ? <Message>{t('Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.')}</Message> : null}
     {notice ? <Message>{t("Valoraciones guardadas.")}</Message> : null}
     {message ? <Message error>{message}</Message> : null}
     {visiblePlayers.map(player => <Card key={player.id} title={player.ea_id_snapshot}>

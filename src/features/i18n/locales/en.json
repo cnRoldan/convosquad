@@ -734,5 +734,14 @@
   "Cerrar votación": "Close voting",
   "Abrir votación": "Open voting",
   "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "Status: {{v0}}. Closing voting keeps the call-up active; cancelling it calls it off.",
-  "La votación está cerrada. No puedes modificar tu voto.": "Voting is closed. You cannot change your response."
+  "La votación está cerrada. No puedes modificar tu voto.": "Voting is closed. You cannot change your response.",
+  "Finalización: {{v0}}": "Ends: {{v0}}",
+  "Finalización: {{v0}}. ": "Ends: {{v0}}. ",
+  "Habilitar valoración de jugadores": "Enable player ratings",
+  "Hora de finalización (HH:mm)": "End time (HH:mm)",
+  "Hora del club. Si es anterior o igual al inicio, se usará el día siguiente. A esa hora la convocatoria pasará al historial.": "Club time. If this is at or before the start, the following day is used. The call-up moves to history at this time.",
+  "La convocatoria ha finalizado. Consulta el historial para verla o valorar a sus jugadores.": "The call-up has ended. Open history to view it or rate its players.",
+  "Las valoraciones se abrirán al finalizar la convocatoria. ": "Ratings open when the call-up ends. ",
+  "Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.": "Ratings open when the call-up ends. Captains will be notified then.",
+  "Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.": "Ratings become available when the call-up ends and are kept for three months."
 }

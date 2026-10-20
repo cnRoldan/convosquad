@@ -9,7 +9,6 @@ import { useAuth } from '@/features/auth/auth-context';
 import { listClubMembers, listMyClubs, listMyMemberships } from './service';
 import { listPlayers } from '@/features/players/service';
 import { listCurrentCallUps, listCallUpPlayers } from '@/features/call-ups/service';
-import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { getMyProfile } from '@/features/profiles/service';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { useResource } from '@/hooks/use-resource';
@@ -91,22 +90,33 @@ export function ClubProvider({ children }: PropsWithChildren) {
   const selectedId = selection.scope === scope ? selection.id : null;
   const activeClub = availableClubs.find((club) => club.id === selectedId) ?? null;
   const clubId = activeClub?.id;
-  const loadRoster = useCallback(async (): Promise<{ roster: RosterPlayer[]; callUp: CallUp | null; hasCurrentCallUp: boolean }> => {
+  const loadRoster = useCallback(async (): Promise<{ roster: RosterPlayer[]; callUp: CallUp | null; hasCurrentCallUp: boolean; expiresAt?: string }> => {
     if (!clubId) return { roster: [], callUp: null, hasCurrentCallUp: false };
-    const [playerRows, memberRows, callUpRows] = await Promise.all([listPlayers(clubId), listClubMembers(clubId), listCurrentCallUps(clubId, clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date)]);
+    const [playerRows, memberRows, callUpRows] = await Promise.all([listPlayers(clubId), listClubMembers(clubId), listCurrentCallUps(clubId)]);
     const next = callUpRows.find((callUp) => callUp.status === 'open' || callUp.status === 'closed');
     const responses = next ? await listCallUpPlayers(next.id) : [];
     return {
       hasCurrentCallUp: callUpRows.length > 0,
+      ...(callUpRows.length ? { expiresAt: callUpRows.map(call => call.ends_at).sort()[0]! } : {}),
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
         displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
         role: memberRows.find((member) => member.user_id === player.user_id)?.role ?? null })),
-      callUp: next ? { id: next.id, clubId: next.club_id, title: t("Convocatoria del club"), startsAt: next.starts_at, status: next.status, closesAt: next.closes_at,
+      callUp: next ? { id: next.id, clubId: next.club_id, title: t("Convocatoria del club"), startsAt: next.starts_at, status: next.status, closesAt: next.closes_at, endsAt: next.ends_at,
         timezone: next.timezone, opponent: t("Por confirmar"), slots: responses.length,
         responses: responses.map((entry) => ({ id: entry.id, displayName: entry.ea_id_snapshot, status: entry.availability, category: entry.category_snapshot, sortOrder: entry.sort_order_snapshot })) } : null,
     };
-  }, [clubId, activeClub?.timezone]);
+  }, [clubId]);
   const data = useResource(`roster:${userId}:${clubId}`, loadRoster, Boolean(userId && clubId && !isDemo && !isRecovery));
+
+  const expiresAt = data.data?.expiresAt;
+  const { reload: reloadRoster } = data;
+  useEffect(() => {
+    if (!expiresAt || isDemo) return;
+    const delay = Date.parse(expiresAt) - Date.now();
+    if (delay < 0) { reloadRoster(); return; }
+    const timer = setTimeout(reloadRoster, Math.min(delay + 50, 2_147_483_000));
+    return () => clearTimeout(timer);
+  }, [expiresAt, isDemo, reloadRoster]);
 
   function selectClub(id: string) {
     if (!ownMemberships.some((member) => member.clubId === id)) return;
