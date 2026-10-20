@@ -18,3 +18,9 @@ export async function reviewJoinRequest(requestId: string, approve: boolean, pla
 export async function listMyJoinRequests(userId: string) {
   return unwrap(await requireSupabase().from('join_requests').select('*').eq('user_id', userId).order('created_at', { ascending: false }));
 }
+
+export async function listIncomingJoinRequests(clubIds: string[]) {
+  if (!clubIds.length) return [];
+  return unwrap(await requireSupabase().from('join_requests').select('*, profiles!join_requests_user_id_fkey(username)')
+    .in('club_id', clubIds).eq('status', 'pending').order('created_at'));
+}

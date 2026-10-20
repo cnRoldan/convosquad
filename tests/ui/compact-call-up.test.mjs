@@ -199,7 +199,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'call_up_contacts') { assert.equal(role, 'admin'); data.privateReads++; result = privateContacts; }
     else if (endpoint === 'club_trial_notes') { assert.equal(role, 'admin'); result = []; }
     else if (endpoint === 'club_trial_contacts') { assert.equal(role, 'admin'); assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); result = []; }
-    else if (endpoint === 'club_trials' || endpoint === 'notification_preferences') result = [];
+    else if (endpoint === 'club_trials' || endpoint === 'notification_preferences' || endpoint === 'join_requests') result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     await route.fulfill({ json: result });
     if (data.snapshotReads >= (status === 'open' ? 3 : 2)) initialReloadComplete();
@@ -208,6 +208,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     players[index].availability = availability;
     for (const channel of channels) {
       const binding = channel.bindings.find(binding => binding.table === 'call_up_players' && binding.event === 'UPDATE');
+      if (!binding) continue;
       channel.send('postgres_changes', { ids: [binding.id], data: { schema: 'public', table: 'call_up_players', type: 'UPDATE', columns: [], record: players[index], old_record: {}, commit_timestamp: new Date().toISOString() } });
     }
   }

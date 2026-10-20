@@ -91,3 +91,12 @@ test('admisión abre el club sin permitir votos y rechaza payloads sin cuenta o 
  assert.equal(readPushIntent({type:'club_approved',clubId}),null);
  assert.equal(readPushIntent({...payload,response:{availability:'available',userId,actionId:'fake'}}),null);
 });
+
+test('solicitud a capitanes valida cuenta y club, persiste intención y solo acepta abrir sin acciones de voto',()=>{
+ const payload={type:'club_join_request',clubId,userId};
+ const intent=readNotificationResponse(payload,'default','join-1','default');
+ assert.deepEqual(intent,{clubId,callUpId:'',joinRequest:true,userId});
+ assert.deepEqual(readPushIntent(JSON.parse(JSON.stringify({type:'club_join_request',...intent}))),intent);
+ for(const action of notificationActions)assert.equal(readNotificationResponse(payload,action.identifier,'join-1','default'),null);
+ for(const bad of [{...payload,userId:'invalid'},{...payload,clubId:'invalid'},{type:'club_join_request',clubId},{...payload,response:{availability:'available',userId,actionId:'fake'}}])assert.equal(readPushIntent(bad),null);
+});

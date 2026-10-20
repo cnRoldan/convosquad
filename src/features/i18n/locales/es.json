@@ -717,5 +717,13 @@
   "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Elige a un jugador que participó a última hora. Su voto no se modificará.",
   "Jugador que añadir a la valoración": "Jugador que añadir a la valoración",
   "Selecciona un jugador": "Selecciona un jugador",
-  "Añadir a la valoración": "Añadir a la valoración"
+  "Añadir a la valoración": "Añadir a la valoración",
+  "Mis solicitudes, {{v0}} pendientes de revisión": "Mis solicitudes, {{v0}} pendientes de revisión",
+  "No se pudieron actualizar las solicitudes.": "No se pudieron actualizar las solicitudes.",
+  "Gestiona las solicitudes de tus clubes y consulta las que has enviado.": "Gestiona las solicitudes de tus clubes y consulta las que has enviado.",
+  "Solicitudes para mis clubes": "Solicitudes para mis clubes",
+  "Solicitudes que he enviado": "Solicitudes que he enviado",
+  "Nueva solicitud de acceso": "Nueva solicitud de acceso",
+  "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.",
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "Ya no tienes permisos para revisar las solicitudes de este club."
 }
