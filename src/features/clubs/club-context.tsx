@@ -23,6 +23,7 @@ type ClubContextValue = {
   currentMembership: Membership | null;
   roster: RosterPlayer[];
   upcomingCallUp: CallUp | null;
+  hasCurrentCallUp: boolean;
   isLoading: boolean;
   error: string | null;
   rosterLoading: boolean;
@@ -90,12 +91,13 @@ export function ClubProvider({ children }: PropsWithChildren) {
   const selectedId = selection.scope === scope ? selection.id : null;
   const activeClub = availableClubs.find((club) => club.id === selectedId) ?? null;
   const clubId = activeClub?.id;
-  const loadRoster = useCallback(async (): Promise<{ roster: RosterPlayer[]; callUp: CallUp | null }> => {
-    if (!clubId) return { roster: [], callUp: null };
+  const loadRoster = useCallback(async (): Promise<{ roster: RosterPlayer[]; callUp: CallUp | null; hasCurrentCallUp: boolean }> => {
+    if (!clubId) return { roster: [], callUp: null, hasCurrentCallUp: false };
     const [playerRows, memberRows, callUpRows] = await Promise.all([listPlayers(clubId), listClubMembers(clubId), listCurrentCallUps(clubId, clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date)]);
     const next = callUpRows.find((callUp) => callUp.status === 'open');
     const responses = next ? await listCallUpPlayers(next.id) : [];
     return {
+      hasCurrentCallUp: callUpRows.length > 0,
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
         displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
         role: memberRows.find((member) => member.user_id === player.user_id)?.role ?? null })),
@@ -127,6 +129,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
     currentMembership: ownMemberships.find((member) => member.clubId === selectedId) ?? null,
     roster: isDemo ? players.filter((player) => player.clubId === selectedId) : data.data?.roster ?? [],
     upcomingCallUp: isDemo ? callUps.find((callUp) => callUp.clubId === selectedId) ?? null : data.data?.callUp ?? null,
+    hasCurrentCallUp: isDemo ? callUps.some(callUp => callUp.clubId === selectedId) : data.data?.hasCurrentCallUp ?? false,
     isLoading: authLoading || (!isDemo && Boolean(userId) && !isRecovery && liveClubs?.userId !== userId),
     error: !isDemo && userId && liveClubs?.userId === userId ? liveClubs.error : null,
     rosterLoading: data.isLoading, rosterVersion: data.version, rosterError: data.error, refreshRoster: data.reload,

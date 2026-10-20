@@ -451,8 +451,8 @@ test('consulta histórica es de solo lectura y vuelve a la convocatoria actual s
     assert.equal(await page.getByTestId('availability-actions').count(), 0);
     assert.equal(f.data.writes, 0);
     await page.getByRole('button', {name: 'Volver a la convocatoria actual', exact: true}).click();
-    await page.getByRole('button', {name: 'Crear convocatoria', exact: true}).waitFor();
     await page.getByText('Administrar convocatoria', {exact: true}).waitFor();
+    assert.equal(await page.getByRole('button', {name: 'Crear convocatoria', exact: true}).count(), 0);
     assert.equal(new URL(page.url()).searchParams.has('id'), false);
     assert.equal(new URL(page.url()).searchParams.has('history'), false);
     assert.equal(await page.getByRole('button', {name: 'Volver a la convocatoria actual', exact: true}).count(), 0);
@@ -737,6 +737,13 @@ test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilita
         if(options.role==='player') await page.screenshot({path:'test-results/closed-voting-panel.png'});
       }
       assert.equal(f.data.writes,0);
+      if(options.role==='admin') {
+        assert.equal(await page.getByRole('button',{name:'Crear convocatoria',exact:true}).count(),0);
+        await page.getByText('Inicio',{exact:true}).click();
+        await page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();
+        await page.getByText('Cargando datos del vestuario…',{exact:true}).waitFor({state:'hidden'});
+        assert.equal(await page.getByRole('button',{name:'Crear convocatoria',exact:true}).count(),0);
+      }
     } finally {await f.close();}
   }
 });

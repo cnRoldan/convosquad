@@ -134,7 +134,7 @@ export default function CallUpScreen() {
     </View> : null}
     <Heading title={historical ? t("Convocatoria histórica") : t("Convocatoria")} subtitle={activeClub?.name ?? ''} />
     {!historical ? <View style={styles.toolbar}>
-      {admin ? <Pressable accessibilityRole="button" accessibilityLabel={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} style={styles.create}>
+      {admin && !call && availableCalls?.length === 0 && !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <Pressable accessibilityRole="button" accessibilityLabel={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} style={styles.create}>
         <Text style={styles.createLabel}>{t("Crear convocatoria")}</Text>
       </Pressable> : null}
       {admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : null}
