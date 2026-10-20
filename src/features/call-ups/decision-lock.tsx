@@ -11,8 +11,8 @@ import { colors } from '@/theme';
 import { availabilityLabels } from './availability';
 import type { Availability } from './list-model';
 
-export function DecisionLock({ clubId, entryId, availability, canEnable, pendingVote, revision, finished = false }: {
-  finished?: boolean; clubId: string; entryId: string | undefined; availability: Availability; canEnable: boolean; pendingVote: boolean; revision: string;
+export function DecisionLock({ clubId, entryId, availability, canEnable, pendingVote, revision, votingClosed = false }: {
+  votingClosed?: boolean; clubId: string; entryId: string | undefined; availability: Availability; canEnable: boolean; pendingVote: boolean; revision: string;
 }) {
   useLanguage();
   const { session, isDemo } = useAuth();
@@ -38,7 +38,7 @@ export function DecisionLock({ clubId, entryId, availability, canEnable, pending
     } catch (cause) { setError(backendErrorMessage(cause)); }
     finally { setBusy(false); }
   }
-  if (isDemo || ((!entryId || (finished && !canEnable)) && !locked && !result.error)) return null;
+  if (isDemo || ((!entryId || (votingClosed && !canEnable)) && !locked && !result.error)) return null;
   return <View style={{ gap: 6 }}>
     <Pressable accessibilityRole="switch" accessibilityLabel={t('Mantener decisión')}
       {...(Platform.OS === 'web' ? { 'aria-checked': locked } : {})} accessibilityState={{ checked: locked, disabled }} disabled={disabled} onPress={() => { void toggle(); }}

@@ -725,5 +725,14 @@
   "Solicitudes que he enviado": "Solicitudes que he enviado",
   "Nueva solicitud de acceso": "Nueva solicitud de acceso",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.",
-  "Ya no tienes permisos para revisar las solicitudes de este club.": "Ya no tienes permisos para revisar las solicitudes de este club."
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "Ya no tienes permisos para revisar las solicitudes de este club.",
+  "Activa · Votación abierta": "Activa · Votación abierta",
+  "Activa · Votación cerrada": "Activa · Votación cerrada",
+  "Finalizada": "Finalizada",
+  "Convocatoria finalizada.": "Convocatoria finalizada.",
+  "Votación cerrada. La convocatoria sigue activa.": "Votación cerrada. La convocatoria sigue activa.",
+  "Cerrar votación": "Cerrar votación",
+  "Abrir votación": "Abrir votación",
+  "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.",
+  "La votación está cerrada. No puedes modificar tu voto.": "La votación está cerrada. No puedes modificar tu voto."
 }

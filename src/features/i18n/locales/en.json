@@ -725,5 +725,14 @@
   "Solicitudes que he enviado": "Requests I have sent",
   "Nueva solicitud de acceso": "New join request",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "This notification belongs to another account. Sign in with the intended account.",
-  "Ya no tienes permisos para revisar las solicitudes de este club.": "You no longer have permission to review requests for this club."
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "You no longer have permission to review requests for this club.",
+  "Activa · Votación abierta": "Active · Voting open",
+  "Activa · Votación cerrada": "Active · Voting closed",
+  "Finalizada": "Finished",
+  "Convocatoria finalizada.": "This call-up has ended.",
+  "Votación cerrada. La convocatoria sigue activa.": "Voting is closed. This call-up is still active.",
+  "Cerrar votación": "Close voting",
+  "Abrir votación": "Open voting",
+  "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "Status: {{v0}}. Closing voting keeps the call-up active; cancelling it calls it off.",
+  "La votación está cerrada. No puedes modificar tu voto.": "Voting is closed. You cannot change your response."
 }

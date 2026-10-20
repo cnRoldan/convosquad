@@ -329,7 +329,7 @@ test('administración con margen y actualización explícita de categorías sin 
   const f = await fixture({ role: 'admin' }); const { page } = f;
   try {
     await page.getByRole('button', { name: 'Administrar convocatoria', exact: true }).click();
-    const state = await page.getByText(/^Estado: Abierta\./).boundingBox();
+    const state = await page.getByText(/^Estado: Activa · Votación abierta\./).boundingBox();
     const edit = await page.getByRole('button', { name: 'Modificar fecha y hora', exact: true }).boundingBox();
     assert.ok(edit.y - state.y - state.height >= 10, 'actions need space above the buttons');
     await page.getByRole('button', { name: 'Actualizar plantilla de convocatoria', exact: true }).click();
@@ -593,7 +593,7 @@ test('cierre de votación mantiene las acciones deshabilitadas al vencer sin esp
     await f.page.clock.fastForward(61000);
     await f.page.getByText('El plazo para votar ha terminado.',{exact:true}).waitFor();
     assert.equal(await button.getAttribute('aria-disabled'),'true');
-    await f.page.getByText('Convocatoria finalizada. Espera a la siguiente.',{exact:true}).waitFor();
+    await f.page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
     assert.equal(f.data.writes,0);
   }finally{await f.close();}
 });
@@ -637,14 +637,14 @@ test('mensajes de voto y cierre siguen el idioma actual sin repetir acciones', a
     await page.getByText(catalogs.en[responseKey].replace('{{v0}}',catalogs.en.Disponible), {exact: true}).waitFor();
     await change('de', 'Deutsch');
     await page.getByRole('button', {name: de['Administrar convocatoria'], exact: true}).click();
-    await page.getByRole('button', {name: de['Cerrar convocatoria'], exact: true}).click();
-    await page.getByRole('button', {name: de['Cerrar convocatoria'], exact: true}).last().click();
+    await page.getByRole('button', {name: de['Cerrar votación'], exact: true}).click();
+    await page.getByRole('button', {name: de['Cerrar votación'], exact: true}).last().click();
     await page.getByText(de[noticeKey], {exact: true}).waitFor();
     for (const [next,name] of [['es','Español'],['fr','Français'],['en','English'],['de','Deutsch'],['es','Español']]) {
       await change(next,name);
       await page.getByText(catalogs[next][noticeKey], {exact: true}).waitFor();
       await page.getByText(catalogs[next][responseKey].replace('{{v0}}',catalogs[next].Disponible), {exact: true}).waitFor();
-      await page.getByText(catalogs[next]['Convocatoria finalizada. Espera a la siguiente.'],{exact:true}).waitFor();
+      await page.getByText(catalogs[next]['Votación cerrada. La convocatoria sigue activa.'],{exact:true}).waitFor();
       assert.equal(await page.getByTestId('availability-actions').getByRole('button',{disabled:true}).count(),3);
     }
     assert.equal(f.data.writes,1);
@@ -671,9 +671,9 @@ test('mantener decisión: hay que votar, el candado se guarda y puede quitarse c
     assert.equal(f.data.decisionWrites,1);
     await page.getByText('Se mantendrá «No disponible» en las próximas convocatorias de este club hasta que lo desactives.',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
-    await page.getByRole('button',{name:'Cerrar convocatoria',exact:true}).click();
-    await page.getByRole('button',{name:'Cerrar convocatoria',exact:true}).last().click();
-    await page.getByText('Convocatoria finalizada. Espera a la siguiente.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Cerrar votación',exact:true}).click();
+    await page.getByRole('button',{name:'Cerrar votación',exact:true}).last().click();
+    await page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:true,disabled:false}).click();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:false}).waitFor();
     assert.equal(f.data.writes,1);assert.equal(f.data.updates,1);
@@ -724,7 +724,7 @@ test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilita
     const f=await fixture(options);
     try {
       const {page}=f;
-      await page.getByText('Convocatoria finalizada. Espera a la siguiente.',{exact:true}).waitFor();
+      await page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
       assert.equal(await page.getByText('Vota primero para mantener tu decisión.',{exact:true}).count(),0);
       const panel=page.getByTestId('availability-actions');
       if(options.linked===false) assert.equal(await panel.count(),0);
@@ -743,6 +743,11 @@ test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilita
         await page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();
         await page.getByText('Cargando datos del vestuario…',{exact:true}).waitFor({state:'hidden'});
         assert.equal(await page.getByRole('button',{name:'Crear convocatoria',exact:true}).count(),0);
+        await page.getByText('Activa · Votación cerrada',{exact:true}).waitFor();
+        assert.equal(await page.getByText('Todavía no hay convocatorias.',{exact:true}).count(),0);
+        await page.screenshot({path:'test-results/active-closed-home.png',fullPage:true});
+        await page.getByRole('button',{name:'Ver convocatoria',exact:true}).click();
+        await page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
       }
     } finally {await f.close();}
   }

@@ -53,7 +53,7 @@ function CallUpNotificationScreen() {
     <Heading title={t("Aviso de convocatoria")} />
     {result ? <><Message error={result.error}>{result.text}</Message><Button label={t("Abrir convocatoria")} onPress={() => { if (clubId && callUpId) { selectClub(clubId); clearPush(); router.replace({ pathname: '/call-up', params: { id: callUpId } }); } }} /></>
       : wrongAccount ? <Message error>{t("Este aviso pertenece a otra cuenta. Abre la convocatoria con tu cuenta para responder.")}</Message>
-      : closed ? <Message>{t("Esta convocatoria está cerrada. No puedes modificar tu voto.")}</Message>
+      : closed ? <Message>{t("La votación está cerrada. No puedes modificar tu voto.")}</Message>
       : response && destination === 'call-up' ? <Body>{t("Guardando tu respuesta…")}</Body>
       : destination === 'login' ? <><Body>{t("Inicia sesión para comprobar el club y continuar.")}</Body><Button label={t("Iniciar sesión y continuar")} onPress={login} /></>
       : isRecovery ? <><Message>{t("Completa la recuperación de tu cuenta antes de continuar.")}</Message><Button label={t("Continuar recuperación")} onPress={login} /></>

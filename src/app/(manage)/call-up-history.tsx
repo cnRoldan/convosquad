@@ -5,7 +5,7 @@ import { Body, Button, Card, DemoNotice, Heading, Message, Screen } from '@/comp
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { listCallUpHistory } from '@/features/call-ups/service';
-import { callStatusLabels } from '@/features/call-ups/availability';
+import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
@@ -24,7 +24,7 @@ export default function CallUpHistoryScreen() {
     {result.isLoading ? <Body>{t("Cargando historial…")}</Body> : null}
     {result.error ? <Message error>{result.error}</Message> : null}
     {result.data?.map(call => <Card key={call.id} title={formatMatchDate(call.starts_at, call.timezone)}>
-      <Body>{t(callStatusLabels[call.status])}</Body>
+      <Body>{t(callUpStatusLabel(call, undefined, true))}</Body>
       <Button secondary label={t("Consultar convocatoria del {{v0}}", { v0: call.local_date })} onPress={() => router.push({ pathname: '/call-up', params: { id: call.id, history: '1' } })} />
     </Card>)}
     {result.data?.length === 0 ? <Body>{t("No hay convocatorias de días anteriores.")}</Body> : null}
