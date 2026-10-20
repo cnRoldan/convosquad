@@ -743,7 +743,7 @@ export type Database = {
         Row: {
           id: string;
           club_id: string;
-          call_up_id: string;
+          call_up_id: string | null;
           event_key: string;
           kind: string;
           created_at: string;
@@ -755,11 +755,14 @@ export type Database = {
           vote_availability: Database['public']['Enums']['availability_status'] | null;
           call_status_version: number | null;
           evaluation_at: string | null;
+          admission_request_id: string | null;
+          recipient_user_id: string | null;
+          club_name_snapshot: string | null;
         };
         Insert: {
           id?: string;
           club_id: string;
-          call_up_id: string;
+          call_up_id?: string | null;
           event_key: string;
           kind: string;
           created_at?: string;
@@ -771,11 +774,14 @@ export type Database = {
           vote_availability?: Database['public']['Enums']['availability_status'] | null;
           call_status_version?: number | null;
           evaluation_at?: string | null;
+          admission_request_id?: string | null;
+          recipient_user_id?: string | null;
+          club_name_snapshot?: string | null;
         };
         Update: {
           id?: string;
           club_id?: string;
-          call_up_id?: string;
+          call_up_id?: string | null;
           event_key?: string;
           kind?: string;
           created_at?: string;
@@ -787,10 +793,15 @@ export type Database = {
           vote_availability?: Database['public']['Enums']['availability_status'] | null;
           call_status_version?: number | null;
           evaluation_at?: string | null;
+          admission_request_id?: string | null;
+          recipient_user_id?: string | null;
+          club_name_snapshot?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'push_events_actor_user_id_fkey'; columns: ["actor_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'push_events_admission_request_id_fkey'; columns: ["admission_request_id"]; isOneToOne: false; referencedRelation: 'join_requests'; referencedColumns: ["id"]; },
           { foreignKeyName: 'push_events_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
+          { foreignKeyName: 'push_events_recipient_user_id_fkey'; columns: ["recipient_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
     };

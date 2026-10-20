@@ -21,7 +21,7 @@ export function PendingPushProvider({ children }: PropsWithChildren) {
   }, [changed]);
   const rememberPush = useCallback((intent: PushIntent) => {
     setChanged(true); setPendingPush(intent);
-    if (Platform.OS !== 'web') void AsyncStorage.setItem(key, JSON.stringify({ type: 'call_up', ...intent })).catch(() => undefined);
+    if (Platform.OS !== 'web') void AsyncStorage.setItem(key, JSON.stringify({ type: intent.membership ? 'club_approved' : 'call_up', ...intent })).catch(() => undefined);
   }, []);
   const clearPush = useCallback(() => {
     setChanged(true); setPendingPush(null);

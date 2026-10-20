@@ -842,3 +842,19 @@ test('fecha y hora usan controles específicos y el formulario expandido permite
   assert.ok(await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).isVisible());
  } finally {await f.close();}
 });
+
+test('aviso de admisión actualiza clubes y abre el admitido; otra cuenta o club revocado no entra',async()=>{
+ const user='00000000-0000-4000-8000-000000000901';
+ const club='00000000-0000-4000-8000-000000000903';
+ for(const mode of ['accepted','other-account','revoked']) {
+  const f=await fixture({clubRole:'player'});
+  try {
+   const targetClub=mode==='revoked'?'00000000-0000-4000-8000-000000000999':club;
+   const targetUser=mode==='other-account'?'00000000-0000-4000-8000-000000000998':user;
+   await f.page.goto(`${origin}/notification?admission=1&club=${targetClub}&user=${targetUser}`);
+   if(mode==='accepted') {await f.page.waitForURL('**/home');await f.page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();}
+   else await f.page.getByText(mode==='other-account'?'Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.':'No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.',{exact:true}).waitFor();
+   assert.equal(f.requests.some(r=>r.endpoint==='respond_to_call_up'),false);
+  } finally {await f.close();}
+ }
+});

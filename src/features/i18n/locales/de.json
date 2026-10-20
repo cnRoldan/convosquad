@@ -707,5 +707,9 @@
   "Políticas de los proveedores": "Datenschutzinformationen der Anbieter",
   "Volver": "Zurück",
   "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.": "Ein aktiver Spieler hat bereits diese EA-ID oder das verknüpfte Konto wird verwendet. Prüfe den Kader.",
-  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Diesen Spieler wieder aufnehmen? EA-ID, Rückennummer, Kategorie und verknüpftes Konto bleiben erhalten. Er kehrt ans Ende seiner Kategorie zurück und wird auch in offene Aufstellungen aufgenommen."
+  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Diesen Spieler wieder aufnehmen? EA-ID, Rückennummer, Kategorie und verknüpftes Konto bleiben erhalten. Er kehrt ans Ende seiner Kategorie zurück und wird auch in offene Aufstellungen aufgenommen.",
+  "Solicitud aceptada": "Anfrage angenommen",
+  "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.": "Diese Benachrichtigung gehört zu einem anderen Konto. Melde dich mit dem aufgenommenen Konto an.",
+  "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.": "Der Vereinszugriff konnte nicht überprüft werden. Aktualisiere deine Vereine oder frage einen Kapitän.",
+  "Comprobando acceso al club…": "Vereinszugriff wird geprüft…"
 }

@@ -28,7 +28,7 @@ test('añadir prueba crea anotación y prueba persistente sin dorsal, ficha ni c
   assert.equal((await db.query('select count(*)::int as n from public.players')).rows[0].n, 0);
   assert.equal((await db.query('select count(*)::int as n from public.call_up_players')).rows[0].n, 0);
   assert.equal((await db.query('select count(*)::int as n from auth.users')).rows[0].n, 3);
-  assert.equal((await db.query('select count(*)::int as n from public.push_events')).rows[0].n, 1);
+  assert.equal((await db.query('select count(*)::int as n from public.push_events where call_up_id=$1',[call.id])).rows[0].n, 1);
 });
 
 test('jugadores, otros clubes y anónimos no pueden añadir pruebas ni escribir fotografías', async () => {
