@@ -59,9 +59,10 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
     <View style={filter !== 'all' ? styles.hidden : undefined}>
       <CompactPanel title={t("PRUEBAS ({{v0}})", { v0: trials.length })} expanded={expandedPanels.has('trials')} onToggle={() => toggle('trials')} subtle>
         {trials.map(trial => <View key={trial.id} style={styles.trial}>
-          <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
-          {showTrialNotes && trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
-          {trialActions?.(trial)}
+          {trialActions ? trialActions(trial) : <>
+            <Text style={styles.name}>{trial.ea_id_snapshot}</Text>
+            {showTrialNotes && trial.notes_snapshot ? <Text style={styles.meta}>{trial.notes_snapshot}</Text> : null}
+          </>}
         </View>)}
         {!trials.length ? <Text style={styles.empty}>{t("No se incluyeron pruebas.")}</Text> : null}
         {trialEditor}
