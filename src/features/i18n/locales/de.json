@@ -609,7 +609,6 @@
   "¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.": "Möchten Sie diesen Spieler aus dem Kader entfernen? Ihre vorherigen Aufgebote bleiben erhalten.",
   "¿Quieres quitar a {{v0}} de la plantilla? No aparecerá en nuevas convocatorias. Las convocatorias anteriores conservarán sus datos.": "Möchten Sie {{v0}} aus dem Kader entfernen? Es wird nicht in neuen Aufgeboten angezeigt. Bei früheren Aufgeboten bleiben Ihre Daten erhalten.",
   "¿Quieres quitar esta prueba de la convocatoria? Seguirá guardada en la plantilla del club y las convocatorias anteriores no cambiarán.": "Möchten Sie diesen Test aus dem Aufgebot entfernen? Er bleibt weiterhin im Kader des Vereins und an bisherigen Berufungen ändert sich nichts.",
-  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.": "Möchten Sie diesen Spieler wiederherstellen? Sie behalten Ihre EA-ID, Startnummer, Kategorie und Ihr verknüpftes Konto. Es kehrt am Ende seiner Kategorie zurück und wird nur in neue Aufrufe einbezogen.",
   "Último aviso para votar": "Letzte Erinnerung zur Abstimmung",
   "Último aviso para votar (HH:mm)": "Letzte Aufforderung zur Abstimmung (HH:mm)",
   "Último aviso para votar a las {{v0}}. ": "Letzte Mitteilung zur Abstimmung am {{v0}}. ",
@@ -706,5 +705,7 @@
   "Política de privacidad": "Datenschutzerklärung",
   "Última actualización: {{v0}}": "Zuletzt aktualisiert: {{v0}}",
   "Políticas de los proveedores": "Datenschutzinformationen der Anbieter",
-  "Volver": "Zurück"
+  "Volver": "Zurück",
+  "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.": "Ein aktiver Spieler hat bereits diese EA-ID oder das verknüpfte Konto wird verwendet. Prüfe den Kader.",
+  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Diesen Spieler wieder aufnehmen? EA-ID, Rückennummer, Kategorie und verknüpftes Konto bleiben erhalten. Er kehrt ans Ende seiner Kategorie zurück und wird auch in offene Aufstellungen aufgenommen."
 }

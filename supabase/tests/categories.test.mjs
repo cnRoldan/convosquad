@@ -75,7 +75,7 @@ describe('Categorías, pruebas y ayudas',{concurrency:false},()=>{
   assert.equal(Number((await db.query('select count(*) as n from auth.users')).rows[0].n),before);
   const snapshot=await row(member,'select * from public.call_up_trials where call_up_id=$1 and source_trial_id=$2',[first.id,trial.id]); assert.equal(snapshot.ea_id_snapshot,'Trial One'); assert.equal(snapshot.position_snapshot,'central zurdo'); assert.equal(snapshot.notes_snapshot,null);
   assert.equal((await row(admin,'select notes from public.call_up_trial_notes where trial_id=$1',[snapshot.id])).notes,'Actualizado');
-  assert.equal((await query(member,'select * from public.call_up_players where call_up_id=$1',[first.id])).rows.length,3);
+  assert.equal((await query(member,'select * from public.call_up_players where call_up_id=$1',[first.id])).rows.length,4);
   await reject(admin,"select * from public.promote_trial($1,'attackers')",[trial.id],'22023');
  });
  test('duplicados en promoción revierten la operación; reutilizar exige una ficha del mismo club y EA ID',async()=>{

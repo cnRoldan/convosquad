@@ -609,7 +609,6 @@
   "¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.": "Do you want to remove this player from the squad? Your previous call-ups will be preserved.",
   "¿Quieres quitar a {{v0}} de la plantilla? No aparecerá en nuevas convocatorias. Las convocatorias anteriores conservarán sus datos.": "Do you want to remove {{v0}} from the squad? It will not appear in new call-ups. Previous call-ups will retain your data.",
   "¿Quieres quitar esta prueba de la convocatoria? Seguirá guardada en la plantilla del club y las convocatorias anteriores no cambiarán.": "Do you want to remove this trial from the call-up? It will continue to be saved in the club's squad and previous call-ups will not change.",
-  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.": "Do you want to reinstate this player? You will keep your EA ID, bib number, category and linked account. It will return at the end of its category and will only be included in new call-ups.",
   "Último aviso para votar": "Last reminder to vote",
   "Último aviso para votar (HH:mm)": "Last notice to vote (HH:mm)",
   "Último aviso para votar a las {{v0}}. ": "Last notice to vote at {{v0}}. ",
@@ -706,5 +705,7 @@
   "Política de privacidad": "Privacy policy",
   "Última actualización: {{v0}}": "Last updated: {{v0}}",
   "Políticas de los proveedores": "Provider policies",
-  "Volver": "Back"
+  "Volver": "Back",
+  "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.": "An active player already has that EA ID or the linked account is in use. Check the roster.",
+  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Restore this player? Their EA ID, shirt number, category and linked account will be preserved. They will return at the end of their category and also join open call-ups."
 }

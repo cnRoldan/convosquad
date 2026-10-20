@@ -47,7 +47,7 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
       else await createPlayer(clubId, { eaId: trimmed, ...(jersey.trim() ? { jerseyNumber: Number(jersey) } : {}), category });
       refreshRoster();
       router.replace(player && !player.isActive ? '/inactive-players' : '/roster');
-    } catch (error) { setMessage(backendErrorMessage(error)); }
+    } catch (error) { setMessage(typeof error === 'object' && error !== null && 'code' in error && (error.code === 'P0041' || error.code === '23505') ? t('Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.') : backendErrorMessage(error)); }
     finally { setBusy(false); }
   }
   async function link() {

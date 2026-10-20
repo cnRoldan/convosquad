@@ -10,9 +10,9 @@ export async function listPlayers(clubId: string, includeInactive = false) {
 }
 
 export async function createPlayer(clubId: string, input: { eaId: string; jerseyNumber?: number; category: RosterCategory }) {
-  return unwrap(await requireSupabase().from('players').insert({
-    club_id: clubId, ea_id: input.eaId, jersey_number: input.jerseyNumber ?? null, category: input.category,
-  }).select().single());
+  return unwrap(await requireSupabase().rpc('add_or_restore_player', {
+    p_club_id: clubId, p_ea_id: input.eaId, ...(input.jerseyNumber === undefined ? {} : { p_jersey_number: input.jerseyNumber }), p_category: input.category,
+  }).single());
 }
 
 export async function updatePlayer(playerId: string, input: { ea_id?: string; jersey_number?: number | null; category?: RosterCategory; is_active?: boolean }) {

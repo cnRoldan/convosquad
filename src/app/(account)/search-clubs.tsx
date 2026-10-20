@@ -1,5 +1,6 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
+import { Keyboard } from 'react-native';
 import { router } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
@@ -23,6 +24,7 @@ export default function SearchClubsScreen() {
     return { clubs, requests };
   }, [session, searched]);
   const result = useResource(`search:${session?.user.id}:${searched}`, load, !isDemo && Boolean(session) && searched !== null);
+  function search() { Keyboard.dismiss(); setMessage(''); setSearched(query.trim()); result.reload(); }
   async function request(clubId: string) {
     if (isDemo || busyId) return;
     setBusyId(clubId);
@@ -36,8 +38,8 @@ export default function SearchClubsScreen() {
   return <Screen>
     <Heading title={t("Encuentra tu equipo")} subtitle={t("Solo se muestran los clubes que han elegido aparecer en el buscador.")} />
     {isDemo ? <DemoNotice /> : null}
-    <Field label={t("Nombre del club")} value={query} onChangeText={setQuery} maxLength={80} returnKeyType="search" onSubmitEditing={() => setSearched(query.trim())} />
-    <Button label={t("Buscar")} disabled={isDemo || result.isLoading} onPress={() => { setMessage(''); setSearched(query.trim()); result.reload(); }} />
+    <Field label={t("Nombre del club")} value={query} onChangeText={setQuery} maxLength={80} returnKeyType="search" onSubmitEditing={search} />
+    <Button label={t("Buscar")} disabled={isDemo || result.isLoading} onPress={search} />
     {result.isLoading ? <Body>{t("Buscando clubes…")}</Body> : null}
     {result.error ? <Message error>{result.error}</Message> : null}
     {message ? <Message>{message}</Message> : null}

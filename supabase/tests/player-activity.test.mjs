@@ -45,7 +45,7 @@ test('quitar conserva ficha, cuenta, membresía y snapshots completos; excluye n
   assert.deepEqual(await row(admin, 'select * from public.club_members where club_id=$1 and user_id=$2', [club.id, member]), membershipBefore);
 });
 
-test('reincorporar conserva identidad, dorsal y categoría y solo afecta nuevas convocatorias', async () => {
+test('reincorporar conserva identidad, dorsal y categoría y se incorpora a convocatorias abiertas', async () => {
   const original = await player('Restored Activity');
   await activity(admin, original.id, false);
   const whileInactive = await row(admin, "select * from public.create_call_up($1,'2028-03-01T20:00:00Z','open')", [club.id]);
@@ -55,7 +55,7 @@ test('reincorporar conserva identidad, dorsal y categoría y solo afecta nuevas 
   assert.equal(restored.is_active, true);
   assert.ok(restored.sort_order > latest.sort_order);
   assert.equal((await query(admin, 'select id from public.players where id=$1 and not is_active', [original.id])).rows.length, 0);
-  assert.equal((await query(admin, 'select id from public.call_up_players where call_up_id=$1 and source_player_id=$2', [whileInactive.id, original.id])).rows.length, 0);
+  assert.equal((await query(admin, 'select id from public.call_up_players where call_up_id=$1 and source_player_id=$2', [whileInactive.id, original.id])).rows.length, 1);
   const after = await row(admin, "select * from public.create_call_up($1,'2028-03-02T20:00:00Z','open')", [club.id]);
   const snapshot = await row(admin, 'select * from public.call_up_players where call_up_id=$1 and source_player_id=$2', [after.id, original.id]);
   assert.equal(snapshot.ea_id_snapshot, original.ea_id);

@@ -816,6 +816,15 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_up_trials']['Row'][];
       };
+      add_or_restore_player: {
+        Args: {
+          p_club_id: string;
+          p_ea_id: string;
+          p_category: Database['public']['Enums']['roster_category'];
+          p_jersey_number?: number;
+        };
+        Returns: Database['public']['Tables']['players']['Row'][];
+      };
       claim_push_deliveries: {
         Args: {
           p_event_id: string;

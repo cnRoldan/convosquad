@@ -7,7 +7,7 @@ export function playerActivityCopy(isActive: boolean) {
     confirmLabel: 'Quitar de la plantilla',
   } : {
     title: 'Reincorporar a la plantilla',
-    description: '¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.',
+    description: '¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.',
     confirmLabel: 'Reincorporar',
   };
 }

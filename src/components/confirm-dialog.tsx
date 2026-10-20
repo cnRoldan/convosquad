@@ -1,5 +1,6 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { Modal, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { ReactNode } from 'react';
 import { Body, Button, Card } from './ui';
 
@@ -15,14 +16,19 @@ export function ConfirmDialog({ visible, title, description, confirmLabel = t("C
   onCancel: () => void;
 }) {
   useLanguage();
+  const insets = useSafeAreaInsets();
   return <Modal transparent visible={visible} animationType="fade" onRequestClose={() => { if (!busy) onCancel(); }}>
-    <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', padding: 24 }}>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+    <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 24, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
       <Card title={title}>
         <Body>{description}</Body>
         {children}
         <Button label={busy ? t("Un momento…") : confirmLabel} disabled={busy || disabled} onPress={onConfirm} />
         <Button secondary label={t("Cancelar")} disabled={busy} onPress={onCancel} />
       </Card>
+      </ScrollView>
     </View>
+    </KeyboardAvoidingView>
   </Modal>;
 }
