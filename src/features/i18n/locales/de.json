@@ -725,5 +725,14 @@
   "Solicitudes que he enviado": "Meine gesendeten Anfragen",
   "Nueva solicitud de acceso": "Neue Beitrittsanfrage",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "Diese Benachrichtigung gehört zu einem anderen Konto. Melde dich mit dem Empfängerkonto an.",
-  "Ya no tienes permisos para revisar las solicitudes de este club.": "Du hast keine Berechtigung mehr, Anfragen für diesen Verein zu prüfen."
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "Du hast keine Berechtigung mehr, Anfragen für diesen Verein zu prüfen.",
+  "Activa · Votación abierta": "Aktiv · Abstimmung offen",
+  "Activa · Votación cerrada": "Aktiv · Abstimmung geschlossen",
+  "Finalizada": "Beendet",
+  "Convocatoria finalizada.": "Dieses Aufgebot ist beendet.",
+  "Votación cerrada. La convocatoria sigue activa.": "Die Abstimmung ist geschlossen. Dieses Aufgebot ist weiterhin aktiv.",
+  "Cerrar votación": "Abstimmung schließen",
+  "Abrir votación": "Abstimmung öffnen",
+  "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "Status: {{v0}}. Nach dem Schließen der Abstimmung bleibt das Aufgebot aktiv; durch Absagen wird es aufgehoben.",
+  "La votación está cerrada. No puedes modificar tu voto.": "Die Abstimmung ist geschlossen. Du kannst deine Antwort nicht ändern."
 }

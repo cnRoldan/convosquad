@@ -1,4 +1,5 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
+import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
 import { votingDeadlinePassed } from '@/features/call-ups/closing-time';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -18,7 +19,7 @@ import { CallUpTrialActions } from '@/features/trials/call-up-trial-actions';
 import { CallUpTrialForm } from '@/features/trials/call-up-trial-form';
 import { AidsSection } from '@/features/call-ups/aids-section';
 import { CallUpAdministration } from '@/features/call-ups/administration';
-import { availabilityLabels, callStatusLabels, responseOptions, callUpErrorMessage } from '@/features/call-ups/availability';
+import { availabilityLabels, responseOptions, callUpErrorMessage } from '@/features/call-ups/availability';
 import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
 import { getCallUp, listCurrentCallUps, listCallUpPlayers, listCallUpTrials, respondToCallUp } from '@/features/call-ups/service';
@@ -53,7 +54,7 @@ export default function CallUpScreen() {
   const availableCalls = calls.data?.filter(row => !deletedCallIds.includes(row.id));
   const candidate = selection?.scope === selectionScope ? selection.id : id;
   const chosen = candidate && !deletedCallIds.includes(candidate) ? candidate : undefined;
-  const callId = isDemo ? upcomingCallUp?.id : chosen ?? availableCalls?.find(row => row.status === 'open')?.id ?? availableCalls?.[0]?.id;
+  const callId = isDemo ? upcomingCallUp?.id : chosen ?? availableCalls?.find(row => row.status === 'open' || row.status === 'closed')?.id ?? availableCalls?.[0]?.id;
   const load = useCallback(async () => {
     if (!clubId || !callId) return null;
     const call = await getCallUp(clubId, callId);
@@ -120,12 +121,12 @@ export default function CallUpScreen() {
     ...responseMessage,
     text: t(responseMessage.text, responseMessage.availability ? { v0: t(availabilityLabels[responseMessage.availability]) } : undefined),
   } : null;
-  const votingFinished = Boolean(call && (call.status === 'closed' || (call.status === 'open' && (votingDeadlinePassed(call, clock) || call.local_date < clubLocalDateTime(call.timezone).date))));
-  const decisionLock = !isDemo && !historical && clubId && call && ownPlayer && !snapshots.error ? <DecisionLock finished={votingFinished} clubId={clubId} entryId={ownPlayer?.id}
+  const votingClosed = Boolean(call && (call.status === 'closed' || (call.status === 'open' && (votingDeadlinePassed(call, clock) || call.local_date < clubLocalDateTime(call.timezone).date))));
+  const decisionLock = !isDemo && !historical && clubId && call && ownPlayer && !snapshots.error ? <DecisionLock votingClosed={votingClosed} clubId={clubId} entryId={ownPlayer?.id}
     availability={ownPlayer?.availability ?? 'unanswered'} canEnable={Boolean(ownPlayer && ownPlayer.availability !== 'unanswered' && call?.status !== 'cancelled')}
     pendingVote={Boolean(currentPending?.saving)} revision={ownSnapshot?.updated_at ?? ''} /> : null;
-  const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && (votingFinished || canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock))
-    ? <AvailabilityActions finished={votingFinished} decisionLock={decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
+  const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && (votingClosed || canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock))
+    ? <AvailabilityActions votingClosed={votingClosed} decisionLock={decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;
   return <Screen compact footer={availabilityFooter} onRefresh={enabled ? refresh : undefined} refreshing={calls.isLoading || snapshots.isLoading || contacts.isLoading}>
     {historical ? <View style={styles.toolbar}>
@@ -141,14 +142,14 @@ export default function CallUpScreen() {
       {!isDemo ? <IconButton icon="refresh" label={t("Actualizar convocatoria")} disabled={calls.isLoading || snapshots.isLoading} onPress={refresh} /> : null}
       {!isDemo ? <Text accessibilityLiveRegion="polite" style={styles.sync}>{syncStatus === 'live' ? t("Actualización en directo") : syncStatus === 'connecting' ? t("Conectando actualizaciones…") : t("Recuperando conexión. Puedes actualizar manualmente.")}</Text> : null}
     </View> : null}
-    {!historical && availableCalls && availableCalls.length > 1 ? <Options value={callId ?? ''} options={availableCalls.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${t(callStatusLabels[row.status])}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
+    {!historical && availableCalls && availableCalls.length > 1 ? <Options value={callId ?? ''} options={availableCalls.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${t(callUpStatusLabel(row, clock))}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
     {calls.isLoading || snapshots.isLoading ? <Body>{t("Cargando convocatoria…")}</Body> : null}
     {calls.error || snapshots.error ? <><Message error>{calls.error ?? snapshots.error}</Message><Button label={t("Reintentar")} onPress={refresh} /></> : null}
-    {responseFeedback && (!availabilityFooter || votingFinished) ? <Message error={responseFeedback.error}>{responseFeedback.text}</Message> : null}
+    {responseFeedback && (!availabilityFooter || votingClosed) ? <Message error={responseFeedback.error}>{responseFeedback.text}</Message> : null}
     {notice ? <Message>{notice}</Message> : null}
-    {votingFinished && !availabilityFooter ? <Text accessibilityLiveRegion="polite" style={styles.finishedNotice}>{t("Convocatoria finalizada. Espera a la siguiente.")}</Text> : null}
+    {votingClosed && !availabilityFooter ? <Text accessibilityLiveRegion="polite" style={styles.finishedNotice}>{historical ? t("Convocatoria finalizada.") : t("Votación cerrada. La convocatoria sigue activa.")}</Text> : null}
     {call ? <>
-      <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callStatusLabels[call.status === 'open' && votingDeadlinePassed(call, clock) ? 'closed' : call.status])}</Text>
+      <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callUpStatusLabel(call, clock, historical))}</Text>
       {admin && call.evaluation_at ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
       {call.closes_at ? <Body>{t("Cierre de votación:")}{clubLocalDateTime(call.timezone, new Date(call.closes_at)).time} · {call.timezone}</Body> : null}
       {call.status !== 'cancelled' && votingDeadlinePassed(call, clock) ? <Body>{t("El plazo para votar ha terminado.")}</Body> : null}

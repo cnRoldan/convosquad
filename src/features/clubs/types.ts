@@ -20,6 +20,8 @@ export type CallUp = {
   clubId: string;
   title: string;
   startsAt: string;
+  status?: Enums<'call_up_status'>;
+  closesAt?: string | null;
   timezone: string;
   opponent: string;
   slots: number;

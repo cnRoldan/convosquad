@@ -11,8 +11,9 @@ import { IconButton } from '@/components/icon-button';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { clubLocalDateTime, clubLocalTimeToInstant } from './local-time';
-import { callUpErrorMessage, callStatusLabels } from './availability';
+import { callUpErrorMessage } from './availability';
 import { deleteCancelledCallUp, refreshCallUpRoster, restartCallUp, updateCallUp } from './service';
+import { callUpStatusLabel } from './lifecycle';
 import { lastNoticeInstant } from './last-notice';
 import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
@@ -58,16 +59,16 @@ export function CallUpAdministration({ call, onSaved, onDeleted }: { call: Table
   if (!admin) return null;
   const current = call.local_date >= clubLocalDateTime(call.timezone).date;
   const resuming = action === 'open' && call.status === 'cancelled';
-  const title = action === 'delete' ? t("Eliminar convocatoria") : action === 'restart' ? t("Reiniciar convocatoria") : action === 'refresh' ? t("Actualizar plantilla") : action === 'edit' ? t("Modificar fecha y hora") : resuming ? t("Reanudar con plantilla actual") : action === 'open' ? t("Abrir convocatoria") : action === 'closed' ? t("Cerrar convocatoria") : t("Cancelar convocatoria");
+  const title = action === 'delete' ? t("Eliminar convocatoria") : action === 'restart' ? t("Reiniciar convocatoria") : action === 'refresh' ? t("Actualizar plantilla") : action === 'edit' ? t("Modificar fecha y hora") : resuming ? t("Reanudar con plantilla actual") : action === 'open' ? (call.status === 'closed' ? t("Abrir votación") : t("Abrir convocatoria")) : action === 'closed' ? t("Cerrar votación") : t("Cancelar convocatoria");
   return <CompactPanel title={t("Administrar convocatoria")} expanded={expanded} onToggle={() => setExpanded(value => !value)} subtle>
     <View style={{ paddingTop: 12, paddingBottom: 6, gap: 12 }}>
-    <Body>{t("Estado: {{v0}}. Cerrar o cancelar conserva los datos; reanudar una cancelada incorpora la plantilla actual.", { v0: t(callStatusLabels[call.status]) })}</Body>
+    <Body>{t("Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.", { v0: t(callUpStatusLabel(call)) })}</Body>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       {current ? <IconButton icon="restart" label={t("Reiniciar convocatoria")} danger disabled={busy} onPress={() => choose('restart')} /> : null}
       <IconButton icon="edit" label={t("Modificar fecha y hora")} disabled={busy} onPress={() => choose('edit')} />
       {(call.status === 'open' || call.status === 'draft') && current ? <IconButton icon="refresh" label={t("Actualizar plantilla de convocatoria")} disabled={busy} onPress={() => choose('refresh')} /> : null}
-      {call.status !== 'open' ? <IconButton icon="play" label={call.status === 'cancelled' ? t("Reanudar con plantilla actual") : t("Abrir convocatoria")} disabled={busy || !current} onPress={() => choose('open')} /> : null}
-      {call.status === 'open' || call.status === 'draft' ? <IconButton icon="lock" label={t("Cerrar convocatoria")} disabled={busy} onPress={() => choose('closed')} /> : null}
+      {call.status !== 'open' ? <IconButton icon="play" label={call.status === 'cancelled' ? t("Reanudar con plantilla actual") : call.status === 'closed' ? t("Abrir votación") : t("Abrir convocatoria")} disabled={busy || !current} onPress={() => choose('open')} /> : null}
+      {call.status === 'open' || call.status === 'draft' ? <IconButton icon="lock" label={t("Cerrar votación")} disabled={busy} onPress={() => choose('closed')} /> : null}
       {call.status === 'cancelled' ? <IconButton icon="trash" label={t("Eliminar convocatoria")} danger disabled={busy} onPress={() => choose('delete')} /> : null}
       {call.status !== 'cancelled' ? <IconButton icon="cancel" label={t("Cancelar convocatoria")} danger disabled={busy} onPress={() => choose('cancelled')} /> : null}
     </View>

@@ -94,14 +94,14 @@ export function ClubProvider({ children }: PropsWithChildren) {
   const loadRoster = useCallback(async (): Promise<{ roster: RosterPlayer[]; callUp: CallUp | null; hasCurrentCallUp: boolean }> => {
     if (!clubId) return { roster: [], callUp: null, hasCurrentCallUp: false };
     const [playerRows, memberRows, callUpRows] = await Promise.all([listPlayers(clubId), listClubMembers(clubId), listCurrentCallUps(clubId, clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date)]);
-    const next = callUpRows.find((callUp) => callUp.status === 'open');
+    const next = callUpRows.find((callUp) => callUp.status === 'open' || callUp.status === 'closed');
     const responses = next ? await listCallUpPlayers(next.id) : [];
     return {
       hasCurrentCallUp: callUpRows.length > 0,
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
         displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
         role: memberRows.find((member) => member.user_id === player.user_id)?.role ?? null })),
-      callUp: next ? { id: next.id, clubId: next.club_id, title: t("Convocatoria del club"), startsAt: next.starts_at,
+      callUp: next ? { id: next.id, clubId: next.club_id, title: t("Convocatoria del club"), startsAt: next.starts_at, status: next.status, closesAt: next.closes_at,
         timezone: next.timezone, opponent: t("Por confirmar"), slots: responses.length,
         responses: responses.map((entry) => ({ id: entry.id, displayName: entry.ea_id_snapshot, status: entry.availability, category: entry.category_snapshot, sortOrder: entry.sort_order_snapshot })) } : null,
     };

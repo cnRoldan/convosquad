@@ -725,5 +725,14 @@
   "Solicitudes que he enviado": "Demandes que j’ai envoyées",
   "Nueva solicitud de acceso": "Nouvelle demande d’adhésion",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "Cette notification appartient à un autre compte. Connecte-toi avec le compte destinataire.",
-  "Ya no tienes permisos para revisar las solicitudes de este club.": "Tu n’as plus l’autorisation de traiter les demandes de ce club."
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "Tu n’as plus l’autorisation de traiter les demandes de ce club.",
+  "Activa · Votación abierta": "Active · Votes ouverts",
+  "Activa · Votación cerrada": "Active · Votes clos",
+  "Finalizada": "Terminée",
+  "Convocatoria finalizada.": "Cette convocation est terminée.",
+  "Votación cerrada. La convocatoria sigue activa.": "Les votes sont clos. Cette convocation reste active.",
+  "Cerrar votación": "Clore les votes",
+  "Abrir votación": "Ouvrir les votes",
+  "Estado: {{v0}}. Cerrar la votación conserva la convocatoria activa; cancelarla la anula.": "État : {{v0}}. Clore les votes laisse la convocation active ; l’annuler la supprime du programme.",
+  "La votación está cerrada. No puedes modificar tu voto.": "Les votes sont clos. Tu ne peux plus modifier ta réponse."
 }

@@ -1,6 +1,5 @@
 export const availabilityLabels = { available: 'Disponible', unavailable: 'No disponible', backup: 'Backup', unanswered: 'Sin responder' } as const;
 export const responseOptions = ['available', 'unavailable', 'backup'] as const;
-export const callStatusLabels = { draft: 'Borrador', open: 'Abierta', closed: 'Cerrada', cancelled: 'Cancelada' } as const;
 export function countAvailability(players: readonly { availability: keyof typeof availabilityLabels }[]) {
   const counts = { available: 0, unavailable: 0, backup: 0, unanswered: 0 };
   for (const player of players) counts[player.availability]++;
