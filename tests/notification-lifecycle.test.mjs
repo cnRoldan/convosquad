@@ -82,3 +82,12 @@ test('la categoría del emisor coincide con la registrada y usa un identificador
     }
   }
 });
+
+test('admisión abre el club sin permitir votos y rechaza payloads sin cuenta o manipulados',()=>{
+ const payload={type:'club_approved',clubId,userId};
+ const intent=readNotificationResponse(payload,'default','admission-1','default');
+ assert.equal(intent.membership,true);assert.equal(intent.clubId,clubId);assert.equal(intent.userId,userId);assert.equal(intent.callUpId,'');
+ assert.equal(readNotificationResponse(payload,'availability-available','admission-1','default'),null);
+ assert.equal(readPushIntent({type:'club_approved',clubId}),null);
+ assert.equal(readPushIntent({...payload,response:{availability:'available',userId,actionId:'fake'}}),null);
+});

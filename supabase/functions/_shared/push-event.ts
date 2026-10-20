@@ -1,7 +1,7 @@
 import { pushCopy } from './push-language.ts';
 import { createHash, timingSafeEqual } from 'node:crypto';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export type PushEventInput = { clubId: string; callUpId: string; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation'; actorEaId?: string | null; availability?: string | null };
+export type PushEventInput = { clubId: string; callUpId: string | null; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'club_approved'; clubName?: string | null; actorEaId?: string | null; availability?: string | null };
 export function parsePushEvent(data: unknown): PushEventInput | null {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   if (Object.keys(data).some(key => !['clubId','callUpId','eventKey','kind'].includes(key))) return null;
@@ -16,6 +16,11 @@ export function authorizedWorker(header: string | null, secret: string | undefin
 }
 export function pushMessage(event: PushEventInput, token: string, recipientUserId?: string | null, canVote = true, language = 'es') {
   const text = pushCopy(language);
+  if (event.kind === 'club_approved') return {
+    to: token, title: text.club_approved, body: `${event.clubName?.slice(0, 100) ?? 'ConvoSquad'} ${text.admissionBody}`,
+    channelId: 'call-ups', sound: 'default',
+    data: { type: 'club_approved', clubId: event.clubId, ...(recipientUserId ? { userId: recipientUserId } : {}) },
+  };
   return {
     to: token, title: text[event.kind],
     body: event.kind === 'evaluation' ? text.evaluationBody : event.kind === 'cancelled' ? text.cancelledBody : event.kind === 'vote'

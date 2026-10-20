@@ -43,3 +43,16 @@ test('el recordatorio de valoración se traduce y abre la convocatoria sin boton
   }
   assert.equal(titles.size,4);
 });
+
+test('admisión: nombre del club, cuatro idiomas y sin acciones de voto ni convocatoria inventada',async()=>{
+ const titles=new Set();
+ for(const language of ['es','en','de','fr']) {
+  const msg=pushMessage({clubId:'club',callUpId:null,eventKey:'club-approved:request',kind:'club_approved',clubName:'Wabi Sabi'},'token','new-member',true,language);
+  assert.match(msg.body,/Wabi Sabi/);assert.equal('categoryId' in msg,false);assert.equal(msg.data.type,'club_approved');assert.equal('callUpId' in msg.data,false);titles.add(msg.title);
+  if(language==='es') assert.equal(msg.body,'Wabi Sabi te ha admitido en su club. Ya puedes acceder a sus convocatorias.');
+ }
+ assert.equal(titles.size,4);
+ let captured;
+ await dispatchReminders({async prepare(){},async events(){return [{id:'e',club_id:'club',call_up_id:null,event_key:'club-approved:r',kind:'club_approved',club_name_snapshot:'Wabi Sabi'}]},async claim(){return [{id:'d',token_snapshot:'token',user_id:'u',preferred_language:'es',can_vote:false}]},async finish(){}},async messages=>{captured=messages[0];return {data:[{status:'ok',id:'ticket'}]}});
+ assert.match(captured.body,/Wabi Sabi/);assert.equal(captured.data.userId,'u');
+});

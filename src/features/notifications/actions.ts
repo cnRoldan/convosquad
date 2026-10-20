@@ -10,6 +10,7 @@ export const notificationActions = [
 export function readNotificationResponse(data: unknown, actionId: string, notificationId: string, defaultActionId: string): PushIntent | null {
   const intent = readPushIntent(data);
   if (!intent) return null;
+  if (intent.membership) return actionId === defaultActionId ? intent : null;
   if (actionId === defaultActionId) return { clubId: intent.clubId, callUpId: intent.callUpId, ...(intent.cancelled ? { cancelled: true } : {}) };
   if (intent.cancelled) return null;
   const action = notificationActions.find(item => item.identifier === actionId);

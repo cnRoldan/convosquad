@@ -1,16 +1,16 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Body, Button, Heading, Message, Screen } from '@/components/ui';
 import { LoadingScreen } from '@/components/loading';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
-import { readPushIntent, notificationDestination } from '@/features/notifications/intent';
+import { type PushIntent, readPushIntent, notificationDestination } from '@/features/notifications/intent';
 import { usePendingPush } from '@/features/notifications/pending-push-context';
 import { availabilityLabels, callUpErrorMessage } from '@/features/call-ups/availability';
 import { getCallUp, respondFromNotification } from '@/features/call-ups/service';
 import { useResource } from '@/hooks/use-resource';
-export default function NotificationScreen() {
+function CallUpNotificationScreen() {
   useLanguage();
   const params = useLocalSearchParams<{ club?: string; call?: string }>();
   const { session, isDemo, isLoading, exitDemo, isRecovery } = useAuth(); const { availableClubs, isLoading: loadingClubs, selectClub, error: clubError, refresh } = useClub();
@@ -63,4 +63,46 @@ export default function NotificationScreen() {
       : <><Body>{t("Convocatoria verificada. Al abrirla cambiarás al club correspondiente.")}</Body><LoadingScreen label={t("Abriendo convocatoria…")} /></>}
     <Button secondary label={t("Cerrar aviso")} onPress={() => { clearPush(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
   </Screen>;
+}
+
+function AdmissionNotification({ intent }: { intent: PushIntent }) {
+  const { session, isDemo, isRecovery, exitDemo } = useAuth();
+  const { availableClubs, reloadClubs, selectClub, error } = useClub();
+  const { clearPush, rememberPush } = usePendingPush();
+  const [verified, setVerified] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const wrongAccount = Boolean(session && intent.userId !== session.user.id);
+  const member = availableClubs.some(club => club.id === intent.clubId);
+  useEffect(() => {
+    if (!session || isDemo || isRecovery || wrongAccount) return;
+    let active = true;
+    void reloadClubs(intent.clubId).then(() => { if (active) setVerified(true); }).catch(() => { if (active) setFailed(true); });
+    return () => { active = false; };
+  }, [session, isDemo, isRecovery, wrongAccount, reloadClubs, intent.clubId]);
+  useEffect(() => {
+    if (verified && member && !wrongAccount && !isRecovery && !isDemo && !error && !failed) {
+      selectClub(intent.clubId); clearPush(); router.replace('/home');
+    }
+  }, [verified, member, wrongAccount, isRecovery, isDemo, error, failed, selectClub, clearPush, intent.clubId]);
+  return <Screen>
+    <Heading title={t('Solicitud aceptada')} />
+    {!session || isDemo || isRecovery ? <><Body>{t('Inicia sesión para comprobar el club y continuar.')}</Body><Button label={t('Iniciar sesión y continuar')} onPress={() => { rememberPush(intent); exitDemo(); router.replace(isRecovery ? '/reset-password' : '/login'); }} /></>
+      : wrongAccount ? <Message error>{t('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.')}</Message>
+      : error || failed || (verified && !member) ? <><Message error>{t('No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.')}</Message><Button label={t('Reintentar')} onPress={() => { setVerified(false); setFailed(false); void reloadClubs(intent.clubId).then(() => setVerified(true)).catch(() => setFailed(true)); }} /></>
+      : <Body>{t('Comprobando acceso al club…')}</Body>}
+    <Button secondary label={t('Cerrar aviso')} onPress={() => { clearPush(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
+  </Screen>;
+}
+
+const subscribeToHydration = () => () => undefined;
+
+export default function NotificationScreen() {
+  const { pendingPush } = usePendingPush();
+  // Deep-link query parameters must not change the first render of statically exported HTML.
+  const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
+  const params = useLocalSearchParams<{ club?: string; admission?: string; user?: string }>();
+  const incoming = params.admission === '1' ? readPushIntent({ type: 'club_approved', clubId: params.club, userId: params.user }) : null;
+  const intent = incoming ?? pendingPush;
+  if (!mounted) return <LoadingScreen label={t('Comprobando acceso al club…')} />;
+  return intent?.membership ? <AdmissionNotification key={`${intent.clubId}:${intent.userId}`} intent={intent} /> : <CallUpNotificationScreen />;
 }

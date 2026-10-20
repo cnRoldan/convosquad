@@ -707,5 +707,9 @@
   "Políticas de los proveedores": "Provider policies",
   "Volver": "Back",
   "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.": "An active player already has that EA ID or the linked account is in use. Check the roster.",
-  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Restore this player? Their EA ID, shirt number, category and linked account will be preserved. They will return at the end of their category and also join open call-ups."
+  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Restore this player? Their EA ID, shirt number, category and linked account will be preserved. They will return at the end of their category and also join open call-ups.",
+  "Solicitud aceptada": "Request accepted",
+  "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.": "This notification belongs to another account. Sign in with the accepted account.",
+  "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.": "Club access could not be verified. Refresh your clubs or contact a captain.",
+  "Comprobando acceso al club…": "Checking club access…"
 }
