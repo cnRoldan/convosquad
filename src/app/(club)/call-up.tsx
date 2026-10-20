@@ -121,11 +121,11 @@ export default function CallUpScreen() {
     text: t(responseMessage.text, responseMessage.availability ? { v0: t(availabilityLabels[responseMessage.availability]) } : undefined),
   } : null;
   const votingFinished = Boolean(call && (call.status === 'closed' || (call.status === 'open' && (votingDeadlinePassed(call, clock) || call.local_date < clubLocalDateTime(call.timezone).date))));
-  const decisionLock = !isDemo && !historical && clubId ? <DecisionLock finished={votingFinished} clubId={clubId} entryId={ownPlayer?.id}
+  const decisionLock = !isDemo && !historical && clubId && call && ownPlayer && !snapshots.error ? <DecisionLock finished={votingFinished} clubId={clubId} entryId={ownPlayer?.id}
     availability={ownPlayer?.availability ?? 'unanswered'} canEnable={Boolean(ownPlayer && ownPlayer.availability !== 'unanswered' && call?.status !== 'cancelled')}
     pendingVote={Boolean(currentPending?.saving)} revision={ownSnapshot?.updated_at ?? ''} /> : null;
   const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && (votingFinished || canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock))
-    ? <AvailabilityActions finished={votingFinished} decisionLock={votingFinished ? undefined : decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
+    ? <AvailabilityActions finished={votingFinished} decisionLock={decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;
   return <Screen compact footer={availabilityFooter} onRefresh={enabled ? refresh : undefined} refreshing={calls.isLoading || snapshots.isLoading || contacts.isLoading}>
     {historical ? <View style={styles.toolbar}>
@@ -147,7 +147,6 @@ export default function CallUpScreen() {
     {responseFeedback && (!availabilityFooter || votingFinished) ? <Message error={responseFeedback.error}>{responseFeedback.text}</Message> : null}
     {notice ? <Message>{notice}</Message> : null}
     {votingFinished && !availabilityFooter ? <Text accessibilityLiveRegion="polite" style={styles.finishedNotice}>{t("Convocatoria finalizada. Espera a la siguiente.")}</Text> : null}
-    {!availabilityFooter || votingFinished ? decisionLock : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callStatusLabels[call.status === 'open' && votingDeadlinePassed(call, clock) ? 'closed' : call.status])}</Text>
       {admin && call.evaluation_at ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}

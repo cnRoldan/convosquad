@@ -33,7 +33,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, selectedCall = false, expandPanels = true, closesAt = null, clockTime = null } = {}) {
+async function fixture({ width = 390, role = 'player', empty = false, status = 'open', linked = true, cooldown = false, historical = false, selectedCall = false, expandPanels = true, noCall = false, retained = false, closesAt = null, clockTime = null } = {}) {
   const context = await browser.newContext({ locale: 'es-ES', viewport: { width, height: 844 } });
   const page = await context.newPage();
   if (clockTime !== null) await page.clock.install({time: clockTime});
@@ -41,7 +41,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const errors = [], unexpected = [], channels = [];
   let initialReloadComplete;
   const initialReload = new Promise(resolve => { initialReloadComplete = resolve; });
-  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, restarts: 0, deletions: 0, privateReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
+  const data = { reads: 0, snapshotReads: 0, writes: 0, trialAdds: 0, decisionWrites: 0, updates: 0, restarts: 0, deletions: 0, privateReads: 0, decisionReads: 0, trialRemovals: 0, aidRemovals: 0, refreshes: 0, release: null, rejectNext: false };
   page.on('pageerror', error => errors.push(error.message));
   const date = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const call = { id: callId, club_id: clubId, starts_at: `${date}T20:00:00Z`, local_date: date, timezone: 'Europe/Madrid', status, status_version: 1, closes_at: closesAt, created_by: userId, created_at: `${date}T00:00:00Z`, updated_at: `${date}T00:00:00Z` };
@@ -56,7 +56,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   }));
   if (cooldown && players[3]) { players[3].availability = 'available'; players[3].responded_at = new Date().toISOString(); }
   const privateContacts = [];
-  let decisionLock = null;
+  let decisionLock = retained ? {availability:'available'} : null;
   const aids = [{id: 'aid', body: 'Ayuda fuera del total', sort_order: 0}];
   const trialSnapshots = [{ id: 'trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, last_sign_in_at: new Date().toISOString(), created_at: call.created_at };
@@ -189,9 +189,10 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     else if (endpoint === 'club_members') result = [{ id: 'member', club_id: clubId, user_id: userId, role, is_active: true }];
     else if (endpoint === 'profiles') result = { id: userId, username: 'fixture' };
     else if (endpoint === 'players') result = players.map(row => ({ id: row.source_player_id, club_id: clubId, ea_id: row.ea_id_snapshot, jersey_number: row.jersey_number_snapshot, category: row.category_snapshot, sort_order: row.sort_order_snapshot, position: row.position_snapshot, user_id: row.user_id, is_active: true }));
+    else if (endpoint === 'call_ups' && noCall) result = request.headers().accept?.includes('object') ? null : [];
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? pastCall : call) : data.deletions ? [] : [call];
     else if (endpoint === 'call_up_players') { result = players; data.snapshotReads++; }
-    else if (endpoint === 'club_decision_locks') { assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); assert.equal(url.searchParams.get('user_id'), `eq.${userId}`); result = decisionLock ? [decisionLock] : []; }
+    else if (endpoint === 'club_decision_locks') { data.decisionReads++; assert.equal(url.searchParams.get('club_id'), `eq.${clubId}`); assert.equal(url.searchParams.get('user_id'), `eq.${userId}`); result = decisionLock ? [decisionLock] : []; }
     else if (endpoint === 'call_up_trials') result = trialSnapshots;
     else if (endpoint === 'call_up_trial_notes') { assert.equal(role, 'admin'); result = [{trial_id: 'trial', notes: 'Valoración privada de la convocatoria'}]; }
     else if (endpoint === 'call_up_aids') result = aids;
@@ -211,6 +212,10 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     }
   }
   await page.goto(`${origin}/call-up${historical ? `?id=${pastId}&history=1` : selectedCall ? `?id=${callId}` : ''}`);
+  if (noCall) {
+    await page.getByText('No hay convocatorias accesibles en este club.',{exact:true}).waitFor();
+    return { context, page, data, players, emit, close };
+  }
   await page.getByRole('button', { name: `Todos (${players.length})`, exact: true }).waitFor();
   if (!historical) await page.getByText('Actualización en directo', { exact: true }).waitFor();
   // Club context, screen snapshot, then the initial Realtime reconciliation.
@@ -760,4 +765,20 @@ test('actualizar convocatoria incorpora candidato añadido desde otro dispositiv
   assert.ok(f.data.snapshotReads>before);assert.equal(f.data.writes,0);
   assert.ok(new URL(f.page.url()).pathname==='/call-up');
  } finally {await f.close();}
+});
+
+
+test('mantener decisión solo se muestra dentro del cuadro de voto y no sin convocatoria',async()=>{
+ for(const options of [{noCall:true,retained:true},{linked:false,retained:true},{status:'cancelled',retained:true}]) {
+  const f=await fixture(options);
+  try {
+   assert.equal(await f.page.getByRole('switch',{name:'Mantener decisión',exact:true}).count(),0);
+   assert.equal(await f.page.getByTestId('availability-actions').count(),0);
+   assert.equal(f.data.decisionReads,0);
+  } finally {await f.close();}
+ }
+ const active=await fixture({retained:true});
+ try {
+  await active.page.getByTestId('availability-actions').getByRole('switch',{name:'Mantener decisión',exact:true,checked:true}).waitFor();
+ } finally {await active.close();}
 });
