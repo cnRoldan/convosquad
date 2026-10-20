@@ -46,6 +46,7 @@ test('medianoche no archiva antes de la hora elegida; miembros ven la votación 
  const call=await row(captain,"select * from public.create_call_up_with_end($1,((now() at time zone $2)::date-1+time '21:50') at time zone $2,((now() at time zone $2)::date+time '02:00') at time zone $2,null,'open')",[late.id,zone]);
  const closed=await row(captain,"select * from public.update_call_up_with_end($1,$2,'closed',$3)",[call.id,call.starts_at,call.ends_at]);
  assert.ok(closed.ends_at>new Date());
+ assert.equal((await query(captain,'select * from public.list_rating_call_ups($1)',[late.id])).rows.length,0);
  assert.equal((await query(captain,'select * from public.list_call_up_history($1)',[late.id])).rows.length,0);
  assert.equal((await query(member,'select * from public.call_ups where id=$1',[call.id])).rows.length,1);
  const entry=await row(member,'select * from public.call_up_players where call_up_id=$1',[call.id]);
@@ -54,6 +55,7 @@ test('medianoche no archiva antes de la hora elegida; miembros ven la votación 
  await assert.rejects(query(captain,'select public.save_player_ratings($1,$2)',[call.id,rating]),e=>e.code==='P0041');
  await db.query("update public.call_ups set ends_at=clock_timestamp()-interval '1 second' where id=$1",[call.id]);
  assert.equal((await query(captain,'select * from public.list_call_up_history($1)',[late.id])).rows.length,1);
+ assert.equal((await query(captain,'select * from public.list_rating_call_ups($1)',[late.id])).rows[0].id,call.id);
  assert.equal((await query(member,'select * from public.call_ups where id=$1',[call.id])).rows.length,0);
  await assert.rejects(query(captain,"select public.update_call_up_with_end($1,$2,'open',$3)",[call.id,call.starts_at,call.ends_at]),e=>e.code==='P0042');
  assert.equal((await row(captain,'select public.save_player_ratings($1,$2) n',[call.id,rating])).n,1);

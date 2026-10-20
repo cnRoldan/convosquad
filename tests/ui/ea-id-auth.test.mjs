@@ -676,7 +676,8 @@ test('valoraciones: hora futura bloquea notas y jugadores no entran a la gestió
   const f=await fixture({clubRole:'admin',performance:true,ratingFuture:true});
   try {
     await f.page.goto(`${origin}/home`);await f.page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
-    await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).click();
+    assert.equal(await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),0);
+    await f.page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
     await f.page.getByText('Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.',{exact:true}).waitFor();
     assert.equal(await f.page.getByLabel('Valoración de EA-Player_9',{exact:true}).isDisabled(),true);
     assert.equal(f.requests.some(request=>request.endpoint==='save_player_ratings'),false);
@@ -1029,4 +1030,21 @@ test('desactivar valoraciones conserva la finalización y no envía una hora de 
   assert.equal(request.body.p_ratings_enabled,false);
   assert.ok(!('p_evaluation_at' in request.body));
  } finally {await f.close();}
+});
+
+
+test('rendimiento solo ofrece valorar convocatorias finalizadas, incluso si el servidor devuelve una activa',async()=>{
+ for(const future of [true,false]){
+  const f=await fixture({clubRole:'admin',performance:true,ratingFuture:future});
+  try{
+   await f.page.goto(`${origin}/performance`);
+   await f.page.getByText('Cargando valoraciones…',{exact:true}).waitFor({state:'hidden'});
+   if(future){
+    await f.page.getByText('No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.',{exact:true}).waitFor();
+    assert.equal(await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),0);
+   }else{
+    await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).waitFor();
+   }
+  }finally{await f.close();}
+ }
 });
