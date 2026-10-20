@@ -14,7 +14,7 @@ import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 export default function RosterScreen() {
   useLanguage();
-  const { activeClub, currentMembership, roster, rosterVersion, notice, refreshRoster } = useClub();
+  const { activeClub, currentMembership, roster, rosterVersion, rosterLoading, notice, refreshRoster } = useClub();
   const { session, isDemo } = useAuth();
   const clubId = activeClub?.id; const admin = currentMembership?.role === 'admin';
   const [filter, setFilter] = useState<'all' | 'registered' | 'unregistered'>('all');
@@ -38,7 +38,8 @@ export default function RosterScreen() {
     catch (error) { setMessage(backendErrorMessage(error)); result.reload(); }
     finally { setBusy(false); }
   }
-  return <Screen>
+  function refresh() { result.reload(); refreshRoster(); }
+  return <Screen onRefresh={!isDemo && clubId ? refresh : undefined} refreshing={result.isLoading || rosterLoading}>
     <Heading title={t("La plantilla")} subtitle={activeClub?.name ?? t("Tu club")} />
     {notice ? <Message>{notice}</Message> : null}
     {activity === 'removed' || removed ? <Message>{t("Jugador quitado de la plantilla. Su cuenta y convocatorias anteriores se conservan.")}</Message> : null}
@@ -71,6 +72,6 @@ export default function RosterScreen() {
     {pendingRemoval && pendingRemoval.scope === scope && admin ? <PlayerActivityDialog key={`${scope}:${pendingRemoval.id}`} player={pendingRemoval}
       onCancel={() => setPendingRemoval(null)} onSuccess={() => { setPendingRemoval(null); setRemoved(true); }} /> : null}
     <TrialSection />
-    {!isDemo ? <Button secondary label={t("Actualizar plantilla")} disabled={result.isLoading} onPress={() => { result.reload(); refreshRoster(); }} /> : <Body>{t("Datos simulados · los cambios de la demo no se guardan.")}</Body>}
+    {!isDemo ? <Button secondary label={t("Actualizar plantilla")} disabled={result.isLoading} onPress={refresh} /> : <Body>{t("Datos simulados · los cambios de la demo no se guardan.")}</Body>}
   </Screen>;
 }

@@ -127,7 +127,7 @@ export default function CallUpScreen() {
   const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && (votingFinished || canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock))
     ? <AvailabilityActions finished={votingFinished} decisionLock={votingFinished ? undefined : decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;
-  return <Screen compact footer={availabilityFooter}>
+  return <Screen compact footer={availabilityFooter} onRefresh={enabled ? refresh : undefined} refreshing={calls.isLoading || snapshots.isLoading || contacts.isLoading}>
     {historical ? <View style={styles.toolbar}>
       <IconButton icon="back" label={t("Volver a la convocatoria actual")} onPress={returnToCurrent} />
       <Text style={styles.date}>{t("Volver a la convocatoria actual")}</Text>
