@@ -7,6 +7,7 @@ import { AuthProvider } from '@/features/auth/auth-context';
 import { PendingInviteProvider } from '@/features/invitations/pending-invite-context';
 import { PendingPushProvider } from '@/features/notifications/pending-push-context';
 import { NativePushLifecycle } from '@/features/notifications/native-lifecycle';
+import { RequestsProvider } from '@/features/join-requests/requests-context';
 import { colors } from '@/theme';
 
 const theme = {
@@ -22,6 +23,7 @@ export default function RootLayout() {
         <PendingPushProvider>
         <PendingInviteProvider>
           <ClubProvider>
+          <RequestsProvider>
             <NativePushLifecycle />
             <StatusBar style="light" />
             <Stack screenOptions={{ headerShown: false }}>
@@ -38,6 +40,7 @@ export default function RootLayout() {
               <Stack.Screen name="auth/callback" />
               <Stack.Screen name="+not-found" />
             </Stack>
+          </RequestsProvider>
           </ClubProvider>
         </PendingInviteProvider>
         </PendingPushProvider>

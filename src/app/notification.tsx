@@ -67,12 +67,13 @@ function CallUpNotificationScreen() {
 
 function AdmissionNotification({ intent }: { intent: PushIntent }) {
   const { session, isDemo, isRecovery, exitDemo } = useAuth();
-  const { availableClubs, reloadClubs, selectClub, error } = useClub();
+  const { availableClubs, ownMemberships, reloadClubs, selectClub, error } = useClub();
   const { clearPush, rememberPush } = usePendingPush();
   const [verified, setVerified] = useState(false);
   const [failed, setFailed] = useState(false);
   const wrongAccount = Boolean(session && intent.userId !== session.user.id);
   const member = availableClubs.some(club => club.id === intent.clubId);
+  const captain = ownMemberships.some(member => member.clubId === intent.clubId && member.role === 'admin');
   useEffect(() => {
     if (!session || isDemo || isRecovery || wrongAccount) return;
     let active = true;
@@ -80,14 +81,15 @@ function AdmissionNotification({ intent }: { intent: PushIntent }) {
     return () => { active = false; };
   }, [session, isDemo, isRecovery, wrongAccount, reloadClubs, intent.clubId]);
   useEffect(() => {
-    if (verified && member && !wrongAccount && !isRecovery && !isDemo && !error && !failed) {
-      selectClub(intent.clubId); clearPush(); router.replace('/home');
+    if (verified && member && (!intent.joinRequest || captain) && !wrongAccount && !isRecovery && !isDemo && !error && !failed) {
+      selectClub(intent.clubId); clearPush(); router.replace(intent.joinRequest ? '/join-requests' : '/home');
     }
-  }, [verified, member, wrongAccount, isRecovery, isDemo, error, failed, selectClub, clearPush, intent.clubId]);
+  }, [verified, member, captain, wrongAccount, isRecovery, isDemo, error, failed, selectClub, clearPush, intent.clubId, intent.joinRequest]);
   return <Screen>
-    <Heading title={t('Solicitud aceptada')} />
+    <Heading title={intent.joinRequest ? t('Nueva solicitud de acceso') : t('Solicitud aceptada')} />
     {!session || isDemo || isRecovery ? <><Body>{t('Inicia sesión para comprobar el club y continuar.')}</Body><Button label={t('Iniciar sesión y continuar')} onPress={() => { rememberPush(intent); exitDemo(); router.replace(isRecovery ? '/reset-password' : '/login'); }} /></>
-      : wrongAccount ? <Message error>{t('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.')}</Message>
+      : wrongAccount ? <Message error>{intent.joinRequest ? t('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.') : t('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.')}</Message>
+      : verified && member && intent.joinRequest && !captain ? <Message error>{t('Ya no tienes permisos para revisar las solicitudes de este club.')}</Message>
       : error || failed || (verified && !member) ? <><Message error>{t('No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.')}</Message><Button label={t('Reintentar')} onPress={() => { setVerified(false); setFailed(false); void reloadClubs(intent.clubId).then(() => setVerified(true)).catch(() => setFailed(true)); }} /></>
       : <Body>{t('Comprobando acceso al club…')}</Body>}
     <Button secondary label={t('Cerrar aviso')} onPress={() => { clearPush(); router.replace(session && !isDemo ? '/clubs' : '/'); }} />
@@ -100,9 +102,9 @@ export default function NotificationScreen() {
   const { pendingPush } = usePendingPush();
   // Deep-link query parameters must not change the first render of statically exported HTML.
   const mounted = useSyncExternalStore(subscribeToHydration, () => true, () => false);
-  const params = useLocalSearchParams<{ club?: string; admission?: string; user?: string }>();
-  const incoming = params.admission === '1' ? readPushIntent({ type: 'club_approved', clubId: params.club, userId: params.user }) : null;
+  const params = useLocalSearchParams<{ club?: string; admission?: string; requests?: string; user?: string }>();
+  const incoming = params.admission === '1' || params.requests === '1' ? readPushIntent({ type: params.requests === '1' ? 'club_join_request' : 'club_approved', clubId: params.club, userId: params.user }) : null;
   const intent = incoming ?? pendingPush;
   if (!mounted) return <LoadingScreen label={t('Comprobando acceso al club…')} />;
-  return intent?.membership ? <AdmissionNotification key={`${intent.clubId}:${intent.userId}`} intent={intent} /> : <CallUpNotificationScreen />;
+  return intent?.membership || intent?.joinRequest ? <AdmissionNotification key={`${intent.clubId}:${intent.userId}:${intent.joinRequest ? 'requests' : 'admission'}`} intent={intent} /> : <CallUpNotificationScreen />;
 }

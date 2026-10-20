@@ -96,11 +96,11 @@ test('historial conserva fotografía, respuesta, pruebas y ayudas al cambiar pla
   assert.equal((await row(admin,'select notes from public.call_up_trial_notes where call_up_id=$1',[call.id])).notes,'Original');
   assert.equal((await row(admin,'select body from public.call_up_aids where call_up_id=$1',[call.id])).body,'Original aid');
 });
-test('publicación Realtime incluye solo las cuatro tablas de convocatorias con RLS y claves primarias',async()=>{
+test('publicación Realtime incluye convocatorias, solicitudes y membresías con RLS',async()=>{
   const published=(await db.query("select tablename from pg_publication_tables where pubname='supabase_realtime' order by tablename")).rows.map(x=>x.tablename);
-  assert.deepEqual(published,['call_up_aids','call_up_players','call_up_trials','call_ups']);
+  assert.deepEqual(published,['call_up_aids','call_up_players','call_up_trials','call_ups','club_members','join_requests']);
   const tables=(await db.query("select relname,relrowsecurity from pg_class where relnamespace='public'::regnamespace and relname=any($1)",[published])).rows;
-  assert.equal(tables.length,4);assert.ok(tables.every(x=>x.relrowsecurity));
+  assert.equal(tables.length,6);assert.ok(tables.every(x=>x.relrowsecurity));
 });
 
 test('restaurar historial recupera la función ausente, admite repetición y mantiene datos y permisos', async () => {

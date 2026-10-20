@@ -51,16 +51,19 @@ export function Card({ title, children }: PropsWithChildren<{ title?: string }>)
   );
 }
 
-export function Button({ label, onPress, secondary = false, disabled = false }: {
+export function Button({ label, onPress, secondary = false, disabled = false, badge, accessibilityLabel }: {
   label: string;
   onPress: () => void;
   secondary?: boolean;
   disabled?: boolean;
+  badge?: number;
+  accessibilityLabel?: string;
 }) {
   useLanguage();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -70,7 +73,12 @@ export function Button({ label, onPress, secondary = false, disabled = false }: 
         (pressed || disabled) && styles.dimmed,
       ]}
     >
-      <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{t(label)}</Text>
+      {badge && badge > 0 ? <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={[styles.buttonText, secondary && styles.secondaryButtonText, { flex: 1 }]}>{t(label)}</Text>
+        <View style={{ minWidth: 24, minHeight: 24, paddingHorizontal: 7, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary }}>
+          <Text style={{ color: colors.background, fontSize: 12, fontWeight: '800' }}>{badge}</Text>
+        </View>
+      </View> : <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{t(label)}</Text>}
     </Pressable>
   );
 }

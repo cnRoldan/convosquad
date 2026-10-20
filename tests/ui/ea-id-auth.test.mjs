@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
+async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -48,6 +48,25 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     {id: 'trial-two', club_id: club.id, ea_id: 'Prueba segunda', status: 'active', sort_order: 1, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
     {id: 'trial-retired', club_id: club.id, ea_id: 'Prueba retirada', status: 'withdrawn', sort_order: 2, created_at: '2026-10-16T12:00:00Z', notes: null, player_id: null},
   ] : [];
+  const channels = [];
+  const joinRequests = pendingJoinRequests ? [{id:'00000000-0000-4000-8000-000000000921',club_id:club.id,user_id:candidateId,club_name_snapshot:club.name,status:'pending',profiles:{username:'Solicitante'},created_at:new Date().toISOString()}] : [];
+  await context.routeWebSocket('**/realtime/v1/websocket*',socket=>{
+    socket.onMessage(message=>{
+      const raw=JSON.parse(String(message));
+      const frame=Array.isArray(raw)?{join_ref:raw[0],ref:raw[1],topic:raw[2],event:raw[3],payload:raw[4]}:raw;
+      function send(event,payload){const reply={join_ref:frame.join_ref,ref:frame.ref,topic:frame.topic,event,payload};socket.send(JSON.stringify(Array.isArray(raw)?[reply.join_ref,reply.ref,reply.topic,reply.event,reply.payload]:reply));}
+      if(frame.event==='phx_join'){
+        const bindings=frame.payload.config.postgres_changes.map((binding,index)=>({...binding,id:index+1}));channels.push({send,bindings});
+        send('phx_reply',{status:'ok',response:{postgres_changes:bindings}});
+      }else if(['heartbeat','phx_leave'].includes(frame.event))send('phx_reply',{status:'ok',response:{}});
+    });
+  });
+  function emitRequest(event,record){
+    for(const channel of channels){
+      const binding=channel.bindings.find(binding=>binding.table==='join_requests'&&binding.event===event);
+      if(binding)channel.send('postgres_changes',{ids:[binding.id],data:{schema:'public',table:'join_requests',type:event,columns:[],record,old_record:{},commit_timestamp:new Date().toISOString()}});
+    }
+  }
   const trialContacts = rosterTrials ? [{trial_id: 'trial-one', phone: '+34600000000'}] : [];
   const trialNotes = rosterTrials ? [{trial_id: 'trial-one', notes: 'Valoración privada del capitán'}] : [];
   let createdCall = null;
@@ -78,6 +97,13 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     }
     const endpoint = url.pathname.split('/').at(-1); const body = req.postData() ? req.postDataJSON() : null;
     requests.push({ endpoint, body });
+    if (endpoint === 'join_requests') {
+      const rows=url.searchParams.has('user_id')?joinRequests.filter(row=>row.user_id===userId):clubRole==='admin'?joinRequests.filter(row=>row.status==='pending'&&row.club_id===club.id):[];
+      return route.fulfill({json:rows});
+    }
+    if (endpoint === 'review_join_request') {
+      assert.equal(clubRole,'admin');const row=joinRequests.find(row=>row.id===body.p_request_id);assert.equal(row.status,'pending');row.status=body.p_approve?'approved':'rejected';return route.fulfill({json:row});
+    }
     if (endpoint === 'club_decision_locks') return route.fulfill({json: []});
     if (endpoint === 'create_club') { club.name = body.p_name; club.timezone = body.p_timezone; return route.fulfill({json: club}); }
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
@@ -181,7 +207,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     if (['clubs', 'club_members', 'search_clubs', 'join_requests', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
     throw new Error(`Unexpected fixture endpoint: ${endpoint}`);
   });
-  return { page, requests, crestFixture: transparentPng, async close() { assert.deepEqual(errors, []); await context.close(); } };
+  return { page, requests, joinRequests, emitRequest, crestFixture: transparentPng, async close() { assert.deepEqual(errors, []); await context.close(); } };
 }
 
 test('registro móvil: dos campos, sesión inmediata y navegación a clubes sin confirmar correo', async () => {
@@ -941,4 +967,46 @@ test('actualizar plantilla muestra un alta remota sin salir del club ni reinicia
   assert.ok(reads>0);assert.ok(page.url().endsWith('/roster'));
   assert.equal(await page.getByText('RegistradoRemoto',{exact:true}).count(),0);
  } finally {await f.close();}
+});
+
+test('solicitudes recibidas: chip en directo, aprobar sin cambiar de club y conservar solicitudes enviadas',async()=>{
+ const f=await fixture({clubRole:'admin',pendingJoinRequests:true});
+ try{
+  f.joinRequests.push({id:'00000000-0000-4000-8000-000000000923',club_id:'00000000-0000-4000-8000-000000000999',user_id:'00000000-0000-4000-8000-000000000901',club_name_snapshot:'Otro club solicitado',status:'pending',created_at:new Date().toISOString()});
+  const {page}=f;await page.goto(`${origin}/clubs`);
+  await page.getByRole('button',{name:'Mis solicitudes, 1 pendientes de revisión',exact:true}).waitFor();
+  const next={...f.joinRequests[0],id:'00000000-0000-4000-8000-000000000922',user_id:'00000000-0000-4000-8000-000000000925',profiles:{username:'OtraSolicitud'}};
+  f.joinRequests.push(next);f.emitRequest('INSERT',next);
+  const badge=page.getByRole('button',{name:'Mis solicitudes, 2 pendientes de revisión',exact:true});
+  await badge.screenshot({path:'test-results/join-request-badge.png'});
+  await badge.click();
+  await page.getByText('Solicitante',{exact:true}).waitFor();await page.getByText('OtraSolicitud',{exact:true}).waitFor();
+  await page.getByText('Solicitudes que he enviado',{exact:true}).waitFor();
+  await page.getByText('Otro club solicitado',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Aprobar',exact:true}).first().click();
+  await page.getByText('Solicitud aprobada. El usuario ya puede acceder al club.',{exact:true}).waitFor();
+  await page.getByText('Solicitante',{exact:true}).waitFor({state:'hidden'});
+  assert.equal(f.requests.find(r=>r.endpoint==='review_join_request').body.p_approve,true);
+  next.status='rejected';f.emitRequest('UPDATE',next);
+  await page.getByText('No hay solicitudes pendientes.',{exact:true}).waitFor();
+  await page.goto(`${origin}/clubs`);
+  await page.getByRole('button',{name:'Mis solicitudes',exact:true}).waitFor();
+ }finally{await f.close();}
+});
+
+test('solicitudes: jugador no muestra pendientes de otros y al tocar push solo capitán destinatario entra a revisión',async()=>{
+ const club='00000000-0000-4000-8000-000000000903',user='00000000-0000-4000-8000-000000000901';
+ for(const mode of ['captain','player','wrong-account']){
+  const f=await fixture({clubRole:mode==='player'?'player':'admin',pendingJoinRequests:true});
+  try{
+   if(mode==='player'){
+    await f.page.goto(`${origin}/clubs`);await f.page.getByRole('button',{name:'Mis solicitudes',exact:true}).click();
+    await f.page.getByText('No tienes solicitudes.',{exact:true}).waitFor();assert.equal(await f.page.getByText('Solicitante',{exact:true}).count(),0);
+   }
+   await f.page.goto(`${origin}/notification?requests=1&club=${club}&user=${mode==='wrong-account'?'00000000-0000-4000-8000-000000000998':user}`);
+   if(mode==='captain'){await f.page.waitForURL('**/join-requests');await f.page.getByText('Solicitante',{exact:true}).waitFor();}
+   else await f.page.getByText(mode==='player'?'Ya no tienes permisos para revisar las solicitudes de este club.':'Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.',{exact:true}).waitFor();
+   assert.equal(f.requests.some(r=>r.endpoint==='review_join_request'),false);
+  }finally{await f.close();}
+ }
 });

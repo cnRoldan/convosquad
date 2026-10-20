@@ -717,5 +717,13 @@
   "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Choose a player who joined at the last minute. Their availability response will stay the same.",
   "Jugador que añadir a la valoración": "Player to add to ratings",
   "Selecciona un jugador": "Select a player",
-  "Añadir a la valoración": "Add to ratings"
+  "Añadir a la valoración": "Add to ratings",
+  "Mis solicitudes, {{v0}} pendientes de revisión": "My requests, {{v0}} awaiting review",
+  "No se pudieron actualizar las solicitudes.": "Could not refresh requests.",
+  "Gestiona las solicitudes de tus clubes y consulta las que has enviado.": "Manage requests for your clubs and check the ones you have sent.",
+  "Solicitudes para mis clubes": "Requests for my clubs",
+  "Solicitudes que he enviado": "Requests I have sent",
+  "Nueva solicitud de acceso": "New join request",
+  "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "This notification belongs to another account. Sign in with the intended account.",
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "You no longer have permission to review requests for this club."
 }

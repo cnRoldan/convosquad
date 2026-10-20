@@ -11,6 +11,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { usePendingInvite } from '@/features/invitations/pending-invite-context';
 import { backendErrorMessage } from '@/lib/backend-result';
+import { useRequests } from '@/features/join-requests/requests-context';
 
 export default function ClubsScreen() {
   useLanguage();
@@ -24,6 +25,8 @@ function ClubSelection() {
   const { pendingInvite, clearInvite } = usePendingInvite();
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
+  const requests = useRequests();
+  const pendingCount = requests.error ? 0 : requests.incoming.length;
   if (isLoading) return <LoadingScreen label={t("Cargando tus clubes…")} />;
   if (auto === '1' && availableClubs.length === 1 && activeClub) return <Redirect href="/home" />;
 
@@ -52,8 +55,9 @@ function ClubSelection() {
     <Button secondary label={t("Buscar clubes")} onPress={() => router.push('/search-clubs')} />
     <Button secondary label={t("Notificaciones")} onPress={() => router.push('/notifications')} />
     {!isDemo ? <Button secondary label={t("Cambiar mi contraseña")} onPress={() => router.push('/change-password')} /> : null}
-    <Button secondary label={t("Mis solicitudes")} onPress={() => router.push('/my-requests')} />
-    {!isDemo ? <Button secondary label={t("Actualizar mis clubes")} onPress={refresh} /> : null}
+    <Button secondary label={t("Mis solicitudes")} badge={pendingCount} accessibilityLabel={pendingCount ? t('Mis solicitudes, {{v0}} pendientes de revisión', { v0: pendingCount }) : t('Mis solicitudes')} onPress={() => router.push('/my-requests')} />
+    {requests.error ? <Message error>{t('No se pudieron actualizar las solicitudes.')}</Message> : null}
+    {!isDemo ? <Button secondary label={t("Actualizar mis clubes")} onPress={() => { refresh(); requests.refresh(); }} /> : null}
     {message ? <Message error>{message}</Message> : null}
     {!isDemo ? <Button secondary label={t("Eliminar mi cuenta")} onPress={() => router.push('/delete-account')} /> : null}
     <Button secondary label={t("Política de privacidad")} onPress={() => router.push('/privacy')} />

@@ -1,45 +1,21 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { useCallback, useState } from 'react';
-import { Body, Button, Card, DemoNotice, Heading, Message, Screen } from '@/components/ui';
+import { Body, Button, DemoNotice, Heading, Message, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
-import { listJoinRequests, reviewJoinRequest } from '@/features/join-requests/service';
-import { useResource } from '@/hooks/use-resource';
-import { backendErrorMessage } from '@/lib/backend-result';
+import { useRequests } from '@/features/join-requests/requests-context';
+import { IncomingRequests } from '@/features/join-requests/incoming-requests';
 
 export default function JoinRequestsScreen() {
   useLanguage();
-  const { session, isDemo } = useAuth();
-  const { activeClub, refreshRoster } = useClub();
-  const clubId = activeClub?.id;
-  const load = useCallback(() => clubId ? listJoinRequests(clubId) : Promise.resolve([]), [clubId]);
-  const requests = useResource(`join-requests:${session?.user.id}:${clubId}`, load, Boolean(clubId && session) && !isDemo);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
-  async function review(id: string, approve: boolean) {
-    if (isDemo || busy) return;
-    setBusy(id);
-    setMessage('');
-    try {
-      await reviewJoinRequest(id, approve);
-      setMessage(approve ? t("Solicitud aprobada. El usuario ya puede acceder al club.") : t("Solicitud rechazada."));
-      requests.reload();
-      refreshRoster();
-    } catch (error) { setMessage(backendErrorMessage(error)); requests.reload(); }
-    finally { setBusy(null); }
-  }
-  return <Screen>
-    <Heading title={t("Solicitudes pendientes")} subtitle={activeClub?.name ?? ''} />
+  const { isDemo } = useAuth();
+  const { activeClub } = useClub();
+  const requests = useRequests();
+  return <Screen onRefresh={!isDemo ? requests.refresh : undefined} refreshing={requests.isLoading}>
+    <Heading title={t('Solicitudes pendientes')} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
-    {requests.isLoading ? <Body>{t("Cargando solicitudes…")}</Body> : null}
+    {requests.isLoading ? <Body>{t('Cargando solicitudes…')}</Body> : null}
     {requests.error ? <Message error>{requests.error}</Message> : null}
-    {message ? <Message>{message}</Message> : null}
-    {requests.data?.map((request) => <Card key={request.id} title={request.profiles?.username ?? t("Usuario solicitante")}>
-      <Body>{t("Quiere incorporarse como jugador.")}</Body>
-      <Button label={t("Aprobar")} disabled={Boolean(busy)} onPress={() => { void review(request.id, true); }} />
-      <Button secondary label={t("Rechazar")} disabled={Boolean(busy)} onPress={() => { void review(request.id, false); }} />
-    </Card>)}
-    {requests.data?.length === 0 ? <Body>{t("No hay solicitudes pendientes.")}</Body> : null}
-    <Button secondary label={t("Actualizar")} disabled={isDemo || requests.isLoading} onPress={requests.reload} />
+    {activeClub && !isDemo ? <IncomingRequests clubId={activeClub.id} /> : null}
+    <Button secondary label={t('Actualizar')} disabled={isDemo || requests.isLoading} onPress={requests.refresh} />
   </Screen>;
 }

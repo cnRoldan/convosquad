@@ -717,5 +717,13 @@
   "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Choisis un joueur qui a participé au dernier moment. Sa réponse de disponibilité restera inchangée.",
   "Jugador que añadir a la valoración": "Joueur à ajouter à l’évaluation",
   "Selecciona un jugador": "Sélectionne un joueur",
-  "Añadir a la valoración": "Ajouter à l’évaluation"
+  "Añadir a la valoración": "Ajouter à l’évaluation",
+  "Mis solicitudes, {{v0}} pendientes de revisión": "Mes demandes, {{v0}} en attente de vérification",
+  "No se pudieron actualizar las solicitudes.": "Impossible d’actualiser les demandes.",
+  "Gestiona las solicitudes de tus clubes y consulta las que has enviado.": "Gère les demandes pour tes clubs et consulte celles que tu as envoyées.",
+  "Solicitudes para mis clubes": "Demandes pour mes clubs",
+  "Solicitudes que he enviado": "Demandes que j’ai envoyées",
+  "Nueva solicitud de acceso": "Nouvelle demande d’adhésion",
+  "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "Cette notification appartient à un autre compte. Connecte-toi avec le compte destinataire.",
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "Tu n’as plus l’autorisation de traiter les demandes de ce club."
 }

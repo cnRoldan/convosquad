@@ -28,7 +28,7 @@ test('aprobar sin convocatoria ni ficha avisa solo al admitido, independientemen
  assert.equal(d.length,1);assert.equal(d[0].user_id,applicant);assert.equal(d[0].can_vote,false);
  assert.equal((await server('select * from public.claim_push_deliveries($1)',[e.id])).rows.length,0);
  await assert.rejects(approve(request),{code:'22023'});
- assert.equal((await db.query("select * from public.push_events where admission_request_id=$1",[request.id])).rows.length,1);
+ assert.equal((await db.query("select * from public.push_events where admission_request_id=$1 and kind='club_approved'",[request.id])).rows.length,1);
 });
 test('rechazo y aprobación no autorizada no generan avisos; fallo de vinculación revierte la admisión',async()=>{
  const a=await setup();await assert.rejects(approve(a.request,other),{code:'42501'});assert.equal(await event(a.club),undefined);

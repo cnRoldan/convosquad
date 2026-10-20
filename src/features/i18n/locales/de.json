@@ -717,5 +717,13 @@
   "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Wähle einen Spieler, der kurzfristig mitgespielt hat. Seine Verfügbarkeitsantwort bleibt unverändert.",
   "Jugador que añadir a la valoración": "Spieler für die Bewertung",
   "Selecciona un jugador": "Spieler auswählen",
-  "Añadir a la valoración": "Zur Bewertung hinzufügen"
+  "Añadir a la valoración": "Zur Bewertung hinzufügen",
+  "Mis solicitudes, {{v0}} pendientes de revisión": "Meine Anfragen, {{v0}} zur Prüfung offen",
+  "No se pudieron actualizar las solicitudes.": "Die Anfragen konnten nicht aktualisiert werden.",
+  "Gestiona las solicitudes de tus clubes y consulta las que has enviado.": "Verwalte Anfragen für deine Vereine und sieh deine gesendeten Anfragen ein.",
+  "Solicitudes para mis clubes": "Anfragen für meine Vereine",
+  "Solicitudes que he enviado": "Meine gesendeten Anfragen",
+  "Nueva solicitud de acceso": "Neue Beitrittsanfrage",
+  "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.": "Diese Benachrichtigung gehört zu einem anderen Konto. Melde dich mit dem Empfängerkonto an.",
+  "Ya no tienes permisos para revisar las solicitudes de este club.": "Du hast keine Berechtigung mehr, Anfragen für diesen Verein zu prüfen."
 }
