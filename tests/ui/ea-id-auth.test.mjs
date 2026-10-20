@@ -178,7 +178,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     }
     if (endpoint === 'set_preferred_language') { preferredLanguage = body.p_language; return route.fulfill({json: null}); }
     if (endpoint === 'profiles') return route.fulfill({ json: { id: '00000000-0000-4000-8000-000000000901', username: 'EA-Player_9', preferred_language: preferredLanguage } });
-    if (['clubs', 'club_members', 'search_clubs', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
+    if (['clubs', 'club_members', 'search_clubs', 'join_requests', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
     throw new Error(`Unexpected fixture endpoint: ${endpoint}`);
   });
   return { page, requests, crestFixture: transparentPng, async close() { assert.deepEqual(errors, []); await context.close(); } };
@@ -811,4 +811,34 @@ test('privacidad accesible desde bienvenida, registro, login y clubes con sesió
    assert.equal(new URL(f.page.url()).pathname,route);
   } finally {await f.close();}
  }
+});
+
+test('navegación móvil: rendimiento vuelve al club sin perder sesión y hay regreso en pantallas internas', async()=>{
+ const f=await fixture({clubRole:'admin',performance:true});
+ try {
+  const {page}=f; await page.goto(`${origin}/home`);
+  await page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
+  await page.waitForURL('**/performance');
+  await page.getByRole('button',{name:'Volver al club',exact:true}).first().click();
+  await page.waitForURL('**/home');
+  await page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();
+  assert.equal(f.requests.filter(r=>r.endpoint==='logout').length,0);
+  await page.goto(`${origin}/create-club`);
+  await page.getByRole('button',{name:'Volver',exact:true}).first().waitFor();
+  await page.goto(`${origin}/my-requests`);
+  await page.getByRole('button',{name:'Volver',exact:true}).first().waitFor();
+ } finally {await f.close();}
+});
+
+test('fecha y hora usan controles específicos y el formulario expandido permite llegar a confirmar',async()=>{
+ const f=await fixture({clubRole:'admin'});
+ try {
+  const {page}=f;await page.goto(`${origin}/create-call-up`);
+  assert.equal(await page.getByLabel('Fecha (AAAA-MM-DD)',{exact:true}).getAttribute('type'),'date');
+  assert.equal(await page.getByLabel('Hora de convocatoria (HH:mm)',{exact:true}).getAttribute('type'),'time');
+  await page.getByLabel('Programar valoración de jugadores',{exact:true}).click();
+  await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).fill('23:50');
+  await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).scrollIntoViewIfNeeded();
+  assert.ok(await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).isVisible());
+ } finally {await f.close();}
 });

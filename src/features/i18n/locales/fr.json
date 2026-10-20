@@ -609,7 +609,6 @@
   "¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.": "Souhaitez-vous retirer ce joueur de l'équipe ? Vos convocations précédents seront conservés.",
   "¿Quieres quitar a {{v0}} de la plantilla? No aparecerá en nuevas convocatorias. Las convocatorias anteriores conservarán sus datos.": "Voulez-vous supprimer {{v0}} de l'équipe ? Il n'apparaîtra pas dans les nouveaux convocations. Les convocations précédents conserveront vos données.",
   "¿Quieres quitar esta prueba de la convocatoria? Seguirá guardada en la plantilla del club y las convocatorias anteriores no cambiarán.": "Souhaitez-vous supprimer ce test de la convocation ? Il continuera à être enregistré dans l'effectif du club et les convocations précédents ne changeront pas.",
-  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.": "Souhaitez-vous réintégrer ce joueur ? Vous conserverez votre identifiant EA, votre numéro de dossard, votre catégorie et votre compte associé. Il reviendra à la fin de sa catégorie et ne sera repris que dans les nouveaux convocations.",
   "Último aviso para votar": "Dernier rappel pour voter",
   "Último aviso para votar (HH:mm)": "Dernier avis de vote (HH:mm)",
   "Último aviso para votar a las {{v0}}. ": "Dernier avis de vote à {{v0}}. ",
@@ -706,5 +705,7 @@
   "Política de privacidad": "Politique de confidentialité",
   "Última actualización: {{v0}}": "Dernière mise à jour : {{v0}}",
   "Políticas de los proveedores": "Politiques des prestataires",
-  "Volver": "Retour"
+  "Volver": "Retour",
+  "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.": "Un joueur actif possède déjà cet identifiant EA ou le compte associé est utilisé. Vérifiez l’effectif.",
+  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "Réintégrer ce joueur ? Son identifiant EA, son numéro, sa catégorie et son compte associé seront conservés. Il reviendra à la fin de sa catégorie et sera aussi ajouté aux convocations ouvertes."
 }

@@ -609,7 +609,6 @@
   "¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.": "¿Quieres quitar a este jugador de la plantilla? Sus convocatorias anteriores se conservarán.",
   "¿Quieres quitar a {{v0}} de la plantilla? No aparecerá en nuevas convocatorias. Las convocatorias anteriores conservarán sus datos.": "¿Quieres quitar a {{v0}} de la plantilla? No aparecerá en nuevas convocatorias. Las convocatorias anteriores conservarán sus datos.",
   "¿Quieres quitar esta prueba de la convocatoria? Seguirá guardada en la plantilla del club y las convocatorias anteriores no cambiarán.": "¿Quieres quitar esta prueba de la convocatoria? Seguirá guardada en la plantilla del club y las convocatorias anteriores no cambiarán.",
-  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.": "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y solo se incluirá en nuevas convocatorias.",
   "Último aviso para votar": "Último aviso para votar",
   "Último aviso para votar (HH:mm)": "Último aviso para votar (HH:mm)",
   "Último aviso para votar a las {{v0}}. ": "Último aviso para votar a las {{v0}}. ",
@@ -706,5 +705,7 @@
   "Política de privacidad": "Política de privacidad",
   "Última actualización: {{v0}}": "Última actualización: {{v0}}",
   "Políticas de los proveedores": "Políticas de los proveedores",
-  "Volver": "Volver"
+  "Volver": "Volver",
+  "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.": "Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.",
+  "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas.": "¿Quieres reincorporar a este jugador? Conservará su EA ID, dorsal, categoría y cuenta vinculada. Volverá al final de su categoría y se incluirá también en las convocatorias abiertas."
 }

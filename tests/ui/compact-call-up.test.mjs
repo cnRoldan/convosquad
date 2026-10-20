@@ -734,3 +734,18 @@ test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilita
     } finally {await f.close();}
   }
 });
+
+test('editar convocatoria: panel largo desplaza hasta valoración y botones sin desbordar en móvil',async()=>{
+ const f=await fixture({role:'admin',width:320,expandPanels:false});
+ try {
+  const {page}=f;await page.setViewportSize({width:320,height:568});
+  await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
+  await page.getByRole('button',{name:'Modificar fecha y hora',exact:true}).click();
+  await page.getByLabel('Programar valoración de jugadores',{exact:true}).click();
+  await page.getByLabel('Hora de valoración (HH:mm)',{exact:true}).fill('23:55');
+  const cancel=page.getByRole('button',{name:'Cancelar',exact:true});await cancel.scrollIntoViewIfNeeded();
+  const box=await cancel.boundingBox();assert.ok(box.y>=0 && box.y+box.height<=568);
+  await page.screenshot({path:'test-results/scrollable-call-up-editor.png'});
+  await cancel.click();assert.equal(f.data.writes,0);
+ } finally {await f.close();}
+});

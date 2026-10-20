@@ -1,3 +1,4 @@
+import { DateTimeField } from '@/components/date-time-field';
 import { t, useLanguage, intlLocale } from '@/features/i18n/runtime';
 import { evaluationInstant } from '@/features/ratings/schedule';
 import { closingInstant } from '@/features/call-ups/closing-time';
@@ -5,7 +6,7 @@ import { useState } from 'react';
 import { Switch } from 'react-native';
 import { lastNoticeInstant } from '@/features/call-ups/last-notice';
 import { router } from 'expo-router';
-import { Body, Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
+import { Body, Button, DemoNotice, Heading, Message, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
@@ -50,19 +51,19 @@ export default function CreateCallUpScreen() {
     <Heading title={t("Crear convocatoria")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
     <Body>{t("Horario del club: {{v0}}. Se conservará una fotografía de la plantilla y las pruebas activas. AYUDAS comenzará vacía.", { v0: activeClub?.timezone })}</Body>
-    <Field label={t("Fecha (AAAA-MM-DD)")} value={date} onChangeText={setDate} placeholder={t("AAAA-MM-DD")} maxLength={10} editable={!busy} />
-    <Field label={t("Hora de convocatoria (HH:mm)")} value={time} onChangeText={setTime} placeholder="21:50" maxLength={5} editable={!busy} />
+    <DateTimeField mode="date" label={t("Fecha (AAAA-MM-DD)")} value={date} onChange={setDate} disabled={busy} />
+    <DateTimeField mode="time" label={t("Hora de convocatoria (HH:mm)")} value={time} onChange={setTime} disabled={busy} />
     <Body>{t("Cerrar la votación automáticamente")}</Body>
     <Switch accessibilityLabel={t("Cierre automático de votación")} value={closingEnabled} onValueChange={setClosingEnabled} disabled={busy} />
-    {closingEnabled ? <Field label={t("Hora de cierre de votación (HH:mm)")} value={closingTime} onChangeText={setClosingTime} maxLength={5} editable={!busy} /> : null}
+    {closingEnabled ? <DateTimeField mode="time" label={t("Hora de cierre de votación (HH:mm)")} value={closingTime} onChange={setClosingTime} disabled={busy} /> : null}
     <Body>{t("Se usa la zona horaria de la convocatoria. Al cerrar ya no se podrán enviar ni cambiar votos.")}</Body>
     <Body>{t("Enviar un último aviso a quienes sigan sin responder")}</Body>
     <Switch accessibilityLabel={t("Enviar último aviso para votar")} value={noticeEnabled} onValueChange={setNoticeEnabled} disabled={busy} />
-    {noticeEnabled ? <Field label={t("Último aviso para votar (HH:mm)")} value={noticeTime} onChangeText={setNoticeTime} maxLength={5} editable={!busy} /> : null}
+    {noticeEnabled ? <DateTimeField mode="time" label={t("Último aviso para votar (HH:mm)")} value={noticeTime} onChange={setNoticeTime} disabled={busy} /> : null}
     <Body>{t("Hora del club. Si el aviso ya ha pasado, se enviará en la próxima ejecución del servicio, antes de la convocatoria.")}</Body>
     <Body>{t("Programar valoración de jugadores")}</Body>
     <Switch accessibilityLabel={t("Programar valoración de jugadores")} value={evaluationEnabled} onValueChange={setEvaluationEnabled} disabled={busy} />
-    {evaluationEnabled ? <><Field label={t("Hora de valoración (HH:mm)")} value={evaluationTime} onChangeText={setEvaluationTime} maxLength={5} editable={!busy} />
+    {evaluationEnabled ? <><DateTimeField mode="time" label={t("Hora de valoración (HH:mm)")} value={evaluationTime} onChange={setEvaluationTime} disabled={busy} />
       <Body>{t("Hora del club. Si es anterior al partido, se usará el día siguiente. Solo los capitanes podrán valorar a partir de esa hora.")}</Body><Body>{t("A esa hora avisaremos a los capitanes para que valoren a los jugadores.")}</Body></> : null}
     {message ? <Message error>{message}</Message> : null}
     <Button label={t("Revisar convocatoria")} disabled={busy || isDemo} onPress={preview} />

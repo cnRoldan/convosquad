@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { ClubAccess } from '@/components/access';
 import { RatingVisibilitySettings } from '@/features/ratings/visibility-settings';
 import { ratingVisibility, ratingVisibilityMessage } from '@/features/ratings/visibility';
 import { Redirect, router } from 'expo-router';
@@ -10,7 +11,7 @@ import { t, useLanguage, intlLocale } from '@/features/i18n/runtime';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 
-export default function PlayerRatingsScreen() {
+function PlayerRatingsScreen() {
   useLanguage();
   const { session, isDemo } = useAuth(); const { activeClub, currentMembership } = useClub(); const clubId = activeClub?.id;
   const admin = currentMembership?.role === 'admin';
@@ -52,7 +53,9 @@ export default function PlayerRatingsScreen() {
         onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} />)}
       {!result.isLoading && !result.data?.calls.length ? <Body>{t('Programa una hora de valoración al crear o editar una convocatoria.')}</Body> : null}
     </Card> : null}
-    <Button secondary label={t('Volver al club')} onPress={() => router.navigate('/home')} />
+    <Button secondary label={t('Volver al club')} onPress={() => router.dismissTo('/home')} />
     <Button secondary label={t('Actualizar rendimiento')} onPress={() => { result.reload(); history.reload(); }} />
   </Screen>;
 }
+
+export default function PerformanceRoute() { return <ClubAccess><PlayerRatingsScreen /></ClubAccess>; }

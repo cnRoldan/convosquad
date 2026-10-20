@@ -17,5 +17,5 @@ test('ficha y papelera comparten la confirmación de retirada y reincorporación
   const restoration = playerActivityCopy(false);
   assert.equal(restoration.confirmLabel, 'Reincorporar');
   assert.match(restoration.description, /EA ID, dorsal, categoría y cuenta vinculada/);
-  assert.match(restoration.description, /solo se incluirá en nuevas convocatorias/);
+  assert.match(restoration.description, /se incluirá también en las convocatorias abiertas/);
 });
