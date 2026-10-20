@@ -36,6 +36,12 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
 }) {
   useLanguage();
   const { activeClub } = useClub();
+  const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
+  const [addingPlayer, setAddingPlayer] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState('');
+  const visiblePlayers = players.filter(player => player.availability === 'available'
+    || ratings.some(rating => rating.call_up_player_id === player.id) || addedPlayers.includes(player.id));
+  const remainingPlayers = players.filter(player => !visiblePlayers.includes(player));
   const [choices, setChoices] = useState<Record<string, RatingChoice>>(() => Object.fromEntries(players.map(player => {
     const saved = ratings.find(rating => rating.call_up_player_id === player.id);
     return [player.id, saved?.not_selected ? 'not_selected' : saved?.score !== null && saved?.score !== undefined ? String(saved.score) as RatingChoice : ''];
@@ -44,7 +50,7 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
   useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
   const available = call.evaluation_at && Date.parse(call.evaluation_at) <= clock && Date.parse(call.starts_at) <= clock
     && Date.parse(call.starts_at) >= ratingCutoff(clock) && (call.status === 'closed' || call.status === 'open');
-  const changes: RatingChange[] = players.flatMap(player => {
+  const changes: RatingChange[] = visiblePlayers.flatMap(player => {
     const previous = ratings.find(rating => rating.call_up_player_id === player.id);
     const before = previous?.not_selected ? 'not_selected' : previous?.score !== null && previous?.score !== undefined ? String(previous.score) : '';
     const next = choices[player.id] ?? '';
@@ -63,11 +69,12 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
     <Heading title={t('Valorar jugadores')} subtitle={formatMatchDate(call.starts_at, call.timezone)} />
     <Body>{t(ratingVisibilityMessage(ratingVisibility(activeClub?.ratingsVisibility)))}</Body>
     <Body>{t('Puntúa de 0 a 10. «No convocado» no cuenta como un cero ni entra en la media.')}</Body>
+    <Body>{t('Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.')}</Body>
     {call.evaluation_at ? <Body>{t('Hora de valoración: {{v0}}', { v0: formatMatchDate(call.evaluation_at, call.timezone) })}</Body> : null}
     {!available ? <Message>{t('Las valoraciones se habilitan a la hora programada y se conservan durante tres meses.')}</Message> : null}
     {notice ? <Message>{t("Valoraciones guardadas.")}</Message> : null}
     {message ? <Message error>{message}</Message> : null}
-    {players.map(player => <Card key={player.id} title={player.ea_id_snapshot}>
+    {visiblePlayers.map(player => <Card key={player.id} title={player.ea_id_snapshot}>
       <View style={{ gap: 6 }}>
         <Text style={{ color: colors.muted, fontSize: 13 }}>{t('Valoración')}</Text>
         <Picker<RatingChoice> accessibilityLabel={t('Valoración de {{v0}}', { v0: player.ea_id_snapshot })} selectedValue={choices[player.id] ?? ''} enabled={Boolean(available) && !busy}
@@ -79,7 +86,20 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
         </Picker>
       </View>
     </Card>)}
-    {!players.length ? <Body>{t('No hay jugadores que valorar.')}</Body> : null}
+    {!visiblePlayers.length ? <Body>{t('No hay jugadores que valorar.')}</Body> : null}
+    {remainingPlayers.length ? addingPlayer ? <Card title={t('Añadir jugador a la valoración')}>
+      <Body>{t('Elige a un jugador que participó a última hora. Su voto no se modificará.')}</Body>
+      <Picker<string> accessibilityLabel={t('Jugador que añadir a la valoración')} selectedValue={selectedPlayer}
+        enabled={Boolean(available) && !busy} onValueChange={setSelectedPlayer}
+        style={{ color: colors.text, backgroundColor: colors.surface, minHeight: 48 }}>
+        <Picker.Item label={t('Selecciona un jugador')} value="" />
+        {remainingPlayers.map(player => <Picker.Item key={player.id} label={player.ea_id_snapshot} value={player.id} />)}
+      </Picker>
+      <Button label={t('Añadir a la valoración')} disabled={!available || busy || !remainingPlayers.some(player => player.id === selectedPlayer)} onPress={() => {
+        setAddedPlayers(current => [...current, selectedPlayer]); setSelectedPlayer(''); setAddingPlayer(false);
+      }} />
+      <Button secondary label={t('Cancelar')} disabled={busy} onPress={() => { setAddingPlayer(false); setSelectedPlayer(''); }} />
+    </Card> : <Button secondary label={t('Añadir jugador a la valoración')} disabled={!available || busy} onPress={() => setAddingPlayer(true)} /> : null}
     <Button label={t('Guardar valoraciones')} disabled={busy || !available || !changes.length} onPress={() => { void save(); }} />
     <Button secondary label={t('Recargar valoraciones')} disabled={busy} onPress={() => onSaved(false)} />
     <Button secondary label={t('Ver rendimiento del club')} onPress={() => router.replace('/performance')} />

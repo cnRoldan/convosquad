@@ -711,5 +711,11 @@
   "Solicitud aceptada": "Request accepted",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.": "This notification belongs to another account. Sign in with the accepted account.",
   "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.": "Club access could not be verified. Refresh your clubs or contact a captain.",
-  "Comprobando acceso al club…": "Checking club access…"
+  "Comprobando acceso al club…": "Checking club access…",
+  "Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.": "Available players and saved ratings are shown. You can add other players from the call-up if they played at the last minute.",
+  "Añadir jugador a la valoración": "Add player to ratings",
+  "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Choose a player who joined at the last minute. Their availability response will stay the same.",
+  "Jugador que añadir a la valoración": "Player to add to ratings",
+  "Selecciona un jugador": "Select a player",
+  "Añadir a la valoración": "Add to ratings"
 }

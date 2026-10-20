@@ -711,5 +711,11 @@
   "Solicitud aceptada": "Anfrage angenommen",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.": "Diese Benachrichtigung gehört zu einem anderen Konto. Melde dich mit dem aufgenommenen Konto an.",
   "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.": "Der Vereinszugriff konnte nicht überprüft werden. Aktualisiere deine Vereine oder frage einen Kapitän.",
-  "Comprobando acceso al club…": "Vereinszugriff wird geprüft…"
+  "Comprobando acceso al club…": "Vereinszugriff wird geprüft…",
+  "Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.": "Angezeigt werden verfügbare Spieler und gespeicherte Bewertungen. Weitere Spieler aus dem Aufgebot kannst du hinzufügen, wenn sie kurzfristig mitgespielt haben.",
+  "Añadir jugador a la valoración": "Spieler zur Bewertung hinzufügen",
+  "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Wähle einen Spieler, der kurzfristig mitgespielt hat. Seine Verfügbarkeitsantwort bleibt unverändert.",
+  "Jugador que añadir a la valoración": "Spieler für die Bewertung",
+  "Selecciona un jugador": "Spieler auswählen",
+  "Añadir a la valoración": "Zur Bewertung hinzufügen"
 }

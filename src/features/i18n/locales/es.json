@@ -711,5 +711,11 @@
   "Solicitud aceptada": "Solicitud aceptada",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.": "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.",
   "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.": "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.",
-  "Comprobando acceso al club…": "Comprobando acceso al club…"
+  "Comprobando acceso al club…": "Comprobando acceso al club…",
+  "Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.": "Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.",
+  "Añadir jugador a la valoración": "Añadir jugador a la valoración",
+  "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Elige a un jugador que participó a última hora. Su voto no se modificará.",
+  "Jugador que añadir a la valoración": "Jugador que añadir a la valoración",
+  "Selecciona un jugador": "Selecciona un jugador",
+  "Añadir a la valoración": "Añadir a la valoración"
 }

@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, browserLanguage = 'es-ES' } = {}) {
+async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -56,7 +56,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     timezone: 'UTC', status: 'closed', evaluation_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), closes_at: null};
   const ratingPlayers = players.map((player,index) => ({id: `rated-${index}`, club_id: club.id, call_up_id: ratingCall.id, source_player_id: player.id,
     user_id: player.user_id, ea_id_snapshot: player.ea_id, category_snapshot: player.category, sort_order_snapshot: index,
-    availability: 'available', responded_at: matchAt, auto_response: false}));
+    availability: ratingAvailability[index], responded_at: matchAt, auto_response: false}));
   const ratings = seedRatings ? ratingPlayers.map((entry,index)=>({call_up_player_id:entry.id,call_up_id:ratingCall.id,club_id:club.id,player_id:entry.source_player_id,player_name:entry.ea_id_snapshot,score:index?4:8,not_selected:false,updated_at:matchAt})) : [];
   let preferredLanguage = null;
   let voteNotifications = true;
@@ -661,6 +661,72 @@ test('valoraciones: hora futura bloquea notas y jugadores no entran a la gestió
     assert.equal(player.requests.some(request=>['get_player_performance','list_rating_call_ups','player_ratings'].includes(request.endpoint)),false);
     assert.equal(await player.page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).count(),0);
   } finally {await player.close();}
+});
+test('valoraciones: solo disponibles inicialmente; añadir un suplente conserva su voto y su nota al recargar',async()=>{
+  const f=await fixture({clubRole:'admin',performance:true,ratingAvailability:['available','backup']});
+  try {
+    const {page}=f;await page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
+    await page.getByLabel('Valoración de EA-Player_9',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Valoración de Candidate',{exact:true}).count(),0);
+    await page.getByLabel('Valoración de EA-Player_9',{exact:true}).selectOption('8');
+    await page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
+    assert.equal(await page.getByRole('button',{name:'Añadir a la valoración',exact:true}).isDisabled(),true);
+    const picker=page.getByLabel('Jugador que añadir a la valoración',{exact:true});
+    assert.deepEqual(await picker.locator('option').allTextContents(),['Selecciona un jugador','Candidate']);
+    await picker.selectOption('rated-1');
+    await page.getByRole('button',{name:'Añadir a la valoración',exact:true}).click();
+    assert.equal(await page.getByLabel('Valoración de EA-Player_9',{exact:true}).inputValue(),'8');
+    assert.equal(await page.getByLabel('Valoración de Candidate',{exact:true}).inputValue(),'');
+    assert.equal(f.requests.some(r=>r.endpoint==='save_player_ratings'),false);
+    assert.equal(await page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).count(),0);
+    await page.getByLabel('Valoración de Candidate',{exact:true}).selectOption('7');
+    await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
+    await page.getByText('Valoraciones guardadas.',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Valoración de Candidate',{exact:true}).inputValue(),'7');
+    assert.deepEqual(f.requests.find(r=>r.endpoint==='save_player_ratings').body.p_ratings.map(r=>[r.entry_id,r.score]),[['rated-0',8],['rated-1',7]]);
+    await page.reload();
+    await page.getByLabel('Valoración de Candidate',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Valoración de Candidate',{exact:true}).inputValue(),'7');
+    assert.equal(f.requests.some(r=>['respond_to_call_up','refresh_call_up_roster'].includes(r.endpoint)),false);
+  } finally {await f.close();}
+});
+test('valoraciones: sin disponibles se puede añadir manualmente a quien no respondió o no estaba disponible',async()=>{
+  const f=await fixture({clubRole:'admin',performance:true,ratingAvailability:['unavailable','unanswered']});
+  try {
+    const {page}=f;await page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
+    await page.getByText('No hay jugadores que valorar.',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).isDisabled(),true);
+    await page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
+    await page.getByLabel('Jugador que añadir a la valoración',{exact:true}).selectOption('rated-1');
+    await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    assert.equal(await page.getByLabel('Valoración de Candidate',{exact:true}).count(),0);
+    await page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
+    const picker=page.getByLabel('Jugador que añadir a la valoración',{exact:true});
+    assert.equal(await picker.inputValue(),'');
+    await picker.selectOption('rated-0');
+    await page.getByRole('button',{name:'Añadir a la valoración',exact:true}).click();
+    await page.getByLabel('Valoración de EA-Player_9',{exact:true}).selectOption('0');
+    await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
+    await page.getByText('Valoraciones guardadas.',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Valoración de EA-Player_9',{exact:true}).inputValue(),'0');
+    assert.equal(await page.getByLabel('Valoración de Candidate',{exact:true}).count(),0);
+    assert.equal(f.requests.find(r=>r.endpoint==='save_player_ratings').body.p_ratings.length,1);
+  } finally {await f.close();}
+});
+test('valoraciones: conserva notas previas de no disponibles y bloquea añadir antes de la hora programada',async()=>{
+  const saved=await fixture({clubRole:'admin',performance:true,ratingAvailability:['unavailable','unanswered'],seedRatings:true});
+  try {
+    await saved.page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
+    await saved.page.getByLabel('Valoración de Candidate',{exact:true}).waitFor();
+    assert.equal(await saved.page.getByLabel('Valoración de Candidate',{exact:true}).inputValue(),'4');
+    assert.equal(await saved.page.getByLabel('Valoración de EA-Player_9',{exact:true}).inputValue(),'8');
+  } finally {await saved.close();}
+  const future=await fixture({clubRole:'admin',performance:true,ratingAvailability:['available','backup'],ratingFuture:true});
+  try {
+    await future.page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
+    await future.page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true,disabled:true}).waitFor();
+    assert.equal(future.requests.some(r=>r.endpoint==='save_player_ratings'),false);
+  } finally {await future.close();}
 });
 test('crear convocatoria programa valoración tras medianoche usando la zona del club',async()=>{
   const f=await fixture({clubRole:'admin'});
