@@ -711,5 +711,11 @@
   "Solicitud aceptada": "Demande acceptée",
   "Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta admitida.": "Cette notification concerne un autre compte. Connectez-vous avec le compte admis.",
   "No se pudo comprobar el acceso al club. Actualiza tus clubes o consulta con un capitán.": "Impossible de vérifier l’accès au club. Actualisez vos clubs ou contactez un capitaine.",
-  "Comprobando acceso al club…": "Vérification de l’accès au club…"
+  "Comprobando acceso al club…": "Vérification de l’accès au club…",
+  "Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.": "Les joueurs disponibles et les évaluations enregistrées sont affichés. Tu peux ajouter d’autres joueurs de la convocation s’ils ont joué au dernier moment.",
+  "Añadir jugador a la valoración": "Ajouter un joueur à l’évaluation",
+  "Elige a un jugador que participó a última hora. Su voto no se modificará.": "Choisis un joueur qui a participé au dernier moment. Sa réponse de disponibilité restera inchangée.",
+  "Jugador que añadir a la valoración": "Joueur à ajouter à l’évaluation",
+  "Selecciona un jugador": "Sélectionne un joueur",
+  "Añadir a la valoración": "Ajouter à l’évaluation"
 }
