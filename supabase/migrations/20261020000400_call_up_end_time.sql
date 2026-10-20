@@ -486,5 +486,23 @@ end;
 $$;
 
 
+-- Repair deployments that predate the call-up publication while keeping existing
+-- membership/request subscriptions and any managed publication configuration.
+do $$
+declare v_table text;
+begin
+  if not exists(select 1 from pg_publication where pubname='supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+  if not exists(select 1 from pg_publication where pubname='supabase_realtime' and puballtables) then
+    foreach v_table in array array['call_ups','call_up_players','call_up_trials','call_up_aids'] loop
+      if not exists(select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename=v_table) then
+        execute format('alter publication supabase_realtime add table public.%I',v_table);
+      end if;
+    end loop;
+  end if;
+end;
+$$;
+
 notify pgrst,'reload schema';
 commit;
