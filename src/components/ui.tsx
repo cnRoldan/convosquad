@@ -54,12 +54,13 @@ export function Card({ title, children }: PropsWithChildren<{ title?: string }>)
   );
 }
 
-export function Button({ label, onPress, secondary = false, disabled = false, badge, accessibilityLabel }: {
+export function Button({ label, onPress, secondary = false, disabled = false, badge, floatingBadge = false, accessibilityLabel }: {
   label: string;
   onPress: () => void;
   secondary?: boolean;
   disabled?: boolean;
   badge?: number;
+  floatingBadge?: boolean;
   accessibilityLabel?: string;
 }) {
   useLanguage();
@@ -73,15 +74,17 @@ export function Button({ label, onPress, secondary = false, disabled = false, ba
       style={({ pressed }) => [
         styles.button,
         secondary && styles.secondaryButton,
+        floatingBadge && styles.buttonBadgeAnchor,
         (pressed || disabled) && styles.dimmed,
       ]}
     >
       {badge && badge > 0 ? <View style={{ width: '100%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Text style={[styles.buttonText, secondary && styles.secondaryButtonText, { flex: 1 }]}>{t(label)}</Text>
-        <View style={{ minWidth: 24, minHeight: 24, paddingHorizontal: 7, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary }}>
+        {!floatingBadge ? <View style={{ minWidth: 24, minHeight: 24, paddingHorizontal: 7, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary }}>
           <Text style={{ color: colors.background, fontSize: 12, fontWeight: '800' }}>{badge}</Text>
-        </View>
+        </View> : null}
       </View> : <Text style={[styles.buttonText, secondary && styles.secondaryButtonText]}>{t(label)}</Text>}
+      {floatingBadge && badge && badge > 0 ? <View pointerEvents="none" style={styles.floatingBadge}><Text style={styles.floatingBadgeText}>{badge}</Text></View> : null}
     </Pressable>
   );
 }
@@ -118,6 +121,9 @@ export const styles = StyleSheet.create({
   buttonText: { color: colors.background, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   secondaryButton: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   secondaryButtonText: { color: colors.text },
+  buttonBadgeAnchor: { position: 'relative' },
+  floatingBadge: { position: 'absolute', top: -9, right: 2, minWidth: 28, height: 28, paddingHorizontal: 7, borderRadius: 14, borderWidth: 2, borderColor: colors.background, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
+  floatingBadgeText: { color: colors.background, fontSize: 12, fontWeight: '800' },
   dimmed: { opacity: 0.6 },
   field: { gap: 8 },
   fieldLabel: { color: colors.text, fontWeight: '600', fontSize: 14 },

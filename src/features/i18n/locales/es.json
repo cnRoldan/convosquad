@@ -750,5 +750,6 @@
   "Plazo para valorar: hasta {{v0}}": "Plazo para valorar: hasta {{v0}}",
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.",
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.",
-  "Decisión mantenida de {{v0}}": "Decisión mantenida de {{v0}}"
+  "Decisión mantenida de {{v0}}": "Decisión mantenida de {{v0}}",
+  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Solicitudes pendientes, {{v0}} pendientes de revisión"
 }
