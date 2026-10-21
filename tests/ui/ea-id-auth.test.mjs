@@ -899,6 +899,8 @@ test('privacidad accesible desde bienvenida, registro, login y clubes con sesió
   const f=await fixture(options);
   try {
    await f.page.goto(`${origin}${route}`);
+   assert.equal(await f.page.getByRole('button',{name:'Explorar la demo',exact:true}).count(),0);
+   assert.equal(await f.page.getByText('Prueba la demo sin crear una cuenta. Los equipos y jugadores son de ejemplo.',{exact:true}).count(),0);
    await f.page.getByRole('button',{name:'Política de privacidad',exact:true}).click();
    await f.page.getByRole('heading',{name:'Política de privacidad',exact:true}).waitFor();
    await f.page.getByRole('button',{name:'Volver',exact:true}).click();

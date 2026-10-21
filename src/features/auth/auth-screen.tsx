@@ -13,7 +13,7 @@ import { isSupabaseConfigured } from '@/lib/supabase';
 export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   useLanguage();
   const isRegister = mode === 'register';
-  const { session, isDemo, enterDemo, exitDemo, isLoading, isRecovery } = useAuth();
+  const { session, isDemo, exitDemo, isLoading, isRecovery } = useAuth();
   const { pendingInvite } = usePendingInvite(); const { pendingPush } = usePendingPush();
   const destination = pendingPush ? '/notification' as const : pendingInvite ? '/invite' as const : { pathname: '/clubs' as const, params: { auto: '1' } };
   const [eaId, setEaId] = useState('');
@@ -55,7 +55,6 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
       {message ? <Body>{message}</Body> : null}
       <Button disabled={busy || isLoading} label={busy ? t("Un momento…") : isRegister ? t("Crear cuenta") : t("Iniciar sesión")} onPress={() => { void submit(); }} />
       <Body>{t("Si olvidas la contraseña o tu ID ya está ocupado, contacta con el administrador. No hay recuperación automática.")}</Body>
-      <Button secondary disabled={busy} label={t("Explorar la demo")} onPress={() => { setPassword(''); enterDemo(); router.replace('/clubs'); }} />
       <Button secondary disabled={busy} label={isRegister ? t("Ya tengo una cuenta") : t("Quiero registrarme")} onPress={() => router.replace(isRegister ? '/login' : '/register')} />
       <Button secondary label={t("Política de privacidad")} onPress={() => router.push('/privacy')} />
     </Screen>
