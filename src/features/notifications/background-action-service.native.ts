@@ -8,7 +8,7 @@ import { performNotificationAction, submitNotificationAction } from './perform-a
 
 const inFlight = new Map<string, Promise<void>>();
 const handledKey = 'convosquad:last-background-attempt';
-export async function handleAndroidNotificationResponse(response: Notifications.NotificationResponse) {
+export async function handleNotificationActionResponse(response: Notifications.NotificationResponse) {
   const intent = readNotificationResponse(response.notification.request.content.data, response.actionIdentifier,
     response.notification.request.identifier, Notifications.DEFAULT_ACTION_IDENTIFIER);
   if (!intent?.response) return;

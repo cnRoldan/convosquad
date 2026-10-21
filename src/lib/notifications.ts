@@ -16,7 +16,7 @@ export async function notificationRuntime() {
     name: t('Convocatorias'), importance: Notifications.AndroidImportance.DEFAULT,
   });
   await ensureBackgroundNotificationTask();
-  await Notifications.setNotificationCategoryAsync(availabilityCategory, notificationActions.map(({ identifier, buttonTitle }) => ({ identifier, buttonTitle: t(buttonTitle), options: { opensAppToForeground: Platform.OS !== 'android', isAuthenticationRequired: true } })));
+  await Notifications.setNotificationCategoryAsync(availabilityCategory, notificationActions.map(({ identifier, buttonTitle }) => ({ identifier, buttonTitle: t(buttonTitle), options: { opensAppToForeground: false, isAuthenticationRequired: true } })));
   return { Notifications, projectId };
 }
 export function permissionGranted(permission: Awaited<ReturnType<typeof import('expo-notifications').getPermissionsAsync>>) {
