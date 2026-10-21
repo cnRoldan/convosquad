@@ -1,6 +1,6 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { Keyboard, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
@@ -9,6 +9,8 @@ import { searchPublicClubs } from '@/features/clubs/service';
 import { listMyJoinRequests, requestToJoin } from '@/features/join-requests/service';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
+import { ClubCrest } from '@/features/clubs/club-crest';
+import { colors } from '@/theme';
 
 export default function SearchClubsScreen() {
   useLanguage();
@@ -46,7 +48,11 @@ export default function SearchClubsScreen() {
     {result.data?.clubs.map((club) => {
       const belongs = availableClubs.some((own) => own.id === club.club_id);
       const pending = result.data?.requests.some((request) => request.club_id === club.club_id && request.status === 'pending');
-      return <Card key={club.club_id} title={club.name}>
+      return <Card key={club.club_id}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Text style={{ flex: 1, color: colors.text, fontSize: 20, fontWeight: '700' }}>{club.name}</Text>
+          <ClubCrest path={club.crest_path} name={club.name} />
+        </View>
         {club.description ? <Body>{club.description}</Body> : null}
         <Button label={belongs ? t("Ya perteneces al club") : pending ? t("Solicitud pendiente") : busyId === club.club_id ? t("Enviando…") : t("Solicitar unirme")}
           disabled={belongs || pending || Boolean(busyId)} onPress={() => { void request(club.club_id); }} />

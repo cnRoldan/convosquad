@@ -299,16 +299,19 @@ export type Database = {
           club_id: string;
           name: string;
           description: string | null;
+          crest_path: string | null;
         };
         Insert: {
           club_id: string;
           name: string;
           description?: string | null;
+          crest_path?: string | null;
         };
         Update: {
           club_id?: string;
           name?: string;
           description?: string | null;
+          crest_path?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'club_directory_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },

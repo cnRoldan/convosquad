@@ -10,14 +10,17 @@ import { formatMatchDate } from '@/lib/format';
 import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
 import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
+import { useRequests } from '@/features/join-requests/requests-context';
 import { colors } from '@/theme';
 
 export default function HomeScreen() {
   useLanguage();
   const { isDemo, session } = useAuth();
+  const requests = useRequests();
   const pathname = usePathname();
   const [clock, setClock] = useState(Date.now);
   const { activeClub, currentMembership, roster, upcomingCallUp, hasCurrentCallUp, rosterLoading, rosterError, refreshRoster, notice } = useClub();
+  const pendingRequests = requests.error || !activeClub ? 0 : requests.incoming.filter(request => request.club_id === activeClub.id).length;
   useFocusEffect(useCallback(() => { refreshRoster(); }, [refreshRoster]));
   useCallUpSync(`home:${session?.user.id}:${activeClub?.id}`, activeClub?.id, Boolean(session && activeClub && !isDemo && pathname === '/home'), refreshRoster);
   useEffect(() => {
@@ -55,7 +58,9 @@ export default function HomeScreen() {
         <Button secondary label={t("Valoraciones y rendimiento")} onPress={() => router.navigate('/performance')} />
         <Button secondary label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} />
         {!hasCurrentCallUp && !rosterLoading && !rosterError ? <Button secondary label={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} /> : null}
-        <Button secondary label={t("Solicitudes pendientes")} onPress={() => router.push('/join-requests')} />
+        <Button secondary label={t("Solicitudes pendientes")} badge={pendingRequests} floatingBadge
+          {...(pendingRequests ? { accessibilityLabel: t('Solicitudes pendientes, {{v0}} pendientes de revisión', { v0: pendingRequests }) } : {})}
+          onPress={() => router.push('/join-requests')} />
         <Button secondary label={t("Invitar jugadores")} onPress={() => router.push('/invitations')} />
       </Card> : null}
       <Button secondary label={t("Cambiar de club")} onPress={() => router.replace('/clubs')} />
