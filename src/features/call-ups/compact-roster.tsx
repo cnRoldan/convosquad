@@ -2,7 +2,7 @@ import { t, useLanguage } from '@/features/i18n/runtime';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { colors } from '@/theme';
 import { categoryLabels } from '@/features/players/categories';
 import { jerseyAccessibilityLabel, jerseyLabel } from '@/features/players/jersey';
@@ -12,8 +12,9 @@ import type { AvailabilityFilter, CallUpPlayer } from './list-model';
 import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
 
-const statusColors = { available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
-const shortLabels = { available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
+const statusColors = { all: colors.primary, available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
+const shortLabels = { all: 'Todos', available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
+const filterIcons = { all: '👥', ...availabilityIcons };
 
 export function CompactRoster({ players, trials, aids, trialEditor, trialActions, showTrialNotes = false }: {
   players: readonly CallUpPlayer[];
@@ -28,23 +29,15 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
   const { width } = useWindowDimensions();
   function toggle(key: string) { setExpandedPanels(current => { const next = new Set(current); if (next.has(key)) next.delete(key); else next.add(key); return next; }); }
   return <View style={styles.stack}>
-    <View style={styles.counters}>
-      {availabilityStates.map(status => <Pressable key={status} accessibilityRole="button"
-        accessibilityLabel={t("{{v0}}: {{v1}}. Filtrar convocatoria", { v0: t(filterLabels[status]), v1: model.counts[status] })}
+    <View style={styles.counters} accessibilityLabel={t('Filtros de disponibilidad')} testID="call-up-filters">
+      {(['all', ...availabilityStates] as const).map(status => <Pressable key={status} accessibilityRole="button"
+        accessibilityLabel={t("{{v0}}: {{v1}}. Filtrar convocatoria", { v0: t(filterLabels[status]), v1: status === 'all' ? model.total : model.counts[status] })}
         {...(Platform.OS === 'web' ? { 'aria-pressed': filter === status } : {})} accessibilityState={{ selected: filter === status }} onPress={() => setFilter(current => current === status ? 'all' : status)}
-        style={({ pressed }) => [styles.counter, width < 360 && styles.halfCounter, filter === status && styles.selected, pressed && styles.pressed]}>
-        <Text style={[styles.count, { color: statusColors[status] }]}>{availabilityIcons[status]} {model.counts[status]}</Text>
-        <Text style={styles.counterLabel}>{t(shortLabels[status])}</Text>
+        style={({ pressed }) => [styles.counter, filter === status && styles.selected, pressed && styles.pressed]}>
+        <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={[styles.count, width < 360 && styles.smallCount, { color: statusColors[status] }]}>{filterIcons[status]} {status === 'all' ? model.total : model.counts[status]}</Text>
+        <Text style={[styles.counterLabel, width < 380 && styles.smallLabel]}>{t(shortLabels[status])}</Text>
       </Pressable>)}
     </View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} accessibilityLabel={t("Filtros de disponibilidad")}>
-      {(['all', ...availabilityStates] as const).map(value => <Pressable key={value} accessibilityRole="button"
-        accessibilityLabel={`${t(filterLabels[value])} (${value === 'all' ? model.total : model.counts[value]})`}
-        {...(Platform.OS === 'web' ? { 'aria-pressed': filter === value } : {})} accessibilityState={{ selected: filter === value }} onPress={() => setFilter(value)}
-        style={({ pressed }) => [styles.chip, filter === value && styles.selected, pressed && styles.pressed]}>
-        <Text style={[styles.chipText, filter === value && styles.selectedText]}>{t(filterLabels[value])} ({value === 'all' ? model.total : model.counts[value]})</Text>
-      </Pressable>)}
-    </ScrollView>
     <Text style={styles.help}>{t("Disponible no significa seleccionado para el once.")}</Text>
     {model.groups.map(group => <CompactPanel key={group.category} title={`${t(categoryLabels[group.category])} (${group.total})`}
       summary={availabilityStates.map(status => `${availabilityIcons[status]} ${group.counts[status]}`).join(' · ')}
@@ -76,6 +69,8 @@ const AvailabilityRow = memo(function AvailabilityRow({ player }: { player: Call
   useLanguage();
   return <View style={styles.row} testID={`call-up-player-${player.id}`}>
     <View style={styles.line}>
+      {player.decisionLocked ? <Text accessibilityRole="image" accessibilityLabel={t('Decisión mantenida de {{v0}}', { v0: player.eaId })}
+        testID={`decision-lock-${player.id}`} style={styles.lock}>🔒</Text> : null}
       <Text style={styles.name}>{player.eaId}</Text>
       {player.jersey !== null ? <Text accessibilityLabel={jerseyAccessibilityLabel(player.jersey)} style={styles.jersey}>{jerseyLabel(player.jersey)}</Text> : null}
       <Text style={[styles.status, { color: statusColors[player.availability] }]}>{availabilityIcons[player.availability]} {t(availabilityLabels[player.availability])}</Text>
@@ -85,13 +80,14 @@ const AvailabilityRow = memo(function AvailabilityRow({ player }: { player: Call
 });
 
 const styles = StyleSheet.create({
-  stack: { gap: 10 }, counters: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  counter: { flexGrow: 1, flexBasis: 0, minHeight: 64, paddingVertical: 8, paddingHorizontal: 4, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  halfCounter: { flexBasis: '45%' }, count: { fontSize: 20, fontWeight: '800' }, counterLabel: { fontSize: 12, color: colors.text, textAlign: 'center' },
-  filters: { gap: 6 }, chip: { minHeight: 44, paddingHorizontal: 10, paddingVertical: 10, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  chipText: { color: colors.muted, fontSize: 13, fontWeight: '600' }, selected: { borderColor: colors.primary, backgroundColor: '#243622' }, selectedText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
+  stack: { gap: 10 }, counters: { flexDirection: 'row', gap: 4 },
+  counter: { flexGrow: 1, flexBasis: 0, minWidth: 0, minHeight: 64, paddingVertical: 8, paddingHorizontal: 4, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  count: { fontSize: 20, fontWeight: '800' }, smallCount: { fontSize: 16 }, counterLabel: { fontSize: 12, color: colors.text, textAlign: 'center' }, smallLabel: { fontSize: 11 },
+  chip: { minHeight: 44, paddingHorizontal: 10, paddingVertical: 10, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  selected: { borderColor: colors.primary, backgroundColor: '#243622' }, selectedText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   help: { fontSize: 12, color: colors.muted }, row: { paddingVertical: 8, gap: 3, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   line: { flexDirection: 'row', alignItems: 'center', gap: 8 }, name: { flex: 1, minWidth: 0, color: colors.text, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  lock: { flexShrink: 0, fontSize: 14, lineHeight: 20 },
   jersey: { color: colors.muted, fontSize: 13, lineHeight: 20 }, status: { flexShrink: 0, fontSize: 12, lineHeight: 20 }, meta: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   trial: { paddingVertical: 6, gap: 2, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border }, empty: { color: colors.muted, fontSize: 13, lineHeight: 20, paddingVertical: 6 },
   emptyResults: { gap: 4, alignItems: 'flex-start' }, aids: { marginTop: 10 }, hidden: { display: 'none' }, pressed: { opacity: 0.6 },
