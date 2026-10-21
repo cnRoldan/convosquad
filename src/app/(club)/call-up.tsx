@@ -92,7 +92,7 @@ export default function CallUpScreen() {
     setNotice('Convocatoria eliminada.');
     refreshRoster(); reloadCalls();
   }
-  const syncStatus = useCallUpSync(scope, clubId, enabled, refresh);
+  useCallUpSync(scope, clubId, enabled, refresh);
   const respond = useCallback(async (entryId: string, availability: typeof responseOptions[number]) => {
     const player = sourcePlayers.find(row => row.id === entryId);
     if (historical || mutationLock.current || !call || !player || snapshots.isLoading || snapshots.error || !canRespondToPlayer(player, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo)) return;
@@ -134,14 +134,12 @@ export default function CallUpScreen() {
       <IconButton icon="back" label={t("Volver a la convocatoria actual")} onPress={returnToCurrent} />
       <Text style={styles.date}>{t("Volver a la convocatoria actual")}</Text>
     </View> : null}
-    <Heading title={historical ? t("Convocatoria histórica") : t("Convocatoria")} subtitle={activeClub?.name ?? ''} />
-    {!historical ? <View style={styles.toolbar}>
-      {admin && !call && availableCalls?.length === 0 && !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <Pressable accessibilityRole="button" accessibilityLabel={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} style={styles.create}>
+    <Heading title={historical ? t("Convocatoria histórica") : t("Convocatoria")} subtitle={activeClub?.name ?? ''}
+      action={!historical && admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : undefined} />
+    {!historical && admin && !call && availableCalls?.length === 0 && !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <View style={styles.toolbar}>
+      <Pressable accessibilityRole="button" accessibilityLabel={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} style={styles.create}>
         <Text style={styles.createLabel}>{t("Crear convocatoria")}</Text>
-      </Pressable> : null}
-      {admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : null}
-      {!isDemo ? <IconButton icon="refresh" label={t("Actualizar convocatoria")} disabled={calls.isLoading || snapshots.isLoading} onPress={refresh} /> : null}
-      {!isDemo ? <Text accessibilityLiveRegion="polite" style={styles.sync}>{syncStatus === 'live' ? t("Actualización en directo") : syncStatus === 'connecting' ? t("Conectando actualizaciones…") : t("Recuperando conexión. Puedes actualizar manualmente.")}</Text> : null}
+      </Pressable>
     </View> : null}
     {!historical && availableCalls && availableCalls.length > 1 ? <Options value={callId ?? ''} options={availableCalls.map(row => ({ value: row.id, label: `${formatMatchDate(row.starts_at, row.timezone)} · ${t(callUpStatusLabel(row, clock))}` }))} onChange={value => { setSelection({ scope: selectionScope, id: value }); setResponseMessage(null); setNotice(''); }} /> : null}
     {calls.isLoading || snapshots.isLoading ? <Body>{t("Cargando convocatoria…")}</Body> : null}
@@ -174,7 +172,6 @@ const styles = StyleSheet.create({
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   create: { minHeight: 44, paddingHorizontal: 12, justifyContent: 'center', borderRadius: 10, backgroundColor: colors.primary },
   createLabel: { color: colors.background, fontWeight: '700', fontSize: 13 },
-  sync: { color: colors.muted, fontSize: 12, lineHeight: 18, flexShrink: 1 },
   finishedNotice: { color: colors.muted, fontSize: 14, lineHeight: 20, fontWeight: '700', padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12 },
   date: { color: colors.text, fontSize: 14, lineHeight: 20 },
 });
