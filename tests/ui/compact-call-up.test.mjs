@@ -382,7 +382,7 @@ test('respuesta propia es inmediata, bloquea pulsaciones rápidas y vuelve al es
     f.data.rejectNext = true;
     await row.getByRole('button', { name: 'No disponible para Jugador_4', exact: true }).click();
     await page.getByText('Guardando respuesta…', { exact: true }).first().waitFor();
-    await page.waitForFunction(() => document.body.innerText.includes('No disponibles: 7. Filtrar convocatoria'));
+    await page.getByRole('button', { name: 'No disponibles: 7. Filtrar convocatoria', exact: true }).waitFor();
     f.data.release();
     await page.getByText(/La convocatoria ya no está disponible o no tienes permiso/).waitFor();
     await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
