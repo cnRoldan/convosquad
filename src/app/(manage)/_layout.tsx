@@ -1,11 +1,11 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { IconButton } from '@/components/icon-button';
+import { headerBackOptions } from '@/components/header-back-options';
 import { router, Stack } from 'expo-router';
 import { ClubAccess } from '@/components/access';
 
 export default function ManageLayout() {
   useLanguage();
-  return <ClubAccess admin><Stack screenOptions={{ headerLeft: () => <IconButton icon="back" label={t('Volver')} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/home'); }} />, headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
+  return <ClubAccess admin><Stack screenOptions={{ ...headerBackOptions(() => { if (router.canGoBack()) router.back(); else router.replace('/home'); }, t('Volver')), headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
     <Stack.Screen name="club-info" options={{ title: t("Editar información") }} />
     <Stack.Screen name="club-settings" options={{ title: t("Capitanes") }} />
     <Stack.Screen name="call-up-history" options={{ title: t("Historial de convocatorias") }} />

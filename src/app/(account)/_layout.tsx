@@ -1,12 +1,12 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { IconButton } from '@/components/icon-button';
+import { headerBackOptions } from '@/components/header-back-options';
 import { router, Stack } from 'expo-router';
 import { AuthAccess } from '@/components/access';
 
 export default function AccountLayout() {
   useLanguage();
-  return <AuthAccess><Stack screenOptions={{ headerLeft: () => <IconButton icon="back" label={t('Volver')} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/clubs'); }} />, headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
-    <Stack.Screen name="performance" options={{ title: t("Valoraciones y rendimiento"), headerLeft: () => <IconButton icon="back" label={t("Volver al club")} onPress={() => router.dismissTo('/home')} /> }} />
+  return <AuthAccess><Stack screenOptions={{ ...headerBackOptions(() => { if (router.canGoBack()) router.back(); else router.replace('/clubs'); }, t('Volver')), headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
+    <Stack.Screen name="performance" options={{ title: t("Valoraciones y rendimiento"), ...headerBackOptions(() => router.dismissTo('/home'), t("Volver al club")) }} />
     <Stack.Screen name="change-password" options={{ title: t("Cambiar mi contraseña") }} />
     <Stack.Screen name="notifications" options={{ title: t("Notificaciones") }} />
     <Stack.Screen name="create-club" options={{ title: t("Crear club") }} />
