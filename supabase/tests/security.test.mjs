@@ -137,7 +137,7 @@ describe('Modelo multiclub y seguridad PostgreSQL', { concurrency: false }, () =
     await assert.rejects(asUser(database, null, (db) => db.query('select * from public.clubs'), 'anon'), (error) => error.code === '42501');
     const directory = await asUser(database, null, (db) => db.query('select * from public.club_directory'), 'anon');
     assert.deepEqual(directory.rows.map((club) => club.club_id), [clubA.id]);
-    assert.deepEqual(Object.keys(directory.rows[0]).sort(), ['club_id', 'description', 'name']);
+    assert.deepEqual(Object.keys(directory.rows[0]).sort(), ['club_id', 'crest_path', 'description', 'name']);
   });
 
   test('no permite escalar roles, falsificar pertenencias ni eliminar el último admin', async () => {
