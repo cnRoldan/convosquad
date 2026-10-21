@@ -8,8 +8,8 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { getCallUp, listCallUpPlayers } from '@/features/call-ups/service';
 import { ratingVisibility, ratingVisibilityMessage } from '@/features/ratings/visibility';
-import { ratingCutoff } from '@/features/ratings/window';
-import { listRatings, saveRatings, ratingError, type RatingChoice, type RatingChange } from '@/features/ratings/service';
+import { ratingDeadline, ratingWindowOpen } from '@/features/ratings/window';
+import { listRatingCalls, listRatings, saveRatings, ratingError, type RatingChoice, type RatingChange } from '@/features/ratings/service';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
@@ -22,8 +22,8 @@ export default function CallUpRatingsScreen() {
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
   const load = useCallback(async () => {
     if (!clubId || !id) return null;
-    const [call, players, ratings] = await Promise.all([getCallUp(clubId, id), listCallUpPlayers(id), listRatings(id)]);
-    return { call, players, ratings };
+    const [call, players, ratings, eligibleCalls] = await Promise.all([getCallUp(clubId, id), listCallUpPlayers(id), listRatings(id), listRatingCalls(clubId)]);
+    return { call, players, ratings, eligible: eligibleCalls.some(candidate => candidate.id === id) };
   }, [clubId, id]);
   const [savedFor, setSavedFor] = useState<string | null>(null);
   const result = useResource(`ratings:${session?.user.id}:${clubId}:${id}`, load, Boolean(session && clubId && id) && !isDemo);
@@ -31,8 +31,8 @@ export default function CallUpRatingsScreen() {
   if (!result.data || result.error) return <Screen><Message error>{result.error ?? t('No se encontró la convocatoria.')}</Message><Button label={t('Reintentar')} onPress={result.reload} /></Screen>;
   return <RatingsEditor key={`${session?.user.id}:${clubId}:${id}:${result.version}`} {...result.data} notice={savedFor === `${clubId}:${id}`} onSaved={saved => { setSavedFor(saved ? `${clubId}:${id}` : null); result.reload(); }} />;
 }
-function RatingsEditor({ call, players, ratings, onSaved, notice }: {
-  call: Tables<'call_ups'>; players: Tables<'call_up_players'>[]; ratings: Tables<'player_ratings'>[]; onSaved: (saved?: boolean) => void; notice: boolean;
+function RatingsEditor({ call, players, ratings, eligible, onSaved, notice }: {
+  call: Tables<'call_ups'>; players: Tables<'call_up_players'>[]; ratings: Tables<'player_ratings'>[]; eligible: boolean; onSaved: (saved?: boolean) => void; notice: boolean;
 }) {
   useLanguage();
   const { activeClub } = useClub();
@@ -48,8 +48,7 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
   })));
   const [clock, setClock] = useState(Date.now); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
-  const available = call.evaluation_at && Date.parse(call.evaluation_at) <= clock && Date.parse(call.ends_at) <= clock && Date.parse(call.starts_at) <= clock
-    && Date.parse(call.starts_at) >= ratingCutoff(clock) && (call.status === 'closed' || call.status === 'open');
+  const available = eligible && ratingWindowOpen(call, clock);
   const changes: RatingChange[] = visiblePlayers.flatMap(player => {
     const previous = ratings.find(rating => rating.call_up_player_id === player.id);
     const before = previous?.not_selected ? 'not_selected' : previous?.score !== null && previous?.score !== undefined ? String(previous.score) : '';
@@ -71,7 +70,8 @@ function RatingsEditor({ call, players, ratings, onSaved, notice }: {
     <Body>{t('Puntúa de 0 a 10. «No convocado» no cuenta como un cero ni entra en la media.')}</Body>
     <Body>{t('Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.')}</Body>
     {call.evaluation_at ? <Body>{t('Finalización: {{v0}}', { v0: formatMatchDate(call.ends_at, call.timezone) })}</Body> : null}
-    {!available ? <Message>{t('Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.')}</Message> : null}
+    {call.evaluation_at ? <Body>{t('Plazo para valorar: hasta {{v0}}', { v0: formatMatchDate(new Date(ratingDeadline(call)).toISOString(), call.timezone) })}</Body> : null}
+    {!available ? <Message>{t('Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.')}</Message> : null}
     {notice ? <Message>{t("Valoraciones guardadas.")}</Message> : null}
     {message ? <Message error>{message}</Message> : null}
     {visiblePlayers.map(player => <Card key={player.id} title={player.ea_id_snapshot}>

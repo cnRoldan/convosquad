@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
+async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -72,7 +72,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
   let createdCall = null;
   const matchAt = new Date(Date.now() - 86400000).toISOString();
   const ratingCall = {id: '00000000-0000-4000-8000-000000000906', club_id: club.id, starts_at: matchAt, local_date: matchAt.slice(0,10),
-    timezone: 'UTC', status: 'closed', ends_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), evaluation_at: new Date(Date.now() + (ratingFuture ? 3600000 : -3600000)).toISOString(), closes_at: null};
+    timezone: 'UTC', status: 'closed', ends_at: new Date(Date.now() + (ratingFuture ? 3600000 : -ratingAgeHours*3600000)).toISOString(), evaluation_at: new Date(Date.now() + (ratingFuture ? 3600000 : -ratingAgeHours*3600000)).toISOString(), closes_at: null};
   const ratingPlayers = players.map((player,index) => ({id: `rated-${index}`, club_id: club.id, call_up_id: ratingCall.id, source_player_id: player.id,
     user_id: player.user_id, ea_id_snapshot: player.ea_id, category_snapshot: player.category, sort_order_snapshot: index,
     availability: ratingAvailability[index], responded_at: matchAt, auto_response: false}));
@@ -119,7 +119,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
       const visibleRatings = clubRole === 'admin' || club.ratings_visibility === 'members' ? ratings : club.ratings_visibility === 'self' ? ratings.filter(rating=>rating.player_id==='player-0') : [];
       if (['list_rating_call_ups','save_player_ratings'].includes(endpoint)) assert.equal(clubRole,'admin');
       else assert.ok(clubRole === 'admin' || club.ratings_visibility !== 'captains');
-      if (endpoint === 'list_rating_call_ups') return route.fulfill({json: performance ? [ratingCall] : []});
+      if (endpoint === 'list_rating_call_ups') return route.fulfill({json: performance ? [...(multipleRatingCalls?[{...ratingCall,id:'older-call',ends_at:new Date(Date.parse(ratingCall.ends_at)-3600000).toISOString()}]:[]),ratingCall] : []});
       if (endpoint === 'player_ratings') return route.fulfill({json: visibleRatings});
       if (endpoint === 'save_player_ratings') {
         if (ratingConflict) return route.fulfill({status:409,json:{code:'40001',message:'Changed'}});
@@ -678,7 +678,7 @@ test('valoraciones: hora futura bloquea notas y jugadores no entran a la gestió
     await f.page.goto(`${origin}/home`);await f.page.getByRole('button',{name:'Valoraciones y rendimiento',exact:true}).click();
     assert.equal(await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),0);
     await f.page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
-    await f.page.getByText('Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.',{exact:true}).waitFor();
+    await f.page.getByText('Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.',{exact:true}).waitFor();
     assert.equal(await f.page.getByLabel('Valoración de EA-Player_9',{exact:true}).isDisabled(),true);
     assert.equal(f.requests.some(request=>request.endpoint==='save_player_ratings'),false);
   } finally {await f.close();}
@@ -1040,11 +1040,57 @@ test('rendimiento solo ofrece valorar convocatorias finalizadas, incluso si el s
    await f.page.goto(`${origin}/performance`);
    await f.page.getByText('Cargando valoraciones…',{exact:true}).waitFor({state:'hidden'});
    if(future){
-    await f.page.getByText('No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.',{exact:true}).waitFor();
+    await f.page.getByText('No hay convocatorias dentro del plazo de valoración de 24 horas.',{exact:true}).waitFor();
     assert.equal(await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),0);
    }else{
     await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).waitFor();
    }
   }finally{await f.close();}
+ }
+});
+
+test('valoración de 24 horas: solo una convocatoria, las vencidas se ocultan y un enlace antiguo no permite guardar',async()=>{
+ for(const age of [1,25]) {
+  const f=await fixture({clubRole:'admin',performance:true,ratingAgeHours:age,multipleRatingCalls:true});
+  try {
+   await f.page.goto(`${origin}/performance`);
+   if(age===1) await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).first().waitFor();
+   else await f.page.getByText('No hay convocatorias dentro del plazo de valoración de 24 horas.',{exact:true}).waitFor();
+   assert.equal(await f.page.getByRole('button',{name:/^Valorar convocatoria del /}).count(),age===1?1:0);
+   if(age===25) {
+    await f.page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
+    await f.page.getByText('Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.',{exact:true}).waitFor();
+    assert.equal(await f.page.getByLabel('Valoración de EA-Player_9',{exact:true}).isDisabled(),true);
+    assert.equal(await f.page.getByRole('button',{name:'Guardar valoraciones',exact:true}).isDisabled(),true);
+    assert.equal(f.requests.some(r=>r.endpoint==='save_player_ratings'),false);
+   }
+  } finally {await f.close();}
+ }
+});
+
+test('el editor abierto desactiva las notas al vencer las 24 horas sin tener que salir de la pantalla',async()=>{
+ const f=await fixture({clubRole:'admin',performance:true,ratingAgeHours:23.99});
+ try {
+  await f.page.clock.install({time:new Date()});
+  await f.page.goto(`${origin}/call-up-ratings?id=00000000-0000-4000-8000-000000000906`);
+  const choice=f.page.getByLabel('Valoración de EA-Player_9',{exact:true});await choice.waitFor();
+  await choice.selectOption('8');assert.equal(await f.page.getByRole('button',{name:'Guardar valoraciones',exact:true}).isEnabled(),true);
+  await f.page.clock.fastForward(60000);
+  await f.page.getByText('Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.',{exact:true}).waitFor();
+  assert.equal(await choice.isDisabled(),true);assert.equal(await f.page.getByRole('button',{name:'Guardar valoraciones',exact:true}).isDisabled(),true);
+  assert.equal(f.requests.some(r=>r.endpoint==='save_player_ratings'),false);
+ } finally {await f.close();}
+});
+
+test('aviso de valoración lleva al editor de la finalizada y comprueba capitán y cuenta destinataria',async()=>{
+ const club='00000000-0000-4000-8000-000000000903',user='00000000-0000-4000-8000-000000000901',call='00000000-0000-4000-8000-000000000906';
+ for(const mode of ['captain','player','wrong-account']) {
+  const f=await fixture({clubRole:mode==='player'?'player':'admin',performance:true});
+  try {
+   await f.page.goto(`${origin}/notification?rating=1&club=${club}&call=${call}&user=${mode==='wrong-account'?'00000000-0000-4000-8000-000000000998':user}`);
+   if(mode==='captain') {await f.page.waitForURL('**/call-up-ratings?*');await f.page.getByRole('button',{name:'Guardar valoraciones',exact:true}).waitFor();}
+   else await f.page.getByText(mode==='player'?'Solo los capitanes de este club pueden gestionar las valoraciones.':'Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.',{exact:true}).waitFor();
+   assert.equal(f.requests.some(r=>['respond_to_call_up','save_player_ratings'].includes(r.endpoint)),false);
+  } finally {await f.close();}
  }
 });

@@ -38,10 +38,21 @@ test('el recordatorio de valoración se traduce y abre la convocatoria sin boton
   for (const language of ['es','en','de','fr']) {
     const message = pushMessage({ clubId:'club',callUpId:'call',eventKey:'evaluation',kind:'evaluation' },'token','captain',true,language);
     assert.equal('categoryId' in message,false);
-    assert.deepEqual(message.data,{type:'call_up',clubId:'club',callUpId:'call',userId:'captain'});
+    assert.deepEqual(message.data,{type:'call_up',clubId:'club',callUpId:'call',userId:'captain',kind:'evaluation'});
     assert.ok(message.body.length>20);titles.add(message.title);
   }
   assert.equal(titles.size,4);
+});
+
+test('aviso de vencimiento usa el texto solicitado en español y se traduce sin ofrecer acciones de voto',()=>{
+ const titles=new Set();
+ for(const language of ['es','en','de','fr']) {
+  const message=pushMessage({clubId:'club',callUpId:'call',eventKey:'deadline',kind:'evaluation_deadline'},'token','captain',true,language);
+  assert.equal('categoryId' in message,false);assert.equal(message.data.kind,'evaluation_deadline');assert.equal(message.data.userId,'captain');
+  assert.ok(message.body.length>20);titles.add(message.title);
+  if(language==='es')assert.equal(message.body,'¡Valora a tus jugadores en su última convocatoria antes de que expire el tiempo!');
+ }
+ assert.equal(titles.size,4);
 });
 
 test('admisión: nombre del club, cuatro idiomas y sin acciones de voto ni convocatoria inventada',async()=>{

@@ -744,5 +744,9 @@
   "Las valoraciones se abrirán al finalizar la convocatoria. ": "Las valoraciones se abrirán al finalizar la convocatoria. ",
   "Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.": "Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.",
   "Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.": "Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.",
-  "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.": "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar."
+  "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.": "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.",
+  "No hay convocatorias dentro del plazo de valoración de 24 horas.": "No hay convocatorias dentro del plazo de valoración de 24 horas.",
+  "Plazo para valorar: hasta {{v0}}": "Plazo para valorar: hasta {{v0}}",
+  "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.",
+  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización."
 }

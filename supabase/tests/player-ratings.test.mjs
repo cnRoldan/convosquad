@@ -15,7 +15,7 @@ before(async()=>{
  for(const user of [member,captain]) await db.query('insert into public.club_members(club_id,user_id,role) values($1,$2,$3)',[club.id,user,user===captain?'admin':'player']);
  for(const name of ['Player A','Player B']) await row(admin,"insert into public.players(club_id,ea_id,category) values($1,$2,'midfielders') returning *",[club.id,name]);
  for(const days of [1,8,15,100,2,3]) {
-  const starts=when(days);const evaluation=days===2?new Date(Date.now()+3600000).toISOString():days===3?null:when(days,14);
+  const starts=when(days);const evaluation=days===1?new Date(Date.now()-3600000).toISOString():days===2?new Date(Date.now()+3600000).toISOString():days===3?null:when(days,14);
   const call=await row(admin,"select * from public.create_call_up_with_evaluation($1,$2,null,'open',null,$3)",[club.id,starts,evaluation]);calls.push(call);
   entries.push((await query(admin,'select * from public.call_up_players where call_up_id=$1 order by ea_id_snapshot',[call.id])).rows);
  }
@@ -35,8 +35,10 @@ test('privacidad y permisos: solo capitanes del mismo club pueden leer o valorar
  assert.equal((await query(captain,'select * from public.player_ratings')).rows.length,1);
 });
 test('cero cuenta en la media y No convocado queda fuera; filtros de semana/mes y nombres históricos',async()=>{
- await save(admin,calls[1].id,[rating(entries[1][0].id,10)]);
- await save(admin,calls[2].id,[{entry_id:entries[2][0].id,not_selected:true,expected_updated_at:null}]);
+ // Historical notes were saved during their original window, which is now closed.
+ for(const [index,score,notSelected] of [[1,10,false],[2,null,true]]) await db.query(
+  'insert into public.player_ratings(call_up_player_id,club_id,call_up_id,player_id,player_name,score,not_selected,rated_by) values($1,$2,$3,$4,$5,$6,$7,$8)',
+  [entries[index][0].id,club.id,calls[index].id,entries[index][0].source_player_id,entries[index][0].ea_id_snapshot,score,notSelected,admin]);
  const performance=await row(admin,"select * from public.get_player_performance($1,'3m')",[club.id]);
  assert.equal(Number(performance.average_score),5);assert.equal(performance.rated_matches,2);assert.equal(performance.not_selected_matches,1);
  assert.equal(Number((await row(captain,"select * from public.get_player_performance($1,'7d')",[club.id])).average_score),0);
@@ -44,8 +46,8 @@ test('cero cuenta en la media y No convocado queda fuera; filtros de semana/mes 
  assert.equal(history.length,3);assert.equal(history[0].score,0);assert.equal(history[2].not_selected,true);
  await assert.rejects(query(admin,"select * from public.get_player_performance($1,'all')",[club.id]),e=>e.code==='22023');
 });
-test('hora de valoración y tres meses se validan en servidor, también aunque se invoque RPC directamente',async()=>{
- for(const index of [3,4,5]) await assert.rejects(save(admin,calls[index].id,[rating(entries[index][0].id,8)]),e=>e.code==='P0041');
+test('solo la última finalizada dentro de 24 horas admite notas, incluso por RPC directa',async()=>{
+ for(const index of [1,2,3,4,5]) await assert.rejects(save(admin,calls[index].id,[rating(entries[index][0].id,8)]),e=>e.code==='P0041');
  await assert.rejects(save(admin,calls[0].id,[rating(entries[1][1].id,8)]),e=>e.code==='42501');
  for(const score of [-1,11,5.5]) await assert.rejects(save(admin,calls[0].id,[rating(entries[0][1].id,score)]),e=>e.code==='22023');
  await assert.rejects(save(admin,calls[0].id,[{entry_id:entries[0][1].id,not_selected:true,score:8,expected_updated_at:null}]),e=>e.code==='22023');
@@ -61,8 +63,8 @@ test('lotes inválidos son atómicos y dos capitanes no se sobrescriben cambios 
  assert.equal((await query(admin,'select * from public.player_ratings where call_up_player_id=$1',[entries[0][1].id])).rows.length,0);
 });
 test('se pueden quitar notas y los registros vencidos se ocultan y purgan sin borrar convocatorias',async()=>{
- const record=await row(admin,'select * from public.player_ratings where call_up_player_id=$1',[entries[2][0].id]);
- await save(admin,calls[2].id,[{entry_id:record.call_up_player_id,clear:true,expected_updated_at:record.updated_at}]);
+ const record=await row(admin,'select * from public.player_ratings where call_up_player_id=$1',[entries[0][0].id]);
+ await save(admin,calls[0].id,[{entry_id:record.call_up_player_id,clear:true,expected_updated_at:record.updated_at}]);
  assert.equal((await query(admin,'select * from public.player_ratings where call_up_player_id=$1',[record.call_up_player_id])).rows.length,0);
  await db.query("insert into public.player_ratings(call_up_player_id,club_id,call_up_id,player_id,player_name,score) values($1,$2,$3,$4,'Old player',7)",[entries[3][0].id,club.id,calls[3].id,entries[3][0].source_player_id]);
  assert.equal((await query(admin,'select * from public.player_ratings where call_up_id=$1',[calls[3].id])).rows.length,0);

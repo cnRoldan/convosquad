@@ -1,6 +1,6 @@
 import { pushMessage } from './push-event.ts';
 
-type Event = { id: string; club_id: string; call_up_id: string | null; event_key: string; kind?: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'club_approved' | 'club_join_request'; club_name_snapshot?: string | null; actor_ea_id?: string | null; vote_availability?: string | null };
+type Event = { id: string; club_id: string; call_up_id: string | null; event_key: string; kind?: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'evaluation_deadline' | 'club_approved' | 'club_join_request'; club_name_snapshot?: string | null; actor_ea_id?: string | null; vote_availability?: string | null };
 type Delivery = { id: string; token_snapshot: string; user_id?: string | null; can_vote?: boolean; preferred_language?: string | null };
 type State = 'sent' | 'failed' | 'unknown';
 export type ReminderStore = {

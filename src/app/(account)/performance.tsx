@@ -1,12 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ClubAccess } from '@/components/access';
 import { RatingVisibilitySettings } from '@/features/ratings/visibility-settings';
 import { ratingVisibility, ratingVisibilityMessage } from '@/features/ratings/visibility';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useFocusEffect } from 'expo-router';
 import { Body, Button, Card, Heading, Message, Options, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { getPerformance, getRatingHistory, listRatingCalls } from '@/features/ratings/service';
+import { latestRatingCalls } from '@/features/ratings/window';
 import { t, useLanguage, intlLocale } from '@/features/i18n/runtime';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
@@ -25,6 +26,11 @@ function PlayerRatingsScreen() {
     return { performance, calls };
   }, [clubId, period, admin]);
   const result = useResource(`performance:${session?.user.id}:${clubId}:${visibility}:${admin}:${period}`, load, Boolean(session && clubId && readable) && !isDemo);
+  const { reload: reloadPerformance } = result;
+  const [clock, setClock] = useState(Date.now);
+  useEffect(() => { const timer = setInterval(() => setClock(Date.now()), 1000); return () => clearInterval(timer); }, []);
+  useFocusEffect(useCallback(() => { reloadPerformance(); }, [reloadPerformance]));
+  const calls = latestRatingCalls(result.data?.calls ?? [], clock);
   const loadHistory = useCallback(() => clubId && selected ? getRatingHistory(clubId, selected) : Promise.resolve([]), [clubId, selected]);
   const history = useResource(`rating-history:${session?.user.id}:${clubId}:${visibility}:${admin}:${selected}`, loadHistory, Boolean(session && clubId && selected && readable) && !isDemo);
   if (!readable) return <Redirect href="/home" />;
@@ -49,9 +55,10 @@ function PlayerRatingsScreen() {
     </Card>)}
     {!result.isLoading && !result.error && !result.data?.performance.length ? <Body>{t('Todavía no hay valoraciones en este período.')}</Body> : null}
     {admin ? <Card title={t('Convocatorias para valorar')}>
-      {result.data?.calls.map(call => <Button key={call.id} secondary label={t('Valorar convocatoria del {{v0}}', { v0: formatMatchDate(call.starts_at, call.timezone) })}
+      <Body>{t('Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.')}</Body>
+      {calls.map(call => <Button key={call.id} secondary label={t('Valorar convocatoria del {{v0}}', { v0: formatMatchDate(call.starts_at, call.timezone) })}
         onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} />)}
-      {!result.isLoading && !result.data?.calls.length ? <Body>{t('No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.')}</Body> : null}
+      {!result.isLoading && !calls.length ? <Body>{t('No hay convocatorias dentro del plazo de valoración de 24 horas.')}</Body> : null}
     </Card> : null}
     <Button secondary label={t('Volver al club')} onPress={() => router.dismissTo('/home')} />
     <Button secondary label={t('Actualizar rendimiento')} onPress={() => { result.reload(); history.reload(); }} />
