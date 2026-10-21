@@ -310,6 +310,7 @@
   "Jugador reincorporado a la plantilla con sus datos conservados. Las convocatorias existentes no cambian.": "Player reinstated to the squad with his data preserved. The existing call-ups do not change.",
   "Jugadores a prueba del club. No cuentan en los totales de disponibilidad.": "Club trial players. They do not count in availability totals.",
   "Jugadores inactivos": "Inactive players",
+  "Jugadores: {{v0}}/{{v1}}": "Players: {{v0}}/{{v1}}",
   "LATERALES / CARRILEROS": "FULL-BACKS / WING-BACKS",
   "La URL de invitaciones debe ser un origen HTTPS sin rutas ni credenciales.": "The invite URL must be an HTTPS origin without routes or credentials.",
   "La caducidad debe estar entre 1 y 720 horas.": "The expiration date must be between 1 and 720 hours.",

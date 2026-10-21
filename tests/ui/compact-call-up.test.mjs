@@ -417,6 +417,8 @@ test('categorías vacías, exclusión de pruebas/ayudas y retorno fácil a Todos
     await f.page.getByRole('button', { name: 'Mostrar todos', exact: true }).click();
     assert.equal(await f.page.getByRole('button', { name: 'PRUEBAS (1)', exact: true }).isVisible(), true);
     assert.equal(await f.page.getByRole('button', { name: 'Todos: 0. Filtrar convocatoria', exact: true }).getAttribute('aria-pressed'), 'true');
+    await f.page.getByText('Inicio', { exact: true }).click();
+    await f.page.getByText('Jugadores: 0/0', { exact: true }).waitFor();
   } finally { await f.close(); }
 });
 
@@ -790,7 +792,10 @@ test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilita
         await page.getByText('Cargando datos del vestuario…',{exact:true}).waitFor({state:'hidden'});
         assert.equal(await page.getByRole('button',{name:'Crear convocatoria',exact:true}).count(),0);
         await page.getByText('Activa · Votación cerrada',{exact:true}).waitFor();
+        await page.getByText('Jugadores: 6/24',{exact:true}).waitFor();
         assert.equal(await page.getByText('Todavía no hay convocatorias.',{exact:true}).count(),0);
+        f.emit(1,'available');
+        await page.getByText('Jugadores: 7/24',{exact:true}).waitFor();
         await page.screenshot({path:'test-results/active-closed-home.png',fullPage:true});
         await page.getByRole('button',{name:'Ver convocatoria',exact:true}).click();
         await page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
