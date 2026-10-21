@@ -25,12 +25,15 @@ export function Screen({ children, compact = false, footer, onRefresh, refreshin
   );
 }
 
-export function Heading({ title, subtitle }: { title: string; subtitle?: string }) {
+export function Heading({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   useLanguage();
   return (
     <View style={styles.heading}>
       <Text style={styles.eyebrow}>{t("CONVOSQUAD · CLUBES PRO")}</Text>
-      <Text accessibilityRole="header" style={styles.title}>{title}</Text>
+      {action ? <View style={styles.titleRow}>
+        <Text accessibilityRole="header" style={[styles.title, styles.titleWithAction]}>{title}</Text>
+        {action}
+      </View> : <Text accessibilityRole="header" style={styles.title}>{title}</Text>}
       {subtitle ? <Text style={styles.body}>{subtitle}</Text> : null}
     </View>
   );
@@ -106,6 +109,8 @@ export const styles = StyleSheet.create({
   heading: { gap: 12, marginVertical: 12 },
   eyebrow: { color: colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 2 },
   title: { color: colors.text, fontSize: 32, fontWeight: '800' },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  titleWithAction: { flex: 1, minWidth: 0 },
   body: { color: colors.muted, fontSize: 16, lineHeight: 24 },
   card: { backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: 20, padding: 20, gap: 12 },
   cardTitle: { color: colors.text, fontSize: 20, fontWeight: '700' },

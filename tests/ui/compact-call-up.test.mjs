@@ -219,7 +219,6 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     return { context, page, data, players, emit, close };
   }
   await page.getByRole('button', { name: `Todos: ${players.length}. Filtrar convocatoria`, exact: true }).waitFor();
-  if (!historical) await page.getByText('Actualización en directo', { exact: true }).waitFor();
   // Club context, screen snapshot, then the initial Realtime reconciliation.
   await initialReload;
   await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
@@ -236,6 +235,9 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
 for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros accesibles a ${width}px`, async () => {
   const f = await fixture({ width }); const { page } = f;
   try {
+    assert.equal(await page.getByRole('button', { name: 'Historial de convocatorias', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Actualizar convocatoria', exact: true }).count(), 0);
+    assert.equal(await page.getByText('Actualización en directo', { exact: true }).count(), 0);
     const rows = page.locator('[data-testid^="call-up-player-"]:visible');
     assert.equal(await rows.count(), 24);
     const filters = page.getByTestId('call-up-filters');
@@ -337,6 +339,20 @@ test('barra oculta sin ficha vinculada, en canceladas y en borradores', async ()
 test('administración con margen y actualización explícita de categorías sin esperar al día siguiente', async () => {
   const f = await fixture({ role: 'admin' }); const { page } = f;
   try {
+    for (const width of [320, 390, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.getByRole('heading', { name: 'Convocatoria', exact: true }).scrollIntoViewIfNeeded();
+      const title = await page.getByRole('heading', { name: 'Convocatoria', exact: true }).boundingBox();
+      const history = await page.getByRole('button', { name: 'Historial de convocatorias', exact: true }).boundingBox();
+      assert.ok(history.x >= title.x + title.width, 'history belongs to the right of the title');
+      assert.ok(Math.abs(history.y + history.height / 2 - title.y - title.height / 2) <= 1, 'title and history must align vertically');
+      assert.ok(history.width >= 44 && history.height >= 44 && history.x + history.width <= width);
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
+      assert.equal(await page.getByRole('button', { name: 'Actualizar convocatoria', exact: true }).count(), 0);
+      assert.equal(await page.getByText('Actualización en directo', { exact: true }).count(), 0);
+      await page.screenshot({ path: `test-results/call-up-header-${width}.png` });
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'Administrar convocatoria', exact: true }).click();
     const state = await page.getByText(/^Estado: Activa · Votación abierta\./).boundingBox();
     const edit = await page.getByRole('button', { name: 'Modificar fecha y hora', exact: true }).boundingBox();
@@ -798,12 +814,12 @@ test('editar convocatoria: panel largo desplaza hasta valoración y botones sin 
  } finally {await f.close();}
 });
 
-test('actualizar convocatoria incorpora candidato añadido desde otro dispositivo sin recrearla',async()=>{
+test('la sincronización incorpora un candidato de otro dispositivo sin actualización manual',async()=>{
  const f=await fixture({expandPanels:false});
  try {
   const before=f.data.snapshotReads;
   f.players.push({...f.players[0],id:'remote-snapshot',source_player_id:'remote-player',user_id:null,ea_id_snapshot:'AltaRemota',availability:'unanswered',responded_at:null});
-  await f.page.getByRole('button',{name:'Actualizar convocatoria',exact:true}).click();
+  f.emit(f.players.length-1,'unanswered');
   await f.page.getByRole('button',{name:`Todos: ${f.players.length}. Filtrar convocatoria`,exact:true}).waitFor();
   assert.ok(f.data.snapshotReads>before);assert.equal(f.data.writes,0);
   assert.ok(new URL(f.page.url()).pathname==='/call-up');
