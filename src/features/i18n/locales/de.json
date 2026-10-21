@@ -748,5 +748,6 @@
   "No hay convocatorias dentro del plazo de valoración de 24 horas.": "Kein Aufgebot liegt innerhalb der Bewertungsfrist von 24 Stunden.",
   "Plazo para valorar: hasta {{v0}}": "Bewertungsfrist: bis {{v0}}",
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Nur das zuletzt beendete Aufgebot. Du hast ab seinem Ende 24 Stunden Zeit zum Bewerten.",
-  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Du kannst nur das zuletzt beendete Aufgebot innerhalb von 24 Stunden nach seinem Ende bewerten."
+  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Du kannst nur das zuletzt beendete Aufgebot innerhalb von 24 Stunden nach seinem Ende bewerten.",
+  "Decisión mantenida de {{v0}}": "Beibehaltene Entscheidung von {{v0}}"
 }

@@ -82,6 +82,7 @@ export type Database = {
           sort_order_snapshot: number;
           availability_version: number;
           auto_response: boolean;
+          decision_locked: boolean;
         };
         Insert: {
           id?: string;
@@ -100,6 +101,7 @@ export type Database = {
           sort_order_snapshot?: number;
           availability_version?: number;
           auto_response?: boolean;
+          decision_locked?: boolean;
         };
         Update: {
           id?: string;
@@ -118,6 +120,7 @@ export type Database = {
           sort_order_snapshot?: number;
           availability_version?: number;
           auto_response?: boolean;
+          decision_locked?: boolean;
         };
         Relationships: [
           { foreignKeyName: 'call_up_players_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },

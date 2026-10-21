@@ -748,5 +748,6 @@
   "No hay convocatorias dentro del plazo de valoración de 24 horas.": "No call-ups are within the 24-hour rating window.",
   "Plazo para valorar: hasta {{v0}}": "Rating deadline: {{v0}}",
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Only the latest finished call-up. You have 24 hours from its end to give your ratings.",
-  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "You can only rate the latest finished call-up within 24 hours of its end."
+  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "You can only rate the latest finished call-up within 24 hours of its end.",
+  "Decisión mantenida de {{v0}}": "Retained decision for {{v0}}"
 }

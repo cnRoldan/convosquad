@@ -79,7 +79,7 @@ export default function CallUpScreen() {
     router.setParams({ id: undefined, history: undefined });
   }
   const sourcePlayers = useMemo<CallUpPlayer[]>(() => isDemo ? upcomingCallUp?.responses.map(row => ({ id: row.id, eaId: row.displayName, category: row.category, sortOrder: row.sortOrder, availability: row.status, userId: roster.find(player => player.id === row.id)?.userId ?? null, jersey: roster.find(player => player.id === row.id)?.jerseyNumber ?? null })) ?? []
-    : snapshots.data?.players.map(row => ({ id: row.id, eaId: row.ea_id_snapshot, category: row.category_snapshot, sortOrder: row.sort_order_snapshot, availability: row.availability, userId: row.user_id, jersey: row.jersey_number_snapshot })) ?? [], [isDemo, upcomingCallUp?.responses, snapshots.data?.players, roster]);
+    : snapshots.data?.players.map(row => ({ id: row.id, eaId: row.ea_id_snapshot, category: row.category_snapshot, sortOrder: row.sort_order_snapshot, availability: row.availability, userId: row.user_id, jersey: row.jersey_number_snapshot, decisionLocked: Boolean(row.decision_locked) })) ?? [], [isDemo, upcomingCallUp?.responses, snapshots.data?.players, roster]);
   const responseScope = `${scope}:${callId}`;
   const currentPending = pending?.scope === responseScope ? pending : null;
   const players = useMemo(() => currentPending && (currentPending.saving || currentPending.source === snapshots.data) ? sourcePlayers.map(player => player.id === currentPending.id ? { ...player, availability: currentPending.availability } : player) : sourcePlayers, [sourcePlayers, currentPending, snapshots.data]);
@@ -125,7 +125,7 @@ export default function CallUpScreen() {
   const votingClosed = Boolean(call && (call.status === 'closed' || (call.status === 'open' && (votingDeadlinePassed(call, clock) || callUpHasEnded(call, clock)))));
   const decisionLock = !isDemo && !historical && clubId && call && ownPlayer && !snapshots.error ? <DecisionLock votingClosed={votingClosed} clubId={clubId} entryId={ownPlayer?.id}
     availability={ownPlayer?.availability ?? 'unanswered'} canEnable={Boolean(ownPlayer && ownPlayer.availability !== 'unanswered' && call?.status !== 'cancelled')}
-    pendingVote={Boolean(currentPending?.saving)} revision={ownSnapshot?.updated_at ?? ''} /> : null;
+    pendingVote={Boolean(currentPending?.saving)} revision={ownSnapshot?.updated_at ?? ''} onChanged={reloadSnapshots} /> : null;
   const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && (votingClosed || canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock))
     ? <AvailabilityActions votingClosed={votingClosed} decisionLock={decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;

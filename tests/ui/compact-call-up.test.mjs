@@ -52,7 +52,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     user_id: index === 3 ? (linked ? userId : null) : index === 4 ? null : `other-${index}`,
     ea_id_snapshot: rowName(index), jersey_number_snapshot: index + 1, position_snapshot: 'MC',
     category_snapshot: categories[Math.floor(index / 4)], sort_order_snapshot: index, availability: statuses[index % 4],
-    responded_at: null, created_at: call.created_at, updated_at: call.updated_at,
+    responded_at: null, created_at: call.created_at, updated_at: call.updated_at, decision_locked: retained && index === 3,
   }));
   if (cooldown && players[3]) { players[3].availability = 'available'; players[3].responded_at = new Date().toISOString(); }
   const privateContacts = [];
@@ -100,6 +100,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         assert.equal(body.p_club_id, clubId);
         if (body.p_enabled || body.p_call_up_player_id !== undefined) assert.equal(body.p_call_up_player_id, 'snapshot-3');
         decisionLock = body.p_enabled ? {availability: players[3].availability} : null;
+        players[3].decision_locked = body.p_enabled;
         return route.fulfill({json: body.p_enabled});
       }
       if (endpoint === 'set_preferred_language') return route.fulfill({json: null});
@@ -217,7 +218,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     await page.getByText('No hay convocatorias accesibles en este club.',{exact:true}).waitFor();
     return { context, page, data, players, emit, close };
   }
-  await page.getByRole('button', { name: `Todos (${players.length})`, exact: true }).waitFor();
+  await page.getByRole('button', { name: `Todos: ${players.length}. Filtrar convocatoria`, exact: true }).waitFor();
   if (!historical) await page.getByText('Actualización en directo', { exact: true }).waitFor();
   // Club context, screen snapshot, then the initial Realtime reconciliation.
   await initialReload;
@@ -237,6 +238,13 @@ for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros a
   try {
     const rows = page.locator('[data-testid^="call-up-player-"]:visible');
     assert.equal(await rows.count(), 24);
+    const filters = page.getByTestId('call-up-filters');
+    assert.equal(await filters.getByRole('button').count(), 5);
+    assert.equal(await page.getByRole('button', {name: /\. Filtrar convocatoria$/}).count(), 5);
+    const filterBox=await filters.boundingBox();
+    for(const button of await filters.getByRole('button').all()) {
+      const box=await button.boundingBox();assert.ok(box.width>=44 && box.height>=44);assert.ok(Math.abs(box.y-filterBox.y)<1);
+    }
     const height = (await page.getByTestId('call-up-player-snapshot-1').boundingBox()).height;
     assert.ok(height <= 44, `read-only player row should be compact: ${height}px`);
     assert.equal(await page.getByTestId('call-up-player-snapshot-1').getByText('#2', { exact: true }).count(), 1);
@@ -258,12 +266,12 @@ for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros a
     assert.equal(await page.getByTestId('call-up-player-snapshot-1').isVisible(), false);
     const reads = f.data.reads;
     for (const label of stateLabels) {
-      await page.getByRole('button', { name: `${label} (6)`, exact: true }).click();
-      assert.equal(await page.getByRole('button', { name: `${label} (6)`, exact: true }).getAttribute('aria-pressed'), 'true');
+      await page.getByRole('button', { name: `${label}: 6. Filtrar convocatoria`, exact: true }).click();
+      assert.equal(await page.getByRole('button', { name: `${label}: 6. Filtrar convocatoria`, exact: true }).getAttribute('aria-pressed'), 'true');
       assert.equal(await page.getByRole('button', { name: 'PRUEBAS (1)', exact: true }).isVisible(), false);
       assert.equal(await page.getByRole('button', { name: 'AYUDAS (1)', exact: true }).isVisible(), false);
     }
-    await page.getByRole('button', { name: 'Todos (24)', exact: true }).click();
+    await page.getByRole('button', { name: 'Todos: 24. Filtrar convocatoria', exact: true }).click();
     assert.equal(await heading.getAttribute('aria-expanded'), 'false');
     assert.equal(f.data.reads, reads, 'changing filters must not query Supabase');
     await heading.click();
@@ -277,15 +285,16 @@ for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros a
     assert.equal(await rows.count(), 24);
     mkdirSync('test-results', { recursive: true });
     await page.screenshot({ path: `test-results/call-up-${width}.png`, fullPage: true });
+    await filters.screenshot({path: `test-results/call-up-filters-${width}.png`});
   } finally { await f.close(); }
 });
 
 test('Realtime actualiza contadores y retira una respuesta del filtro Pendientes', async () => {
   const f = await fixture();
   try {
-    await f.page.getByRole('button', { name: 'Pendientes (6)', exact: true }).click();
+    await f.page.getByRole('button', { name: 'Pendientes: 6. Filtrar convocatoria', exact: true }).click();
     f.emit(7, 'available');
-    await f.page.getByRole('button', { name: 'Pendientes (5)', exact: true }).waitFor();
+    await f.page.getByRole('button', { name: 'Pendientes: 5. Filtrar convocatoria', exact: true }).waitFor();
     assert.equal(await f.page.getByTestId('call-up-player-snapshot-7').count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Disponibles: 7. Filtrar convocatoria', exact: true }).count(), 1);
     assert.equal(await f.page.getByRole('button', { name: 'CENTRALES (4)', exact: true }).count(), 0);
@@ -297,15 +306,15 @@ test('barra flotante permite responder con la ficha oculta y no tapa el final de
   try {
     const bar = page.getByTestId('availability-actions');
     const before = await bar.boundingBox();
-    await page.getByRole('button', { name: 'Disponibles (6)', exact: true }).click();
+    await page.getByRole('button', { name: 'Disponibles: 6. Filtrar convocatoria', exact: true }).click();
     assert.equal(await page.getByTestId('call-up-player-snapshot-3').count(), 0);
     await bar.getByRole('button', { name: 'Disponible para Jugador_4', exact: true }).click();
-    await page.waitForFunction(() => document.body.innerText.includes('Disponibles (7)'));
+    await page.getByRole('button', { name: 'Disponibles: 7. Filtrar convocatoria', exact: true }).waitFor();
     f.data.release();
     await bar.getByText('Tu respuesta: Disponible.', { exact: true }).waitFor();
     await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
     assert.equal(f.data.writes, 1);
-    await page.getByRole('button', { name: 'Todos (24)', exact: true }).click();
+    await page.getByRole('button', { name: 'Todos: 24. Filtrar convocatoria', exact: true }).click();
     const aid = page.getByText('Ayuda fuera del total', { exact: false });
     await aid.scrollIntoViewIfNeeded();
     const after = await bar.boundingBox();
@@ -364,7 +373,7 @@ test('respuesta propia es inmediata, bloquea pulsaciones rápidas y vuelve al es
     await button.evaluate(element => { element.click(); element.click(); });
     await page.getByText('Guardando respuesta…', { exact: true }).first().waitFor();
     assert.equal(await button.getAttribute('aria-pressed'), 'true');
-    await page.waitForFunction(() => document.body.innerText.includes('Disponibles (7)'));
+    await page.getByRole('button', { name: 'Disponibles: 7. Filtrar convocatoria', exact: true }).waitFor();
     assert.equal(f.data.writes, 1);
     assert.equal(await button.getAttribute('aria-disabled'), 'true');
     f.data.release();
@@ -373,7 +382,7 @@ test('respuesta propia es inmediata, bloquea pulsaciones rápidas y vuelve al es
     f.data.rejectNext = true;
     await row.getByRole('button', { name: 'No disponible para Jugador_4', exact: true }).click();
     await page.getByText('Guardando respuesta…', { exact: true }).first().waitFor();
-    await page.waitForFunction(() => document.body.innerText.includes('No disponibles (7)'));
+    await page.waitForFunction(() => document.body.innerText.includes('No disponibles: 7. Filtrar convocatoria'));
     f.data.release();
     await page.getByText(/La convocatoria ya no está disponible o no tienes permiso/).waitFor();
     await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
@@ -386,12 +395,12 @@ test('categorías vacías, exclusión de pruebas/ayudas y retorno fácil a Todos
   const f = await fixture({ empty: true });
   try {
     for (const category of ['PORTEROS', 'CENTRALES', 'LATERALES / CARRILEROS', 'CENTROCAMPISTAS', 'ATACANTES', 'BACKUPS']) assert.equal(await f.page.getByRole('button', { name: `${category} (0)`, exact: true }).count(), 1);
-    await f.page.getByRole('button', { name: 'Disponibles (0)', exact: true }).click();
+    await f.page.getByRole('button', { name: 'Disponibles: 0. Filtrar convocatoria', exact: true }).click();
     await f.page.getByText('No hay jugadores en disponibles.', { exact: true }).waitFor();
     assert.equal(await f.page.getByRole('button', { name: 'PORTEROS (0)', exact: true }).count(), 0);
     await f.page.getByRole('button', { name: 'Mostrar todos', exact: true }).click();
     assert.equal(await f.page.getByRole('button', { name: 'PRUEBAS (1)', exact: true }).isVisible(), true);
-    assert.equal(await f.page.getByRole('button', { name: 'Todos (0)', exact: true }).getAttribute('aria-pressed'), 'true');
+    assert.equal(await f.page.getByRole('button', { name: 'Todos: 0. Filtrar convocatoria', exact: true }).getAttribute('aria-pressed'), 'true');
   } finally { await f.close(); }
 });
 
@@ -470,7 +479,7 @@ test('capitán añade prueba por nombre desde convocatoria sin EA ID ni dorsal y
     if (await trialsPanel.getAttribute('aria-expanded') === 'false') await trialsPanel.click();
     await page.getByText('Amigo de Selu', {exact: true}).waitFor();
     assert.equal(f.data.trialAdds, 1);
-    assert.equal(await page.getByRole('button', {name: 'Todos (24)', exact: true}).count(), 1);
+    assert.equal(await page.getByRole('button', {name: 'Todos: 24. Filtrar convocatoria', exact: true}).count(), 1);
     assert.equal(await page.getByText('PRUEBAS (2)', {exact: true}).count(), 1);
     assert.equal(await page.getByText('#99', {exact: true}).count(), 0);
   } finally { await f.close(); }
@@ -487,7 +496,7 @@ test('reiniciar pide confirmación, cancelar no escribe y confirmar elimina voto
     assert.equal(f.data.restarts, 0);
     await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).click();
     await page.getByRole('button', {name: 'Reiniciar convocatoria', exact: true}).last().click();
-    await page.getByRole('button', {name: 'Pendientes (24)', exact: true}).waitFor();
+    await page.getByRole('button', {name: 'Pendientes: 24. Filtrar convocatoria', exact: true}).waitFor();
     await page.getByRole('button', {name: 'Disponible para Jugador_4', exact: true, disabled: false}).waitFor();
     assert.equal(f.data.restarts, 1);
     const aids=page.getByRole('button',{name:'AYUDAS (1)',exact:true});
@@ -668,6 +677,7 @@ test('mantener decisión: hay que votar, el candado se guarda y puede quitarse c
     await page.getByText('Tu respuesta: No disponible.',{exact:true}).waitFor();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,disabled:false}).click();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:true}).waitFor();
+    await page.getByTestId('decision-lock-snapshot-3').waitFor();
     assert.equal(f.data.decisionWrites,1);
     await page.getByText('Se mantendrá «No disponible» en las próximas convocatorias de este club hasta que lo desactives.',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).click();
@@ -676,9 +686,29 @@ test('mantener decisión: hay que votar, el candado se guarda y puede quitarse c
     await page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:true,disabled:false}).click();
     await page.getByRole('switch',{name:'Mantener decisión',exact:true,checked:false}).waitFor();
+    await page.getByTestId('decision-lock-snapshot-3').waitFor({state:'hidden'});
     assert.equal(f.data.writes,1);assert.equal(f.data.updates,1);
     await page.screenshot({path:'test-results/retained-decision.png'});
   } finally {await f.close();}
+});
+
+test('jugadores y capitanes ven a la izquierda el candado de otro miembro y su cambio por Realtime',async()=>{
+ for(const role of ['player','admin']) {
+  const f=await fixture({role});
+  try {
+   const icon=f.page.getByTestId('decision-lock-snapshot-1');assert.equal(await icon.count(),0);
+   f.players[1].decision_locked=true;f.emit(1,f.players[1].availability);
+   await icon.waitFor();assert.equal(await icon.getAttribute('aria-label'),'Decisión mantenida de Jugador_2');
+   const iconBox=await icon.boundingBox(),nameBox=await f.page.getByText('Jugador_2',{exact:true}).boundingBox();
+   assert.ok(iconBox.x+iconBox.width<=nameBox.x);
+   await f.page.getByRole('button',{name:'No disponibles: 6. Filtrar convocatoria',exact:true}).click();
+   assert.equal(await icon.isVisible(),true);
+   if(role==='player')await f.page.getByTestId('call-up-player-snapshot-1').screenshot({path:'test-results/visible-decision-lock.png'});
+   f.players[1].decision_locked=false;f.emit(1,f.players[1].availability);
+   await icon.waitFor({state:'hidden'});
+   assert.equal(f.data.writes,0);assert.equal(f.data.decisionWrites,0);
+  } finally {await f.close();}
+ }
 });
 
 test('eliminar convocatoria: vuelve a Convocatoria vacía, limpia el enlace y permite salir sin crear otra',async()=>{
@@ -774,7 +804,7 @@ test('actualizar convocatoria incorpora candidato añadido desde otro dispositiv
   const before=f.data.snapshotReads;
   f.players.push({...f.players[0],id:'remote-snapshot',source_player_id:'remote-player',user_id:null,ea_id_snapshot:'AltaRemota',availability:'unanswered',responded_at:null});
   await f.page.getByRole('button',{name:'Actualizar convocatoria',exact:true}).click();
-  await f.page.getByRole('button',{name:`Todos (${f.players.length})`,exact:true}).waitFor();
+  await f.page.getByRole('button',{name:`Todos: ${f.players.length}. Filtrar convocatoria`,exact:true}).waitFor();
   assert.ok(f.data.snapshotReads>before);assert.equal(f.data.writes,0);
   assert.ok(new URL(f.page.url()).pathname==='/call-up');
  } finally {await f.close();}

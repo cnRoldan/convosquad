@@ -11,7 +11,8 @@ import { colors } from '@/theme';
 import { availabilityLabels } from './availability';
 import type { Availability } from './list-model';
 
-export function DecisionLock({ clubId, entryId, availability, canEnable, pendingVote, revision, votingClosed = false }: {
+export function DecisionLock({ clubId, entryId, availability, canEnable, pendingVote, revision, votingClosed = false, onChanged }: {
+  onChanged?: () => void;
   votingClosed?: boolean; clubId: string; entryId: string | undefined; availability: Availability; canEnable: boolean; pendingVote: boolean; revision: string;
 }) {
   useLanguage();
@@ -35,6 +36,7 @@ export function DecisionLock({ clubId, entryId, availability, canEnable, pending
       });
       if (cause) throw cause;
       result.reload();
+      onChanged?.();
     } catch (cause) { setError(backendErrorMessage(cause)); }
     finally { setBusy(false); }
   }

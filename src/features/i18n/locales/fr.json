@@ -748,5 +748,6 @@
   "No hay convocatorias dentro del plazo de valoración de 24 horas.": "Aucune convocation ne se trouve dans le délai de 24 heures pour évaluer.",
   "Plazo para valorar: hasta {{v0}}": "Date limite pour évaluer : {{v0}}",
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Seulement la dernière convocation terminée. Tu as 24 heures après sa fin pour évaluer.",
-  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Tu peux seulement évaluer la dernière convocation terminée pendant les 24 heures suivant sa fin."
+  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Tu peux seulement évaluer la dernière convocation terminée pendant les 24 heures suivant sa fin.",
+  "Decisión mantenida de {{v0}}": "Décision conservée de {{v0}}"
 }
