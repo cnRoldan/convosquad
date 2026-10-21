@@ -310,6 +310,7 @@
   "Jugador reincorporado a la plantilla con sus datos conservados. Las convocatorias existentes no cambian.": "Joueur réintégré dans l'équipe avec ses données préservées. Les convocations existants ne changent pas.",
   "Jugadores a prueba del club. No cuentan en los totales de disponibilidad.": "Joueurs de trial du club. Ils ne comptent pas dans les totaux de disponibilité.",
   "Jugadores inactivos": "Joueurs inactifs",
+  "Jugadores: {{v0}}/{{v1}}": "Joueurs : {{v0}}/{{v1}}",
   "LATERALES / CARRILEROS": "LATÉRAUX / PISTONS",
   "La URL de invitaciones debe ser un origen HTTPS sin rutas ni credenciales.": "L'URL d'invitation doit être une origine HTTPS sans routes ni informations d'identification.",
   "La caducidad debe estar entre 1 y 720 horas.": "La date d'expiration doit être comprise entre 1 et 720 heures.",

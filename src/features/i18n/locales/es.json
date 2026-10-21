@@ -310,6 +310,7 @@
   "Jugador reincorporado a la plantilla con sus datos conservados. Las convocatorias existentes no cambian.": "Jugador reincorporado a la plantilla con sus datos conservados. Las convocatorias existentes no cambian.",
   "Jugadores a prueba del club. No cuentan en los totales de disponibilidad.": "Jugadores a prueba del club. No cuentan en los totales de disponibilidad.",
   "Jugadores inactivos": "Jugadores inactivos",
+  "Jugadores: {{v0}}/{{v1}}": "Jugadores: {{v0}}/{{v1}}",
   "LATERALES / CARRILEROS": "LATERALES / CARRILEROS",
   "La URL de invitaciones debe ser un origen HTTPS sin rutas ni credenciales.": "La URL de invitaciones debe ser un origen HTTPS sin rutas ni credenciales.",
   "La caducidad debe estar entre 1 y 720 horas.": "La caducidad debe estar entre 1 y 720 horas.",

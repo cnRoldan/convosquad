@@ -1,6 +1,7 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { router, useFocusEffect, usePathname } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
+import { Text } from 'react-native';
 
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { useClub } from '@/features/clubs/club-context';
@@ -9,6 +10,7 @@ import { formatMatchDate } from '@/lib/format';
 import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
 import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
+import { colors } from '@/theme';
 
 export default function HomeScreen() {
   useLanguage();
@@ -39,6 +41,10 @@ export default function HomeScreen() {
           <Body>{formatMatchDate(upcomingCallUp.startsAt, upcomingCallUp.timezone)} · {upcomingCallUp.timezone}</Body>
           <Body>{t(callUpStatusLabel({ status: upcomingCallUp.status ?? 'open', closes_at: upcomingCallUp.closesAt ?? null, ends_at: upcomingCallUp.endsAt ?? null,
             local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date, timezone: upcomingCallUp.timezone }, clock))}</Body>
+          <Text accessibilityLiveRegion="polite" style={{ color: colors.primary, fontSize: 18, fontWeight: '700' }}>{t("Jugadores: {{v0}}/{{v1}}", {
+            v0: upcomingCallUp.responses.filter(player => player.status === 'available').length,
+            v1: upcomingCallUp.responses.length,
+          })}</Text>
           <Button label={t("Ver convocatoria")} onPress={() => router.navigate({ pathname: '/call-up', params: { id: upcomingCallUp.id } })} />
         </> : !rosterLoading && !rosterError ? <Body>{t("Todavía no hay convocatorias.")}</Body> : null}
       </Card>
