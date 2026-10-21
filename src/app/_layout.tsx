@@ -36,7 +36,7 @@ export default function RootLayout() {
               <Stack.Screen name="(manage)" />
               <Stack.Screen name="notification" />
               <Stack.Screen name="invite" />
-              <Stack.Screen name="(club)" />
+              <Stack.Screen name="(club)" options={{ gestureEnabled: false }} />
               <Stack.Screen name="auth/callback" />
               <Stack.Screen name="+not-found" />
             </Stack>
