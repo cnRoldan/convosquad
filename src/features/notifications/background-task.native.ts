@@ -2,13 +2,13 @@ import * as TaskManager from 'expo-task-manager';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { nativePushSupported } from '@/lib/push-support';
-import { handleAndroidNotificationResponse } from './background-action-service';
+import { handleNotificationActionResponse } from './background-action-service';
 
 const taskName = 'convosquad-notification-actions';
 if (Platform.OS === 'android' && nativePushSupported() && !TaskManager.isTaskDefined(taskName)) {
   TaskManager.defineTask<Notifications.NotificationTaskPayload>(taskName, async ({ data, error }) => {
     if (error || !data || !('actionIdentifier' in data)) return;
-    await handleAndroidNotificationResponse(data);
+    await handleNotificationActionResponse(data);
   });
 }
 export async function ensureBackgroundNotificationTask() {

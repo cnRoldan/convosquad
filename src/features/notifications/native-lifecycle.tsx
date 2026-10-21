@@ -31,9 +31,9 @@ export function NativePushLifecycle() {
         responding = responding.then(async () => {
           if (!active) return;
           const intent = readNotificationResponse(response.notification.request.content.data, response.actionIdentifier, response.notification.request.identifier, Notifications.DEFAULT_ACTION_IDENTIFIER); if (!intent) return;
-          if (intent.response && Platform.OS === 'android') {
-            const { handleAndroidNotificationResponse } = await import('./background-action-service');
-            await handleAndroidNotificationResponse(response); return;
+          if (intent.response) {
+            const { handleNotificationActionResponse } = await import('./background-action-service');
+            await handleNotificationActionResponse(response); return;
           }
           const id = `${response.notification.request.identifier}:${response.actionIdentifier}`;
           if (await AsyncStorage.getItem('convosquad:last-push-response') === id || !active) return;
