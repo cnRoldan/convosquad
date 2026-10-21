@@ -243,6 +243,7 @@ for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros a
     const filters = page.getByTestId('call-up-filters');
     assert.equal(await filters.getByRole('button').count(), 5);
     assert.equal(await page.getByRole('button', {name: /\. Filtrar convocatoria$/}).count(), 5);
+    for (const label of ['Todos', ...stateLabels]) assert.equal(await filters.getByText(label, { exact: true }).count(), 0);
     const filterBox=await filters.boundingBox();
     for(const button of await filters.getByRole('button').all()) {
       const box=await button.boundingBox();assert.ok(box.width>=44 && box.height>=44);assert.ok(Math.abs(box.y-filterBox.y)<1);
