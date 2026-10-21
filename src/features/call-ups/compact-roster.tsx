@@ -13,7 +13,6 @@ import { CompactPanel } from './compact-panel';
 import type { Tables } from '@/types/database';
 
 const statusColors = { all: colors.primary, available: colors.primary, unavailable: colors.danger, backup: '#F2D478', unanswered: colors.muted };
-const shortLabels = { all: 'Todos', available: 'Disponibles', unavailable: 'No disp.', backup: 'Backup', unanswered: 'Pendientes' };
 const filterIcons = { all: '👥', ...availabilityIcons };
 
 export function CompactRoster({ players, trials, aids, trialEditor, trialActions, showTrialNotes = false }: {
@@ -35,7 +34,6 @@ export function CompactRoster({ players, trials, aids, trialEditor, trialActions
         {...(Platform.OS === 'web' ? { 'aria-pressed': filter === status } : {})} accessibilityState={{ selected: filter === status }} onPress={() => setFilter(current => current === status ? 'all' : status)}
         style={({ pressed }) => [styles.counter, filter === status && styles.selected, pressed && styles.pressed]}>
         <Text adjustsFontSizeToFit minimumFontScale={0.75} numberOfLines={1} style={[styles.count, width < 360 && styles.smallCount, { color: statusColors[status] }]}>{filterIcons[status]} {status === 'all' ? model.total : model.counts[status]}</Text>
-        <Text style={[styles.counterLabel, width < 380 && styles.smallLabel]}>{t(shortLabels[status])}</Text>
       </Pressable>)}
     </View>
     <Text style={styles.help}>{t("Disponible no significa seleccionado para el once.")}</Text>
@@ -82,7 +80,7 @@ const AvailabilityRow = memo(function AvailabilityRow({ player }: { player: Call
 const styles = StyleSheet.create({
   stack: { gap: 10 }, counters: { flexDirection: 'row', gap: 4 },
   counter: { flexGrow: 1, flexBasis: 0, minWidth: 0, minHeight: 64, paddingVertical: 8, paddingHorizontal: 4, borderWidth: 1, borderColor: colors.border, borderRadius: 10, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  count: { fontSize: 20, fontWeight: '800' }, smallCount: { fontSize: 16 }, counterLabel: { fontSize: 12, color: colors.text, textAlign: 'center' }, smallLabel: { fontSize: 11 },
+  count: { fontSize: 20, fontWeight: '800' }, smallCount: { fontSize: 16 },
   chip: { minHeight: 44, paddingHorizontal: 10, paddingVertical: 10, justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
   selected: { borderColor: colors.primary, backgroundColor: '#243622' }, selectedText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   help: { fontSize: 12, color: colors.muted }, row: { paddingVertical: 8, gap: 3, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
