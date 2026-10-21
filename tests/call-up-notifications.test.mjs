@@ -8,6 +8,17 @@ import { pushMessage } from '../supabase/functions/_shared/push-event.ts';
 import { dispatchReminders } from '../supabase/functions/_shared/reminder-worker.ts';
 const clubId='80000000-0000-4000-8000-000000000010',callUpId='80000000-0000-4000-8000-000000000020',userId='80000000-0000-4000-8000-000000000030';
 
+test('recordatorios de valoración conservan destino y destinatario tras tocar, guardar y restaurar; no permiten votar',()=>{
+ for(const kind of ['evaluation','evaluation_deadline']) {
+  const data={type:'call_up',clubId,callUpId,userId,kind};
+  const intent=readNotificationResponse(data,'default','notification','default');
+  assert.deepEqual(intent,{clubId,callUpId,userId,rating:true});
+  assert.deepEqual(readPushIntent({type:'call_up',...intent}),intent);
+  assert.equal(readNotificationResponse(data,notificationActions[0].identifier,'notification','default'),null);
+  assert.equal(readPushIntent({...data,userId:'invalid'}),null);
+ }
+});
+
 test('último aviso usa zona del club, respeta horario de verano y admite desactivación', () => {
   assert.equal(lastNoticeInstant(true,'2026-10-15','18:45','Europe/Madrid','2026-10-15T19:50:00Z'),'2026-10-15T16:45:00.000Z');
   assert.equal(lastNoticeInstant(true,'2026-12-15','18:45','Europe/Madrid','2026-12-15T20:50:00Z'),'2026-12-15T17:45:00.000Z');

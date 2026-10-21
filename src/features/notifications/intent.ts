@@ -1,5 +1,5 @@
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export type PushIntent = { clubId: string; callUpId: string; membership?: true; joinRequest?: true; userId?: string; cancelled?: true; response?: { availability: 'available' | 'unavailable' | 'backup'; userId: string; actionId: string } };
+export type PushIntent = { clubId: string; callUpId: string; membership?: true; joinRequest?: true; rating?: true; userId?: string; cancelled?: true; response?: { availability: 'available' | 'unavailable' | 'backup'; userId: string; actionId: string } };
 export function readPushIntent(data: unknown): PushIntent | null {
   if (data && typeof data === 'object' && 'type' in data && (data.type === 'club_approved' || data.type === 'club_join_request')) {
     if (!('clubId' in data) || typeof data.clubId !== 'string' || !uuid.test(data.clubId) || !('userId' in data) || typeof data.userId !== 'string' || !uuid.test(data.userId) || 'response' in data) return null;
@@ -8,6 +8,10 @@ export function readPushIntent(data: unknown): PushIntent | null {
   if (!data || typeof data !== 'object' || !('type' in data) || data.type !== 'call_up' || !('clubId' in data) || !('callUpId' in data)) return null;
   if (typeof data.clubId !== 'string' || typeof data.callUpId !== 'string' || !uuid.test(data.clubId) || !uuid.test(data.callUpId)) return null;
   const intent: PushIntent = { clubId: data.clubId.toLowerCase(), callUpId: data.callUpId.toLowerCase() };
+  if (('kind' in data && (data.kind === 'evaluation' || data.kind === 'evaluation_deadline')) || ('rating' in data && data.rating === true)) {
+    if (!('userId' in data) || typeof data.userId !== 'string' || !uuid.test(data.userId) || 'response' in data) return null;
+    intent.rating = true; intent.userId = data.userId.toLowerCase();
+  }
   if (('kind' in data && data.kind === 'cancelled') || ('cancelled' in data && data.cancelled === true)) intent.cancelled = true;
   if ('response' in data) {
     const response = data.response;

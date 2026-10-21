@@ -744,5 +744,9 @@
   "Las valoraciones se abrirán al finalizar la convocatoria. ": "Ratings open when the call-up ends. ",
   "Las valoraciones se abrirán al finalizar la convocatoria. En ese momento avisaremos a los capitanes.": "Ratings open when the call-up ends. Captains will be notified then.",
   "Las valoraciones se habilitan al finalizar la convocatoria y se conservan durante tres meses.": "Ratings become available when the call-up ends and are kept for three months.",
-  "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.": "There are no finished call-ups to rate. Call-ups with ratings enabled will appear when they end."
+  "No hay convocatorias finalizadas para valorar. Las que tengan valoración habilitada aparecerán al finalizar.": "There are no finished call-ups to rate. Call-ups with ratings enabled will appear when they end.",
+  "No hay convocatorias dentro del plazo de valoración de 24 horas.": "No call-ups are within the 24-hour rating window.",
+  "Plazo para valorar: hasta {{v0}}": "Rating deadline: {{v0}}",
+  "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Only the latest finished call-up. You have 24 hours from its end to give your ratings.",
+  "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "You can only rate the latest finished call-up within 24 hours of its end."
 }
