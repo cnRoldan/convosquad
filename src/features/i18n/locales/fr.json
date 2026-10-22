@@ -749,5 +749,6 @@
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Seulement la dernière convocation terminée. Tu as 24 heures après sa fin pour évaluer.",
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Tu peux seulement évaluer la dernière convocation terminée pendant les 24 heures suivant sa fin.",
   "Decisión mantenida de {{v0}}": "Décision conservée de {{v0}}",
-  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Demandes en attente : {{v0}} à examiner"
+  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Demandes en attente : {{v0}} à examiner",
+  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "Impossible de dissocier cet appareil des notifications. Réessayez de vous déconnecter."
 }

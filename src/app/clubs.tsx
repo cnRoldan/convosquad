@@ -10,7 +10,8 @@ import { AuthAccess } from '@/components/access';
 import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { usePendingInvite } from '@/features/invitations/pending-invite-context';
-import { backendErrorMessage } from '@/lib/backend-result';
+import { logoutErrorMessage } from '@/features/auth/logout';
+import { useSessionLogout } from '@/features/auth/use-session-logout';
 import { useRequests } from '@/features/join-requests/requests-context';
 
 export default function ClubsScreen() {
@@ -20,25 +21,20 @@ export default function ClubsScreen() {
 function ClubSelection() {
   useLanguage();
   const { auto } = useLocalSearchParams<{ auto?: string }>();
-  const { availableClubs, ownMemberships, activeClub, selectClub, clearClub, isLoading, error, refresh } = useClub();
-  const { isDemo, signOut, exitDemo } = useAuth();
-  const { pendingInvite, clearInvite } = usePendingInvite();
+  const { availableClubs, ownMemberships, activeClub, selectClub, isLoading, error, refresh } = useClub();
+  const { isDemo } = useAuth();
+  const { pendingInvite } = usePendingInvite();
+  const { logout, isSigningOut } = useSessionLogout();
   const [message, setMessage] = useState('');
-  const [busy, setBusy] = useState(false);
   const requests = useRequests();
   const pendingCount = requests.error ? 0 : requests.incoming.length;
   if (isLoading) return <LoadingScreen label={t("Cargando tus clubes…")} />;
   if (auto === '1' && availableClubs.length === 1 && activeClub) return <Redirect href="/home" />;
 
   async function leave() {
-    setBusy(true);
-    try {
-      if (isDemo) exitDemo(); else await signOut();
-      clearClub();
-      clearInvite();
-      router.replace('/');
-    } catch (error) { setMessage(backendErrorMessage(error)); }
-    finally { setBusy(false); }
+    setMessage('');
+    try { await logout(); }
+    catch (error) { setMessage(t(logoutErrorMessage(error))); }
   }
   return <Screen>
     <Heading title={t("Elige tu club")} subtitle={isDemo ? t("Hola, Álex. Estos son tus vestuarios en la demo.") : t("Una cuenta, varios vestuarios independientes.")} />
@@ -61,6 +57,6 @@ function ClubSelection() {
     {message ? <Message error>{message}</Message> : null}
     {!isDemo ? <Button secondary label={t("Eliminar mi cuenta")} onPress={() => router.push('/delete-account')} /> : null}
     <Button secondary label={t("Política de privacidad")} onPress={() => router.push('/privacy')} />
-    <Button secondary disabled={busy} label={isDemo ? t("Volver a la bienvenida") : t("Cerrar sesión")} onPress={() => { void leave(); }} />
+    <Button secondary disabled={isSigningOut} label={isDemo ? t("Volver a la bienvenida") : t("Cerrar sesión")} onPress={() => { void leave(); }} />
   </Screen>;
 }
