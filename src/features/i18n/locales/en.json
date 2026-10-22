@@ -749,5 +749,6 @@
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Only the latest finished call-up. You have 24 hours from its end to give your ratings.",
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "You can only rate the latest finished call-up within 24 hours of its end.",
   "Decisión mantenida de {{v0}}": "Retained decision for {{v0}}",
-  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Pending requests, {{v0}} awaiting review"
+  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Pending requests, {{v0}} awaiting review",
+  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "This device could not be unlinked from notifications. Try logging out again."
 }

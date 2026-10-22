@@ -8,14 +8,16 @@ import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RecoveryState } from './recovery-state';
 
-import { deactivateInstallation, pauseDeviceRegistration } from '@/features/notifications/device-service';
+import { pauseDeviceRegistration } from '@/features/notifications/device-service';
 import { supabase } from '@/lib/supabase';
+import { logoutAccount } from './service';
 
 type AuthContextValue = {
   session: Session | null;
   isLoading: boolean;
   isDemo: boolean;
   isRecovery: boolean;
+  isSigningOut: boolean;
   getRecoveryMode: () => boolean;
   enterDemo: () => void;
   exitDemo: () => void;
@@ -30,6 +32,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setLoading] = useState(Boolean(supabase));
   const [isDemo, setDemo] = useState(false);
   const [isRecovery, setRecovery] = useState(false);
+  const [isSigningOut, setSigningOut] = useState(false);
+  const logoutRef = useRef<Promise<void> | null>(null);
   const recoveryRef = useRef<RecoveryState | null>(null);
   if (recoveryRef.current == null) recoveryRef.current = new RecoveryState(AsyncStorage, `convosquad:recovery:${process.env.EXPO_PUBLIC_SUPABASE_URL ?? ''}`, setRecovery);
 
@@ -75,15 +79,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const enterDemo = useCallback(() => setDemo(true), []);
   const exitDemo = useCallback(() => setDemo(false), []);
   const getRecoveryMode = useCallback(() => recoveryRef.current?.current ?? false, []);
-  async function signOut() {
-    if (session?.user.id) { pauseDeviceRegistration(session.user.id); await deactivateInstallation(session.user.id, true); }
-    if (supabase) {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-    }
-    setSession(null);
-    await recoveryRef.current!.handle('SIGNED_OUT', null);
-    setDemo(false);
+  function signOut(): Promise<void> {
+    if (logoutRef.current) return logoutRef.current;
+    setSigningOut(true);
+    if (session?.user.id) pauseDeviceRegistration(session.user.id);
+    const operation = (async () => {
+      if (supabase) await logoutAccount();
+      setSession(null);
+      await recoveryRef.current!.handle('SIGNED_OUT', null);
+      setDemo(false);
+    })().finally(() => { logoutRef.current = null; setSigningOut(false); });
+    logoutRef.current = operation;
+    return operation;
   }
 
   async function finishAccountDeletion() {
@@ -100,7 +107,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     ]).catch(() => undefined);
   }
 
-  return <AuthContext.Provider value={{ session, isLoading, isDemo, isRecovery, getRecoveryMode, enterDemo, exitDemo, signOut, finishAccountDeletion }}>
+  return <AuthContext.Provider value={{ session, isLoading, isDemo, isRecovery, isSigningOut, getRecoveryMode, enterDemo, exitDemo, signOut, finishAccountDeletion }}>
     {children}
   </AuthContext.Provider>;
 }

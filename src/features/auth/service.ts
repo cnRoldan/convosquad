@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 import { changeOwnPassword, type PasswordChangeInput } from './password-change';
 import { requireSupabase } from '@/lib/supabase';
 import { EaAccountError, loginEaAccount, registerEaAccount } from './ea-account';
+import { endDeviceSession } from './logout';
+import { deactivateInstallation } from '@/features/notifications/device-service';
 
 export { authErrorMessage } from './errors';
 
@@ -20,8 +22,7 @@ export async function loginAccount(eaId: string, password: string) {
 }
 
 export async function logoutAccount() {
-  const { error } = await requireSupabase().auth.signOut();
-  if (error) throw error;
+  await endDeviceSession(requireSupabase(), userId => deactivateInstallation(userId, true));
 }
 
 export async function changeAccountPassword(userId: string, input: PasswordChangeInput) {

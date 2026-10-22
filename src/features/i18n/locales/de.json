@@ -749,5 +749,6 @@
   "Solo la última convocatoria finalizada. Tienes 24 horas desde su finalización para valorar.": "Nur das zuletzt beendete Aufgebot. Du hast ab seinem Ende 24 Stunden Zeit zum Bewerten.",
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Du kannst nur das zuletzt beendete Aufgebot innerhalb von 24 Stunden nach seinem Ende bewerten.",
   "Decisión mantenida de {{v0}}": "Beibehaltene Entscheidung von {{v0}}",
-  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Offene Anfragen: {{v0}} zu prüfen"
+  "Solicitudes pendientes, {{v0}} pendientes de revisión": "Offene Anfragen: {{v0}} zu prüfen",
+  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "Dieses Gerät konnte nicht von den Benachrichtigungen getrennt werden. Versuche erneut, dich abzumelden."
 }

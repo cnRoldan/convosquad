@@ -4,6 +4,7 @@ import { requireSupabase } from '@/lib/supabase';
 import { nativePushSupported, notificationRuntime, permissionGranted } from '@/lib/notifications';
 import { DeviceWriteGate } from './device-write-gate';
 import { registerDeviceWithPermission, requestDevicePermission } from './device-registration';
+import { deactivateOwnedDevice } from './device-deactivation';
 
 const deviceKey = 'convosquad:push-device';
 const permissionRequestedKey = 'convosquad:push-permission-requested';
@@ -35,11 +36,7 @@ async function deactivate(userId: string, unlink: boolean, rememberChoice = true
   const id = await AsyncStorage.getItem(deviceKey);
   if (id) {
     if (!await currentUser(userId, true)) throw new Error('No se pudo verificar la sesión para desvincular este dispositivo. Recupera la conexión e inténtalo de nuevo.');
-    const controller = new AbortController(); const timeout = setTimeout(() => controller.abort(), 8000);
-    try {
-      const { error } = await requireSupabase().rpc('deactivate_push_device', { p_device_id: id, p_unlink: unlink }).abortSignal(controller.signal);
-      if (error) throw new Error('No se pudo desactivar este dispositivo. Comprueba la conexión antes de cerrar sesión.');
-    } finally { clearTimeout(timeout); }
+    await deactivateOwnedDevice(requireSupabase(), userId, id, unlink);
   }
   if (unlink && await AsyncStorage.getItem(enabledKey(userId)) !== '0') await AsyncStorage.removeItem(enabledKey(userId));
   else if (!unlink && rememberChoice) await AsyncStorage.setItem(enabledKey(userId), '0');

@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
+async function fixture({ logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -96,7 +96,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
       return route.fulfill({json: {Key: `club-crests/${club.id}/crest.png`}});
     }
     const endpoint = url.pathname.split('/').at(-1); const body = req.postData() ? req.postDataJSON() : null;
-    requests.push({ endpoint, body });
+    requests.push({ endpoint, body, ...(endpoint === 'logout' ? { scope: url.searchParams.get('scope') } : {}) });
     if (endpoint === 'join_requests') {
       const rows=url.searchParams.has('user_id')?joinRequests.filter(row=>row.user_id===userId):clubRole==='admin'?joinRequests.filter(row=>row.status==='pending'&&row.club_id===club.id):[];
       return route.fulfill({json:rows});
@@ -195,7 +195,7 @@ async function fixture({ deletionBlocked = false, deletionRace = false, confirme
     if (endpoint === 'settings') return route.fulfill({ json: { mailer_autoconfirm: confirmed, disable_signup: false } });
     if (endpoint === 'is_ea_id_available') return route.fulfill({ json: available });
     if (endpoint === 'user') return route.fulfill({ json: { id: userId, aud: 'authenticated', role: 'authenticated', email: 'ea.player@accounts.convosquad.invalid', user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() } });
-    if (endpoint === 'logout') return route.fulfill({ json: {} });
+    if (endpoint === 'logout') return route.fulfill(logoutFailure ? { status: 503, json: { msg: 'Private server detail' } } : { json: {} });
     if (endpoint === 'token' && wrongPassword) return route.fulfill({ status: 400, headers: { 'X-Supabase-Api-Version': '2024-01-01', 'Access-Control-Expose-Headers': 'X-Supabase-Api-Version' }, json: { code: 'invalid_credentials', msg: 'Invalid login credentials' } });
     if (endpoint === 'signup' || endpoint === 'token') {
       const user = { id: '00000000-0000-4000-8000-000000000901', aud: 'authenticated', role: 'authenticated', email: body.email, user_metadata: body.data ?? {}, app_metadata: {}, created_at: new Date().toISOString() };
@@ -1095,4 +1095,45 @@ test('aviso de valoración lleva al editor de la finalizada y comprueba capitán
    assert.equal(f.requests.some(r=>['respond_to_call_up','save_player_ratings'].includes(r.endpoint)),false);
   } finally {await f.close();}
  }
+});
+
+
+test('el menú del ID se abre junto al identificador, se cierra al tocar fuera y permite cerrar sesión desde el club', async () => {
+ for (const width of [320, 390]) {
+  const f = await fixture({clubRole:'admin'});
+  try {
+   await f.page.setViewportSize({width,height:844});
+   await f.page.goto(`${origin}/home`);
+   const trigger = f.page.getByRole('button',{name:'Sesión iniciada como EA-Player_9',exact:true});
+   await trigger.click();
+   const menu = f.page.getByRole('menu'); await menu.waitFor();
+   const badgeBounds = await trigger.boundingBox(), menuBounds = await menu.boundingBox();
+   assert.ok(menuBounds.y >= badgeBounds.y + badgeBounds.height);
+   assert.ok(menuBounds.x >= 0 && menuBounds.x + menuBounds.width <= width);
+   if (width === 390) await f.page.screenshot({path:'test-results/session-menu.png', animations:'disabled'});
+   await f.page.getByRole('button',{name:'Cerrar',exact:true}).click({position:{x:8,y:500}});
+   await menu.waitFor({state:'hidden'});
+   await trigger.click();
+   await f.page.getByRole('menuitem',{name:'Cerrar sesión',exact:true}).click();
+   await f.page.waitForURL(origin + '/');
+   await f.page.getByRole('button',{name:'Iniciar sesión',exact:true}).waitFor();
+   assert.deepEqual(f.requests.filter(r=>r.endpoint==='logout').map(r=>r.scope),['local']);
+   await f.page.reload();
+   await f.page.goto(`${origin}/home`);
+   await f.page.waitForURL('**/login');
+  } finally { await f.close(); }
+ }
+});
+
+test('cerrar sesión desde clubes termina correctamente aunque la revocación remota devuelva un error tras borrar la sesión local', async () => {
+ const f = await fixture({clubRole:'admin',logoutFailure:true});
+ try {
+  await f.page.goto(`${origin}/clubs`);
+  await f.page.getByRole('button',{name:'Cerrar sesión',exact:true}).click();
+  await f.page.waitForURL(origin + '/');
+  await f.page.getByRole('button',{name:'Iniciar sesión',exact:true}).waitFor();
+  assert.deepEqual(f.requests.filter(r=>r.endpoint==='logout').map(r=>r.scope),['local']);
+  await f.page.reload();
+  assert.equal(await f.page.getByText('ID: EA-Player_9',{exact:true}).count(),0);
+ } finally { await f.close(); }
 });
