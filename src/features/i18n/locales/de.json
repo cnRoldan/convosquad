@@ -758,5 +758,9 @@
   "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Wähle die Position von {{v0}} im Kader. Der Spieler wird nicht mehr unter den Probespielern angezeigt.",
   "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Speichere die Änderungen am Probespieler, bevor du ihn in den Kader aufnimmst.",
   "Incorporar a la plantilla": "In den Kader aufnehmen",
-  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Ein Kaderspieler hat bereits diesen Namen. Prüfe sein Profil, bevor du diesen Probespieler aufnimmst."
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Ein Kaderspieler hat bereits diesen Namen. Prüfe sein Profil, bevor du diesen Probespieler aufnimmst.",
+  "Aún no cuentas con ficha de jugador en plantilla": "Du hast noch kein Spielerprofil im Kader",
+  "Crea tu ficha para aparecer como jugador y poder votar en las convocatorias de este club.": "Erstelle dein Spielerprofil, um im Kader zu erscheinen und bei den Nominierungen dieses Vereins abzustimmen.",
+  "Crear mi ficha": "Mein Spielerprofil erstellen",
+  "La ficha quedará vinculada a tu cuenta para participar y votar en las convocatorias.": "Das Spielerprofil wird mit deinem Konto verknüpft, damit du an Nominierungen teilnehmen und abstimmen kannst."
 }

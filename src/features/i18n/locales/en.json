@@ -758,5 +758,9 @@
   "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Choose {{v0}}’s position in the roster. They will no longer appear among trial players.",
   "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Save the trial player’s changes before converting them to a roster player.",
   "Incorporar a la plantilla": "Add to roster",
-  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "A roster player already has that name. Check their record before adding this trial player."
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "A roster player already has that name. Check their record before adding this trial player.",
+  "Aún no cuentas con ficha de jugador en plantilla": "You do not have a player record in the roster yet",
+  "Crea tu ficha para aparecer como jugador y poder votar en las convocatorias de este club.": "Create your player record to join the roster and vote in this club’s call-ups.",
+  "Crear mi ficha": "Create my player record",
+  "La ficha quedará vinculada a tu cuenta para participar y votar en las convocatorias.": "The player record will be linked to your account so you can participate and vote in call-ups."
 }

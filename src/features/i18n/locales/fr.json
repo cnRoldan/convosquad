@@ -758,5 +758,9 @@
   "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Choisissez le poste de {{v0}} dans l’effectif. Ce joueur ne figurera plus parmi les joueurs à l’essai.",
   "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Enregistrez les modifications du joueur à l’essai avant de l’intégrer à l’effectif.",
   "Incorporar a la plantilla": "Intégrer à l’effectif",
-  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Un joueur de l’effectif porte déjà ce nom. Vérifiez sa fiche avant d’intégrer ce joueur à l’essai."
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Un joueur de l’effectif porte déjà ce nom. Vérifiez sa fiche avant d’intégrer ce joueur à l’essai.",
+  "Aún no cuentas con ficha de jugador en plantilla": "Vous n’avez pas encore de fiche joueur dans l’effectif",
+  "Crea tu ficha para aparecer como jugador y poder votar en las convocatorias de este club.": "Créez votre fiche pour figurer dans l’effectif et voter aux convocations de ce club.",
+  "Crear mi ficha": "Créer ma fiche joueur",
+  "La ficha quedará vinculada a tu cuenta para participar y votar en las convocatorias.": "La fiche sera liée à votre compte pour participer et voter aux convocations."
 }

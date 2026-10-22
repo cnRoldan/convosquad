@@ -12,6 +12,7 @@ import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
 import { useRequests } from '@/features/join-requests/requests-context';
 import { colors } from '@/theme';
+import { MyPlayerNotice } from '@/features/players/my-player-notice';
 
 export default function HomeScreen() {
   useLanguage();
@@ -34,6 +35,7 @@ export default function HomeScreen() {
       {notice ? <Body>{notice}</Body> : null}
       {rosterLoading ? <Body>{t("Cargando datos del vestuario…")}</Body> : null}
       {rosterError ? <Card title={t("No se pudieron cargar los datos")}><Body>{rosterError}</Body><Button label={t("Reintentar")} onPress={refreshRoster} /></Card> : null}
+      <MyPlayerNotice />
       <Card title={t("El vestuario")}>
         {!rosterLoading && !rosterError ? <Body>{t("{{v0}} jugadores en plantilla", { v0: roster.length })}</Body> : null}
         <Button secondary label={t("Ver plantilla")} onPress={() => router.navigate('/roster')} />

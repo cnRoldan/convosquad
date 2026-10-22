@@ -15,6 +15,12 @@ export async function createPlayer(clubId: string, input: { eaId: string; jersey
   }).single());
 }
 
+export async function createMyPlayer(clubId: string, category: RosterCategory, jerseyNumber?: number) {
+  return unwrap(await requireSupabase().rpc('create_my_player', {
+    p_club_id: clubId, p_category: category, ...(jerseyNumber === undefined ? {} : { p_jersey_number: jerseyNumber }),
+  }).single());
+}
+
 export async function updatePlayer(playerId: string, input: { ea_id?: string; jersey_number?: number | null; category?: RosterCategory; is_active?: boolean }) {
   return unwrap(await requireSupabase().from('players').update(input).eq('id', playerId).select().single());
 }
