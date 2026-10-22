@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
+async function fixture({ logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -160,6 +160,15 @@ async function fixture({ logoutFailure = false, deletionBlocked = false, deletio
         if (previous >= 0) trialContacts.splice(previous, 1);
         if (body.p_phone) trialContacts.push({trial_id: trial.id, phone: body.p_phone});
         return route.fulfill({json: trial});
+      }
+      if (endpoint === 'promote_trial') {
+        assert.equal(clubRole, 'admin');
+        if (failTrialPromotion) { failTrialPromotion = false; return route.fulfill({status:409,json:{code:'23505',message:'Duplicate player'}}); }
+        const trial = trials.find(row => row.id === body.p_trial_id);
+        assert.equal(trial.status, 'active');
+        const player = {id:'promoted-player',club_id:club.id,ea_id:trial.ea_id,jersey_number:null,category:body.p_category,user_id:null,is_active:true,sort_order:2};
+        players.push(player); Object.assign(trial,{status:'incorporated',player_id:player.id});
+        return route.fulfill({json:player});
       }
       if (endpoint === 'withdraw_trial') {
         assert.equal(clubRole, 'admin');
@@ -627,11 +636,57 @@ test('gestionar prueba: carga teléfono privado y guarda con prefijo normalizado
   } finally { await f.close(); }
 });
 
+test('gestionar prueba: convertir exige posición, permite cancelar y actualiza la plantilla', async () => {
+ const f = await fixture({clubRole:'admin',rosterTrials:true});
+ try {
+  const {page} = f;
+  await page.goto(`${origin}/roster`);
+  await page.getByRole('button',{name:'Editar prueba de Prueba primera',exact:true}).click();
+  const convert = page.getByRole('button',{name:'Convertir a jugador de plantilla',exact:true});
+  const name = page.getByLabel('Nombre de la prueba',{exact:true});
+  await name.fill('Cambio sin guardar'); assert.equal(await convert.isDisabled(),true);
+  await name.fill('Prueba primera');
+  await convert.click();
+  const confirm = page.getByRole('button',{name:'Incorporar a la plantilla',exact:true});
+  assert.equal(await confirm.isDisabled(),true);
+  await page.getByRole('button',{name:'CENTRALES',exact:true}).click();
+  await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+  assert.equal(f.requests.some(r=>r.endpoint==='promote_trial'),false);
+  await convert.click(); assert.equal(await confirm.isDisabled(),true);
+  await page.getByRole('button',{name:'ATACANTES',exact:true}).click();
+  await confirm.click();
+  await page.waitForURL('**/roster');
+  await page.getByRole('button',{name:'Editar Prueba primera',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Editar prueba de Prueba primera',exact:true}).count(),0);
+  const requests = f.requests.filter(r=>r.endpoint==='promote_trial');
+  assert.equal(requests.length,1); assert.deepEqual(requests[0].body,{p_trial_id:'trial-one',p_category:'attackers'});
+ } finally {await f.close();}
+});
+
+test('gestionar prueba: un error al incorporar se muestra en el selector y permite reintentar', async () => {
+ const f = await fixture({clubRole:'admin',rosterTrials:true,failTrialPromotion:true});
+ try {
+  const {page} = f;
+  await page.goto(`${origin}/roster`);
+  await page.getByRole('button',{name:'Editar prueba de Prueba primera',exact:true}).click();
+  await page.getByRole('button',{name:'Convertir a jugador de plantilla',exact:true}).click();
+  await page.getByRole('button',{name:'PORTEROS',exact:true}).click();
+  const confirm = page.getByRole('button',{name:'Incorporar a la plantilla',exact:true});
+  await confirm.click();
+  await page.getByText('Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.',{exact:true}).waitFor();
+  assert.equal(await confirm.isDisabled(),false);
+  await confirm.click(); await page.waitForURL('**/roster');
+  await page.getByRole('button',{name:'Editar Prueba primera',exact:true}).waitFor();
+  assert.equal(f.requests.filter(r=>r.endpoint==='promote_trial').length,2);
+ } finally {await f.close();}
+});
+
 test('nueva prueba admite teléfono opcional; fallo al cargar contacto impide sobrescribirlo', async () => {
   const f = await fixture({clubRole: 'admin'});
   try {
     await f.page.goto(`${origin}/roster`);
     await f.page.getByRole('button', {name: 'Añadir prueba', exact: true}).click();
+    assert.equal(await f.page.getByRole('button', {name: 'Convertir a jugador de plantilla', exact: true}).count(), 0);
     await f.page.getByLabel('Nombre de la prueba', {exact: true}).fill('Nueva prueba');
     await f.page.getByLabel('Teléfono de la prueba (solo capitanes, opcional)', {exact: true}).fill('+44 7000 000000');
     await f.page.getByRole('button', {name: 'Guardar prueba', exact: true}).click();

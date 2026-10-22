@@ -753,5 +753,10 @@
   "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "Impossible de dissocier cet appareil des notifications. Réessayez de vous déconnecter.",
   "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.": "Le délai pour choisir Disponible est terminé. Vous pouvez encore choisir Indisponible ou Remplaçant.",
   "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.": "Le vote est clos. Vous pouvez seulement choisir Indisponible ou Remplaçant tant que la convocation est active.",
-  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "La convocation n’est plus disponible ou vous n’avez pas l’autorisation. Actualisez les données ; elle est peut-être terminée ou annulée."
+  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "La convocation n’est plus disponible ou vous n’avez pas l’autorisation. Actualisez les données ; elle est peut-être terminée ou annulée.",
+  "Convertir a jugador de plantilla": "Convertir en joueur de l’effectif",
+  "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Choisissez le poste de {{v0}} dans l’effectif. Ce joueur ne figurera plus parmi les joueurs à l’essai.",
+  "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Enregistrez les modifications du joueur à l’essai avant de l’intégrer à l’effectif.",
+  "Incorporar a la plantilla": "Intégrer à l’effectif",
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Un joueur de l’effectif porte déjà ce nom. Vérifiez sa fiche avant d’intégrer ce joueur à l’essai."
 }

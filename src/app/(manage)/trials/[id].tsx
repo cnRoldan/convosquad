@@ -1,12 +1,13 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Body, Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
+import { Body, Button, DemoNotice, Field, Heading, Message, Options, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { LoadingScreen } from '@/components/loading';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
-import { listTrials, listTrialContacts, saveTrial, withdrawTrial } from '@/features/trials/service';
+import { listTrials, listTrialContacts, promoteTrial, saveTrial, withdrawTrial } from '@/features/trials/service';
+import { categories, categoryLabels, type RosterCategory } from '@/features/players/categories';
 import { PrivatePhoneField } from '@/features/call-ups/private-phone-field';
 import { normalizePhone } from '@/features/call-ups/phone';
 import type { Tables } from '@/types/database';
@@ -36,6 +37,10 @@ function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | n
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [confirming, setConfirming] = useState(false);
+  const [promoting, setPromoting] = useState(false);
+  const [category, setCategory] = useState<RosterCategory | ''>('');
+  const [promotionError, setPromotionError] = useState('');
+  const dirty = Boolean(trial && (name.trim() !== trial.ea_id || notes.trim() !== (trial.notes ?? '') || phone !== initialPhone));
   async function save() {
     if (!clubId || busy || isDemo) return;
     if (!name.trim() || name.trim().length > 64) return setMessage(t("Introduce un nombre de hasta 64 caracteres."));
@@ -53,6 +58,18 @@ function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | n
     catch (error) { setMessage(backendErrorMessage(error)); }
     finally { setBusy(false); setConfirming(false); }
   }
+  async function promote() {
+    if (!trial || !category || dirty || busy || isDemo) return;
+    setBusy(true); setPromotionError('');
+    try {
+      await promoteTrial(trial.id, category);
+      setPromoting(false); refreshRoster(); router.replace('/roster');
+    } catch (error) {
+      setPromotionError(typeof error === 'object' && error !== null && 'code' in error && error.code === '23505'
+        ? t("Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.")
+        : backendErrorMessage(error));
+    } finally { setBusy(false); }
+  }
   return <Screen>
     <Heading title={trial ? t("Gestionar prueba") : t("Añadir prueba")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
@@ -62,7 +79,18 @@ function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | n
     <Body>{t("Solo los capitanes pueden ver estas observaciones.")}</Body>
     {message ? <Message error>{message}</Message> : null}
     <Button label={t("Guardar prueba")} disabled={busy || isDemo} onPress={() => { void save(); }} />
+    {trial ? <>
+      {dirty ? <Body>{t("Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.")}</Body> : null}
+      <Button secondary label={t("Convertir a jugador de plantilla")} disabled={busy || isDemo || dirty} onPress={() => {
+        setCategory(''); setPromotionError(''); setPromoting(true);
+      }} />
+    </> : null}
     {trial ? <Button secondary label={t("Retirar de pruebas")} disabled={busy || isDemo} onPress={() => setConfirming(true)} /> : null}
+    <ConfirmDialog visible={promoting} title={t("Convertir a jugador de plantilla")} description={t("Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.", { v0: trial?.ea_id ?? '' })}
+      confirmLabel={t("Incorporar a la plantilla")} busy={busy} disabled={!category || dirty} onCancel={() => setPromoting(false)} onConfirm={() => { void promote(); }}>
+      <Options value={category} options={categories.map(value => ({ value, label: t(categoryLabels[value]) }))} onChange={setCategory} disabled={busy} />
+      {promotionError ? <Message error>{promotionError}</Message> : null}
+    </ConfirmDialog>
     <ConfirmDialog visible={confirming} title={t("Retirar prueba")} description={t("Dejará de aparecer en las nuevas convocatorias. Las anteriores conservarán sus datos.")} busy={busy} onCancel={() => setConfirming(false)} onConfirm={() => { void confirm(); }} />
   </Screen>;
 }
