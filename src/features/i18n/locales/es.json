@@ -750,5 +750,8 @@
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.",
   "Decisión mantenida de {{v0}}": "Decisión mantenida de {{v0}}",
   "Solicitudes pendientes, {{v0}} pendientes de revisión": "Solicitudes pendientes, {{v0}} pendientes de revisión",
-  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión."
+  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.",
+  "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.": "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.",
+  "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.": "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.",
+  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado."
 }

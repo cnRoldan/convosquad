@@ -16,23 +16,26 @@ export function AvailabilityActions({ player, disabled, feedback, onRespond, dec
   onRespond: (id: string, availability: typeof responseOptions[number]) => void;
 }) {
   useLanguage();
-  const inactive = disabled || votingClosed;
   return <View pointerEvents="box-none" style={styles.position}>
     <View style={styles.card} testID="availability-actions">
       <Text accessibilityLiveRegion="polite" style={[styles.status, votingClosed && styles.closedStatus, !votingClosed && feedback?.error && { color: colors.danger }]}>
         {votingClosed ? t("Votación cerrada. La convocatoria sigue activa.") : feedback?.text ?? t("Tu disponibilidad: {{v0}}", { v0: t(availabilityLabels[player.availability]) })}
       </Text>
       <View style={styles.buttons}>
-        {responseOptions.map(status => <Pressable key={status} accessibilityRole="button"
-          accessibilityLabel={t("{{v0}} para {{v1}}", { v0: t(availabilityLabels[status]), v1: player.eaId })}
-          {...(Platform.OS === 'web' ? { 'aria-pressed': player.availability === status } : {})}
-          aria-disabled={inactive} accessibilityState={{ selected: player.availability === status, disabled: inactive }} disabled={inactive}
-          onPress={() => { if (!inactive && player.availability !== status) onRespond(player.id, status); }}
-          style={({ pressed }) => [styles.button, player.availability === status && { borderColor: statusColors[status], backgroundColor: '#243622' }, (pressed || inactive) && { opacity: 0.6 }]}>
-          <Text style={styles.icon}>{availabilityIcons[status]}</Text>
-          <Text style={[styles.label, { color: votingClosed ? colors.muted : statusColors[status] }]}>{t(availabilityLabels[status])}</Text>
-        </Pressable>)}
+        {responseOptions.map(status => {
+          const inactive = disabled || (votingClosed && status === 'available');
+          return <Pressable key={status} accessibilityRole="button"
+            accessibilityLabel={t("{{v0}} para {{v1}}", { v0: t(availabilityLabels[status]), v1: player.eaId })}
+            {...(Platform.OS === 'web' ? { 'aria-pressed': player.availability === status } : {})}
+            aria-disabled={inactive} accessibilityState={{ selected: player.availability === status, disabled: inactive }} disabled={inactive}
+            onPress={() => { if (!inactive && player.availability !== status) onRespond(player.id, status); }}
+            style={({ pressed }) => [styles.button, player.availability === status && { borderColor: statusColors[status], backgroundColor: '#243622' }, (pressed || inactive) && { opacity: 0.6 }]}>
+            <Text style={styles.icon}>{availabilityIcons[status]}</Text>
+            <Text style={[styles.label, { color: inactive ? colors.muted : statusColors[status] }]}>{t(availabilityLabels[status])}</Text>
+          </Pressable>;
+        })}
       </View>
+      {votingClosed && feedback ? <Text accessibilityLiveRegion="polite" style={[styles.status, feedback.error && { color: colors.danger }]}>{feedback.text}</Text> : null}
       {decisionLock}
     </View>
   </View>;

@@ -750,5 +750,8 @@
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "You can only rate the latest finished call-up within 24 hours of its end.",
   "Decisión mantenida de {{v0}}": "Retained decision for {{v0}}",
   "Solicitudes pendientes, {{v0}} pendientes de revisión": "Pending requests, {{v0}} awaiting review",
-  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "This device could not be unlinked from notifications. Try logging out again."
+  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "This device could not be unlinked from notifications. Try logging out again.",
+  "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.": "The deadline to choose Available has passed. You can still choose Unavailable or Backup.",
+  "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.": "Voting is closed. You can only choose Unavailable or Backup while the call-up is still active.",
+  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "The call-up is no longer available or you do not have permission. Refresh the data; it may have ended or been cancelled."
 }

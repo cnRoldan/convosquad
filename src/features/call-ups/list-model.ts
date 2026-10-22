@@ -23,6 +23,10 @@ export function callUpList(players: readonly CallUpPlayer[], filter: Availabilit
   };
 }
 
-export function canRespondToPlayer(player: Pick<CallUpPlayer, 'userId'>, userId: string | undefined, call: Pick<Tables<'call_ups'>, 'status' | 'local_date'> & { closes_at?: string | null; ends_at?: string | null }, localDate: string, isDemo: boolean, now = Date.now()) {
-  return !isDemo && Boolean(userId && player.userId && player.userId === userId) && call.status === 'open' && (call.ends_at ? Date.parse(call.ends_at) > now : call.local_date >= localDate) && !votingDeadlinePassed(call, now);
+export function canRespondToPlayer(player: Pick<CallUpPlayer, 'userId'>, userId: string | undefined, call: Pick<Tables<'call_ups'>, 'status' | 'local_date'> & { closes_at?: string | null; ends_at?: string | null }, localDate: string, isDemo: boolean, now = Date.now(), availability: Availability = 'available') {
+  const votingClosed = call.status === 'closed' || votingDeadlinePassed(call, now);
+  return !isDemo && Boolean(userId && player.userId && player.userId === userId)
+    && (call.status === 'open' || call.status === 'closed')
+    && (call.ends_at ? Date.parse(call.ends_at) > now : call.local_date >= localDate)
+    && (availability === 'unavailable' || availability === 'backup' || (availability === 'available' && !votingClosed));
 }

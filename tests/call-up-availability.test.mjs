@@ -14,7 +14,8 @@ test('contadores usan las cuatro respuestas de la plantilla y explican duplicado
   assert.deepEqual(countAvailability([{ availability: 'available' }, { availability: 'backup' }, { availability: 'unavailable' }, { availability: 'unanswered' }, { availability: 'unanswered' }]), { available: 1, unavailable: 1, backup: 1, unanswered: 2 });
   assert.deepEqual(countAvailability([]), { available: 0, unavailable: 0, backup: 0, unanswered: 0 });
   assert.match(callUpErrorMessage({ code: '23505' }), /fecha local/);
-  assert.match(callUpErrorMessage({ code: '42501' }), /cerrado o cancelado/);
+  assert.match(callUpErrorMessage({ code: '42501' }), /finalizado o haberse cancelado/);
+  assert.match(callUpErrorMessage({ code: 'P0031' }, 'response'), /Solo puedes marcar No disponible o Backup/);
   assert.ok(!callUpErrorMessage(new Error('private data')).includes('private data'));
 });
 function harness() {
