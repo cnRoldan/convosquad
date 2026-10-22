@@ -16,7 +16,8 @@ before(async()=>{
  await query(captain,'select public.link_player_account($1,$2)',[player.id,member]);
  await db.query("insert into public.club_trials(club_id,ea_id) values($1,'Trial name')",[club.id]);
  await query(member,"select public.register_push_device('7c000000-1111-4000-8000-000000000001','ExpoPushToken[DeleteCall]','android')");
- for(let day=1;day<=4;day++) calls.push(await row(captain,"select * from public.create_call_up($1,now()+$2::interval,'open')",[club.id,`${day} days`]));
+ // Calendar days at local noon stay distinct across daylight-saving changes.
+ for(let day=1;day<=4;day++) calls.push(await row(captain,"select * from public.create_call_up($1,(((now() at time zone $3)::date + $2::int) + time '12:00') at time zone $3,'open')",[club.id,day,club.timezone]));
  entry=await row(captain,'select * from public.call_up_players where call_up_id=$1',[calls[0].id]);
  await query(member,"select public.respond_to_call_up($1,'unavailable')",[entry.id]);
  await query(member,'select public.set_club_decision_lock($1,true,$2)',[club.id,entry.id]);
