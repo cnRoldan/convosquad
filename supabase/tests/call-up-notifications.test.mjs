@@ -74,7 +74,7 @@ test('preferencia revocada y membresía retirada después del voto cancelan env�
   const deliveries=(await server('select * from public.claim_push_deliveries($1)',[event.id])).rows;
   assert.deepEqual(deliveries.map(d=>d.user_id),[owner]);
 });
-test('acciones push responden solo por uno mismo, rechazan ajenos/cerradas/sin ficha y no repiten eventos',async()=>{
+test('acciones push responden solo por uno mismo, rechazan ajenos, Disponible tras el cierre y usuarios sin ficha y no repiten eventos',async()=>{
   const {club,call,entry}=await setup();
   const respond=(user,state,key='notification:available')=>query(user,'select * from public.respond_from_notification($1,$2,$3,$4)',[club.id,call.id,state,key]);
   for(const user of [outsider,unlinked])await assert.rejects(respond(user,'available'),{code:'42501'});
@@ -86,7 +86,9 @@ test('acciones push responden solo por uno mismo, rechazan ajenos/cerradas/sin f
   await respond(player,'available');
   assert.equal((await row(player,'select availability from public.call_up_players where id=$1',[entry.id])).availability,'unavailable');
   await query(owner,'select * from public.update_call_up_with_notice($1,$2,$3,$4)',[call.id,call.starts_at,'closed',call.last_notice_at]);
-  await assert.rejects(respond(player,'backup','new-action'),{code:'42501'});
+  await assert.rejects(respond(player,'available','new-action'),{code:'P0031'});
+  await db.query("update public.call_up_players set responded_at=clock_timestamp()-interval '31 seconds' where id=$1",[entry.id]);
+  await respond(player,'backup','late-backup');
   await assert.rejects(query(player,'select * from public.prepare_due_call_up_reminders()'),{code:'42501'});
 });
 test('último aviso es puntual, solo pendientes y no depende ya del ajuste de club',async()=>{

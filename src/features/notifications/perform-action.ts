@@ -16,7 +16,7 @@ export async function performNotificationAction(intent: PushIntent, dependencies
     const status = await dependencies.respond({ ...intent, response: intent.response }, session);
     return { saved: true, message: `Tu respuesta: ${availabilityLabels[status]}.` };
   } catch (error) {
-    return { saved: false, message: callUpErrorMessage(error) };
+    return { saved: false, message: callUpErrorMessage(error, 'response') };
   }
 }
 

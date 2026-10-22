@@ -222,7 +222,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   // Club context, screen snapshot, then the initial Realtime reconciliation.
   await initialReload;
   await page.waitForFunction(() => !document.body.innerText.includes('Cargando convocatoria'));
-  if (!historical && !empty && linked && status === 'open' && !cooldown) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
+  if (!historical && !empty && linked && status === 'open' && !cooldown && (!closesAt || Date.parse(closesAt) > (clockTime === null ? Date.now() : new Date(clockTime).getTime()))) await page.getByRole('button', { name: 'Disponible para Jugador_4', exact: true, disabled: false }).waitFor();
   if (expandPanels) {
     for (const panel of await page.getByRole('button', {name: /^(PORTEROS|CENTRALES|LATERALES \/ CARRILEROS|CENTROCAMPISTAS|ATACANTES|BACKUPS|PRUEBAS|AYUDAS) \(\d+\)$/}).all()) {
       if (await panel.getAttribute('aria-expanded') === 'false') await panel.click();
@@ -612,15 +612,16 @@ test('jugadores no solicitan teléfonos privados ni ven campos de contacto o acc
 });
 
 
-test('cierre de votación mantiene las acciones deshabilitadas al vencer sin esperar Realtime ni Cron', async () => {
+test('cierre de votación bloquea Disponible pero permite bajas y backup sin esperar Realtime ni Cron', async () => {
   const now=Date.now();
   const f=await fixture({closesAt:new Date(now+60000).toISOString(),clockTime:now});
   try {
     const button=f.page.getByRole('button',{name:'Disponible para Jugador_4',exact:true});
     await button.waitFor();
     await f.page.clock.fastForward(61000);
-    await f.page.getByText('El plazo para votar ha terminado.',{exact:true}).waitFor();
+    await f.page.getByText('El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.',{exact:true}).waitFor();
     assert.equal(await button.getAttribute('aria-disabled'),'true');
+    for (const label of ['No disponible', 'Backup']) assert.notEqual(await f.page.getByRole('button',{name:`${label} para Jugador_4`,exact:true}).getAttribute('aria-disabled'),'true');
     await f.page.getByText('Votación cerrada. La convocatoria sigue activa.',{exact:true}).waitFor();
     assert.equal(f.data.writes,0);
   }finally{await f.close();}
@@ -673,7 +674,7 @@ test('mensajes de voto y cierre siguen el idioma actual sin repetir acciones', a
       await page.getByText(catalogs[next][noticeKey], {exact: true}).waitFor();
       await page.getByText(catalogs[next][responseKey].replace('{{v0}}',catalogs[next].Disponible), {exact: true}).waitFor();
       await page.getByText(catalogs[next]['Votación cerrada. La convocatoria sigue activa.'],{exact:true}).waitFor();
-      assert.equal(await page.getByTestId('availability-actions').getByRole('button',{disabled:true}).count(),3);
+      assert.equal(await page.getByTestId('availability-actions').getByRole('button',{disabled:true}).count(),1);
     }
     assert.equal(f.data.writes,1);
     assert.equal(f.data.updates,1);
@@ -768,7 +769,7 @@ test('eliminar convocatoria: vuelve a Convocatoria vacía, limpia el enlace y pe
   }
 });
 
-test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilitados y no envía respuestas',async()=>{
+test('convocatoria cerrada solo bloquea Disponible y mantiene los cambios de última hora',async()=>{
   for(const options of [{role:'player',status:'closed'},{role:'admin',status:'closed'},{role:'player',status:'closed',linked:false}]) {
     const f=await fixture(options);
     try {
@@ -779,10 +780,10 @@ test('convocatoria cerrada avisa al jugador, mantiene los tres votos deshabilita
       if(options.linked===false) assert.equal(await panel.count(),0);
       else {
         assert.equal(await panel.getByRole('button').count(),3);
-        for(const button of await panel.getByRole('button').all()) {
-          assert.equal(await button.getAttribute('aria-disabled'),'true');
-          await button.evaluate(node=>node.click());
-        }
+        const available=panel.getByRole('button',{name:'Disponible para Jugador_4',exact:true});
+        assert.equal(await available.getAttribute('aria-disabled'),'true');
+        await available.evaluate(node=>node.click());
+        for (const label of ['No disponible','Backup']) assert.notEqual(await panel.getByRole('button',{name:`${label} para Jugador_4`,exact:true}).getAttribute('aria-disabled'),'true');
         if(options.role==='player') await page.screenshot({path:'test-results/closed-voting-panel.png'});
       }
       assert.equal(f.data.writes,0);
@@ -883,4 +884,42 @@ test('convocatoria sigue activa pasada medianoche y abre valoración al llegar a
   assert.equal(await page.getByRole('button',{name:'Administrar convocatoria',exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Mantener decisión',exact:true}).count(),0);
  } finally {await f.close();}
+});
+
+
+test('un jugador cambia su disponibilidad tras cerrar la votación y el equipo recibe las actualizaciones',async()=>{
+ for(const timed of [false,true]) {
+  const f=await fixture(timed?{closesAt:new Date(Date.now()-1000).toISOString()}:{status:'closed'});
+  try {
+   const {page}=f, panel=page.getByTestId('availability-actions');
+   f.emit(3,'available');
+   await panel.getByRole('button',{name:'Disponible para Jugador_4',exact:true,pressed:true}).waitFor();
+   for(const [label,status] of [['No disponible','unavailable'],['Backup','backup']]) {
+    await panel.getByRole('button',{name:`${label} para Jugador_4`,exact:true,disabled:false}).click();
+    await panel.getByText('Guardando respuesta…',{exact:true}).waitFor();
+    f.data.release();
+    await panel.getByText(`Tu respuesta: ${label}.`,{exact:true}).waitFor();
+    assert.equal(f.players[3].availability,status);
+    await panel.getByRole('button',{name:'Disponible para Jugador_4',exact:true,disabled:true}).waitFor();
+   }
+   assert.equal(f.data.writes,2);
+   f.emit(0,'backup');
+   await page.getByRole('button',{name:'Backup: 8. Filtrar convocatoria',exact:true}).waitFor();
+   if(!timed)await page.screenshot({path:'test-results/late-availability.png'});
+  }finally{await f.close();}
+ }
+});
+
+test('el cierre mantiene el cooldown y al finalizar desaparecen los controles de voto',async()=>{
+ const now=Date.now(),f=await fixture({status:'closed',cooldown:true,clockTime:now,endsAt:new Date(now+120000).toISOString()});
+ try {
+  const {page}=f,panel=page.getByTestId('availability-actions');
+  await panel.getByText(/Podrás cambiar tu voto en/).waitFor();
+  for(const label of ['Disponible','No disponible','Backup'])assert.equal(await panel.getByRole('button',{name:`${label} para Jugador_4`,exact:true}).getAttribute('aria-disabled'),'true');
+  await page.clock.fastForward(31000);
+  for(const label of ['No disponible','Backup'])await panel.getByRole('button',{name:`${label} para Jugador_4`,exact:true,disabled:false}).waitFor();
+  await page.clock.fastForward(90001);
+  await panel.waitFor({state:'hidden'});
+  assert.equal(f.data.writes,0);
+ }finally{await f.close();}
 });

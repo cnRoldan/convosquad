@@ -750,5 +750,8 @@
   "Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.": "Tu peux seulement évaluer la dernière convocation terminée pendant les 24 heures suivant sa fin.",
   "Decisión mantenida de {{v0}}": "Décision conservée de {{v0}}",
   "Solicitudes pendientes, {{v0}} pendientes de revisión": "Demandes en attente : {{v0}} à examiner",
-  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "Impossible de dissocier cet appareil des notifications. Réessayez de vous déconnecter."
+  "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "Impossible de dissocier cet appareil des notifications. Réessayez de vous déconnecter.",
+  "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.": "Le délai pour choisir Disponible est terminé. Vous pouvez encore choisir Indisponible ou Remplaçant.",
+  "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.": "Le vote est clos. Vous pouvez seulement choisir Indisponible ou Remplaçant tant que la convocation est active.",
+  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "La convocation n’est plus disponible ou vous n’avez pas l’autorisation. Actualisez les données ; elle est peut-être terminée ou annulée."
 }

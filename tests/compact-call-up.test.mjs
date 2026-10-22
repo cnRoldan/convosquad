@@ -55,3 +55,18 @@ test('dorsales compactos mantienen la descripción completa accesible', () => {
   for (const jersey of [1, 6, 20, 99]) { assert.equal(jerseyLabel(jersey), `#${jersey}`); assert.equal(jerseyAccessibilityLabel(jersey), `Dorsal ${jersey}`); }
   assert.equal(jerseyLabel(null), 'Sin dorsal'); assert.equal(jerseyAccessibilityLabel(null), 'Sin dorsal');
 });
+
+test('tras el cierre solo se permite No disponible o Backup para la ficha propia hasta la finalización', () => {
+  const now = Date.parse('2026-10-22T20:00:00Z');
+  const base = { status: 'open', local_date: '2026-10-22', ends_at: '2026-10-22T22:00:00Z' };
+  for (const call of [{ ...base, status: 'closed' }, { ...base, closes_at: '2026-10-22T19:00:00Z' }]) {
+    for (const response of ['available', 'unavailable', 'backup', 'unanswered']) {
+      const allowed = response === 'unavailable' || response === 'backup';
+      assert.equal(canRespondToPlayer({ userId: 'own' }, 'own', call, base.local_date, false, now, response), allowed);
+      assert.equal(canRespondToPlayer({ userId: 'other' }, 'own', call, base.local_date, false, now, response), false);
+      assert.equal(canRespondToPlayer({ userId: 'own' }, 'own', call, base.local_date, true, now, response), false);
+      assert.equal(canRespondToPlayer({ userId: 'own' }, 'own', call, base.local_date, false, Date.parse(base.ends_at), response), false);
+      for (const status of ['cancelled', 'draft']) assert.equal(canRespondToPlayer({ userId: 'own' }, 'own', { ...call, status }, base.local_date, false, now, response), false);
+    }
+  }
+});
