@@ -14,29 +14,35 @@ export function SessionMenu({ eaId }: { eaId: string }) {
   const insets = useSafeAreaInsets();
   const { logout, isSigningOut } = useSessionLogout();
   const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState('');
   const menuWidth = Math.min(220, width - 32);
   function open() {
     setError('');
-    trigger.current?.measureInWindow((x, y, triggerWidth, triggerHeight) => setAnchor({
-      top: Math.max(insets.top + 8, Math.min(y + triggerHeight + 6, height - insets.bottom - 180)),
-      right: Math.max(16, Math.min(width - x - triggerWidth, width - menuWidth - 16)),
-    }));
+    trigger.current?.measureInWindow((x, y, triggerWidth, triggerHeight) => {
+      setAnchor({
+        top: Math.max(insets.top + 8, Math.min(y + triggerHeight + 6, height - insets.bottom - 180)),
+        right: Math.max(16, Math.min(width - x - triggerWidth, width - menuWidth - 16)),
+      });
+      setMenuOpen(true);
+    });
   }
+  // Keep the measured position while the modal finishes its exit animation.
+  function close() { setMenuOpen(false); }
   async function leave() {
     setError('');
-    try { await logout(); setAnchor(null); }
+    try { await logout(); close(); }
     catch (cause) { setError(t(logoutErrorMessage(cause))); }
   }
   return <>
     <Pressable ref={trigger} accessibilityRole="button" accessibilityLabel={t('Sesión iniciada como {{v0}}', { v0: eaId })}
-      accessibilityState={{ expanded: Boolean(anchor), disabled: isSigningOut }} disabled={isSigningOut}
+      accessibilityState={{ expanded: menuOpen, disabled: isSigningOut }} disabled={isSigningOut}
       onPress={open} style={({ pressed }) => [styles.badge, pressed && styles.pressed]}>
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.identity}>ID: {eaId}</Text>
     </Pressable>
-    <Modal visible={Boolean(anchor)} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={() => setAnchor(null)}>
-      <View style={styles.overlay} accessibilityViewIsModal onAccessibilityEscape={() => setAnchor(null)}>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('Cerrar')} style={StyleSheet.absoluteFill} onPress={() => setAnchor(null)} />
+    <Modal visible={menuOpen} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
+      <View style={styles.overlay} accessibilityViewIsModal onAccessibilityEscape={close}>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('Cerrar')} style={StyleSheet.absoluteFill} onPress={close} />
         <View accessibilityRole="menu" style={[styles.menu, { width: menuWidth, top: anchor?.top, right: anchor?.right }]}>
           <Pressable accessibilityRole="menuitem" accessibilityLabel={t('Cerrar sesión')} disabled={isSigningOut} accessibilityState={{ disabled: isSigningOut, busy: isSigningOut }}
             style={({ pressed }) => [styles.item, pressed && styles.pressed]} onPress={() => { void leave(); }}>
