@@ -1111,9 +1111,27 @@ test('el menú del ID se abre junto al identificador, se cierra al tocar fuera y
    assert.ok(menuBounds.y >= badgeBounds.y + badgeBounds.height);
    assert.ok(menuBounds.x >= 0 && menuBounds.x + menuBounds.width <= width);
    if (width === 390) await f.page.screenshot({path:'test-results/session-menu.png', animations:'disabled'});
-   await f.page.getByRole('button',{name:'Cerrar',exact:true}).click({position:{x:8,y:500}});
-   await menu.waitFor({state:'hidden'});
-   await trigger.click();
+   for (const dismiss of ['outside', 'escape']) {
+    await f.page.getByRole('dialog').waitFor();
+    await menu.evaluate(element => {
+     window.sessionMenuFrames = [];
+     const sample = () => {
+      if (!element.isConnected) return;
+      const { x, y } = element.getBoundingClientRect();
+      window.sessionMenuFrames.push({ x, y });
+      requestAnimationFrame(sample);
+     };
+     sample();
+    });
+    if (dismiss === 'outside') await f.page.getByRole('button',{name:'Cerrar',exact:true}).click({position:{x:8,y:500}});
+    else await f.page.keyboard.press('Escape');
+    await menu.waitFor({state:'detached'});
+    const frames = await f.page.evaluate(() => window.sessionMenuFrames);
+    assert.ok(frames.length > 1, 'se comprueba también la animación de salida');
+    assert.ok(frames.every(frame => Math.abs(frame.x - menuBounds.x) < 1 && Math.abs(frame.y - menuBounds.y) < 1), `el menú conserva su posición al cerrar (${dismiss}, ${width}px)`);
+    await trigger.click();
+    await menu.waitFor();
+   }
    await f.page.getByRole('menuitem',{name:'Cerrar sesión',exact:true}).click();
    await f.page.waitForURL(origin + '/');
    await f.page.getByRole('button',{name:'Iniciar sesión',exact:true}).waitFor();
