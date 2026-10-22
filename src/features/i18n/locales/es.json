@@ -753,5 +753,10 @@
   "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.",
   "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.": "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.",
   "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.": "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.",
-  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado."
+  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.",
+  "Convertir a jugador de plantilla": "Convertir a jugador de plantilla",
+  "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.",
+  "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.",
+  "Incorporar a la plantilla": "Incorporar a la plantilla",
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba."
 }

@@ -753,5 +753,10 @@
   "No se pudo desvincular este dispositivo de las notificaciones. Vuelve a intentar cerrar sesión.": "Dieses Gerät konnte nicht von den Benachrichtigungen getrennt werden. Versuche erneut, dich abzumelden.",
   "El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.": "Die Frist für Verfügbar ist abgelaufen. Du kannst weiterhin Nicht verfügbar oder Ersatz wählen.",
   "La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.": "Die Abstimmung ist geschlossen. Solange die Nominierung aktiv ist, kannst du nur Nicht verfügbar oder Ersatz wählen.",
-  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "Die Nominierung ist nicht mehr verfügbar oder du hast keine Berechtigung. Aktualisiere die Daten; sie könnte beendet oder abgesagt worden sein."
+  "La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.": "Die Nominierung ist nicht mehr verfügbar oder du hast keine Berechtigung. Aktualisiere die Daten; sie könnte beendet oder abgesagt worden sein.",
+  "Convertir a jugador de plantilla": "In Kaderspieler umwandeln",
+  "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Wähle die Position von {{v0}} im Kader. Der Spieler wird nicht mehr unter den Probespielern angezeigt.",
+  "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Speichere die Änderungen am Probespieler, bevor du ihn in den Kader aufnimmst.",
+  "Incorporar a la plantilla": "In den Kader aufnehmen",
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Ein Kaderspieler hat bereits diesen Namen. Prüfe sein Profil, bevor du diesen Probespieler aufnimmst."
 }
