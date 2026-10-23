@@ -306,6 +306,20 @@ test('Realtime actualiza contadores y retira una respuesta del filtro Pendientes
   } finally { await f.close(); }
 });
 
+test('Regresar cierra el aviso de la alineación y vuelve a la convocatoria', async () => {
+  const f = await fixture(); const { page } = f;
+  try {
+    await page.getByRole('button', { name: 'Consulta el 11', exact: true }).click();
+    await page.getByText('Funcionalidad aún no disponible', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Regresar', exact: true }).click();
+    await page.waitForURL(/\/call-up$/);
+    await page.getByRole('heading', { name: 'Convocatoria', exact: true }).waitFor();
+    await page.getByText('Funcionalidad aún no disponible', { exact: true }).waitFor({ state: 'hidden' });
+    await page.getByRole('button', { name: 'Consulta el 11', exact: true }).click();
+    await page.getByText('Funcionalidad aún no disponible', { exact: true }).waitFor({ state: 'visible' });
+  } finally { await f.close(); }
+});
+
 test('barra flotante permite responder con la ficha oculta y no tapa el final de la lista', async () => {
   const f = await fixture(); const { page } = f;
   try {

@@ -1,5 +1,6 @@
+import { useCallback, useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { useClub } from '@/features/clubs/club-context';
 import { t, useLanguage } from '@/features/i18n/runtime';
@@ -7,7 +8,14 @@ import { colors } from '@/theme';
 
 export default function LineupScreen() {
   useLanguage(); const { activeClub } = useClub();
-  const back = () => { if (router.canGoBack()) router.back(); else router.replace('/call-up'); };
+  const [noticeVisible, setNoticeVisible] = useState(true);
+  useFocusEffect(useCallback(() => {
+    setNoticeVisible(true);
+  }, []));
+  const back = () => {
+    setNoticeVisible(false);
+    requestAnimationFrame(() => router.replace('/call-up'));
+  };
   return <Screen compact>
     <Heading title={t('Tu 11')} subtitle={activeClub?.name ?? ''} />
     <View style={styles.pitch}>
@@ -15,7 +23,7 @@ export default function LineupScreen() {
       {[['12%', '46%'], ['30%', '18%'], ['30%', '72%'], ['48%', '34%'], ['48%', '58%'], ['68%', '12%'], ['68%', '78%'], ['83%', '45%']].map(([top, left], index) => <View key={index} style={[styles.player, { top: top as `${number}%`, left: left as `${number}%` }]} />)}
       <View style={styles.blur} />
     </View>
-    <Modal transparent visible animationType="fade" onRequestClose={back}>
+    <Modal transparent visible={noticeVisible} animationType="fade" onRequestClose={back}>
       <View style={styles.overlay}><Card title={t('⭐ Funcionalidad Prémium')}><Body>{t('Funcionalidad aún no disponible')}</Body><Button label={t('Regresar')} onPress={back} /></Card></View>
     </Modal>
   </Screen>;
