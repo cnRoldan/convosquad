@@ -58,7 +58,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
   const privateContacts = [];
   let decisionLock = retained ? {availability:'available'} : null;
   const aids = [{id: 'aid', body: 'Ayuda fuera del total', sort_order: 0}];
-  const trialSnapshots = [{ id: 'trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
+  const trialSnapshots = [{ id: 'trial', call_up_id: callId, club_id: clubId, source_trial_id: 'trial-source', ea_id_snapshot: 'Trial_fuera_del_total', jersey_number_snapshot: 99, position_snapshot: 'MC', notes_snapshot: null }];
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, last_sign_in_at: new Date().toISOString(), created_at: call.created_at };
   const expiry = Math.floor((clockTime === null ? Date.now() : new Date(clockTime).getTime()) / 1000) + 7200;
   const jwt = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: userId, exp: expiry })).toString('base64url')}.fixture`;
@@ -88,6 +88,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'list_rating_call_ups') return route.fulfill({json: []});
       if (endpoint === 'delete_cancelled_call_up') {
         assert.equal(role,'admin');assert.equal(call.status,'cancelled');
         assert.deepEqual(request.postDataJSON(),{p_call_up_id:callId,p_expected_version:call.status_version});
@@ -158,7 +159,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         const body = request.postDataJSON();
         assert.equal(body.p_call_up_id, callId);
         assert.equal('p_ea_id' in body, false);
-        const snapshot = { id: 'added-trial', call_up_id: callId, club_id: clubId, ea_id_snapshot: body.p_name, jersey_number_snapshot: null, position_snapshot: null, notes_snapshot: null };
+        const snapshot = { id: 'added-trial', call_up_id: callId, club_id: clubId, source_trial_id: 'trial-source-added', ea_id_snapshot: body.p_name, jersey_number_snapshot: null, position_snapshot: null, notes_snapshot: null };
         trialSnapshots.push(snapshot); data.trialAdds++;
         if (body.p_phone) privateContacts.push({id: 'trial-contact', trial_id: snapshot.id, phone: body.p_phone});
         return route.fulfill({ json: snapshot });
@@ -559,28 +560,22 @@ test('capitanes guardan teléfonos privados, abren WhatsApp y quitan pruebas y a
     if (await panel.getAttribute('aria-expanded') === 'false') await panel.click();
     await page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).waitFor();
     assert.equal(await page.getByRole('textbox', {name: 'Teléfono', exact: true}).count(), 0);
-    const editContact = page.getByRole('button', {name: 'Editar teléfono de Contacto de prueba', exact: true});
+    const editContact = page.getByRole('button', {name: 'Editar prueba de Contacto de prueba', exact: true});
     const actionRow = editContact.locator('..');
     assert.equal(await actionRow.getByRole('button').count(), 3);
     for (const button of await actionRow.getByRole('button').all()) {
       const bounds = await button.boundingBox(); assert.ok(bounds.width >= 44 && bounds.height >= 44);
     }
-    assert.equal(await page.getByText('WhatsApp de Contacto de prueba', {exact: true}).count(), 0);
     await editContact.click();
-    await page.getByRole('textbox', {name: 'Teléfono', exact: true}).waitFor();
-    const nameBounds = await page.getByText('Contacto de prueba', {exact: true}).boundingBox();
-    const labelBounds = await page.getByText('Teléfono', {exact: true}).boundingBox();
-    assert.ok(labelBounds.y - nameBounds.y - nameBounds.height >= 12);
-    const privacyNotice = page.getByRole('textbox', {name: 'Teléfono', exact: true}).locator('../..');
-    await privacyNotice.getByText('Solo los capitanes pueden ver este número.', {exact: true}).waitFor();
+    await page.waitForURL(url => url.pathname === '/trials/trial-source-added' && url.searchParams.get('returnTo') === 'call-up' && url.searchParams.get('callUpId') === callId);
+    await page.goBack();
+    const returnedPanel = page.getByRole('button', {name: 'PRUEBAS (2)', exact: true});
+    await returnedPanel.waitFor(); if (await returnedPanel.getAttribute('aria-expanded') === 'false') await returnedPanel.click();
+    await page.getByRole('button', {name: 'Editar prueba de Contacto de prueba', exact: true}).waitFor();
     const whatsappIcon = page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).locator('svg');
     assert.equal(await whatsappIcon.getAttribute('fill'), '#25D366');
     assert.equal(await whatsappIcon.getAttribute('stroke'), 'none');
     assert.equal(await whatsappIcon.getAttribute('width'), '24');
-    mkdirSync('test-results', {recursive: true});
-    await page.screenshot({path: 'test-results/private-phone-editor.png', fullPage: true});
-    await page.getByRole('button', {name: 'Guardar teléfono de Contacto de prueba', exact: true}).click();
-    await page.getByRole('button', {name: 'Editar teléfono de Contacto de prueba', exact: true}).waitFor();
     await page.evaluate(() => { window.open = url => { window.__contactUrl = String(url); return null; }; });
     await page.getByRole('button', {name: 'WhatsApp de Contacto de prueba', exact: true}).click();
     await page.waitForFunction(() => window.__contactUrl === 'https://wa.me/34600000000');
