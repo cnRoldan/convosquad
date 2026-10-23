@@ -758,5 +758,9 @@
   "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.": "Elige la posición de {{v0}} en la plantilla. Dejará de aparecer entre los jugadores en pruebas.",
   "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.": "Guarda los cambios de la prueba antes de convertirla en jugador de plantilla.",
   "Incorporar a la plantilla": "Incorporar a la plantilla",
-  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba."
+  "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.": "Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.",
+  "Aún no cuentas con ficha de jugador en plantilla": "Aún no cuentas con ficha de jugador en plantilla",
+  "Crea tu ficha para aparecer como jugador y poder votar en las convocatorias de este club.": "Crea tu ficha para aparecer como jugador y poder votar en las convocatorias de este club.",
+  "Crear mi ficha": "Crear mi ficha",
+  "La ficha quedará vinculada a tu cuenta para participar y votar en las convocatorias.": "La ficha quedará vinculada a tu cuenta para participar y votar en las convocatorias."
 }

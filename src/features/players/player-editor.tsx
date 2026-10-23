@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { listClubAccounts } from '@/features/clubs/service';
-import { createPlayer, linkPlayerAccount, listPlayers, updatePlayer } from './service';
+import { createMyPlayer, createPlayer, linkPlayerAccount, listPlayers, updatePlayer } from './service';
 import { categories, categoryLabels } from './categories';
 import type { RosterCategory } from './categories';
 import { useResource } from '@/hooks/use-resource';
@@ -14,13 +14,14 @@ import { backendErrorMessage } from '@/lib/backend-result';
 import { PlayerActivityDialog } from './player-activity-dialog';
 
 export type EditablePlayer = { id: string; eaId: string; jerseyNumber: number | null; category: RosterCategory; userId: string | null; isActive: boolean };
-export function PlayerEditor({ player = null }: { player?: EditablePlayer | null }) {
+export function PlayerEditor({ player = null, self = false }: { player?: EditablePlayer | null; self?: boolean }) {
   useLanguage();
   const { session, isDemo } = useAuth();
-  const { activeClub, currentMembership, refreshRoster } = useClub();
+  const { activeClub, currentMembership, refreshRoster, accountEaId } = useClub();
   const clubId = activeClub?.id;
   const admin = currentMembership?.role === 'admin';
   const [eaId, setEaId] = useState(player?.eaId ?? '');
+  const displayedEaId = self ? accountEaId ?? '' : eaId;
   const [jersey, setJersey] = useState(player?.jerseyNumber?.toString() ?? '');
   const [category, setCategory] = useState<RosterCategory>(player?.category ?? 'midfielders');
   const [linkedUserId, setLinkedUserId] = useState(player?.userId ?? null);
@@ -37,13 +38,14 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
 
   async function save() {
     if (!clubId || !admin || isDemo || busy) return;
-    const trimmed = eaId.trim();
+    const trimmed = displayedEaId.trim();
     if (!trimmed || trimmed.length > 64) return setMessage(t("El EA ID debe tener entre 1 y 64 caracteres."));
     if (jersey.trim() && (!/^[0-9]{1,2}$/.test(jersey.trim()) || Number(jersey) < 1 || Number(jersey) > 99)) return setMessage(t("El dorsal debe estar entre 1 y 99 o quedar vacío."));
     setBusy(true);
     setMessage('');
     try {
-      if (player) await updatePlayer(player.id, { ea_id: trimmed, jersey_number: jersey.trim() ? Number(jersey) : null, category });
+      if (self) await createMyPlayer(clubId, category, jersey.trim() ? Number(jersey) : undefined);
+      else if (player) await updatePlayer(player.id, { ea_id: trimmed, jersey_number: jersey.trim() ? Number(jersey) : null, category });
       else await createPlayer(clubId, { eaId: trimmed, ...(jersey.trim() ? { jerseyNumber: Number(jersey) } : {}), category });
       refreshRoster();
       router.replace(player && !player.isActive ? '/inactive-players' : '/roster');
@@ -65,16 +67,16 @@ export function PlayerEditor({ player = null }: { player?: EditablePlayer | null
   const dirty = Boolean(player && (eaId.trim() !== player.eaId || jersey.trim() !== (player.jerseyNumber?.toString() ?? '') || category !== player.category));
   const freeAccounts = accounts.data?.members.filter((member) => !accounts.data?.players.some((existing) => existing.user_id === member.user_id)) ?? [];
   return <Screen>
-    <Heading title={player ? t("Editar ficha") : t("Añadir jugador")} subtitle={activeClub?.name ?? ''} />
+    <Heading title={self ? t('Crear mi ficha') : player ? t("Editar ficha") : t("Añadir jugador")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
-    <Field label={t("ID de EA Sports FC")} value={eaId} onChangeText={setEaId} maxLength={64} autoCapitalize="none" editable={!busy} />
+    <Field label={t("ID de EA Sports FC")} value={displayedEaId} onChangeText={setEaId} maxLength={64} autoCapitalize="none" editable={!busy && !self} />
     <Field label={t("Dorsal (opcional)")} value={jersey} onChangeText={setJersey} maxLength={2} keyboardType="number-pad" editable={!busy} />
     <Body>{t("Categoría principal · {{v0}}", { v0: t(categoryLabels[category]) })}</Body>
     <Options value={category} options={categories.map((value) => ({ value, label: t(categoryLabels[value]) }))} onChange={setCategory} disabled={busy} />
     {player && !player.isActive ? <Message>{t("Jugador inactivo · no se incluye en nuevas convocatorias.")}</Message> : null}
-    <Body>{linkedUserId ? t("Registrado · cuenta vinculada") : t("Sin registrar · la ficha es independiente de una cuenta")}</Body>
+    <Body>{self ? t('La ficha quedará vinculada a tu cuenta para participar y votar en las convocatorias.') : linkedUserId ? t("Registrado · cuenta vinculada") : t("Sin registrar · la ficha es independiente de una cuenta")}</Body>
     {message ? <Message>{message}</Message> : null}
-    <Button label={busy ? t("Guardando…") : t("Guardar jugador")} disabled={busy || isDemo || !admin} onPress={() => { void save(); }} />
+    <Button label={busy ? t("Guardando…") : self ? t('Crear mi ficha') : t("Guardar jugador")} disabled={busy || isDemo || !admin || (self && !accountEaId)} onPress={() => { void save(); }} />
     {player && admin ? <>
       {dirty ? <Body>{t("Guarda los cambios de ficha antes de quitar o reincorporar al jugador.")}</Body> : null}
       <Button secondary label={player.isActive ? t("Quitar de la plantilla") : t("Reincorporar a la plantilla")} disabled={busy || isDemo || dirty} onPress={() => setDeactivating(true)} />

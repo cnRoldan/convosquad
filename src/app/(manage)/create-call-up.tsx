@@ -13,6 +13,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { createCallUp } from '@/features/call-ups/service';
 import { clubLocalTimeToInstant, clubLocalDateTime } from '@/features/call-ups/local-time';
 import { callUpErrorMessage } from '@/features/call-ups/availability';
+import { MyPlayerNotice } from '@/features/players/my-player-notice';
 export default function CreateCallUpScreen() {
   useLanguage();
   const { isDemo } = useAuth(); const { activeClub, refreshRoster } = useClub();
@@ -49,6 +50,7 @@ export default function CreateCallUpScreen() {
   }
   return <Screen>
     <Heading title={t("Crear convocatoria")} subtitle={activeClub?.name ?? ''} />
+    <MyPlayerNotice />
     {isDemo ? <DemoNotice /> : null}
     <Body>{t("Horario del club: {{v0}}. Se conservará una fotografía de la plantilla y las pruebas activas. AYUDAS comenzará vacía.", { v0: activeClub?.timezone })}</Body>
     <DateTimeField mode="date" label={t("Fecha (AAAA-MM-DD)")} value={date} onChange={setDate} disabled={busy} />

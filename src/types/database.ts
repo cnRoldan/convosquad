@@ -927,6 +927,14 @@ export type Database = {
         };
         Returns: { id: string; token: string; expires_at: string }[];
       };
+      create_my_player: {
+        Args: {
+          p_club_id: string;
+          p_category: Database['public']['Enums']['roster_category'];
+          p_jersey_number?: number;
+        };
+        Returns: Database['public']['Tables']['players']['Row'][];
+      };
       deactivate_push_device: {
         Args: {
           p_device_id: string;

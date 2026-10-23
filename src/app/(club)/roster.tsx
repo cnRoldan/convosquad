@@ -12,6 +12,7 @@ import type { RosterCategory } from '@/features/players/categories';
 import { TrialSection } from '@/features/trials/trial-section';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
+import { MyPlayerNotice } from '@/features/players/my-player-notice';
 export default function RosterScreen() {
   useLanguage();
   const { activeClub, currentMembership, roster, rosterVersion, rosterLoading, notice, refreshRoster } = useClub();
@@ -41,6 +42,7 @@ export default function RosterScreen() {
   function refresh() { result.reload(); refreshRoster(); }
   return <Screen onRefresh={!isDemo && clubId ? refresh : undefined} refreshing={result.isLoading || rosterLoading}>
     <Heading title={t("La plantilla")} subtitle={activeClub?.name ?? t("Tu club")} />
+    <MyPlayerNotice />
     {notice ? <Message>{notice}</Message> : null}
     {activity === 'removed' || removed ? <Message>{t("Jugador quitado de la plantilla. Su cuenta y convocatorias anteriores se conservan.")}</Message> : null}
     {message ? <Message error>{message}</Message> : null}

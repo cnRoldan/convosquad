@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
+async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRoster = false, logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], browserLanguage = 'es-ES' } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -35,6 +35,7 @@ async function fixture({ logoutFailure = false, deletionBlocked = false, deletio
     { id: 'unlinked', club_id: club.id, user_id: '00000000-0000-4000-8000-000000000905', role: 'player', is_active: true, profiles: { username: 'SinFicha' } },
   ];
   const players = [userId, candidateId].map((user_id, i) => ({ id: `player-${i}`, club_id: club.id, user_id, ea_id: i ? 'Candidate' : 'EA-Player_9', category: 'backups', sort_order: i, jersey_number: i + 1, is_active: true }));
+  if (missingOwnPlayer) { players[0].user_id = null; players[0].ea_id = 'Otra ficha'; }
   if (clubRole) await context.addInitScript(({ userId }) => {
     if (sessionStorage.getItem('fixture-session-initialized')) return;
     sessionStorage.setItem('fixture-session-initialized','1');
@@ -184,7 +185,17 @@ async function fixture({ logoutFailure = false, deletionBlocked = false, deletio
         return route.fulfill({ json: req.headers().accept?.includes('object') ? club : [club] });
       }
       if (endpoint === 'club_members') return route.fulfill({ json: accounts });
-      if (endpoint === 'players') return route.fulfill({ json: players });
+      if (endpoint === 'players') return route.fulfill(failRoster ? {status:503,json:{message:'Roster unavailable'}} : { json: players });
+      if (endpoint === 'create_my_player') {
+        assert.equal(clubRole,'admin');
+        if (failMyPlayer) { failMyPlayer=false; return route.fulfill({status:503,json:{message:'Temporary failure'}}); }
+        let own=players.find(player=>player.user_id===userId);
+        if (!own) {
+          own={id:'my-player',club_id:club.id,user_id:userId,ea_id:'EA-Player_9',category:body.p_category,jersey_number:body.p_jersey_number??null,is_active:true,sort_order:2};
+          players.push(own);
+        }
+        return route.fulfill({json:own});
+      }
       if (endpoint === 'call_ups') {
         const current = createdCall ?? (performance ? ratingCall : null);
         return route.fulfill({json:req.headers().accept?.includes('object') ? current : current ? [current] : []});
@@ -607,6 +618,62 @@ test('escudos reutilizan URL al navegar y se invalidan al guardar una sustituci�
  }finally{await f.close();}
 });
 
+
+test('capitán sin ficha: aviso en el club y creación personal con cuenta vinculada automáticamente',async()=>{
+ const f=await fixture({clubRole:'admin',missingOwnPlayer:true});
+ try {
+  const {page}=f;
+  for(const path of ['/home','/roster','/call-up','/create-call-up']) {
+   await page.goto(origin+path);
+   await page.getByText('Aún no cuentas con ficha de jugador en plantilla',{exact:true}).waitFor();
+   await page.getByRole('button',{name:'Crear mi ficha',exact:true}).waitFor();
+  }
+  await page.getByRole('button',{name:'Crear mi ficha',exact:true}).click();
+  const id=page.getByLabel('ID de EA Sports FC',{exact:true});
+  assert.equal(await id.inputValue(),'EA-Player_9');assert.equal(await id.isEditable(),false);
+  await page.getByLabel('Dorsal (opcional)',{exact:true}).fill('7');
+  await page.getByRole('button',{name:'ATACANTES',exact:true}).click();
+  await page.getByRole('button',{name:'Crear mi ficha',exact:true}).click();
+  await page.waitForURL('**/roster');
+  await page.getByRole('button',{name:'Editar EA-Player_9',exact:true}).waitFor();
+  assert.equal(await page.getByText('Aún no cuentas con ficha de jugador en plantilla',{exact:true}).count(),0);
+  const calls=f.requests.filter(request=>request.endpoint==='create_my_player');
+  assert.equal(calls.length,1);assert.deepEqual(calls[0].body,{p_club_id:'00000000-0000-4000-8000-000000000903',p_category:'attackers',p_jersey_number:7});
+  await page.goto(origin+'/home');
+  await page.getByText('3 jugadores en plantilla',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Crear mi ficha',exact:true}).count(),0);
+ } finally {await f.close();}
+});
+
+test('crear mi ficha: un fallo conserva la posición y permite reintentar sin anunciar éxito',async()=>{
+ const f=await fixture({clubRole:'admin',missingOwnPlayer:true,failMyPlayer:true});
+ try {
+  const {page}=f;await page.goto(origin+'/home');
+  await page.getByRole('button',{name:'Crear mi ficha',exact:true}).click();
+  await page.getByRole('button',{name:'PORTEROS',exact:true}).click();
+  const save=page.getByRole('button',{name:'Crear mi ficha',exact:true});
+  await save.click();
+  await page.getByText('No se pudo completar la operación. Comprueba tu conexión y vuelve a intentarlo.',{exact:true}).waitFor();
+  await page.getByText('Categoría principal · PORTEROS',{exact:true}).waitFor();
+  await save.click();await page.waitForURL('**/roster');
+  await page.getByRole('button',{name:'Editar EA-Player_9',exact:true}).waitFor();
+  assert.equal(f.requests.filter(request=>request.endpoint==='create_my_player').length,2);
+  assert.ok(f.requests.filter(request=>request.endpoint==='create_my_player').every(request=>request.body.p_category==='goalkeepers'));
+ } finally {await f.close();}
+});
+
+test('aviso de ficha: se oculta si existe ficha, no es capitán o falla la carga de la plantilla',async()=>{
+ for(const options of [{clubRole:'admin'},{clubRole:'player',missingOwnPlayer:true},{clubRole:'admin',missingOwnPlayer:true,failRoster:true}]) {
+  const f=await fixture(options);
+  try {
+   await f.page.goto(origin+'/home');
+   await f.page.getByRole('button',{name:'Ver plantilla',exact:true}).waitFor();
+   if(options.failRoster) await f.page.getByText('No se pudieron cargar los datos',{exact:true}).waitFor();
+   else await f.page.getByText('2 jugadores en plantilla',{exact:true}).waitFor();
+   assert.equal(await f.page.getByRole('button',{name:'Crear mi ficha',exact:true}).count(),0);
+  } finally {await f.close();}
+ }
+});
 
 test('gestionar prueba: carga teléfono privado y guarda con prefijo normalizado para WhatsApp', async () => {
   const f = await fixture({clubRole: 'admin', rosterTrials: true});
