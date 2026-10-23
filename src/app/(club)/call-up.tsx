@@ -28,7 +28,6 @@ import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
 import type { Tables } from '@/types/database';
-import { MyPlayerNotice } from '@/features/players/my-player-notice';
 
 export default function CallUpScreen() {
   useLanguage();
@@ -137,7 +136,6 @@ export default function CallUpScreen() {
     </View> : null}
     <Heading title={historical ? t("Convocatoria histórica") : t("Convocatoria")} subtitle={activeClub?.name ?? ''}
       action={!historical && admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : undefined} />
-    {!historical ? <MyPlayerNotice /> : null}
     {!historical && admin && !call && availableCalls?.length === 0 && !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <View style={styles.toolbar}>
       <Pressable accessibilityRole="button" accessibilityLabel={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} style={styles.create}>
         <Text style={styles.createLabel}>{t("Crear convocatoria")}</Text>
