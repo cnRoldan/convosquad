@@ -623,11 +623,15 @@ test('capitán sin ficha: aviso en el club y creación personal con cuenta vincu
  const f=await fixture({clubRole:'admin',missingOwnPlayer:true});
  try {
   const {page}=f;
-  for(const path of ['/home','/roster','/call-up','/create-call-up']) {
+  for(const path of ['/home','/roster','/create-call-up']) {
    await page.goto(origin+path);
    await page.getByText('Aún no cuentas con ficha de jugador en plantilla',{exact:true}).waitFor();
    await page.getByRole('button',{name:'Crear mi ficha',exact:true}).waitFor();
   }
+  await page.goto(origin+'/call-up');
+  await page.getByRole('heading',{name:'Convocatoria',exact:true}).waitFor();
+  assert.equal(await page.getByText('Aún no cuentas con ficha de jugador en plantilla',{exact:true}).count(),0);
+  await page.goto(origin+'/create-call-up');
   await page.getByRole('button',{name:'Crear mi ficha',exact:true}).click();
   const id=page.getByLabel('ID de EA Sports FC',{exact:true});
   assert.equal(await id.inputValue(),'EA-Player_9');assert.equal(await id.isEditable(),false);
