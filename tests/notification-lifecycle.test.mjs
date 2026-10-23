@@ -73,7 +73,7 @@ test('la categoría del emisor coincide con la registrada y usa un identificador
   assert.match(availabilityCategory, /^[A-Za-z0-9_]+$/);
   assert.equal(notificationActions.length, 3);
   assert.equal(new Set(notificationActions.map(action => action.identifier)).size, 3);
-  for (const kind of ['published', 'pending', 'reminder', 'vote']) {
+  for (const kind of ['published', 'pending', 'reminder']) {
     const message = pushMessage({clubId, callUpId, eventKey: 'actions', kind}, 'ExpoPushToken[fixture]', userId, true);
     assert.equal(message.categoryId, availabilityCategory);
     for (const action of notificationActions) {
@@ -81,6 +81,7 @@ test('la categoría del emisor coincide con la registrada y usa un identificador
       assert.equal(intent.response.availability, action.availability);
     }
   }
+  assert.equal(pushMessage({clubId, callUpId, eventKey: 'vote', kind: 'vote'}, 'ExpoPushToken[fixture]', userId, true).categoryId, undefined);
 });
 
 test('admisión abre el club sin permitir votos y rechaza payloads sin cuenta o manipulados',()=>{

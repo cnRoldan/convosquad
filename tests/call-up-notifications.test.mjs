@@ -51,7 +51,7 @@ test('worker distingue votos y avisos pendientes, añade acciones y no reenvía 
   const event={id:'event',club_id:clubId,call_up_id:callUpId,event_key:'vote:1:1',kind:'vote',actor_ea_id:'Jugador_1',vote_availability:'unavailable'};
   const store={async prepare(){},async events(){return [event];},async claim(){if(claimed)return [];claimed=true;return [{id:'delivery',token_snapshot:'ExpoPushToken[fixture]',user_id:userId}];},async finish(){}};
   await dispatchReminders(store,async batch=>{messages.push(...batch);return {data:[{status:'ok',id:'ticket'}]};});
-  assert.match(messages[0].body,/Jugador_1.*No disponible/);assert.equal(messages[0].categoryId,availabilityCategory);
+  assert.match(messages[0].body,/Jugador_1.*No disponible/);assert.equal(messages[0].categoryId,undefined);
   assert.equal(messages[0].data.userId,userId);
   await dispatchReminders(store,async()=>{throw new Error('Must not send twice');});
   assert.equal(messages.length,1);

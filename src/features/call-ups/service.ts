@@ -52,6 +52,11 @@ export async function listCurrentCallUps(clubId: string) {
 export async function getCallUp(clubId: string, callUpId: string) {
   return unwrap(await requireSupabase().from('call_ups').select('*').eq('club_id', clubId).eq('id', callUpId).single());
 }
+export async function getCallUpCreator(userId: string | null) {
+  if (!userId) return null;
+  const profile = unwrap(await requireSupabase().from('profiles').select('username').eq('id', userId).maybeSingle());
+  return profile?.username ?? null;
+}
 export async function listCallUpHistory(clubId: string) {
   return unwrap(await requireSupabase().rpc('list_call_up_history', { p_club_id: clubId }));
 }

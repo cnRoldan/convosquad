@@ -14,15 +14,15 @@ export type ExistingPlayer = { eaId: string; jerseyNumber: number | null };
 export type CheckedImportRow = { row: ImportRow; errors: string[]; warnings: string[]; player: ImportPlayer | null; trial: ImportTrial | null };
 const cleanEmoji = (value: string) => value.replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}\uFE0F\u200D\u20E3]/gu, '').trim();
 function header(value: string): RosterCategory | 'trial' | 'aid' | null {
-  const text = cleanEmoji(value).replace(/[*`]/g, '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase().replace(/[\s/\-]+/g, ' ').trim();
-  if (/^(PORTEROS?|POR)$/.test(text)) return 'goalkeepers';
-  if (/^(CENTRALES?|DFC)$/.test(text)) return 'centre_backs';
-  if (/^(LATERALES?( CARRILEROS?)?|CARRILEROS?|LI|LD)$/.test(text)) return 'wide_backs';
-  if (/^(CENTROCAMPISTAS?|MCDS?( VOLANTES?)?|VOLANTES?|MCOS?|MCS?|MCD|MCO|MI|MD)$/.test(text)) return 'midfielders';
-  if (/^(ATACANTES?|DELANTEROS?|EXTREMOS?|EI|ED|DC)$/.test(text)) return 'attackers';
-  if (/^BACK ?UPS?$/.test(text)) return 'backups';
-  if (text === 'PRUEBAS') return 'trial';
-  if (text === 'AYUDAS') return 'aid';
+  const text = cleanEmoji(value).replace(/[*`]/g, '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase().replace(/[:.]+$/, '').replace(/[\s/\-]+/g, ' ').trim();
+  if (/^(PORTEROS?|ARQUEROS?|GOALKEEPERS?|GK|POR)$/.test(text)) return 'goalkeepers';
+  if (/^(CENTRALES?|DEFENSAS? CENTRALES?|CENTRE BACKS?|CENTER BACKS?|CB|DFC)$/.test(text)) return 'centre_backs';
+  if (/^(DEFENSAS?|LATERALES?( CARRILEROS?)?|CARRILEROS?|FULL BACKS?|WING BACKS?|LI|LD)$/.test(text)) return 'wide_backs';
+  if (/^(MEDIOS?|CENTROCAMPISTAS?|MIDFIELDERS?|MCDS?( VOLANTES?)?|VOLANTES?|MCOS?|MCS?|MCD|MCO|MI|MD)$/.test(text)) return 'midfielders';
+  if (/^(ATACANTES?|DELANTEROS?|FORWARDS?|STRIKERS?|EXTREMOS?|EI|ED|DC)$/.test(text)) return 'attackers';
+  if (/^(SUPLENTES?|RESERVAS?|SUBSTITUTES?|BACK ?UPS?)$/.test(text)) return 'backups';
+  if (/^(PRUEBAS|JUGADORES? A PRUEBA|TRIALS?|TRYOUTS?)$/.test(text)) return 'trial';
+  if (/^(AYUDAS|ANOTACIONES|NOTAS|NOTES?)$/.test(text)) return 'aid';
   return null;
 }
 export function parseRosterText(text: string): { rows: ImportRow[]; error: string | null; metadata: string[] } {
@@ -39,16 +39,18 @@ export function parseRosterText(text: string): { rows: ImportRow[]; error: strin
     const emojiMatch = /^((?:[0-9]\uFE0F?\u20E3)+)\s*[-–—.:)]?\s*(.*)$/.exec(raw.trim().replace(/^[•●▪◦]\s*/, '').replace(/[*`]/g, ''));
     const start = emojiMatch ? [emojiMatch[0], emojiMatch[1]?.replace(/([0-9])\uFE0F?\u20E3/g, '$1'), cleanEmoji(emojiMatch[2] ?? '')] : /^#?\s*(\d{1,3})(?:\s*[-–—.:)]\s*|\s+)(.+)$/.exec(cleaned);
     let eaId = start?.[2]?.trim() ?? cleaned;
+    const trailingJersey = !start ? /^(.*?)\s*(?:[-–—/]\s*)?#(\d{1,2})$/.exec(eaId) : null;
+    if (trailingJersey?.[1]) eaId = trailingJersey[1].trim();
     const tail = /^(.*?)\s*(?:\(\s*([a-z]{2,3})\s*\)|\[\s*([a-z]{2,3})\s*\]|(?:\s*[-–—/,]\s*|\s+)([a-z]{2,3}))$/i.exec(eaId);
     const position = (tail?.[2] ?? tail?.[3] ?? tail?.[4] ?? '').toUpperCase();
     const hasPosition = isPosition(position) && Boolean(tail?.[1]) && (!section || section === 'trial' || Boolean(tail?.[2] || tail?.[3]) || /[-–—/,]\s*[a-z]{2,3}$/i.test(eaId));
     if (hasPosition && tail?.[1]) eaId = tail[1].trim();
-    const category = section && isCategory(section) ? section : isPosition(position) ? legacyCategory[position] : '';
+    const category = section === 'backups' ? section : isPosition(position) ? legacyCategory[position] : section && isCategory(section) ? section : '';
     const trialPosition = kind === 'trial' ? /^(.*?)\s*\(([^()]{1,80})\)$/.exec(eaId) : null;
     if (trialPosition?.[1]) eaId = trialPosition[1].trim();
     const unknownHeading = !start && !hasPosition && cleaned === cleaned.toUpperCase() && /^\p{Letter}[\p{Letter}\s/]+$/u.test(cleaned);
     const ambiguous = /^\d+\s+(?:jugador(?:es)?(?:\s+externos?)?|dfc|mc|mcd|mco|dc|por|li|ld)(?:\s|$)/i.test(cleaned);
-    rows.push({ id: `line-${index + 1}`, lineNumber: index + 1, raw, kind, jerseyText: kind === 'aid' ? '' : start?.[1] ?? '',
+    rows.push({ id: `line-${index + 1}`, lineNumber: index + 1, raw, kind, jerseyText: kind === 'aid' ? '' : start?.[1] ?? trailingJersey?.[2] ?? '',
       eaId: kind === 'aid' ? cleaned : eaId, positionText: trialPosition?.[2]?.trim() ?? (hasPosition ? position : ''), category,
       notes: '', availability: raw.includes('✅') ? 'available' : raw.includes('❌') ? 'unavailable' : raw.includes('🟡') ? 'backup' : null,
       selected: kind !== 'aid', requiresReview: kind !== 'aid' && (ambiguous || unknownHeading || (!start && /^\d+(?:\p{Letter}|\/)/u.test(cleaned)) || (!start && !category && kind !== 'trial')) });

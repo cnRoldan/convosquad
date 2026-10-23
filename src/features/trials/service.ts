@@ -29,6 +29,36 @@ export async function listTrialContacts(clubId: string) {
   return unwrap(await requireSupabase().from('club_trial_contacts').select('trial_id,phone').eq('club_id', clubId));
 }
 
+export async function listTrialHistory(clubId: string) {
+  const since = new Date();
+  since.setUTCMonth(since.getUTCMonth() - 12);
+  const trials = unwrap(await requireSupabase().from('club_trials').select('*')
+    .eq('club_id', clubId).neq('status', 'active').gte('resolved_at', since.toISOString())
+    .order('resolved_at', { ascending: false }).limit(6));
+  const notes = unwrap(await requireSupabase().from('club_trial_notes').select('trial_id,notes').eq('club_id', clubId));
+  return trials.map(trial => ({ ...trial, notes: notes.find(note => note.trial_id === trial.id)?.notes ?? null }));
+}
+
+export async function deleteTrialHistory(id: string) {
+  const { error } = await requireSupabase().rpc('delete_trial_history', { p_trial_id: id });
+  if (error) throw error;
+}
+
+export async function syncTrialToCallUp(callUpId: string, trialId: string) {
+  return unwrap(await requireSupabase().rpc('sync_call_up_trial_from_roster', { p_call_up_id: callUpId, p_trial_id: trialId }).single());
+}
+
+export function trialErrorMessage(error: unknown) {
+  const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null;
+  if (code === 'P0043') return 'El historial gratuito ya contiene 6 pruebas. Elimina una para archivar esta prueba.';
+  return backendMessage(error);
+}
+
+function backendMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  return 'No se pudo completar la operación con la prueba.';
+}
+
 export async function addCallUpTrial(callUpId: string, name: string, notes: string | null) {
   return unwrap(await requireSupabase().rpc('add_call_up_trial', { p_call_up_id: callUpId, p_name: name, ...(notes ? { p_notes: notes } : {}) }));
 }
