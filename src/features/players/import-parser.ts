@@ -45,7 +45,7 @@ export function parseRosterText(text: string): { rows: ImportRow[]; error: strin
     const position = (tail?.[2] ?? tail?.[3] ?? tail?.[4] ?? '').toUpperCase();
     const hasPosition = isPosition(position) && Boolean(tail?.[1]) && (!section || section === 'trial' || Boolean(tail?.[2] || tail?.[3]) || /[-–—/,]\s*[a-z]{2,3}$/i.test(eaId));
     if (hasPosition && tail?.[1]) eaId = tail[1].trim();
-    const category = isPosition(position) ? legacyCategory[position] : section && isCategory(section) ? section : '';
+    const category = section === 'backups' ? section : isPosition(position) ? legacyCategory[position] : section && isCategory(section) ? section : '';
     const trialPosition = kind === 'trial' ? /^(.*?)\s*\(([^()]{1,80})\)$/.exec(eaId) : null;
     if (trialPosition?.[1]) eaId = trialPosition[1].trim();
     const unknownHeading = !start && !hasPosition && cleaned === cleaned.toUpperCase() && /^\p{Letter}[\p{Letter}\s/]+$/u.test(cleaned);
