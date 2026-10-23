@@ -805,5 +805,9 @@
   "Último aviso para votar: {{v0}} · solo pendientes": "Último aviso para votar: {{v0}} · solo pendientes",
   "⭐ Funcionalidad Prémium": "⭐ Funcionalidad Prémium",
   "El historial gratuito ya contiene 6 pruebas. Elimina una para archivar esta prueba.": "El historial gratuito ya contiene 6 pruebas. Elimina una para archivar esta prueba.",
-  "No se pudo completar la operación con la prueba.": "No se pudo completar la operación con la prueba."
+  "No se pudo completar la operación con la prueba.": "No se pudo completar la operación con la prueba.",
+  "Abandonar club": "Abandonar club",
+  "¿Abandonar {{v0}}?": "¿Abandonar {{v0}}?",
+  "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.",
+  "este club": "este club"
 }
