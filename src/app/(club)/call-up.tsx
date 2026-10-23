@@ -20,10 +20,11 @@ import { CallUpTrialActions } from '@/features/trials/call-up-trial-actions';
 import { CallUpTrialForm } from '@/features/trials/call-up-trial-form';
 import { AidsSection } from '@/features/call-ups/aids-section';
 import { CallUpAdministration } from '@/features/call-ups/administration';
+import { CallUpInfoDialog } from '@/features/call-ups/call-up-info-dialog';
 import { availabilityLabels, responseOptions, callUpErrorMessage } from '@/features/call-ups/availability';
 import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
-import { getCallUp, listCurrentCallUps, listCallUpPlayers, listCallUpTrials, respondToCallUp } from '@/features/call-ups/service';
+import { getCallUp, getCallUpCreator, listCurrentCallUps, listCallUpPlayers, listCallUpTrials, respondToCallUp } from '@/features/call-ups/service';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
@@ -47,6 +48,7 @@ export default function CallUpScreen() {
   const [responseMessage, setResponseMessage] = useState<{ scope: string; text: string; availability?: CallUpPlayer['availability']; error: boolean } | null>(null);
   const [pending, setPending] = useState<{ scope: string; id: string; availability: CallUpPlayer['availability']; saving: boolean; source: unknown } | null>(null);
   const [aidsRevision, setAidsRevision] = useState(0);
+  const [showInfo, setShowInfo] = useState(false);
   const localDate = clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date;
   const enabled = Boolean(session && clubId && !isDemo);
   const loadCalls = useCallback(() => clubId ? listCurrentCallUps(clubId) : Promise.resolve([]), [clubId]);
@@ -59,8 +61,8 @@ export default function CallUpScreen() {
   const load = useCallback(async () => {
     if (!clubId || !callId) return null;
     const call = await getCallUp(clubId, callId);
-    const [players, trials] = await Promise.all([listCallUpPlayers(callId), listCallUpTrials(callId, admin)]);
-    return { call, players, trials };
+    const [players, trials, creator] = await Promise.all([listCallUpPlayers(callId), listCallUpTrials(callId, admin), getCallUpCreator(call.created_by)]);
+    return { call, players, trials, creator };
   }, [clubId, callId, admin]);
   const snapshots = useResource(`call-snapshot:${scope}:${admin}:${callId}:${rosterVersion}`, load, enabled && Boolean(callId));
   const loadContacts = useCallback(() => callId ? listCallUpContacts(callId) : Promise.resolve([]), [callId]);
@@ -135,7 +137,10 @@ export default function CallUpScreen() {
       <Text style={styles.date}>{t("Volver a la convocatoria actual")}</Text>
     </View> : null}
     <Heading title={historical ? t("Convocatoria histórica") : t("Convocatoria")} subtitle={activeClub?.name ?? ''}
-      action={!historical && admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : undefined} />
+      action={<View style={styles.headingActions}>
+        {!historical && admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : null}
+        {call ? <IconButton icon="info" label={t("Información de la convocatoria")} onPress={() => setShowInfo(true)} /> : null}
+      </View>} />
     {!historical && admin && !call && availableCalls?.length === 0 && !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <View style={styles.toolbar}>
       <Pressable accessibilityRole="button" accessibilityLabel={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} style={styles.create}>
         <Text style={styles.createLabel}>{t("Crear convocatoria")}</Text>
@@ -149,11 +154,9 @@ export default function CallUpScreen() {
     {votingClosed && !availabilityFooter ? <Text accessibilityLiveRegion="polite" style={styles.finishedNotice}>{historical ? t("Convocatoria finalizada.") : t("Votación cerrada. La convocatoria sigue activa.")}</Text> : null}
     {call ? <>
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callUpStatusLabel(call, clock, historical))}</Text>
-      <Body>{t('Finalización: {{v0}}', { v0: formatMatchDate(call.ends_at, call.timezone) })}</Body>
       {admin && call.evaluation_at && historical ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
-      {call.closes_at ? <Body>{t("Cierre de votación:")}{clubLocalDateTime(call.timezone, new Date(call.closes_at)).time} · {call.timezone}</Body> : null}
       {votingClosed && !historical ? <Body>{t("El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.")}</Body> : null}
-      {call.last_notice_at ? <Body>{t("Último aviso para votar:")}{clubLocalDateTime(call.timezone, new Date(call.last_notice_at)).time} {t("· solo pendientes")}</Body> : null}
+      {votingClosed && !historical ? <Button label={admin ? t('¡Forma tu 11!') : t('Consulta el 11')} onPress={() => router.push('/lineup')} /> : null}
       {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onDeleted={() => handleDeleted(call.id)} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? "Convocatoria actualizada. La fotografía y respuestas se conservan."); refreshRoster(); refresh(); }} /> : null}
       {admin && contacts.error ? <Message error>{t("No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.")}</Message> : null}
       {snapshots.error ? <Body>{t("Respuestas no disponibles.")}</Body> : <CompactRoster key={responseScope} players={players}
@@ -164,12 +167,14 @@ export default function CallUpScreen() {
         trialEditor={!historical && admin && !isDemo && (call.status === 'open' || call.status === 'draft') ? <CallUpTrialForm key={responseScope} callUpId={call.id} onSaved={() => { refreshRoster(); refresh(); }} /> : null}
         aids={<AidsSection key={responseScope} callUpId={call.id} revision={aidsRevision} editable={!historical && admin && (call.status === 'open' || call.status === 'draft')} />} />}
       {isDemo ? <Body>{t("Convocatoria simulada · los cambios no se guardan.")}</Body> : null}
+      <CallUpInfoDialog call={call} creator={snapshots.data?.creator ?? null} visible={showInfo} onClose={() => setShowInfo(false)} />
     </> : !calls.isLoading && !snapshots.isLoading && !calls.error && !snapshots.error ? <Body>{t("No hay convocatorias accesibles en este club.")}</Body> : null}
   </Screen>;
 }
 
 const styles = StyleSheet.create({
   toolbar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
+  headingActions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   create: { minHeight: 44, paddingHorizontal: 12, justifyContent: 'center', borderRadius: 10, backgroundColor: colors.primary },
   createLabel: { color: colors.background, fontWeight: '700', fontSize: 13 },
   finishedNotice: { color: colors.muted, fontSize: 14, lineHeight: 20, fontWeight: '700', padding: 12, borderWidth: 1, borderColor: colors.border, borderRadius: 12 },

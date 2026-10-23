@@ -439,6 +439,7 @@ export type Database = {
           player_id: string | null;
           created_at: string;
           incorporated_at: string | null;
+          resolved_at: string | null;
         };
         Insert: {
           id?: string;
@@ -452,6 +453,7 @@ export type Database = {
           player_id?: string | null;
           created_at?: string;
           incorporated_at?: string | null;
+          resolved_at?: string | null;
         };
         Update: {
           id?: string;
@@ -465,6 +467,7 @@ export type Database = {
           player_id?: string | null;
           created_at?: string;
           incorporated_at?: string | null;
+          resolved_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'club_trials_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -961,6 +964,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_trial_history: {
+        Args: {
+          p_trial_id: string;
+        };
+        Returns: undefined;
+      };
       finish_push_delivery: {
         Args: {
           p_delivery_id: string;
@@ -968,6 +977,12 @@ export type Database = {
           p_ticket_id?: string;
         };
         Returns: undefined;
+      };
+      get_call_up_player_totals: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: { player_id: string; player_name: string; total_call_ups: number; available_count: number; unavailable_count: number; backup_count: number; unanswered_count: number; average_response_seconds: number }[];
       };
       get_player_performance: {
         Args: {
@@ -1222,6 +1237,13 @@ export type Database = {
           p_visibility: string;
         };
         Returns: undefined;
+      };
+      sync_call_up_trial_from_roster: {
+        Args: {
+          p_call_up_id: string;
+          p_trial_id: string;
+        };
+        Returns: Database['public']['Tables']['call_up_trials']['Row'][];
       };
       update_call_up: {
         Args: {

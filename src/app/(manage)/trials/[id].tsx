@@ -6,7 +6,7 @@ import { ConfirmDialog } from '@/components/confirm-dialog';
 import { LoadingScreen } from '@/components/loading';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
-import { listTrials, listTrialContacts, promoteTrial, saveTrial, withdrawTrial } from '@/features/trials/service';
+import { listTrials, listTrialContacts, promoteTrial, saveTrial, syncTrialToCallUp, trialErrorMessage, withdrawTrial } from '@/features/trials/service';
 import { categories, categoryLabels, type RosterCategory } from '@/features/players/categories';
 import { PrivatePhoneField } from '@/features/call-ups/private-phone-field';
 import { normalizePhone } from '@/features/call-ups/phone';
@@ -15,7 +15,7 @@ import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 export default function TrialScreen() {
   useLanguage();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, returnTo, callUpId } = useLocalSearchParams<{ id: string; returnTo?: string; callUpId?: string }>();
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
   const load = useCallback(async () => {
     if (!clubId) return { trials: [], contacts: [] };
@@ -26,9 +26,9 @@ export default function TrialScreen() {
   if (result.isLoading) return <LoadingScreen label={t("Cargando prueba…")} />;
   const trial = result.data?.trials.find(row => row.id === id);
   if (id !== 'new' && (!trial || trial.status !== 'active')) return <Screen><Message error>{result.error ?? t("La prueba no está activa en este club.")}</Message><Button label={t("Volver a la plantilla")} onPress={() => router.replace('/roster')} /></Screen>;
-  return <TrialEditor key={`${session?.user.id}:${clubId}:${id}`} trial={trial ?? null} initialPhone={result.data?.contacts.find(row => row.trial_id === id)?.phone ?? ''} />;
+  return <TrialEditor key={`${session?.user.id}:${clubId}:${id}`} trial={trial ?? null} initialPhone={result.data?.contacts.find(row => row.trial_id === id)?.phone ?? ''} returnToCallUp={returnTo === 'call-up' ? callUpId : undefined} />;
 }
-function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | null; initialPhone: string }) {
+function TrialEditor({ trial, initialPhone, returnToCallUp }: { trial: Tables<'club_trials'> | null; initialPhone: string; returnToCallUp: string | undefined }) {
   useLanguage();
   const { isDemo } = useAuth(); const { activeClub, refreshRoster } = useClub(); const clubId = activeClub?.id;
   const [name, setName] = useState(trial?.ea_id ?? '');
@@ -48,14 +48,19 @@ function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | n
     try { normalizedPhone = normalizePhone(phone); }
     catch (error) { return setMessage(error instanceof Error ? error.message : backendErrorMessage(error)); }
     setBusy(true); setMessage('');
-    try { await saveTrial(clubId, { name: name.trim(), notes: notes.trim() || null, phone: normalizedPhone }, trial?.id); refreshRoster(); router.replace('/roster'); }
+    try {
+      const saved = await saveTrial(clubId, { name: name.trim(), notes: notes.trim() || null, phone: normalizedPhone }, trial?.id);
+      if (returnToCallUp && trial) await syncTrialToCallUp(returnToCallUp, saved.id);
+      refreshRoster();
+      router.replace(returnToCallUp ? { pathname: '/call-up', params: { id: returnToCallUp } } : '/roster');
+    }
     catch (error) { setMessage(backendErrorMessage(error)); } finally { setBusy(false); }
   }
   async function confirm() {
     if (!trial || busy || isDemo) return;
     setBusy(true); setMessage('');
     try { await withdrawTrial(trial.id); refreshRoster(); router.replace('/roster'); }
-    catch (error) { setMessage(backendErrorMessage(error)); }
+    catch (error) { setMessage(t(trialErrorMessage(error))); }
     finally { setBusy(false); setConfirming(false); }
   }
   async function promote() {
@@ -67,7 +72,7 @@ function TrialEditor({ trial, initialPhone }: { trial: Tables<'club_trials'> | n
     } catch (error) {
       setPromotionError(typeof error === 'object' && error !== null && 'code' in error && error.code === '23505'
         ? t("Ya hay un jugador de plantilla con ese nombre. Revisa su ficha antes de incorporar esta prueba.")
-        : backendErrorMessage(error));
+        : t(trialErrorMessage(error)));
     } finally { setBusy(false); }
   }
   return <Screen>

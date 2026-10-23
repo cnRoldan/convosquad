@@ -19,6 +19,14 @@ test('tolera CRLF, espacios, guiones largos, viñetas y formato de WhatsApp', ()
   assert.equal(checked[2].player.eaId, 'Gamer Name');
   assert.equal(rows[1].lineNumber, 3);
 });
+test('acepta encabezados habituales y dorsales al final sin depender de una plantilla concreta', () => {
+  const parsed = parseRosterText('GOALKEEPERS:\nAlex (POR) #1\nDEFENSAS:\nLuis (DFC) #4\nMIDFIELDERS:\nSam - MCO - #10\nJUGADORES A PRUEBA:\nTaylor (DC)');
+  const checked = validateImportRows(parsed.rows, []);
+  assert.equal(parsed.error, null);
+  assert.deepEqual(checked.slice(0, 3).map(entry => entry.player?.category), ['goalkeepers', 'centre_backs', 'midfielders']);
+  assert.deepEqual(checked.slice(0, 3).map(entry => entry.player?.jerseyNumber), [1, 4, 10]);
+  assert.equal(checked[3].trial?.eaId, 'Taylor');
+});
 test('las líneas inválidas permanecen visibles y se pueden corregir', () => {
   const parsed = parseRosterText('cabecera de plantilla\n0 - Bad (XYZ)');
   const checked = validateImportRows(parsed.rows, []);

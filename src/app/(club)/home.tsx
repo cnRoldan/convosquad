@@ -13,6 +13,8 @@ import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
 import { useRequests } from '@/features/join-requests/requests-context';
 import { colors } from '@/theme';
 import { MyPlayerNotice } from '@/features/players/my-player-notice';
+import { listRatingCalls } from '@/features/ratings/service';
+import { useResource } from '@/hooks/use-resource';
 
 export default function HomeScreen() {
   useLanguage();
@@ -21,8 +23,14 @@ export default function HomeScreen() {
   const pathname = usePathname();
   const [clock, setClock] = useState(Date.now);
   const { activeClub, currentMembership, roster, upcomingCallUp, hasCurrentCallUp, rosterLoading, rosterError, refreshRoster, notice } = useClub();
+  const clubId = activeClub?.id;
+  const admin = currentMembership?.role === 'admin';
+  const loadRatingCalls = useCallback(() => clubId ? listRatingCalls(clubId) : Promise.resolve([]), [clubId]);
+  const ratingCalls = useResource(`home-rating-call:${session?.user.id}:${clubId}`, loadRatingCalls, Boolean(session && clubId && admin && !isDemo));
+  const { reload: reloadRatingCalls } = ratingCalls;
+  const ratingCall = ratingCalls.data?.[0];
   const pendingRequests = requests.error || !activeClub ? 0 : requests.incoming.filter(request => request.club_id === activeClub.id).length;
-  useFocusEffect(useCallback(() => { refreshRoster(); }, [refreshRoster]));
+  useFocusEffect(useCallback(() => { refreshRoster(); reloadRatingCalls(); }, [refreshRoster, reloadRatingCalls]));
   useCallUpSync(`home:${session?.user.id}:${activeClub?.id}`, activeClub?.id, Boolean(session && activeClub && !isDemo && pathname === '/home'), refreshRoster);
   useEffect(() => {
     if (pathname !== '/home') return;
@@ -51,7 +59,10 @@ export default function HomeScreen() {
             v1: upcomingCallUp.responses.length,
           })}</Text>
           <Button label={t("Ver convocatoria")} onPress={() => router.navigate({ pathname: '/call-up', params: { id: upcomingCallUp.id } })} />
-        </> : !rosterLoading && !rosterError ? <Body>{t("Todavía no hay convocatorias.")}</Body> : null}
+        </> : !rosterLoading && !rosterError ? <>
+          <Body>{t("Todavía no hay convocatorias.")}</Body>
+          {admin && ratingCall ? <Button label={t('Valorar rendimiento de jugadores')} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: ratingCall.id } })} /> : null}
+        </> : null}
       </Card>
       {currentMembership?.role !== 'admin' && (activeClub?.ratingsVisibility === 'members' || activeClub?.ratingsVisibility === 'self') ? <Card title={t("Valoraciones y rendimiento")}><Button secondary label={t("Ver rendimiento del club")} onPress={() => router.navigate('/performance')} /></Card> : null}
       {currentMembership?.role === 'admin' ? <Card title={t("Administrar el club")}>

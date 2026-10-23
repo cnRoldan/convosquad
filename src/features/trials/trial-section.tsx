@@ -12,7 +12,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { moveItem } from '@/features/players/categories';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
-import { listTrials, listTrialContacts, reorderTrials, withdrawTrial } from './service';
+import { listTrials, listTrialContacts, reorderTrials, trialErrorMessage, withdrawTrial } from './service';
 export function TrialSection() {
   useLanguage();
   const { session, isDemo } = useAuth();
@@ -44,12 +44,13 @@ export function TrialSection() {
       await withdrawTrial(pending.id);
       trials.reload(); contacts.reload(); setPending(null);
       setNotice(t("Prueba retirada de la plantilla. Las convocatorias anteriores conservan sus datos."));
-    } catch (error) { setMessage(backendErrorMessage(error)); }
+    } catch (error) { setMessage(t(trialErrorMessage(error))); }
     finally { setBusy(false); }
   }
   return <Card title={t("PRUEBAS")}>
     <Body>{t("Jugadores a prueba del club. No cuentan en los totales de disponibilidad.")}</Body>
     {admin ? <Button secondary label={t("Añadir prueba")} onPress={() => router.push({ pathname: '/trials/[id]', params: { id: 'new' } })} /> : null}
+    {admin ? <Button secondary label={t("Historial de pruebas")} onPress={() => router.push('/trial-history')} /> : null}
     {trials.isLoading ? <Body>{t("Cargando pruebas…")}</Body> : null}
     {trials.error ? <><Message error>{trials.error}</Message><Button secondary label={t("Reintentar pruebas")} onPress={trials.reload} /></> : null}
     {message ? <Message error>{message}</Message> : null}

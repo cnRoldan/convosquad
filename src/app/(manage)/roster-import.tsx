@@ -47,8 +47,8 @@ function RosterImportEditor() {
   return <Screen>
     <Heading title={t("Importar desde WhatsApp")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
-    <Body>{t("Se reconocen categorías, dorsales con emojis, PRUEBAS y AYUDAS. La plantilla existente se conserva. Las respuestas de convocatorias nunca se importan.")}</Body>
-    <Field label={t("Plantilla de WhatsApp")} multiline value={text} onChangeText={value => { setText(value); setRows(null); }} editable={!busy} textAlignVertical="top" style={{ minHeight: 180 }} placeholder={t("🧤 PORTEROS\n2️⃣3️⃣alexinstic23 ✅\nPRUEBAS\nTrialPlayer (DFC)")} />
+    <Body>{t("Pega una lista de WhatsApp o texto libre. Se reconocen encabezados habituales, posiciones, dorsales al principio o al final y jugadores en pruebas. Podrás revisar cada línea antes de guardar.")}</Body>
+    <Field label={t("Lista de jugadores")} multiline value={text} onChangeText={value => { setText(value); setRows(null); }} editable={!busy} textAlignVertical="top" style={{ minHeight: 180 }} placeholder={t("PORTEROS:\n23 - Alex (POR)\nDEFENSAS:\nLuis (DFC) #4\nJUGADORES A PRUEBA:\nMario (DC)")} />
     <Button label={t("Analizar plantilla")} disabled={busy || existing.isLoading} onPress={preview} />
     {existing.isLoading ? <Body>{t("Comprobando plantilla y pruebas…")}</Body> : null}
     {existing.error ? <><Message error>{existing.error}</Message><Button label={t("Reintentar")} onPress={existing.reload} /></> : null}

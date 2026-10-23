@@ -20,6 +20,9 @@ export async function getPerformance(clubId: string, period: '7d' | '1m' | '3m')
 export async function getRatingHistory(clubId: string, playerId: string) {
   return unwrap(await requireSupabase().rpc('get_player_rating_history', { p_club_id: clubId, p_player_id: playerId }));
 }
+export async function getCallUpPlayerTotals(clubId: string) {
+  return unwrap(await requireSupabase().rpc('get_call_up_player_totals', { p_club_id: clubId }));
+}
 export function ratingError(error: unknown) {
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null;
   if (code === 'P0041') return 'Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.';

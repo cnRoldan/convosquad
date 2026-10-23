@@ -42,7 +42,7 @@ export function pushMessage(event: PushEventInput, token: string, recipientUserI
     body: event.kind === 'evaluation_deadline' ? text.evaluationDeadlineBody : event.kind === 'evaluation' ? text.evaluationBody : event.kind === 'cancelled' ? text.cancelledBody : event.kind === 'vote'
       ? `${event.actorEaId?.slice(0, 100) ?? text.player} ${text.voted}: ${event.availability === 'available' ? text.available : event.availability === 'unavailable' ? text.unavailable : text.backup}.`
       : event.kind === 'published' ? (canVote ? text.publishedBody : text.readOnly) : event.kind === 'reminder' ? text.reminderBody : text.pendingBody,
-    channelId: 'call-ups', sound: 'default', ...(event.kind !== 'cancelled' && event.kind !== 'evaluation' && event.kind !== 'evaluation_deadline' && canVote ? { categoryId: 'call_up_availability' } : {}),
+    channelId: 'call-ups', sound: 'default', ...(['published', 'pending', 'reminder'].includes(event.kind) && canVote ? { categoryId: 'call_up_availability' } : {}),
     data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, ...(recipientUserId ? { userId: recipientUserId } : {}), ...(event.kind === 'cancelled' ? { kind: 'cancelled' } : {}), ...(event.kind === 'evaluation' || event.kind === 'evaluation_deadline' ? { kind: event.kind } : {}) },
   };
 }
