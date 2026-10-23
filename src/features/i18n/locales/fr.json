@@ -805,5 +805,9 @@
   "Último aviso para votar: {{v0}} · solo pendientes": "Dernier rappel de vote : {{v0}} · en attente uniquement",
   "⭐ Funcionalidad Prémium": "⭐ Fonctionnalité Premium",
   "El historial gratuito ya contiene 6 pruebas. Elimina una para archivar esta prueba.": "L’historique gratuit contient déjà 6 joueurs à l’essai. Supprime-en un pour archiver cet essai.",
-  "No se pudo completar la operación con la prueba.": "L’opération sur le joueur à l’essai n’a pas pu être terminée."
+  "No se pudo completar la operación con la prueba.": "L’opération sur le joueur à l’essai n’a pas pu être terminée.",
+  "Abandonar club": "Quitter le club",
+  "¿Abandonar {{v0}}?": "Quitter {{v0}} ?",
+  "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "Vous quitterez le club et votre fiche sortira de l’effectif actif. Les convocations précédentes conserveront votre historique.",
+  "este club": "ce club"
 }

@@ -27,6 +27,11 @@ export async function setClubMember(clubId: string, userId: string, role: Enums<
   return unwrap(await requireSupabase().rpc('set_club_member', { p_club_id: clubId, p_user_id: userId, p_role: role, p_is_active: isActive }).single());
 }
 
+export async function leaveClub(clubId: string) {
+  const { error } = await requireSupabase().rpc('leave_club', { p_club_id: clubId });
+  if (error) throw error;
+}
+
 export async function searchPublicClubs(query: string) {
   return unwrap(await requireSupabase().rpc('search_clubs', { p_query: query.trim().slice(0, 80) }));
 }

@@ -1019,6 +1019,12 @@ export type Database = {
         };
         Returns: boolean;
       };
+      leave_club: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: undefined;
+      };
       link_player_account: {
         Args: {
           p_player_id: string;

@@ -805,5 +805,9 @@
   "Último aviso para votar: {{v0}} · solo pendientes": "Last voting reminder: {{v0}} · pending only",
   "⭐ Funcionalidad Prémium": "⭐ Premium feature",
   "El historial gratuito ya contiene 6 pruebas. Elimina una para archivar esta prueba.": "The free history already contains 6 trial players. Delete one to archive this trial.",
-  "No se pudo completar la operación con la prueba.": "The trial player operation could not be completed."
+  "No se pudo completar la operación con la prueba.": "The trial player operation could not be completed.",
+  "Abandonar club": "Leave club",
+  "¿Abandonar {{v0}}?": "Leave {{v0}}?",
+  "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "You will leave the club and your player profile will be removed from the active roster. Previous call-ups will keep your history.",
+  "este club": "this club"
 }

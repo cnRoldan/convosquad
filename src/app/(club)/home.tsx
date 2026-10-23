@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Text } from 'react-native';
 
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useClub } from '@/features/clubs/club-context';
+import { leaveClub } from '@/features/clubs/service';
 import { useAuth } from '@/features/auth/auth-context';
+import { backendErrorMessage } from '@/lib/backend-result';
 import { formatMatchDate } from '@/lib/format';
 import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
 import { clubLocalDateTime } from '@/features/call-ups/local-time';
@@ -22,7 +25,10 @@ export default function HomeScreen() {
   const requests = useRequests();
   const pathname = usePathname();
   const [clock, setClock] = useState(Date.now);
-  const { activeClub, currentMembership, roster, upcomingCallUp, hasCurrentCallUp, rosterLoading, rosterError, refreshRoster, notice } = useClub();
+  const { activeClub, currentMembership, roster, upcomingCallUp, hasCurrentCallUp, rosterLoading, rosterError, refreshRoster, notice, reloadClubs } = useClub();
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [leaveError, setLeaveError] = useState('');
   const clubId = activeClub?.id;
   const admin = currentMembership?.role === 'admin';
   const loadRatingCalls = useCallback(() => clubId ? listRatingCalls(clubId) : Promise.resolve([]), [clubId]);
@@ -37,6 +43,17 @@ export default function HomeScreen() {
     const timer = setInterval(() => setClock(Date.now()), 1000);
     return () => clearInterval(timer);
   }, [pathname]);
+  async function leaveCurrentClub() {
+    if (!clubId || currentMembership?.role !== 'player' || leaving || isDemo) return;
+    setLeaving(true); setLeaveError('');
+    try {
+      await leaveClub(clubId);
+      setConfirmingLeave(false);
+      await reloadClubs();
+      router.replace('/clubs');
+    } catch (error) { setLeaveError(backendErrorMessage(error)); }
+    finally { setLeaving(false); }
+  }
   return (
     <Screen>
       <Heading title={activeClub?.name ?? t("Tu club")} subtitle={t("Tu rol: {{v0}}.", { v0: currentMembership?.role === 'admin' ? t("capitán") : t("jugador") })} />
@@ -76,8 +93,13 @@ export default function HomeScreen() {
           onPress={() => router.push('/join-requests')} />
         <Button secondary label={t("Invitar jugadores")} onPress={() => router.push('/invitations')} />
       </Card> : null}
+      {currentMembership?.role === 'player' && !isDemo ? <Button secondary label={t("Abandonar club")} disabled={leaving} onPress={() => { setLeaveError(''); setConfirmingLeave(true); }} /> : null}
+      {leaveError ? <Body>{leaveError}</Body> : null}
       <Button secondary label={t("Cambiar de club")} onPress={() => router.replace('/clubs')} />
       {isDemo ? <Body>{t("Estás explorando un club de ejemplo.")}</Body> : null}
+      <ConfirmDialog visible={confirmingLeave} title={t("¿Abandonar {{v0}}?", { v0: activeClub?.name ?? t("este club") })}
+        description={t("Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.")}
+        confirmLabel={t("Abandonar club")} busy={leaving} onCancel={() => setConfirmingLeave(false)} onConfirm={() => { void leaveCurrentClub(); }} />
     </Screen>
   );
 }

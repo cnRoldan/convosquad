@@ -805,5 +805,9 @@
   "Último aviso para votar: {{v0}} · solo pendientes": "Letzte Abstimmungserinnerung: {{v0}} · nur ausstehende",
   "⭐ Funcionalidad Prémium": "⭐ Premium-Funktion",
   "El historial gratuito ya contiene 6 pruebas. Elimina una para archivar esta prueba.": "Der kostenlose Verlauf enthält bereits 6 Probespieler. Lösche einen, um diesen zu archivieren.",
-  "No se pudo completar la operación con la prueba.": "Der Vorgang mit dem Probespieler konnte nicht abgeschlossen werden."
+  "No se pudo completar la operación con la prueba.": "Der Vorgang mit dem Probespieler konnte nicht abgeschlossen werden.",
+  "Abandonar club": "Verein verlassen",
+  "¿Abandonar {{v0}}?": "{{v0}} verlassen?",
+  "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "Du verlässt den Verein und dein Spielerprofil wird aus dem aktiven Kader entfernt. Frühere Aufstellungen behalten deinen Verlauf.",
+  "este club": "diesen Verein"
 }
