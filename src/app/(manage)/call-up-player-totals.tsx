@@ -41,6 +41,6 @@ export default function CallUpPlayerTotalsScreen() {
 }
 const styles = StyleSheet.create({
   preview: { height: 560, borderRadius: 24, overflow: 'hidden' },
-  tint: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(9,18,14,0.35)' },
+  tint: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(9,18,14,0.35)' },
   overlay: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(3,8,6,0.48)' },
 });
