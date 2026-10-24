@@ -1,3 +1,4 @@
+import { AppVersion } from '@/components/app-version';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { Text, View } from 'react-native';
 import { ClubCrest } from '@/features/clubs/club-crest';
@@ -58,5 +59,6 @@ function ClubSelection() {
     {!isDemo ? <Button secondary label={t("Eliminar mi cuenta")} onPress={() => router.push('/delete-account')} /> : null}
     <Button secondary label={t("Política de privacidad")} onPress={() => router.push('/privacy')} />
     <Button secondary disabled={isSigningOut} label={isDemo ? t("Volver a la bienvenida") : t("Cerrar sesión")} onPress={() => { void leave(); }} />
+    <AppVersion />
   </Screen>;
 }
