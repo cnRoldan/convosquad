@@ -63,3 +63,17 @@ test('pendientes, cambios de token, revocación de membresía y cancelación se 
  const revoked=(await server("select public.prepare_call_up_push($1,$2,'published:revoked','published') as id",[club.id,call.id])).rows[0].id;await query(admin,"select * from public.set_club_member($1,$2,'player',false)",[club.id,member]);assert.equal((await server('select * from public.claim_push_deliveries($1)',[revoked])).rows.length,0);
  await query(admin,"select * from public.update_call_up($1,$2,'cancelled')",[call.id,call.starts_at]);await assert.rejects(server("select public.prepare_call_up_push($1,$2,'cancelled','published')",[club.id,call.id]),e=>e.code==='22023');
 });
+
+ test('misma instalación y token recuperan la sesión sin permitir apropiación con un solo identificador',async()=>{
+ const device='80000000-0000-4000-8000-000000000199';
+ await register(member,device,'session_recovery');
+ await assert.rejects(register(other,device,'wrong_token'),e=>e.code==='42501');
+ await assert.rejects(register(other,d3,'session_recovery'),e=>e.code==='42501');
+ await register(other,device,'session_recovery');
+ const saved=await row(other,'select * from public.push_devices where device_id=$1',[device]);
+ assert.equal(saved.user_id,other);assert.equal(saved.is_active,true);
+ assert.equal((await query(member,'select * from public.push_devices where device_id=$1',[device])).rows.length,0);
+ await query(other,'select public.deactivate_push_device($1,true)',[device]);
+ await register(member,device,'session_recovery');
+ assert.equal((await row(member,'select user_id from public.push_devices where device_id=$1',[device])).user_id,member);
+ });
