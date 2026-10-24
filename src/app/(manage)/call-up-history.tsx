@@ -20,7 +20,7 @@ export default function CallUpHistoryScreen() {
   return <Screen>
     <Heading title={t("Historial de convocatorias")} subtitle={activeClub?.name ?? ''} />
     <Body>{t("Las diez convocatorias de días anteriores más recientes, según la zona horaria del club. Solo capitanes.")}</Body>
-    <Card title={t('⭐ Funcionalidad Prémium')}>
+    <Card>
       <Body>{t('Compara la disponibilidad y el tiempo de respuesta de cada jugador.')}</Body>
       <Button label={t('Total por jugador')} onPress={() => router.push('/call-up-player-totals')} />
     </Card>
