@@ -1,6 +1,6 @@
 import { Link, router } from 'expo-router';
 import Head from 'expo-router/head';
-import { Text, View } from 'react-native';
+import { Linking, Platform, Text, View } from 'react-native';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
 import { LanguageSelector } from '@/features/i18n/language-selector';
@@ -16,7 +16,7 @@ export default function PrivacyScreen() {
   const policy = privacyPolicies[language];
   const date = new Intl.DateTimeFormat(intlLocale(), { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${privacyUpdatedAt}T12:00:00Z`));
   return <Screen>
-    <Head><title>{`${t('Política de privacidad')} · ConvoSquad`}</title><meta name="description" content={policy.intro} /></Head>
+    {Platform.OS === 'web' ? <Head><title>{`${t('Política de privacidad')} · ConvoSquad`}</title><meta name="description" content={policy.intro} /></Head> : null}
     {!session || isDemo ? <View style={{ alignSelf: 'flex-end' }}><LanguageSelector /></View> : null}
     <Heading title={t('Política de privacidad')} subtitle="ConvoSquad" />
     <Body>{t('Última actualización: {{v0}}', { v0: date })}</Body>
@@ -28,8 +28,8 @@ export default function PrivacyScreen() {
       {section.paragraphs.map(paragraph => <Body key={paragraph}>{paragraph}</Body>)}
     </Card>)}
     <Card title={t('Políticas de los proveedores')}>
-      {policy.providerLinks.map(provider => <Link key={provider.href} href={provider.href} style={linkStyle}>{provider.label}</Link>)}
-      <Link href="https://www.aepd.es/" style={linkStyle}>Agencia Española de Protección de Datos (AEPD)</Link>
+      {policy.providerLinks.map(provider => <Text key={provider.href} accessibilityRole="link" onPress={() => { void Linking.openURL(provider.href); }} style={linkStyle}>{provider.label}</Text>)}
+      <Text accessibilityRole="link" onPress={() => { void Linking.openURL('https://www.aepd.es/'); }} style={linkStyle}>Agencia Española de Protección de Datos (AEPD)</Text>
     </Card>
     <Button secondary label={t('Volver')} onPress={() => { if (router.canGoBack()) router.back(); else router.replace(session || isDemo ? '/clubs' : '/'); }} />
   </Screen>;
