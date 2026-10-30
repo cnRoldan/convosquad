@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { router } from 'expo-router';
@@ -6,6 +6,7 @@ import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
+import { shareLineupImage } from './share-image';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 import { deleteLineupPreference, loadLineup, saveLineup, saveLineupPreference } from './service';
@@ -26,6 +27,8 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
   const [layoutChanged,setLayoutChanged]=useState(false);
   const [dirty,setDirty]=useState(false);
   const [conflict,setConflict]=useState(false);
+  const [sharing,setSharing]=useState(false);
+  const pitchImageRef = useRef<View>(null);
   const editable=captain && active && !busy && !conflict;
   function change(next:Lineup) {setDocument(next);setDirty(true);}
   const reload = useCallback(async () => {
@@ -81,6 +84,12 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     } catch { setMessage('No se pudo eliminar la posición personalizada.'); }
     finally { setBusy(false); }
   }
+  async function shareImage() {
+    setSharing(true); setMessage('');
+    try { await shareLineupImage(pitchImageRef); }
+    catch { setMessage('No se pudo generar la imagen. Inténtalo de nuevo.'); }
+    finally { setSharing(false); }
+  }
   function include(id: string) {
     setDocument(d => d ? {...d,bench:[...new Set([...d.bench,id])],manualIds:[...new Set([...(d.manualIds??[]),id])],excludedIds:d.excludedIds?.filter(excludedId=>excludedId!==id)} : d);setDirty(true); setAdding(false);
   }
@@ -99,7 +108,8 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
         <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => { change(applyPreset(document, document.formation)); setLayoutChanged(false); }} />
       </View> : null}
-      <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
+      <LineupPitch ref={pitchImageRef} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
+      <Button label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing} onPress={() => void shareImage()} />
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
           {document.bench.map(id => <Pressable accessibilityRole="button" accessibilityLabel={`Gestionar ${candidates.find(p => p.id === id)?.name ?? 'jugador'} en el banquillo`} disabled={!editable} key={id} onPress={() => setBenchPlayer(id)}><PlayerToken compact player={candidates.find(p => p.id === id)} /></Pressable>)}

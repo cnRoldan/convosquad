@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { PlayerToken } from './player-token';
@@ -8,13 +8,13 @@ import { moveSlot } from './model';
 type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragging?: (dragging: boolean) => void };
 const height = 520;
 
-export function LineupPitch(props: Props) {
+export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
   const [width, setWidth] = useState(1);
-  return <View style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
+  return <View ref={imageRef} collapsable={false} style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <PitchMarkings />
     {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} />)}
   </View>;
-}
+});
 
 function PitchMarkings() {
   const line = '#E6F8D9';
