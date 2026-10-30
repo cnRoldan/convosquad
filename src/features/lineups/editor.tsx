@@ -8,7 +8,7 @@ import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
-import { loadLineup, saveLineup, saveLineupPreference } from './service';
+import { deleteLineupPreference, loadLineup, saveLineup, saveLineupPreference } from './service';
 import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup, type LineupLayout } from './model';
 
 export function LineupEditor({ clubId, callId, captain }: { clubId: string; callId: string; captain: boolean }) {
@@ -23,6 +23,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
   const [message, setMessage] = useState('');
   const [active,setActive]=useState(false);
   const [dragging,setDragging]=useState(false);
+  const [layoutChanged,setLayoutChanged]=useState(false);
   const [dirty,setDirty]=useState(false);
   const [conflict,setConflict]=useState(false);
   const editable=captain && active && !busy && !conflict;
@@ -32,7 +33,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     try {
       const data = await loadLineup(clubId, callId, captain);
       setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setRevision(data.revision); setMessage('');
-      setActive(data.active);setDirty(false);setConflict(false);
+      setActive(data.active);setDirty(false);setLayoutChanged(false);setConflict(false);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
   }, [clubId, callId, captain]);
@@ -47,7 +48,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
         if(dirty){
           if(data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{setDocument(data.document);setRevision(data.revision);}
+        }else{setDocument(data.document);setRevision(data.revision);setPreference(data.preference);setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
@@ -66,8 +67,18 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     setBusy(true);
     try {
       setPreference(await saveLineupPreference(clubId, layoutFromLineup(document)));
+      setLayoutChanged(false);
       setMessage('Posición personalizada guardada para los capitanes del club.');
     } catch { setMessage('No se pudo guardar la posición personalizada.'); }
+    finally { setBusy(false); }
+  }
+  async function deleteCustomLayout() {
+    setBusy(true);
+    try {
+      await deleteLineupPreference(clubId);
+      setPreference(null);
+      setMessage('Posición personalizada eliminada.');
+    } catch { setMessage('No se pudo eliminar la posición personalizada.'); }
     finally { setBusy(false); }
   }
   function include(id: string) {
@@ -83,12 +94,12 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
       {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <Button key={f} label={f} disabled={!editable} onPress={() => change(applyPreset(document, f))} />)}
-        {preference ? <Pressable accessibilityRole="button" accessibilityLabel="Aplicar posición personalizada" disabled={!editable} onPress={() => change(applyLayout(document, preference))} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: '#B4F16C', opacity: editable ? 1 : 0.45 }}><Text style={{ color: '#B4F16C', fontWeight: '700' }}>Personalizada</Text></Pressable> : null}
-        <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable} onPress={() => void saveCustomLayout()} />
-        <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => change(applyPreset(document, document.formation))} />
+        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <Button key={f} label={f} disabled={!editable} onPress={() => { change(applyPreset(document, f)); setLayoutChanged(false); }} />)}
+        {preference ? <><Pressable accessibilityRole="button" accessibilityLabel="Aplicar posición personalizada" disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setLayoutChanged(false); }} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: '#B4F16C', opacity: editable ? 1 : 0.45 }}><Text style={{ color: '#B4F16C', fontWeight: '700' }}>Personalizada</Text></Pressable><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
+        <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
+        <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => { change(applyPreset(document, document.formation)); setLayoutChanged(false); }} />
       </View> : null}
-      <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={change} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
+      <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
           {document.bench.map(id => <Pressable accessibilityRole="button" accessibilityLabel={`Gestionar ${candidates.find(p => p.id === id)?.name ?? 'jugador'} en el banquillo`} disabled={!editable} key={id} onPress={() => setBenchPlayer(id)}><PlayerToken compact player={candidates.find(p => p.id === id)} /></Pressable>)}

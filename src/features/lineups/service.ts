@@ -34,6 +34,11 @@ export async function saveLineupPreference(clubId: string, layout: LineupLayout)
   return unwrap(await requireSupabase().rpc('save_lineup_preference', { p_club_id: clubId, p_formation: layout.formation, p_slots: layout.slots as unknown as Json })) as unknown as LineupLayout;
 }
 
+export async function deleteLineupPreference(clubId: string) {
+  const { error } = await requireSupabase().rpc('delete_lineup_preference', { p_club_id: clubId });
+  if (error) throw error;
+}
+
 function isLineupLayout(value: unknown): value is LineupLayout {
   if (!value || typeof value !== 'object' || !('formation' in value) || !('slots' in value)) return false;
   return ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'].includes(String(value.formation)) && Array.isArray(value.slots) && value.slots.length === 11;

@@ -42,6 +42,9 @@ test('custom field layout belongs to the club and is only writable by captains',
  const saved=(await query(captain,'select public.save_lineup_preference($1,$2,$3) preference',[club,'4-3-3',slots])).rows[0].preference;
  assert.equal(saved.formation,'4-3-3');assert.deepEqual(saved.slots,slots);
  assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,saved);
+ await assert.rejects(query(outsider,'select public.delete_lineup_preference($1)',[club]),{code:'42501'});
+ await query(captain,'select public.delete_lineup_preference($1)',[club]);
+ assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{});
 });
 test('rejects moved goalkeeper and missing coordinates',async()=>{
  const moved=structuredClone(doc);moved.slots[0].x=0.6;

@@ -1092,6 +1092,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_lineup_preference: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: undefined;
+      };
       delete_my_account: {
         Args: {
           p_confirmation: string;
