@@ -34,6 +34,15 @@ test('drafts are revisioned, reject unauthorized access and incomplete publicati
  const result=(await query(captain,'select public.read_lineup($1) state',[call.id])).rows[0].state;
  assert.equal(result.revision,1);assert.deepEqual(result.document,doc);
 });
+test('custom field layout belongs to the club and is only writable by captains',async()=>{
+ const club=(await db.query('select club_id from public.call_ups where id=$1',[call.id])).rows[0].club_id;
+ const slots=doc.slots.map(({id,x,y})=>({id,x,y}));
+ assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{});
+ await assert.rejects(query(outsider,'select public.save_lineup_preference($1,$2,$3)',[club,'4-3-3',slots]),{code:'42501'});
+ const saved=(await query(captain,'select public.save_lineup_preference($1,$2,$3) preference',[club,'4-3-3',slots])).rows[0].preference;
+ assert.equal(saved.formation,'4-3-3');assert.deepEqual(saved.slots,slots);
+ assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,saved);
+});
 test('rejects moved goalkeeper and missing coordinates',async()=>{
  const moved=structuredClone(doc);moved.slots[0].x=0.6;
  await assert.rejects(query(captain,'select public.save_lineup($1,1,$2,false)',[call.id,moved]));

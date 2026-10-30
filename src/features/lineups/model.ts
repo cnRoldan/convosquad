@@ -2,6 +2,7 @@ export type Candidate = { id: string; name: string; eligible: boolean; active: b
 export type Slot = { id: number; x: number; y: number; playerId: string | null };
 export type Formation = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2';
 export type Lineup = { formation: Formation; slots: Slot[]; bench: string[]; manualIds?: string[]; excludedIds?: string[] | undefined };
+export type LineupLayout = { formation: Formation; slots: Pick<Slot, 'id' | 'x' | 'y'>[] };
 const lines: Record<Formation, number[]> = { '4-3-3': [4, 3, 3], '4-4-2': [4, 4, 2], '4-2-3-1': [4, 2, 3, 1], '3-5-2': [3, 5, 2] };
 
 export function preset(formation: Formation): Slot[] {
@@ -25,6 +26,14 @@ export function inheritLineup(previous: Lineup | null, candidates: Candidate[]):
 
 export function applyPreset(lineup: Lineup, formation: Formation): Lineup {
   return { ...lineup, formation, slots: preset(formation).map(s => ({ ...s, playerId: lineup.slots.find(old => old.id === s.id)?.playerId ?? null })) };
+}
+
+export function layoutFromLineup(lineup: Lineup): LineupLayout {
+  return { formation: lineup.formation, slots: lineup.slots.map(({ id, x, y }) => ({ id, x, y })) };
+}
+
+export function applyLayout(lineup: Lineup, layout: LineupLayout): Lineup {
+  return { ...lineup, formation: layout.formation, slots: layout.slots.map(slot => ({ ...slot, playerId: lineup.slots.find(current => current.id === slot.id)?.playerId ?? null })) };
 }
 
 export function moveSlot(lineup: Lineup, slotId: number, x: number, y: number): Lineup {

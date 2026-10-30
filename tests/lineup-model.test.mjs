@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {inheritLineup,assignPlayer,moveSlot,removeFromBench,sendToBench,preset,reconcileLineup} from '../src/features/lineups/model.ts';
+import {applyLayout,inheritLineup,assignPlayer,layoutFromLineup,moveSlot,removeFromBench,sendToBench,preset,reconcileLineup} from '../src/features/lineups/model.ts';
 test('seven previous starters retain exact coordinates; eight others remain on bench',()=>{
  const candidates=Array.from({length:15},(_,i)=>({id:String(i),name:String(i),active:true,eligible:true}));
  const previous={formation:'4-3-3',slots:preset('4-3-3').map((s,i)=>({...s,playerId:i<7?String(i):'old'+i})),bench:['7']};
@@ -13,6 +13,8 @@ test('seven previous starters retain exact coordinates; eight others remain on b
  assert.ok(sendToBench(moved,1).bench.includes('7'));
  const removed=removeFromBench(inherited,'7');assert.ok(!removed.bench.includes('7'));assert.ok(removed.excludedIds.includes('7'));
  assert.ok(!reconcileLineup(removed,candidates).bench.includes('7'));
+ const layout=layoutFromLineup(moved);layout.slots[1].x=0.12;
+ const customized=applyLayout(moved,layout);assert.equal(customized.slots[1].x,0.12);assert.equal(customized.slots[1].playerId,moved.slots[1].playerId);
 });
 test('unavailable players leave vacant slots while explicit manual selections survive',()=>{
  const candidates=[{id:'a',name:'A',active:true,eligible:false},{id:'b',name:'B',active:true,eligible:true}];

@@ -390,6 +390,29 @@ export type Database = {
           { foreignKeyName: 'club_invitations_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      club_lineup_preferences: {
+        Row: {
+          club_id: string;
+          custom_formation: string;
+          custom_slots: Json;
+          updated_at: string;
+        };
+        Insert: {
+          club_id: string;
+          custom_formation: string;
+          custom_slots: Json;
+          updated_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          custom_formation?: string;
+          custom_slots?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_lineup_preferences_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+        ];
+      };
       club_members: {
         Row: {
           id: string;
@@ -1196,6 +1219,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      read_lineup_preference: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: Json;
+      };
       redeem_club_invitation: {
         Args: {
           p_club_id: string;
@@ -1325,6 +1354,14 @@ export type Database = {
           p_publish?: boolean;
         };
         Returns: number;
+      };
+      save_lineup_preference: {
+        Args: {
+          p_club_id: string;
+          p_formation: string;
+          p_slots: Json;
+        };
+        Returns: Json;
       };
       save_player_ratings: {
         Args: {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { router } from 'expo-router';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
@@ -7,11 +7,12 @@ import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
-import { loadLineup, saveLineup } from './service';
-import { applyPreset, assignPlayer, canPublish, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup } from './model';
+import { loadLineup, saveLineup, saveLineupPreference } from './service';
+import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup, type LineupLayout } from './model';
 
 export function LineupEditor({ clubId, callId, captain }: { clubId: string; callId: string; captain: boolean }) {
   const [document, setDocument] = useState<Lineup | null>(null);
+  const [preference, setPreference] = useState<LineupLayout | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [revision, setRevision] = useState(0);
   const [slot, setSlot] = useState<number | null>(null);
@@ -29,7 +30,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     setBusy(true);
     try {
       const data = await loadLineup(clubId, callId, captain);
-      setDocument(data.document); setCandidates(data.candidates); setRevision(data.revision); setMessage('');
+      setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setRevision(data.revision); setMessage('');
       setActive(data.active);setDirty(false);setConflict(false);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
@@ -59,6 +60,15 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
         ? 'Otro capitán ha cambiado el once. Recarga antes de continuar.' : 'No se pudo guardar el once.');
     } finally { setBusy(false); }
   }
+  async function saveCustomLayout() {
+    if (!document) return;
+    setBusy(true);
+    try {
+      setPreference(await saveLineupPreference(clubId, layoutFromLineup(document)));
+      setMessage('Posición personalizada guardada para los capitanes del club.');
+    } catch { setMessage('No se pudo guardar la posición personalizada.'); }
+    finally { setBusy(false); }
+  }
   function include(id: string) {
     setDocument(d => d ? {...d,bench:[...new Set([...d.bench,id])],manualIds:[...new Set([...(d.manualIds??[]),id])],excludedIds:d.excludedIds?.filter(excludedId=>excludedId!==id)} : d);setDirty(true); setAdding(false);
   }
@@ -71,7 +81,12 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     {message ? <Body>{message}</Body> : null}
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
-      {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <Button key={f} label={f} disabled={!editable} onPress={() => change(applyPreset(document, f))} />)}</View> : null}
+      {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <Button key={f} label={f} disabled={!editable} onPress={() => change(applyPreset(document, f))} />)}
+        {preference ? <Pressable accessibilityRole="button" accessibilityLabel="Aplicar posición personalizada" disabled={!editable} onPress={() => change(applyLayout(document, preference))} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: '#B4F16C', opacity: editable ? 1 : 0.45 }}><Text style={{ color: '#B4F16C', fontWeight: '700' }}>Personalizada</Text></Pressable> : null}
+        <Button label="Guardar" disabled={!editable} onPress={() => void saveCustomLayout()} accessibilityLabel="Guardar posición personalizada" />
+        <Button secondary label="Reset" disabled={!editable} onPress={() => change(applyPreset(document, document.formation))} accessibilityLabel="Restaurar posición del preset" />
+      </View> : null}
       <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={change} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
