@@ -40,7 +40,7 @@ describe('Flujos de incorporaciones e importación', { concurrency: false }, () 
     assert.equal((await query(player, 'select username from public.profiles where id = $1', [requester])).rows.length, 0);
   });
   test('el solicitante conserva el nombre público original y pierde el admin acceso al perfil tras rechazo', async () => {
-    await query(admin, "update public.clubs set name = 'Private renamed', is_public = false where id = $1", [club.id]);
+    await database.query("update public.clubs set name = 'Private renamed', is_public = false where id = $1", [club.id]);
     const request = await row(requester, 'select * from public.join_requests where club_id = $1', [club.id]);
     assert.equal(request.club_name_snapshot, 'Public_% Club');
     await query(admin, 'select * from public.review_join_request($1, false)', [request.id]);

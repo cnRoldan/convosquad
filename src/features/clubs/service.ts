@@ -23,6 +23,10 @@ export async function updateClub(clubId: string, input: { name?: string; descrip
   return unwrap(await requireSupabase().from('clubs').update(input).eq('id', clubId).select().single());
 }
 
+export async function readClubPremium(clubId: string) {
+  return unwrap(await requireSupabase().rpc('read_club_premium', { p_club_id: clubId }));
+}
+
 export async function setClubMember(clubId: string, userId: string, role: Enums<'club_role'>, isActive: boolean) {
   return unwrap(await requireSupabase().rpc('set_club_member', { p_club_id: clubId, p_user_id: userId, p_role: role, p_is_active: isActive }).single());
 }

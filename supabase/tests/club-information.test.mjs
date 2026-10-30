@@ -12,9 +12,12 @@ before(async () => {
   call = (await query(owner, "select * from public.create_call_up($1,'2035-06-01T22:30:00Z','open')", [club.id])).rows[0];
 });
 after(async () => { await db?.close(); });
-test('capitán edita información y directorio; cambio de zona conserva la convocatoria existente', async () => {
-  const result = await query(captain, "update public.clubs set name='Actualizado',description='Descripción',timezone='Atlantic/Canary' where id=$1 returning *", [club.id]);
+test('capitán edita información y directorio; el nombre requiere Prémium', async () => {
+  await assert.rejects(query(captain, "update public.clubs set name='Actualizado' where id=$1", [club.id]), e => e.code === '42501');
+  const result = await query(captain, "update public.clubs set description='Descripción',timezone='Atlantic/Canary' where id=$1 returning *", [club.id]);
   assert.equal(result.rows[0].timezone, 'Atlantic/Canary');
+  await db.query("insert into public.club_feature_entitlements(club_id,lineup_premium_until) values($1,'infinity')", [club.id]);
+  await query(captain, "update public.clubs set name='Actualizado' where id=$1", [club.id]);
   const directory = (await db.query('select * from public.club_directory where club_id=$1', [club.id])).rows[0];
   assert.equal(directory.name, 'Actualizado'); assert.equal(directory.description, 'Descripción');
   assert.deepEqual((await db.query('select * from public.call_ups where id=$1', [call.id])).rows[0], call);

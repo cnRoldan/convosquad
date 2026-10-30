@@ -42,6 +42,7 @@ export default function LineupScreen() {
     <Card title={access.remaining === 0 ? '⭐ Funcionalidad Prémium' : 'Tu 11 aún no está disponible'}>
       <Body>{access.remaining === 0 ? 'Las 6 generaciones gratuitas del equipo ya se han utilizado. Activa la suscripción Prémium para formar el 11 en todas las convocatorias.' : 'Un capitán debe pulsar «¡Forma tu 11!» para activar esta convocatoria para el equipo.'}</Body>
       {currentMembership?.role === 'admin' && access.remaining > 0 ? <Button label={opening ? 'Abriendo Tu 11…' : `Usar generación gratuita (${access.remaining} restantes)`} disabled={opening} onPress={() => void openFreeGeneration()} /> : null}
+      {access.remaining === 0 && currentMembership?.role === 'admin' ? <Button label="Ver Prémium" onPress={() => router.push('/premium')} /> : null}
       <Button secondary label={t('Regresar')} onPress={back} />
     </Card>
   </Screen>;

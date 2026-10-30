@@ -1273,6 +1273,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['players']['Row'][];
       };
+      read_club_premium: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: boolean;
+      };
       read_lineup: {
         Args: {
           p_call_id: string;

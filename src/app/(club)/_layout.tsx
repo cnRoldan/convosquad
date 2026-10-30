@@ -17,6 +17,7 @@ export default function ClubLayout() {
       <Tabs.Screen name="roster" options={{ title: t("Plantilla"), tabBarAccessibilityLabel: t("Plantilla"), tabBarIcon: ({ color }) => <NavigationIcon name="shirt" color={color} /> }} />
       <Tabs.Screen name="call-up" options={{ title: t("Convocatoria"), tabBarAccessibilityLabel: t("Convocatoria"), tabBarIcon: ({ color }) => <NavigationIcon name="user-round-check" color={color} /> }} />
       <Tabs.Screen name="lineup" options={{ href: null }} />
+      <Tabs.Screen name="premium" options={{ href: null }} />
     </Tabs>
   </ClubAccess>;
 }
