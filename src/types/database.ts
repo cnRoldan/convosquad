@@ -12,6 +12,7 @@ export type Database = {
           body: string;
           sort_order: number;
           created_at: string;
+          lineup_guest_id: string | null;
         };
         Insert: {
           id?: string;
@@ -20,6 +21,7 @@ export type Database = {
           body: string;
           sort_order?: number;
           created_at?: string;
+          lineup_guest_id?: string | null;
         };
         Update: {
           id?: string;
@@ -28,9 +30,11 @@ export type Database = {
           body?: string;
           sort_order?: number;
           created_at?: string;
+          lineup_guest_id?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'call_up_aids_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
+          { foreignKeyName: 'call_up_aids_lineup_guest_id_fkey'; columns: ["lineup_guest_id"]; isOneToOne: false; referencedRelation: 'lineup_guests'; referencedColumns: ["id"]; },
         ];
       };
       call_up_contacts: {
@@ -62,6 +66,36 @@ export type Database = {
           { foreignKeyName: 'call_up_contacts_aid_id_fkey'; columns: ["aid_id"]; isOneToOne: true; referencedRelation: 'call_up_aids'; referencedColumns: ["id"]; },
           { foreignKeyName: 'call_up_contacts_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
           { foreignKeyName: 'call_up_contacts_trial_id_fkey'; columns: ["trial_id"]; isOneToOne: true; referencedRelation: 'call_up_trials'; referencedColumns: ["id"]; },
+        ];
+      };
+      call_up_lineups: {
+        Row: {
+          call_up_id: string;
+          club_id: string;
+          draft: Json;
+          published: Json | null;
+          revision: number;
+          updated_at: string;
+        };
+        Insert: {
+          call_up_id: string;
+          club_id: string;
+          draft: Json;
+          published?: Json | null;
+          revision?: number;
+          updated_at?: string;
+        };
+        Update: {
+          call_up_id?: string;
+          club_id?: string;
+          draft?: Json;
+          published?: Json | null;
+          revision?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'call_up_lineups_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: true; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
         ];
       };
       call_up_players: {
@@ -552,6 +586,72 @@ export type Database = {
           { foreignKeyName: 'join_requests_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      lineup_guest_calls: {
+        Row: {
+          guest_id: string;
+          call_up_id: string;
+        };
+        Insert: {
+          guest_id: string;
+          call_up_id: string;
+        };
+        Update: {
+          guest_id?: string;
+          call_up_id?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'lineup_guest_calls_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_guest_calls_guest_id_fkey'; columns: ["guest_id"]; isOneToOne: false; referencedRelation: 'lineup_guests'; referencedColumns: ["id"]; },
+        ];
+      };
+      lineup_guests: {
+        Row: {
+          id: string;
+          club_id: string;
+          call_up_id: string | null;
+          kind: string;
+          name: string;
+          retained: boolean;
+          source_trial_id: string | null;
+          trial_id: string | null;
+          aid_id: string | null;
+          notes: string | null;
+          phone: string | null;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          call_up_id?: string | null;
+          kind: string;
+          name: string;
+          retained?: boolean;
+          source_trial_id?: string | null;
+          trial_id?: string | null;
+          aid_id?: string | null;
+          notes?: string | null;
+          phone?: string | null;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          call_up_id?: string | null;
+          kind?: string;
+          name?: string;
+          retained?: boolean;
+          source_trial_id?: string | null;
+          trial_id?: string | null;
+          aid_id?: string | null;
+          notes?: string | null;
+          phone?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: 'lineup_guests_aid_id_fkey'; columns: ["aid_id"]; isOneToOne: false; referencedRelation: 'call_up_aids'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_guests_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_guests_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_guests_source_trial_id_fkey'; columns: ["source_trial_id"]; isOneToOne: false; referencedRelation: 'club_trials'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_guests_trial_id_fkey'; columns: ["trial_id"]; isOneToOne: false; referencedRelation: 'call_up_trials'; referencedColumns: ["id"]; },
+        ];
+      };
       notification_preferences: {
         Row: {
           user_id: string;
@@ -839,6 +939,17 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_up_trials']['Row'][];
       };
+      add_lineup_guest: {
+        Args: {
+          p_call_id: string;
+          p_kind: string;
+          p_name: string;
+          p_notes: string;
+          p_phone: string;
+          p_retain: boolean;
+        };
+        Returns: string;
+      };
       add_or_restore_player: {
         Args: {
           p_club_id: string;
@@ -1038,11 +1149,23 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      list_lineup_guests: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: { id: string; name: string; kind: string; retained: boolean; trial_id: string; aid_id: string; source_trial_id: string }[];
+      };
       list_rating_call_ups: {
         Args: {
           p_club_id: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      list_roster_helpers: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: { id: string; name: string }[];
       };
       prepare_call_up_push: {
         Args: {
@@ -1066,6 +1189,12 @@ export type Database = {
           p_existing_player_id?: string;
         };
         Returns: Database['public']['Tables']['players']['Row'][];
+      };
+      read_lineup: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
       };
       redeem_club_invitation: {
         Args: {
@@ -1187,6 +1316,15 @@ export type Database = {
           p_trial_id?: string;
         };
         Returns: Database['public']['Tables']['club_trials']['Row'][];
+      };
+      save_lineup: {
+        Args: {
+          p_call_id: string;
+          p_revision: number;
+          p_document: Json;
+          p_publish?: boolean;
+        };
+        Returns: number;
       };
       save_player_ratings: {
         Args: {

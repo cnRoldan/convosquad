@@ -1,0 +1,61 @@
+export type Candidate = { id: string; name: string; eligible: boolean; active: boolean; manual?: boolean };
+export type Slot = { id: number; x: number; y: number; playerId: string | null };
+export type Formation = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2';
+export type Lineup = { formation: Formation; slots: Slot[]; bench: string[]; manualIds?: string[] };
+const lines: Record<Formation, number[]> = { '4-3-3': [4, 3, 3], '4-4-2': [4, 4, 2], '4-2-3-1': [4, 2, 3, 1], '3-5-2': [3, 5, 2] };
+
+export function preset(formation: Formation): Slot[] {
+  const slots: Slot[] = [{ id: 0, x: 0.5, y: 0.9, playerId: null }];
+  lines[formation].forEach((count, row, rows) => {
+    for (let column = 0; column < count; column++) slots.push({
+      id: slots.length, x: (column + 1) / (count + 1), y: 0.72 - row * (0.57 / (rows.length - 1)), playerId: null,
+    });
+  });
+  return slots;
+}
+
+// IDs are stable roster identities, never names or call-up snapshot IDs.
+export function inheritLineup(previous: Lineup | null, candidates: Candidate[]): Lineup {
+  const eligible = new Set(candidates.filter(p => p.active && p.eligible).map(p => p.id));
+  const slots = previous ? previous.slots.map(s => ({ ...s, playerId: s.playerId && eligible.has(s.playerId) ? s.playerId : null })) : preset('4-3-3');
+  const placed = new Set(slots.flatMap(s => s.playerId ? [s.playerId] : []));
+  const bench = [...new Set([...(previous?.bench ?? []), ...eligible])].filter(id => eligible.has(id) && !placed.has(id));
+  return { formation: previous?.formation ?? '4-3-3', slots, bench };
+}
+
+export function applyPreset(lineup: Lineup, formation: Formation): Lineup {
+  return { ...lineup, formation, slots: preset(formation).map(s => ({ ...s, playerId: lineup.slots.find(old => old.id === s.id)?.playerId ?? null })) };
+}
+
+export function moveSlot(lineup: Lineup, slotId: number, x: number, y: number): Lineup {
+  if (slotId === 0 || !Number.isFinite(x) || !Number.isFinite(y)) return lineup;
+  return { ...lineup, slots: lineup.slots.map(s => s.id === slotId ? { ...s, x: Math.max(0.08, Math.min(0.92, x)), y: Math.max(0.08, Math.min(0.82, y)) } : s) };
+}
+
+export function assignPlayer(lineup: Lineup, slotId: number, playerId: string): Lineup {
+  const target = lineup.slots.find(s => s.id === slotId);
+  const source = lineup.slots.find(s => s.playerId === playerId);
+  if (!target || source?.id === target.id || (!source && !lineup.bench.includes(playerId))) return lineup;
+  return {
+    ...lineup,
+    slots: lineup.slots.map(s => s.id === slotId ? { ...s, playerId } : s.id === source?.id ? { ...s, playerId: target.playerId } : s),
+    bench: source ? lineup.bench : lineup.bench.map(id => id === playerId ? target.playerId : id).filter((id): id is string => id !== null),
+  };
+}
+
+export function sendToBench(lineup: Lineup, slotId: number): Lineup {
+  const playerId = lineup.slots.find(s => s.id === slotId)?.playerId;
+  if (!playerId) return lineup;
+  return { ...lineup, slots: lineup.slots.map(s => s.id === slotId ? { ...s, playerId: null } : s), bench: [...lineup.bench, playerId] };
+}
+
+export function canPublish(lineup: Lineup): boolean {
+  return lineup.slots.length === 11 && lineup.slots.every(s => s.playerId !== null)
+    && new Set(lineup.slots.map(s => s.playerId)).size === 11;
+}
+
+export function reconcileLineup(lineup: Lineup, candidates: Candidate[]): Lineup {
+  const manualIds = (lineup.manualIds ?? []).filter(id => candidates.some(c => c.id === id && c.active));
+  const result = inheritLineup(lineup, candidates.map(c => ({...c,eligible:c.eligible || manualIds.includes(c.id)})));
+  return {...result,manualIds};
+}

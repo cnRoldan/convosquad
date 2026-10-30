@@ -13,6 +13,7 @@ import { TrialSection } from '@/features/trials/trial-section';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { MyPlayerNotice } from '@/features/players/my-player-notice';
+import { RosterHelpers } from '@/features/lineups/roster-helpers';
 export default function RosterScreen() {
   useLanguage();
   const { activeClub, currentMembership, roster, rosterVersion, rosterLoading, notice, refreshRoster } = useClub();
@@ -74,6 +75,7 @@ export default function RosterScreen() {
     {pendingRemoval && pendingRemoval.scope === scope && admin ? <PlayerActivityDialog key={`${scope}:${pendingRemoval.id}`} player={pendingRemoval}
       onCancel={() => setPendingRemoval(null)} onSuccess={() => { setPendingRemoval(null); setRemoved(true); }} /> : null}
     <TrialSection />
+    {!isDemo && clubId ? <RosterHelpers clubId={clubId} version={rosterVersion} /> : null}
     {!isDemo ? <Button secondary label={t("Actualizar plantilla")} disabled={result.isLoading} onPress={refresh} /> : <Body>{t("Datos simulados · los cambios de la demo no se guardan.")}</Body>}
   </Screen>;
 }

@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/theme';
 import { SessionIdentity } from './session-identity';
 
-export function Screen({ children, compact = false, footer, onRefresh, refreshing = false }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode; onRefresh?: (() => void) | undefined; refreshing?: boolean }>) {
+export function Screen({ children, compact = false, footer, onRefresh, refreshing = false, scrollEnabled = true }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode; onRefresh?: (() => void) | undefined; refreshing?: boolean; scrollEnabled?: boolean }>) {
   useLanguage();
   const segments = useSegments();
   const hasHeader = segments.some(segment => segment === '(account)' || segment === '(manage)');
@@ -17,7 +17,7 @@ export function Screen({ children, compact = false, footer, onRefresh, refreshin
   return (
     <SafeAreaView style={styles.safe} edges={hasHeader ? ['left', 'right'] : ['top', 'left', 'right']}>
       <SessionIdentity compact={compact} />
-      <ScrollView alwaysBounceVertical={onRefresh ? true : undefined} refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} /> : undefined} style={{ flex: 1 }} contentContainerStyle={[styles.content, compact && styles.compactContent, footer ? { paddingBottom: footerHeight + 24 } : undefined]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustContentInsets={false} contentInsetAdjustmentBehavior="never" automaticallyAdjustKeyboardInsets>
+      <ScrollView scrollEnabled={scrollEnabled} alwaysBounceVertical={onRefresh ? true : undefined} refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} /> : undefined} style={{ flex: 1 }} contentContainerStyle={[styles.content, compact && styles.compactContent, footer ? { paddingBottom: footerHeight + 24 } : undefined]} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustContentInsets={false} contentInsetAdjustmentBehavior="never" automaticallyAdjustKeyboardInsets>
         {children}
       </ScrollView>
       {footer ? <View pointerEvents="box-none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0 }} onLayout={event => setFooterHeight(Math.ceil(event.nativeEvent.layout.height))}>{footer}</View> : null}

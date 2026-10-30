@@ -1,13 +1,15 @@
 import { useCallback, useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { LineupEditor } from '@/features/lineups/editor';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { useClub } from '@/features/clubs/club-context';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { colors } from '@/theme';
 
 export default function LineupScreen() {
-  useLanguage(); const { activeClub } = useClub();
+  useLanguage(); const { activeClub, currentMembership } = useClub();
+  const { id } = useLocalSearchParams<{ id?: string }>();
   const [noticeVisible, setNoticeVisible] = useState(true);
   useFocusEffect(useCallback(() => {
     setNoticeVisible(true);
@@ -16,6 +18,7 @@ export default function LineupScreen() {
     setNoticeVisible(false);
     requestAnimationFrame(() => router.replace('/call-up'));
   };
+  if (id && activeClub) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}`} clubId={activeClub.id} callId={id} captain={currentMembership?.role === 'admin'} />;
   return <Screen compact>
     <Heading title={t('Tu 11')} subtitle={activeClub?.name ?? ''} />
     <View style={styles.pitch}>
