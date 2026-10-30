@@ -393,21 +393,24 @@ export type Database = {
       club_lineup_preferences: {
         Row: {
           club_id: string;
-          custom_formation: string;
-          custom_slots: Json;
+          custom_formation: string | null;
+          custom_slots: Json | null;
           updated_at: string;
+          player_color: string;
         };
         Insert: {
           club_id: string;
-          custom_formation: string;
-          custom_slots: Json;
+          custom_formation?: string | null;
+          custom_slots?: Json | null;
           updated_at?: string;
+          player_color?: string;
         };
         Update: {
           club_id?: string;
-          custom_formation?: string;
-          custom_slots?: Json;
+          custom_formation?: string | null;
+          custom_slots?: Json | null;
           updated_at?: string;
+          player_color?: string;
         };
         Relationships: [
           { foreignKeyName: 'club_lineup_preferences_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -1405,6 +1408,13 @@ export type Database = {
           p_is_active: boolean;
         };
         Returns: Database['public']['Tables']['club_members']['Row'][];
+      };
+      set_lineup_player_color: {
+        Args: {
+          p_club_id: string;
+          p_color: string;
+        };
+        Returns: string;
       };
       set_notification_preferences: {
         Args: {

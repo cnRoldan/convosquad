@@ -18,7 +18,7 @@ export default function LineupScreen() {
     setNoticeVisible(false);
     requestAnimationFrame(() => router.replace('/call-up'));
   };
-  if (id && activeClub) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}`} clubId={activeClub.id} callId={id} captain={currentMembership?.role === 'admin'} />;
+  if (id && activeClub) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}`} clubId={activeClub.id} clubName={activeClub.name} crestPath={activeClub.crestPath} callId={id} captain={currentMembership?.role === 'admin'} />;
   return <Screen compact>
     <Heading title={t('Tu 11')} subtitle={activeClub?.name ?? ''} />
     <View style={styles.pitch}>

@@ -1,9 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 import type { Candidate } from './model';
 
-export function PlayerToken({ player, emptyLabel = '+', compact = false }: { player?: Candidate | undefined; emptyLabel?: string; compact?: boolean }) {
+export function PlayerToken({ player, emptyLabel = '+', compact = false, color = '#B4F16C' }: { player?: Candidate | undefined; emptyLabel?: string; compact?: boolean; color?: string }) {
   return <View style={[styles.container, compact && styles.compact]}>
-    <View style={[styles.circle, !player && styles.empty]}>
+    <View style={[styles.circle, player ? { backgroundColor: color } : styles.empty]}>
       <Text style={styles.number}>{player ? player.jerseyNumber ?? '—' : emptyLabel}</Text>
     </View>
     {player ? <Text numberOfLines={2} style={styles.name}>{player.name}</Text> : null}

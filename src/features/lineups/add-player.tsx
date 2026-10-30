@@ -11,8 +11,8 @@ const filters: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todos' }, { value: 'attackers', label: 'Delanteros' }, { value: 'midfielders', label: 'Centrocampistas' },
   { value: 'centre_backs', label: 'Defensas' }, { value: 'wide_backs', label: 'Carrileros' }, { value: 'goalkeepers', label: 'Porteros' }, { value: 'backups', label: 'Backups' },
 ];
-export function AddLineupPlayer({ candidates, select, create, close }: {
-  candidates: Candidate[]; select: (id: string) => void; create: (input: GuestInput) => Promise<void>; close: () => void;
+export function AddLineupPlayer({ candidates, playerColor, select, create, close }: {
+  candidates: Candidate[]; playerColor: string; select: (id: string) => void; create: (input: GuestInput) => Promise<void>; close: () => void;
 }) {
   const [mode, setMode] = useState<'roster' | 'aid' | 'trial'>('roster');
   const [filter, setFilter] = useState<Filter>('all');
@@ -31,7 +31,7 @@ export function AddLineupPlayer({ candidates, select, create, close }: {
       <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: '85%' }}><Card title="Añadir al banquillo">
         {mode === 'roster' ? <><Options value={filter} onChange={setFilter} disabled={busy} options={filters} />
           <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 4, paddingVertical: 8 }} accessibilityLabel="Elegir jugador para el banquillo">
-            {visible.map(player => <Pressable accessibilityRole="button" accessibilityLabel={`Añadir ${player.name} al banquillo`} disabled={busy} key={player.id} onPress={() => select(player.id)} style={{ opacity: busy ? 0.45 : 1 }}><PlayerToken compact player={player} /></Pressable>)}
+            {visible.map(player => <Pressable accessibilityRole="button" accessibilityLabel={`Añadir ${player.name} al banquillo`} disabled={busy} key={player.id} onPress={() => select(player.id)} style={{ opacity: busy ? 0.45 : 1 }}><PlayerToken compact color={playerColor} player={player} /></Pressable>)}
           </ScrollView>
           {!visible.length ? <Body>No hay jugadores en esta categoría.</Body> : null}
         </> : <>
