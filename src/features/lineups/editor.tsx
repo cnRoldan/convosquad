@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { router } from 'expo-router';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
+import { IconButton } from '@/components/icon-button';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
 import { requireSupabase } from '@/lib/supabase';
@@ -84,8 +85,8 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
       {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
         {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <Button key={f} label={f} disabled={!editable} onPress={() => change(applyPreset(document, f))} />)}
         {preference ? <Pressable accessibilityRole="button" accessibilityLabel="Aplicar posición personalizada" disabled={!editable} onPress={() => change(applyLayout(document, preference))} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 12, borderWidth: 1, borderColor: '#B4F16C', opacity: editable ? 1 : 0.45 }}><Text style={{ color: '#B4F16C', fontWeight: '700' }}>Personalizada</Text></Pressable> : null}
-        <Button label="Guardar" disabled={!editable} onPress={() => void saveCustomLayout()} accessibilityLabel="Guardar posición personalizada" />
-        <Button secondary label="Reset" disabled={!editable} onPress={() => change(applyPreset(document, document.formation))} accessibilityLabel="Restaurar posición del preset" />
+        <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable} onPress={() => void saveCustomLayout()} />
+        <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => change(applyPreset(document, document.formation))} />
       </View> : null}
       <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={change} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
       <Card title="Banquillo">

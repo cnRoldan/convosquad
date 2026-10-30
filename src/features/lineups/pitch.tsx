@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { PlayerToken } from './player-token';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
@@ -10,11 +11,33 @@ const height = 520;
 export function LineupPitch(props: Props) {
   const [width, setWidth] = useState(1);
   return <View style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
-    <View pointerEvents="none" style={styles.half} />
-    <View pointerEvents="none" style={styles.circle} />
-    <View pointerEvents="none" style={styles.goal} />
+    <PitchMarkings />
     {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} />)}
   </View>;
+}
+
+function PitchMarkings() {
+  const line = '#E6F8D9';
+  return <Svg pointerEvents="none" width="100%" height="100%" viewBox="0 0 100 160" preserveAspectRatio="none" style={StyleSheet.absoluteFill} accessible={false}>
+    <Rect width="100" height="20" fill="#267A40" />
+    <Rect y="20" width="100" height="20" fill="#216F3A" />
+    <Rect y="40" width="100" height="20" fill="#267A40" />
+    <Rect y="60" width="100" height="20" fill="#216F3A" />
+    <Rect y="80" width="100" height="20" fill="#267A40" />
+    <Rect y="100" width="100" height="20" fill="#216F3A" />
+    <Rect y="120" width="100" height="20" fill="#267A40" />
+    <Rect y="140" width="100" height="20" fill="#216F3A" />
+    <Rect x="5" y="5" width="90" height="150" fill="none" stroke={line} strokeWidth="1.2" />
+    <Path d="M5 80h90M36 5v10h28V5M18 5v27h64V5M5 14a9 9 0 0 0 9-9M95 14a9 9 0 0 1-9-9" fill="none" stroke={line} strokeWidth="1.2" />
+    <Path d="M5 146a9 9 0 0 1 9 9M95 146a9 9 0 0 0-9 9M36 155v-10h28v10M18 155v-27h64v27" fill="none" stroke={line} strokeWidth="1.2" />
+    <Rect x="38" y="1" width="24" height="4" fill="none" stroke={line} strokeWidth="1.2" />
+    <Rect x="38" y="155" width="24" height="4" fill="none" stroke={line} strokeWidth="1.2" />
+    <Circle cx="50" cy="80" r="14" fill="none" stroke={line} strokeWidth="1.2" />
+    <Circle cx="50" cy="80" r="1" fill={line} />
+    <Circle cx="50" cy="22" r="1" fill={line} />
+    <Circle cx="50" cy="138" r="1" fill={line} />
+    <Path d="M40 32a11 11 0 0 0 20 0M40 128a11 11 0 0 1 20 0" fill="none" stroke={line} strokeWidth="1.2" />
+  </Svg>;
 }
 
 function Position(props: Props & { slot: Slot; width: number }) {
@@ -45,10 +68,7 @@ function Position(props: Props & { slot: Slot; width: number }) {
   </View>;
 }
 const styles = StyleSheet.create({
-  pitch: { height, borderRadius: 20, borderWidth: 2, borderColor: '#DDF8D2', backgroundColor: '#286840', overflow: 'hidden' },
-  half: { position: 'absolute', top: '50%', left: 0, right: 0, height: 2, backgroundColor: '#DDF8D2' },
-  circle: { position: 'absolute', top: '50%', left: '50%', marginLeft: -50, marginTop: -50, width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: '#DDF8D2' },
-  goal: { position: 'absolute', bottom: 0, left: '25%', width: '50%', height: 72, borderWidth: 2, borderColor: '#DDF8D2' },
+  pitch: { height, borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
 });

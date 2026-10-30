@@ -16,6 +16,7 @@ const paths = {
   info: 'M12 17v-6M12 7h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   refresh: 'M3 11a9 9 0 0115-6l3 3M21 3v5h-5M21 13a9 9 0 01-15 6l-3-3M3 21v-5h5',
   save: 'M4 3h13l4 4v14H3V3h1zM7 3v6h10V3M7 21v-8h10v8',
+  eraser: 'm7 21-4-4a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l6 6a2 2 0 0 1 0 3l-7 7H7zm1-6 4 4m-4-4 5-5 4 4-5 5',
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
 } as const;
 
