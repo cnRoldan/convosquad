@@ -8,13 +8,14 @@ import { AddLineupPlayer, type GuestInput } from './add-player';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 import { loadLineup, saveLineup } from './service';
-import { applyPreset, assignPlayer, canPublish, reconcileLineup, sendToBench, type Candidate, type Formation, type Lineup } from './model';
+import { applyPreset, assignPlayer, canPublish, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup } from './model';
 
 export function LineupEditor({ clubId, callId, captain }: { clubId: string; callId: string; captain: boolean }) {
   const [document, setDocument] = useState<Lineup | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [revision, setRevision] = useState(0);
   const [slot, setSlot] = useState<number | null>(null);
+  const [benchPlayer, setBenchPlayer] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -37,7 +38,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
   useEffect(()=>{
     let live=true;
     const timer=setInterval(()=>{
-      if(busy||dragging||adding||slot!==null) return;
+      if(busy||dragging||adding||slot!==null||benchPlayer!==null) return;
       void loadLineup(clubId,callId,captain).then(data=>{
         if(!live) return;
         setActive(data.active);setCandidates(data.candidates);
@@ -48,7 +49,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
-  },[clubId,callId,captain,busy,dragging,adding,slot,dirty,revision]);
+  },[clubId,callId,captain,busy,dragging,adding,slot,benchPlayer,dirty,revision]);
   async function save(publish: boolean) {
     if (!document) return;
     setBusy(true);
@@ -59,7 +60,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     } finally { setBusy(false); }
   }
   function include(id: string) {
-    setDocument(d => d ? {...d,bench:[...new Set([...d.bench,id])],manualIds:[...new Set([...(d.manualIds??[]),id])]} : d);setDirty(true); setAdding(false);
+    setDocument(d => d ? {...d,bench:[...new Set([...d.bench,id])],manualIds:[...new Set([...(d.manualIds??[]),id])],excludedIds:d.excludedIds?.filter(excludedId=>excludedId!==id)} : d);setDirty(true); setAdding(false);
   }
   async function create(input: GuestInput) {
     const id=unwrap(await requireSupabase().rpc('add_lineup_guest',{p_call_id:callId,p_kind:input.kind,p_name:input.name,p_notes:input.notes,p_phone:input.phone,p_retain:input.retain}));
@@ -74,7 +75,7 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
       <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={change} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
-          {document.bench.map(id => <PlayerToken compact key={id} player={candidates.find(p => p.id === id)} />)}
+          {document.bench.map(id => <Pressable accessibilityRole="button" accessibilityLabel={`Gestionar ${candidates.find(p => p.id === id)?.name ?? 'jugador'} en el banquillo`} disabled={!editable} key={id} onPress={() => setBenchPlayer(id)}><PlayerToken compact player={candidates.find(p => p.id === id)} /></Pressable>)}
           {captain ? <Pressable accessibilityRole="button" accessibilityLabel="Añadir al banquillo" disabled={!editable} onPress={()=>setAdding(true)} style={{opacity:editable?1:0.45}}><PlayerToken compact /></Pressable> : null}
         </ScrollView>
       </Card>
@@ -87,10 +88,23 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><ScrollView style={{ maxHeight: '80%' }}><Card title="Cambiar jugador">
         {document && slot !== null ? <>
           {document.slots.find(s=>s.id===slot)?.playerId ? <Button label="Mandar al banquillo" disabled={!editable} onPress={() => { change(sendToBench(document, slot)); setSlot(null); }} />:null}
-          {candidates.filter(p => document.bench.includes(p.id) || document.slots.some(s => s.playerId === p.id)).map(p => <Button secondary disabled={!editable} key={p.id} label={p.name} onPress={() => { change(assignPlayer(document, slot, p.id)); setSlot(null); }} />)}
+          <Body>Banquillo</Body>
+          <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 4, paddingVertical: 8 }} accessibilityLabel="Elegir jugador del banquillo">
+            {document.bench.map(id => <Pressable accessibilityRole="button" accessibilityLabel={`Elegir ${candidates.find(p => p.id === id)?.name ?? 'jugador'}`} disabled={!editable} key={id} onPress={() => { change(assignPlayer(document, slot, id)); setSlot(null); }}><PlayerToken compact player={candidates.find(p => p.id === id)} /></Pressable>)}
+          </ScrollView>
+          {document.slots.some(s => s.id !== slot && s.playerId) ? <><Body>Campo</Body><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 4, paddingVertical: 8 }} accessibilityLabel="Intercambiar con jugador del campo">
+            {document.slots.filter(s => s.id !== slot && s.playerId).map(s => { const player = candidates.find(p => p.id === s.playerId); return <Pressable accessibilityRole="button" accessibilityLabel={`Intercambiar con ${player?.name ?? 'jugador'}`} disabled={!editable} key={s.id} onPress={() => { if (s.playerId) { change(assignPlayer(document, slot, s.playerId)); setSlot(null); } }}><PlayerToken compact player={player} /></Pressable>; })}
+          </ScrollView></> : null}
         </> : null}
         <Button label="Cerrar" onPress={() => setSlot(null)} />
       </Card></ScrollView></View>
+    </Modal>
+    <Modal transparent visible={benchPlayer !== null} onRequestClose={() => setBenchPlayer(null)}>
+      <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><Card title="Jugador en el banquillo">
+        {benchPlayer ? <View style={{ alignItems: 'center', paddingVertical: 8 }}><PlayerToken player={candidates.find(p => p.id === benchPlayer)} /></View> : null}
+        <Button label="Quitar del banquillo" disabled={!editable} onPress={() => { if (document && benchPlayer) change(removeFromBench(document, benchPlayer)); setBenchPlayer(null); }} />
+        <Button secondary label="Cerrar" onPress={() => setBenchPlayer(null)} />
+      </Card></View>
     </Modal>
   </Screen>;
 }

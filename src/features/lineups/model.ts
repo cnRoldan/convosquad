@@ -1,7 +1,7 @@
 export type Candidate = { id: string; name: string; eligible: boolean; active: boolean; manual?: boolean; jerseyNumber?: number | null | undefined };
 export type Slot = { id: number; x: number; y: number; playerId: string | null };
 export type Formation = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2';
-export type Lineup = { formation: Formation; slots: Slot[]; bench: string[]; manualIds?: string[] };
+export type Lineup = { formation: Formation; slots: Slot[]; bench: string[]; manualIds?: string[]; excludedIds?: string[] | undefined };
 const lines: Record<Formation, number[]> = { '4-3-3': [4, 3, 3], '4-4-2': [4, 4, 2], '4-2-3-1': [4, 2, 3, 1], '3-5-2': [3, 5, 2] };
 
 export function preset(formation: Formation): Slot[] {
@@ -40,13 +40,19 @@ export function assignPlayer(lineup: Lineup, slotId: number, playerId: string): 
     ...lineup,
     slots: lineup.slots.map(s => s.id === slotId ? { ...s, playerId } : s.id === source?.id ? { ...s, playerId: target.playerId } : s),
     bench: source ? lineup.bench : lineup.bench.map(id => id === playerId ? target.playerId : id).filter((id): id is string => id !== null),
+    excludedIds: lineup.excludedIds?.filter(id => id !== playerId),
   };
 }
 
 export function sendToBench(lineup: Lineup, slotId: number): Lineup {
   const playerId = lineup.slots.find(s => s.id === slotId)?.playerId;
   if (!playerId) return lineup;
-  return { ...lineup, slots: lineup.slots.map(s => s.id === slotId ? { ...s, playerId: null } : s), bench: [...lineup.bench, playerId] };
+  return { ...lineup, slots: lineup.slots.map(s => s.id === slotId ? { ...s, playerId: null } : s), bench: [...lineup.bench, playerId], excludedIds: lineup.excludedIds?.filter(id => id !== playerId) };
+}
+
+export function removeFromBench(lineup: Lineup, playerId: string): Lineup {
+  if (!lineup.bench.includes(playerId)) return lineup;
+  return { ...lineup, bench: lineup.bench.filter(id => id !== playerId), excludedIds: [...new Set([...(lineup.excludedIds ?? []), playerId])] };
 }
 
 export function canPublish(lineup: Lineup): boolean {
@@ -56,6 +62,8 @@ export function canPublish(lineup: Lineup): boolean {
 
 export function reconcileLineup(lineup: Lineup, candidates: Candidate[]): Lineup {
   const manualIds = (lineup.manualIds ?? []).filter(id => candidates.some(c => c.id === id && c.active));
-  const result = inheritLineup(lineup, candidates.map(c => ({...c,eligible:c.eligible || manualIds.includes(c.id)})));
-  return {...result,manualIds};
+  const excludedIds = (lineup.excludedIds ?? []).filter(id => candidates.some(c => c.id === id && c.active));
+  const eligibleCandidates = candidates.map(c => ({...c,eligible:(c.eligible || manualIds.includes(c.id)) && !excludedIds.includes(c.id)}));
+  const result = inheritLineup(lineup, eligibleCandidates);
+  return {...result,manualIds,excludedIds};
 }
