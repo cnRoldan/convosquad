@@ -6,19 +6,46 @@ import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { useClub } from '@/features/clubs/club-context';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { colors } from '@/theme';
+import { activateLineupAccess, readLineupAccess, type LineupAccess } from '@/features/lineups/service';
 
 export default function LineupScreen() {
   useLanguage(); const { activeClub, currentMembership } = useClub();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const [noticeVisible, setNoticeVisible] = useState(true);
+  const [access, setAccess] = useState<LineupAccess | null>(null);
+  const [opening, setOpening] = useState(false);
   useFocusEffect(useCallback(() => {
     setNoticeVisible(true);
-  }, []));
+    if (!id || !activeClub) return;
+    let active = true;
+    void readLineupAccess(id).then(value => { if (active) setAccess(value); }).catch(() => { if (active) setAccess({ activated: false, premium: false, remaining: 0, allowed: false }); });
+    return () => { active = false; };
+  }, [id, activeClub]));
   const back = () => {
     setNoticeVisible(false);
     requestAnimationFrame(() => router.replace('/call-up'));
   };
-  if (id && activeClub) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}`} clubId={activeClub.id} clubName={activeClub.name} crestPath={activeClub.crestPath} callId={id} captain={currentMembership?.role === 'admin'} />;
+  async function openFreeGeneration() {
+    if (!id) return;
+    setOpening(true);
+    try { setAccess(await activateLineupAccess(id)); }
+    finally { setOpening(false); }
+  }
+  if (id && activeClub && access?.allowed) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}`} clubId={activeClub.id} clubName={activeClub.name} crestPath={activeClub.crestPath} callId={id} captain={currentMembership?.role === 'admin'} />;
+  if (id && activeClub && access) return <Screen compact>
+    <Heading title={t('Tu 11')} subtitle={activeClub.name} />
+    <View style={styles.pitch}>
+      <View style={styles.half} /><View style={styles.circle} /><View style={[styles.box, styles.topBox]} /><View style={[styles.box, styles.bottomBox]} />
+      {[['12%', '46%'], ['30%', '18%'], ['30%', '72%'], ['48%', '34%'], ['48%', '58%'], ['68%', '12%'], ['68%', '78%'], ['83%', '45%']].map(([top, left], index) => <View key={index} style={[styles.player, { top: top as `${number}%`, left: left as `${number}%` }]} />)}
+      <View style={styles.blur} />
+    </View>
+    <Card title={access.remaining === 0 ? '⭐ Funcionalidad Prémium' : 'Tu 11 aún no está disponible'}>
+      <Body>{access.remaining === 0 ? 'Las 6 generaciones gratuitas del equipo ya se han utilizado. Activa la suscripción Prémium para formar el 11 en todas las convocatorias.' : 'Un capitán debe pulsar «¡Forma tu 11!» para activar esta convocatoria para el equipo.'}</Body>
+      {currentMembership?.role === 'admin' && access.remaining > 0 ? <Button label={opening ? 'Abriendo Tu 11…' : `Usar generación gratuita (${access.remaining} restantes)`} disabled={opening} onPress={() => void openFreeGeneration()} /> : null}
+      <Button secondary label={t('Regresar')} onPress={back} />
+    </Card>
+  </Screen>;
+  if (id && activeClub) return <Screen compact><Heading title={t('Tu 11')} subtitle={activeClub.name} /><Body>Cargando acceso…</Body></Screen>;
   return <Screen compact>
     <Heading title={t('Tu 11')} subtitle={activeClub?.name ?? ''} />
     <View style={styles.pitch}>

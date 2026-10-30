@@ -29,6 +29,7 @@ import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
 import type { Tables } from '@/types/database';
+import { activateLineupAccess } from '@/features/lineups/service';
 
 export default function CallUpScreen() {
   useLanguage();
@@ -49,6 +50,7 @@ export default function CallUpScreen() {
   const [pending, setPending] = useState<{ scope: string; id: string; availability: CallUpPlayer['availability']; saving: boolean; source: unknown } | null>(null);
   const [aidsRevision, setAidsRevision] = useState(0);
   const [showInfo, setShowInfo] = useState(false);
+  const [openingLineup, setOpeningLineup] = useState(false);
   const localDate = clubLocalDateTime(activeClub?.timezone ?? 'Europe/Madrid').date;
   const enabled = Boolean(session && clubId && !isDemo);
   const loadCalls = useCallback(() => clubId ? listCurrentCallUps(clubId) : Promise.resolve([]), [clubId]);
@@ -131,6 +133,16 @@ export default function CallUpScreen() {
   const availabilityFooter = !historical && ownPlayer && call && !snapshots.error && responseOptions.some(status => canRespondToPlayer(ownPlayer, session?.user.id, call, clubLocalDateTime(call.timezone).date, isDemo, clock, status))
     ? <AvailabilityActions votingClosed={votingClosed} decisionLock={decisionLock} player={ownPlayer} disabled={Boolean(currentPending?.saving) || snapshots.isLoading || remaining > 0}
       feedback={remaining > 0 ? { text: t("Podrás cambiar tu voto en {{v0}} s.", { v0: remaining }), error: false } : responseFeedback} onRespond={respond} /> : null;
+  async function openLineup() {
+    if (!call) return;
+    if (!admin) { router.push({ pathname: '/lineup', params: { id: call.id } }); return; }
+    setOpeningLineup(true);
+    try {
+      await activateLineupAccess(call.id);
+      router.push({ pathname: '/lineup', params: { id: call.id } });
+    } catch { setNotice('No se pudo abrir Tu 11. Inténtalo de nuevo.'); }
+    finally { setOpeningLineup(false); }
+  }
   return <Screen compact footer={availabilityFooter} onRefresh={enabled ? refresh : undefined} refreshing={calls.isLoading || snapshots.isLoading || contacts.isLoading}>
     {historical ? <View style={styles.toolbar}>
       <IconButton icon="back" label={t("Volver a la convocatoria actual")} onPress={returnToCurrent} />
@@ -156,7 +168,7 @@ export default function CallUpScreen() {
       <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callUpStatusLabel(call, clock, historical))}</Text>
       {admin && call.evaluation_at && historical ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
       {votingClosed && !historical ? <Body>{t("El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.")}</Body> : null}
-      {!historical && (call.status === 'open' || call.status === 'closed') ? <Button label={admin ? t('¡Forma tu 11!') : t('Consulta el 11')} onPress={() => router.push({ pathname: '/lineup', params: { id: call.id } })} /> : null}
+      {!historical && (call.status === 'open' || call.status === 'closed') ? <Button label={openingLineup ? 'Abriendo Tu 11…' : admin ? t('¡Forma tu 11!') : t('Consulta el 11')} disabled={openingLineup} onPress={() => void openLineup()} /> : null}
       {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onDeleted={() => handleDeleted(call.id)} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? "Convocatoria actualizada. La fotografía y respuestas se conservan."); refreshRoster(); refresh(); }} /> : null}
       {admin && contacts.error ? <Message error>{t("No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.")}</Message> : null}
       {snapshots.error ? <Body>{t("Respuestas no disponibles.")}</Body> : <CompactRoster key={responseScope} players={players}

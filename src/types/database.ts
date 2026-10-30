@@ -351,6 +351,26 @@ export type Database = {
           { foreignKeyName: 'club_directory_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
         ];
       };
+      club_feature_entitlements: {
+        Row: {
+          club_id: string;
+          lineup_premium_until: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          club_id: string;
+          lineup_premium_until?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          lineup_premium_until?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_feature_entitlements_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+        ];
+      };
       club_invitations: {
         Row: {
           id: string;
@@ -388,6 +408,31 @@ export type Database = {
         Relationships: [
           { foreignKeyName: 'club_invitations_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
           { foreignKeyName: 'club_invitations_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      club_lineup_accesses: {
+        Row: {
+          call_up_id: string;
+          club_id: string;
+          activated_at: string;
+          activated_by: string | null;
+        };
+        Insert: {
+          call_up_id: string;
+          club_id: string;
+          activated_at?: string;
+          activated_by?: string | null;
+        };
+        Update: {
+          call_up_id?: string;
+          club_id?: string;
+          activated_at?: string;
+          activated_by?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_lineup_accesses_activated_by_fkey'; columns: ["activated_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'club_lineup_accesses_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: true; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'club_lineup_accesses_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
         ];
       };
       club_lineup_preferences: {
@@ -949,6 +994,12 @@ export type Database = {
         Args: Record<string, never>;
         Returns: { club_id: string; club_name: string }[];
       };
+      activate_lineup_access: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
+      };
       add_call_up_trial: {
         Args: {
           p_call_up_id: string;
@@ -1223,6 +1274,12 @@ export type Database = {
         Returns: Database['public']['Tables']['players']['Row'][];
       };
       read_lineup: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
+      };
+      read_lineup_access: {
         Args: {
           p_call_id: string;
         };

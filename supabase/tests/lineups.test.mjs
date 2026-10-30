@@ -28,11 +28,26 @@ test('manual guests create snapshots and retain roster entries without exposing 
 test('drafts are revisioned, reject unauthorized access and incomplete publication',async()=>{
  await assert.rejects(query(outsider,'select public.read_lineup($1)',[call.id]),{code:'42501'});
  await assert.rejects(query(outsider,'select public.save_lineup($1,0,$2,false)',[call.id,doc]),{code:'42501'});
+ const access=(await query(captain,'select public.activate_lineup_access($1) access',[call.id])).rows[0].access;
+ assert.deepEqual(access,{activated:true,premium:false,remaining:5,allowed:true});
+ assert.deepEqual((await query(captain,'select public.activate_lineup_access($1) access',[call.id])).rows[0].access,access);
  assert.equal((await query(captain,'select public.save_lineup($1,0,$2,false) revision',[call.id,doc])).rows[0].revision,1);
  await assert.rejects(query(captain,'select public.save_lineup($1,0,$2,false)',[call.id,doc]),{code:'40001'});
  await assert.rejects(query(captain,'select public.save_lineup($1,1,$2,true)',[call.id,doc]));
  const result=(await query(captain,'select public.read_lineup($1) state',[call.id])).rows[0].state;
  assert.equal(result.revision,1);assert.deepEqual(result.document,doc);
+});
+test('six free generations are shared by the club and a seventh remains locked',async()=>{
+ const club=(await db.query('select club_id from public.call_ups where id=$1',[call.id])).rows[0].club_id;
+ for(let index=2;index<=6;index++) {
+   const next=(await query(captain,"select * from public.create_call_up($1,$2,'open')",[club,`2035-09-0${index}T20:00:00Z`])).rows[0];
+   const access=(await query(captain,'select public.activate_lineup_access($1) access',[next.id])).rows[0].access;
+   assert.equal(access.allowed,true); assert.equal(access.remaining,6-index);
+ }
+ const seventh=(await query(captain,"select * from public.create_call_up($1,'2035-09-07T20:00:00Z','open')",[club])).rows[0];
+ const locked=(await query(captain,'select public.activate_lineup_access($1) access',[seventh.id])).rows[0].access;
+ assert.deepEqual(locked,{activated:false,premium:false,remaining:0,allowed:false});
+ await assert.rejects(query(captain,'select public.read_lineup($1)',[seventh.id]),{code:'42501'});
 });
 test('custom field layout belongs to the club and is only writable by captains',async()=>{
  const club=(await db.query('select club_id from public.call_ups where id=$1',[call.id])).rows[0].club_id;

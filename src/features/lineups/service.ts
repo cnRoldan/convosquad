@@ -6,6 +6,16 @@ import { listPlayers } from '@/features/players/service';
 import type { Json } from '@/types/database';
 import { inheritLineup, reconcileLineup, type Candidate, type Lineup, type LineupLayout } from './model';
 
+export type LineupAccess = { activated: boolean; premium: boolean; remaining: number; allowed: boolean };
+
+export async function readLineupAccess(callId: string): Promise<LineupAccess> {
+  return unwrap(await requireSupabase().rpc('read_lineup_access', { p_call_id: callId })) as unknown as LineupAccess;
+}
+
+export async function activateLineupAccess(callId: string): Promise<LineupAccess> {
+  return unwrap(await requireSupabase().rpc('activate_lineup_access', { p_call_id: callId })) as unknown as LineupAccess;
+}
+
 export async function loadLineup(clubId: string, callId: string, captain: boolean) {
   const [players, roster, saved, guests, trials, aids, rosterTrials, call, preference] = await Promise.all([
     listCallUpPlayers(callId), listPlayers(clubId),
