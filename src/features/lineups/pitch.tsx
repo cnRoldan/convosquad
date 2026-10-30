@@ -39,8 +39,8 @@ function Position(props: Props & { slot: Slot; width: number }) {
   }));
   const player = props.candidates.find(p => p.id === props.slot.playerId);
   return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * height - 24 }]}>
-    <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : (props.slot.id === 0 ? 'Portero: posición vacía' : 'Posición vacía')} style={styles.target}>
-      <PlayerToken player={player} emptyLabel={props.slot.id === 0 ? 'POR' : '+'} />
+    <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : 'Posición vacía'} style={styles.target}>
+      <PlayerToken player={player} />
     </Pressable>
   </View>;
 }
