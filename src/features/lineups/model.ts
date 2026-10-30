@@ -1,4 +1,4 @@
-export type Candidate = { id: string; name: string; eligible: boolean; active: boolean; manual?: boolean };
+export type Candidate = { id: string; name: string; eligible: boolean; active: boolean; manual?: boolean; jerseyNumber?: number | null | undefined };
 export type Slot = { id: number; x: number; y: number; playerId: string | null };
 export type Formation = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2';
 export type Lineup = { formation: Formation; slots: Slot[]; bench: string[]; manualIds?: string[] };

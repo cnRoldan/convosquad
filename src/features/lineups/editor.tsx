@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Modal, ScrollView, View } from 'react-native';
+import { Modal, Pressable, ScrollView, View } from 'react-native';
+import { PlayerToken } from './player-token';
 import { router } from 'expo-router';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { LineupPitch } from './pitch';
@@ -71,7 +72,12 @@ export function LineupEditor({ clubId, callId, captain }: { clubId: string; call
     {document ? <>
       {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>{(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <Button key={f} label={f} disabled={!editable} onPress={() => change(applyPreset(document, f))} />)}</View> : null}
       <LineupPitch lineup={document} candidates={candidates} editable={editable} onChange={change} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
-      <Card title="Banquillo">{document.bench.map(id => <Body key={id}>{candidates.find(p => p.id === id)?.name ?? id}</Body>)}{captain ? <Button label="+" accessibilityLabel="Añadir al banquillo" disabled={!editable} onPress={()=>setAdding(true)} /> : null}</Card>
+      <Card title="Banquillo">
+        <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:12,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
+          {document.bench.map(id => <PlayerToken key={id} player={candidates.find(p => p.id === id)} />)}
+          {captain ? <Pressable accessibilityRole="button" accessibilityLabel="Añadir al banquillo" disabled={!editable} onPress={()=>setAdding(true)} style={{opacity:editable?1:0.45}}><PlayerToken /></Pressable> : null}
+        </ScrollView>
+      </Card>
       {captain ? <><Button label="Guardar borrador" disabled={!editable} onPress={() => void save(false)} /><Button label="Publicar 11" disabled={!editable || !canPublish(document)} onPress={() => void save(true)} />{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
     </> : !busy ? <Body>El capitán todavía está preparando el 11.</Body> : null}
     <Button secondary label="Recargar" disabled={busy} onPress={() => void reload()} />

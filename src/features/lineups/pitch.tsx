@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { PlayerToken } from './player-token';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
@@ -36,11 +37,10 @@ function Position(props: Props & { slot: Slot; width: number }) {
     onPanResponderTerminate: () => latest.current.onDragging?.(false),
     onPanResponderTerminationRequest: () => false,
   }));
-  const name = props.candidates.find(p => p.id === props.slot.playerId)?.name;
+  const player = props.candidates.find(p => p.id === props.slot.playerId);
   return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * height - 24 }]}>
-    <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={name ?? (props.slot.id === 0 ? 'Portero: posición vacía' : 'Posición vacía')} style={styles.target}>
-      <View style={[styles.marker, !name && styles.empty]}><Text style={styles.number}>{props.slot.id === 0 ? 'POR' : name ? String(props.slot.id) : '+'}</Text></View>
-      {name ? <Text numberOfLines={2} style={styles.name}>{name}</Text> : null}
+    <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : (props.slot.id === 0 ? 'Portero: posición vacía' : 'Posición vacía')} style={styles.target}>
+      <PlayerToken player={player} emptyLabel={props.slot.id === 0 ? 'POR' : '+'} />
     </Pressable>
   </View>;
 }
@@ -51,8 +51,4 @@ const styles = StyleSheet.create({
   goal: { position: 'absolute', bottom: 0, left: '25%', width: '50%', height: 72, borderWidth: 2, borderColor: '#DDF8D2' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
-  marker: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#B4F16C', justifyContent: 'center', alignItems: 'center' },
-  empty: { backgroundColor: '#A5AEA8' },
-  number: { fontWeight: '700', color: '#0B1210' },
-  name: { fontSize: 11, color: '#FFFFFF', textAlign: 'center', backgroundColor: '#14241C', borderRadius: 4, paddingHorizontal: 3 },
 });
