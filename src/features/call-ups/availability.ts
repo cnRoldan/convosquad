@@ -11,6 +11,7 @@ export function callUpErrorMessage(error: unknown, context: 'response' | 'manage
   if (code === 'P0042') return 'La convocatoria ha finalizado. Consulta el historial para verla o valorar a sus jugadores.';
   if (code === 'P0031') return context === 'response' ? 'La votación está cerrada. Solo puedes marcar No disponible o Backup mientras la convocatoria siga activa.' : 'El plazo para votar ha terminado. Para reabrir o reiniciar, modifica primero la hora de cierre.';
   if (code === 'P0030') return 'Espera 30 segundos desde tu último voto antes de cambiarlo.';
+  if (code === 'P0045') return 'La prueba de este club ha terminado. Actívalo por 2,99 € para crear nuevas convocatorias para siempre.';
   if (code === '23514') return 'Revisa los horarios: aviso y cierre deben ser del mismo día de la convocatoria, el aviso anterior al cierre y el cierre anterior o igual al inicio.';
   if (code === '23505') return 'Ya existe una convocatoria para esa fecha local en el club. Elige otro día.';
   if (code === '42501' || code === 'PGRST116') return 'La convocatoria ya no está disponible o no tienes permiso. Actualiza los datos; puede haber finalizado o haberse cancelado.';

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { router } from 'expo-router';
-import { Body, Button, Card, Heading, Screen } from '@/components/ui';
+import { Body, Button, Card, Field, Heading, Screen } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
 import { colors } from '@/theme';
 import { LineupPitch } from './pitch';
@@ -34,6 +34,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
   const [dirty,setDirty]=useState(false);
   const [conflict,setConflict]=useState(false);
   const [sharing,setSharing]=useState(false);
+  const [colorPicker,setColorPicker]=useState(false);
+  const [customColor,setCustomColor]=useState('#B4F16C');
   const pitchImageRef = useRef<View>(null);
   const editable=captain && active && !busy && !conflict;
   function change(next:Lineup) {setDocument(next);setDirty(true);}
@@ -93,9 +95,11 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     finally { setBusy(false); }
   }
   async function choosePlayerColor(color: string) {
-    if (color === playerColor) return;
+    const normalized = normalizeHex(color);
+    if (!normalized) { setMessage('Introduce un color hexadecimal válido, por ejemplo #B4F16C.'); return; }
+    if (normalized === playerColor) { setColorPicker(false); return; }
     setBusy(true);
-    try { setPlayerColor(await setLineupPlayerColor(clubId, color)); setMessage('Color de los jugadores guardado.'); }
+    try { setPlayerColor(await setLineupPlayerColor(clubId, normalized)); setCustomColor(normalized); setColorPicker(false); setMessage('Color de los jugadores guardado.'); }
     catch { setMessage('No se pudo guardar el color de los jugadores.'); }
     finally { setBusy(false); }
   }
@@ -123,7 +127,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
         <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => { change(resetPreset(document, selectedPreset, preference)); setLayoutChanged(false); }} />
       </View> : null}
-      {captain ? <View style={{ gap: 8 }}><Body>Color de jugadores</Body><View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>{playerColors.map(color => <Pressable key={color} accessibilityRole="button" accessibilityLabel={`Usar color ${color}`} accessibilityState={{ selected: playerColor === color }} disabled={!editable} onPress={() => void choosePlayerColor(color)} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: color, borderWidth: playerColor === color ? 3 : 1, borderColor: playerColor === color ? colors.text : colors.border, opacity: editable ? 1 : 0.45 }} />)}</View></View> : null}
+      {captain ? <View style={{ gap: 8 }}><Body>Color de jugadores</Body><View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10 }}>{playerColors.map(color => <Pressable key={color} accessibilityRole="button" accessibilityLabel={`Usar color ${color}`} accessibilityState={{ selected: playerColor === color }} disabled={!editable} onPress={() => void choosePlayerColor(color)} style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: color, borderWidth: playerColor === color ? 3 : 1, borderColor: playerColor === color ? colors.text : colors.border, opacity: editable ? 1 : 0.45 }} />)}<Pressable accessibilityRole="button" accessibilityLabel="Elegir un color personalizado" disabled={!editable} onPress={() => { setCustomColor(playerColor); setColorPicker(true); }} style={{ minHeight: 34, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 17, borderWidth: 1, borderColor: colors.border, opacity: editable ? 1 : 0.45 }}><Text style={{ color: colors.text, fontWeight: '700' }}>#</Text></Pressable></View></View> : null}
       <LineupPitch ref={pitchImageRef} clubName={clubName} crestPath={crestPath} playerColor={playerColor} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
       <Button label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing} onPress={() => void shareImage()} />
       <Card title="Banquillo">
@@ -159,7 +163,21 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         <Button secondary label="Cerrar" onPress={() => setBenchPlayer(null)} />
       </Card></View>
     </Modal>
+    <Modal transparent visible={colorPicker} onRequestClose={() => setColorPicker(false)}>
+      <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><Card title="Color personalizado">
+        <Body>Escribe cualquier color hexadecimal para los círculos de los jugadores.</Body>
+        <Field label="Color hexadecimal" value={customColor} onChangeText={setCustomColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
+        <View style={{ height: 42, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: normalizeHex(customColor) ?? colors.surface }} />
+        <Button label="Aplicar color" disabled={busy || !normalizeHex(customColor)} onPress={() => void choosePlayerColor(customColor)} />
+        <Button secondary label="Cerrar" onPress={() => setColorPicker(false)} />
+      </Card></View>
+    </Modal>
   </Screen>;
+}
+
+function normalizeHex(value: string) {
+  const color = value.trim().startsWith('#') ? value.trim() : `#${value.trim()}`;
+  return /^#[0-9A-Fa-f]{6}$/.test(color) ? color.toUpperCase() : null;
 }
 
 function PresetChip({ label, selected, disabled, onPress }: { label: string; selected: boolean; disabled: boolean; onPress: () => void }) {

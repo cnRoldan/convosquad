@@ -27,6 +27,10 @@ export async function readClubPremium(clubId: string) {
   return unwrap(await requireSupabase().rpc('read_club_premium', { p_club_id: clubId }));
 }
 
+export async function readClubActivation(clubId: string) {
+  return unwrap(await requireSupabase().rpc('read_club_activation', { p_club_id: clubId })) as unknown as { activated: boolean; trialEndsAt: string; canCreateCallUps: boolean };
+}
+
 export async function setClubMember(clubId: string, userId: string, role: Enums<'club_role'>, isActive: boolean) {
   return unwrap(await requireSupabase().rpc('set_club_member', { p_club_id: clubId, p_user_id: userId, p_role: role, p_is_active: isActive }).single());
 }

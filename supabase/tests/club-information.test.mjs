@@ -34,3 +34,12 @@ test('RLS impide editar a jugadores y otros clubes; solo creador elimina; zona i
   await assert.rejects(query(player, 'select public.delete_club($1)', [club.id]), e => e.code === '42501');
   assert.equal((await db.query('select name from public.clubs where id=$1', [club.id])).rows[0].name, 'Actualizado');
 });
+test('la prueba es única por creador y al vencer bloquea nuevas convocatorias', async () => {
+  const second = (await query(owner, "select * from public.create_club('Segundo club')")).rows[0];
+  const access = (await query(owner, 'select public.read_club_activation($1) access', [second.id])).rows[0].access;
+  assert.equal(access.canCreateCallUps, false);
+  await assert.rejects(query(owner, "select * from public.create_call_up($1,'2035-07-01T20:00:00Z','open')", [second.id]), e => e.code === 'P0045');
+  const expiring = (await query(other, "select * from public.create_club('Club de prueba')")).rows[0];
+  await db.query("update public.clubs set trial_ends_at=clock_timestamp()-interval '1 minute' where id=$1", [expiring.id]);
+  await assert.rejects(query(other, "select * from public.create_call_up($1,'2035-07-02T20:00:00Z','open')", [expiring.id]), e => e.code === 'P0045');
+});

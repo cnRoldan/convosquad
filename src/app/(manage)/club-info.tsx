@@ -8,7 +8,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { CrestSettings } from '@/features/clubs/crest-settings';
 import { TimezonePicker } from '@/features/clubs/timezone-picker';
-import { deleteClub, getClubSettings, readClubPremium, updateClub } from '@/features/clubs/service';
+import { deleteClub, getClubSettings, readClubActivation, updateClub } from '@/features/clubs/service';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { colors } from '@/theme';
@@ -42,7 +42,7 @@ function ClubInfoForm({ club }: { club: Tables<'clubs'> }) {
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState(false);
-  const premium = useResource(`club-premium:${club.id}:${session?.user.id}`, () => readClubPremium(club.id), Boolean(session && !isDemo));
+  const activation = useResource(`club-activation:${club.id}:${session?.user.id}`, () => readClubActivation(club.id), Boolean(session && !isDemo));
   const admin = currentMembership?.role === 'admin' && !isDemo;
   const owner = club.created_by === session?.user.id;
   async function save() {
@@ -67,8 +67,8 @@ function ClubInfoForm({ club }: { club: Tables<'clubs'> }) {
   }
   return <>
     <Card title={t("Información del club")}>
-      <Field label={t("Nombre del club")} value={name} onChangeText={setName} maxLength={80} editable={admin && !busy && Boolean(premium.data)} />
-      {!premium.isLoading && !premium.data ? <Body>El cambio de nombre está disponible con ConvoSquad Prémium.</Body> : null}
+      <Field label={t("Nombre del club")} value={name} onChangeText={setName} maxLength={80} editable={admin && !busy && Boolean(activation.data?.activated)} />
+      {!activation.isLoading && !activation.data?.activated ? <Body>Activa el club para cambiar su nombre.</Body> : null}
       <Field label={t("Descripción (opcional)")} value={description} onChangeText={setDescription} maxLength={500} multiline editable={admin && !busy} />
       <TimezonePicker value={timezone} onChange={setTimezone} disabled={!admin || busy} />
       <Body>{t("Las convocatorias ya creadas conservarán su horario. Las nuevas usarán la zona elegida.")}</Body>

@@ -356,16 +356,19 @@ export type Database = {
           club_id: string;
           lineup_premium_until: string | null;
           updated_at: string;
+          club_activated_at: string | null;
         };
         Insert: {
           club_id: string;
           lineup_premium_until?: string | null;
           updated_at?: string;
+          club_activated_at?: string | null;
         };
         Update: {
           club_id?: string;
           lineup_premium_until?: string | null;
           updated_at?: string;
+          club_activated_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'club_feature_entitlements_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -491,6 +494,27 @@ export type Database = {
           { foreignKeyName: 'club_members_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      club_trial_claims: {
+        Row: {
+          user_id: string;
+          first_club_id: string | null;
+          claimed_at: string;
+        };
+        Insert: {
+          user_id: string;
+          first_club_id?: string | null;
+          claimed_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          first_club_id?: string | null;
+          claimed_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_trial_claims_first_club_id_fkey'; columns: ["first_club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'club_trial_claims_user_id_fkey'; columns: ["user_id"]; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       club_trial_contacts: {
         Row: {
           trial_id: string;
@@ -591,6 +615,7 @@ export type Database = {
           reminder_minutes: number | null;
           crest_path: string | null;
           ratings_visibility: string;
+          trial_ends_at: string;
         };
         Insert: {
           id?: string;
@@ -603,6 +628,7 @@ export type Database = {
           reminder_minutes?: number | null;
           crest_path?: string | null;
           ratings_visibility?: string;
+          trial_ends_at: string;
         };
         Update: {
           id?: string;
@@ -615,6 +641,7 @@ export type Database = {
           reminder_minutes?: number | null;
           crest_path?: string | null;
           ratings_visibility?: string;
+          trial_ends_at?: string;
         };
         Relationships: [
           { foreignKeyName: 'clubs_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
@@ -1272,6 +1299,12 @@ export type Database = {
           p_existing_player_id?: string;
         };
         Returns: Database['public']['Tables']['players']['Row'][];
+      };
+      read_club_activation: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: Json;
       };
       read_club_premium: {
         Args: {
