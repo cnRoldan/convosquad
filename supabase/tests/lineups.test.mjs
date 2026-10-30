@@ -52,16 +52,16 @@ test('six free generations are shared by the club and a seventh remains locked',
 test('custom field layout belongs to the club and is only writable by captains',async()=>{
  const club=(await db.query('select club_id from public.call_ups where id=$1',[call.id])).rows[0].club_id;
  const slots=doc.slots.map(({id,x,y})=>({id,x,y}));
- assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{playerColor:'#B4F16C'});
+ assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{playerColor:'#B4F16C',jerseyColor:'#0B1210'});
  await assert.rejects(query(outsider,'select public.save_lineup_preference($1,$2,$3)',[club,'4-3-3',slots]),{code:'42501'});
  const saved=(await query(captain,'select public.save_lineup_preference($1,$2,$3) preference',[club,'4-3-3',slots])).rows[0].preference;
  assert.equal(saved.formation,'4-3-3');assert.deepEqual(saved.slots,slots);
- assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{...saved,playerColor:'#B4F16C'});
+ assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{...saved,playerColor:'#B4F16C',jerseyColor:'#0B1210'});
  await assert.rejects(query(outsider,"select public.set_lineup_player_color($1,'#70B7FF')",[club]),{code:'42501'});
  assert.equal((await query(captain,"select public.set_lineup_player_color($1,'#70B7FF') color",[club])).rows[0].color,'#70B7FF');
  await assert.rejects(query(outsider,'select public.delete_lineup_preference($1)',[club]),{code:'42501'});
  await query(captain,'select public.delete_lineup_preference($1)',[club]);
- assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{playerColor:'#70B7FF'});
+ assert.deepEqual((await query(captain,'select public.read_lineup_preference($1) preference',[club])).rows[0].preference,{playerColor:'#70B7FF',jerseyColor:'#0B1210'});
 });
 test('rejects moved goalkeeper and missing coordinates',async()=>{
  const moved=structuredClone(doc);moved.slots[0].x=0.6;

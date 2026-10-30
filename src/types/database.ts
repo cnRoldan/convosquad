@@ -445,6 +445,7 @@ export type Database = {
           custom_slots: Json | null;
           updated_at: string;
           player_color: string;
+          jersey_color: string;
         };
         Insert: {
           club_id: string;
@@ -452,6 +453,7 @@ export type Database = {
           custom_slots?: Json | null;
           updated_at?: string;
           player_color?: string;
+          jersey_color?: string;
         };
         Update: {
           club_id?: string;
@@ -459,6 +461,7 @@ export type Database = {
           custom_slots?: Json | null;
           updated_at?: string;
           player_color?: string;
+          jersey_color?: string;
         };
         Relationships: [
           { foreignKeyName: 'club_lineup_preferences_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -1511,6 +1514,14 @@ export type Database = {
           p_color: string;
         };
         Returns: string;
+      };
+      set_lineup_player_colors: {
+        Args: {
+          p_club_id: string;
+          p_player_color: string;
+          p_jersey_color: string;
+        };
+        Returns: Json;
       };
       set_notification_preferences: {
         Args: {

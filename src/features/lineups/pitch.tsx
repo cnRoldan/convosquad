@@ -1,28 +1,18 @@
 import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
-import { Image, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { PlayerToken } from './player-token';
-import { ClubCrest } from '@/features/clubs/club-crest';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
-type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; clubName: string; crestPath?: string | null | undefined; playerColor: string; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragging?: (dragging: boolean) => void };
+type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; jerseyColor: string; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragging?: (dragging: boolean) => void };
 const height = 520;
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
   const [width, setWidth] = useState(1);
   return <View ref={imageRef} collapsable={false} style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <PitchMarkings />
-    <View pointerEvents="none" style={styles.teamIdentity}>
-      <ClubCrest path={props.crestPath} name={props.clubName} size={25} />
-      <Text numberOfLines={1} style={styles.teamName}>{props.clubName}</Text>
-    </View>
     {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} />)}
-    <View pointerEvents="none" style={styles.poweredBy}>
-      <Text style={styles.poweredText}>Powered by</Text>
-      <Image source={require('../../../assets/images/icon.png')} style={styles.poweredIcon} />
-      <Text style={styles.poweredBrand}>ConvoSquad</Text>
-    </View>
   </View>;
 });
 
@@ -73,18 +63,12 @@ function Position(props: Props & { slot: Slot; width: number }) {
   const player = props.candidates.find(p => p.id === props.slot.playerId);
   return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * height - 24 }]}>
     <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : 'Posición vacía'} style={styles.target}>
-      <PlayerToken player={player} color={props.playerColor} />
+      <PlayerToken player={player} color={props.playerColor} jerseyColor={props.jerseyColor} />
     </Pressable>
   </View>;
 }
 const styles = StyleSheet.create({
   pitch: { height, borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
-  teamIdentity: { position: 'absolute', top: 10, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  teamName: { color: '#F3F8F1', fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textShadowColor: 'rgba(0,0,0,0.65)', textShadowRadius: 4 },
-  poweredBy: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 4, borderRadius: 9, backgroundColor: 'rgba(5,18,10,0.62)' },
-  poweredText: { color: '#D8E7D7', fontSize: 7, fontWeight: '700' },
-  poweredIcon: { width: 13, height: 13, borderRadius: 3 },
-  poweredBrand: { color: '#F3F8F1', fontSize: 8, fontWeight: '800' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
 });

@@ -33,7 +33,7 @@ export async function loadLineup(clubId: string, callId: string, captain: boolea
   candidates.push(...aids.filter(a=>!guests.some(g=>g.aid_id===a.id || g.id===a.lineup_guest_id)).map(a=>({id:a.id,name:a.body,active:true,eligible:false})));
   const active=['open','closed'].includes(call.status)&&new Date(call.ends_at).getTime()>Date.now();
   const customLayout = isLineupLayout(preference) ? preference : null;
-  return { revision: data.revision, candidates, active, preference: customLayout, playerColor: isPlayerColor(preference) ? preference.playerColor : '#B4F16C', document: captain && data.inherited ? inheritLineup(data.document, candidates) : data.document && active ? reconcileLineup(data.document,candidates) : data.document };
+  return { revision: data.revision, candidates, active, preference: customLayout, playerColor: isPlayerColor(preference) ? preference.playerColor : '#B4F16C', jerseyColor: isJerseyColor(preference) ? preference.jerseyColor : '#0B1210', document: captain && data.inherited ? inheritLineup(data.document, candidates) : data.document && active ? reconcileLineup(data.document,candidates) : data.document };
 }
 
 export async function saveLineup(callId: string, revision: number, document: Lineup, publish: boolean) {
@@ -53,6 +53,10 @@ export async function setLineupPlayerColor(clubId: string, color: string) {
   return unwrap(await requireSupabase().rpc('set_lineup_player_color', { p_club_id: clubId, p_color: color }));
 }
 
+export async function setLineupPlayerColors(clubId: string, playerColor: string, jerseyColor: string) {
+  return unwrap(await requireSupabase().rpc('set_lineup_player_colors', { p_club_id: clubId, p_player_color: playerColor, p_jersey_color: jerseyColor })) as unknown as { playerColor: string; jerseyColor: string };
+}
+
 function isLineupLayout(value: unknown): value is LineupLayout {
   if (!value || typeof value !== 'object' || !('formation' in value) || !('slots' in value)) return false;
   return ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'].includes(String(value.formation)) && Array.isArray(value.slots) && value.slots.length === 11;
@@ -60,4 +64,8 @@ function isLineupLayout(value: unknown): value is LineupLayout {
 
 function isPlayerColor(value: unknown): value is { playerColor: string } {
   return Boolean(value && typeof value === 'object' && 'playerColor' in value && typeof value.playerColor === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value.playerColor));
+}
+
+function isJerseyColor(value: unknown): value is { jerseyColor: string } {
+  return Boolean(value && typeof value === 'object' && 'jerseyColor' in value && typeof value.jerseyColor === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value.jerseyColor));
 }
