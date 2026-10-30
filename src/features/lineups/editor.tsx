@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { Body, Button, Card, Field, Heading, Screen } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
 import { colors } from '@/theme';
+import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
 import { shareLineupImage } from './share-image';
@@ -165,9 +166,13 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     </Modal>
     <Modal transparent visible={colorPicker} onRequestClose={() => setColorPicker(false)}>
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><Card title="Color personalizado">
-        <Body>Escribe cualquier color hexadecimal para los círculos de los jugadores.</Body>
+        <Body>Elige el tono visualmente o escribe su código hexadecimal.</Body>
+        <ColorPicker value={customColor} onChangeJS={result => setCustomColor(result.hex)} style={{ gap: 12 }} sliderThickness={22} thumbSize={24} thumbColor={colors.text}>
+          <Panel1 style={{ height: 190, borderRadius: 14 }} />
+          <HueSlider style={{ borderRadius: 12 }} />
+          <Preview hideInitialColor style={{ borderRadius: 12 }} />
+        </ColorPicker>
         <Field label="Color hexadecimal" value={customColor} onChangeText={setCustomColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
-        <View style={{ height: 42, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: normalizeHex(customColor) ?? colors.surface }} />
         <Button label="Aplicar color" disabled={busy || !normalizeHex(customColor)} onPress={() => void choosePlayerColor(customColor)} />
         <Button secondary label="Cerrar" onPress={() => setColorPicker(false)} />
       </Card></View>

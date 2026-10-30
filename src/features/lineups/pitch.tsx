@@ -1,5 +1,5 @@
 import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { PlayerToken } from './player-token';
 import { ClubCrest } from '@/features/clubs/club-crest';
@@ -13,11 +13,16 @@ export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, i
   const [width, setWidth] = useState(1);
   return <View ref={imageRef} collapsable={false} style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <PitchMarkings />
-    <View pointerEvents="none" style={styles.shareHeader}>
-      <View style={styles.crest}><ClubCrest path={props.crestPath} name={props.clubName} size={34} /></View>
-      <View style={{ flexShrink: 1 }}><Text numberOfLines={1} style={styles.shareTitle}>{props.clubName}</Text><Text style={styles.shareSubtitle}>CONVOSQUAD · TU 11</Text></View>
+    <View pointerEvents="none" style={styles.teamIdentity}>
+      <ClubCrest path={props.crestPath} name={props.clubName} size={25} />
+      <Text numberOfLines={1} style={styles.teamName}>{props.clubName}</Text>
     </View>
     {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} />)}
+    <View pointerEvents="none" style={styles.poweredBy}>
+      <Text style={styles.poweredText}>Powered by</Text>
+      <Image source={require('../../../assets/images/icon.png')} style={styles.poweredIcon} />
+      <Text style={styles.poweredBrand}>ConvoSquad</Text>
+    </View>
   </View>;
 });
 
@@ -74,10 +79,12 @@ function Position(props: Props & { slot: Slot; width: number }) {
 }
 const styles = StyleSheet.create({
   pitch: { height, borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
-  shareHeader: { position: 'absolute', top: 14, left: 14, right: 14, minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 13, borderWidth: 1, borderColor: 'rgba(230,248,217,0.68)', backgroundColor: 'rgba(7,24,13,0.78)' },
-  crest: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
-  shareTitle: { color: '#F3F8F1', fontSize: 14, fontWeight: '800' },
-  shareSubtitle: { color: '#B4F16C', fontSize: 8, fontWeight: '800', letterSpacing: 1.1, marginTop: 2 },
+  teamIdentity: { position: 'absolute', top: 10, left: 12, right: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  teamName: { color: '#F3F8F1', fontSize: 12, fontWeight: '900', letterSpacing: 0.5, textShadowColor: 'rgba(0,0,0,0.65)', textShadowRadius: 4 },
+  poweredBy: { position: 'absolute', left: 10, bottom: 10, flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 4, borderRadius: 9, backgroundColor: 'rgba(5,18,10,0.62)' },
+  poweredText: { color: '#D8E7D7', fontSize: 7, fontWeight: '700' },
+  poweredIcon: { width: 13, height: 13, borderRadius: 3 },
+  poweredBrand: { color: '#F3F8F1', fontSize: 8, fontWeight: '800' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
 });
