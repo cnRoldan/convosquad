@@ -7,7 +7,7 @@ import type { Json } from '@/types/database';
 import { inheritLineup, reconcileLineup, type Candidate, type Lineup, type LineupLayout } from './model';
 
 export type LineupAccess = { activated: boolean; premium: boolean; remaining: number; allowed: boolean };
-export type LineupDraft = { id: string; ordinal: number; title: string; document: Lineup; revision: number; submittedAt: string | null; createdBy: string; updatedBy: string; updatedAt: string; upVotes: number; downVotes: number; myVote: boolean | null; published: boolean; suggestedChanges: number; suggestedBy: string | null };
+export type LineupDraft = { id: string; ordinal: number; title: string; document: Lineup; revision: number; submittedAt: string | null; createdBy: string; updatedBy: string; updatedAt: string; upVotes: number; downVotes: number; myVote: boolean | null; published: boolean; publishedBy: string | null; suggestedChanges: number; suggestedBy: string | null };
 
 export async function readLineupAccess(callId: string): Promise<LineupAccess> {
   return unwrap(await requireSupabase().rpc('read_lineup_access', { p_call_id: callId })) as unknown as LineupAccess;
