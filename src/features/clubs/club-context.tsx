@@ -99,7 +99,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
       hasCurrentCallUp: callUpRows.length > 0,
       ...(callUpRows.length ? { expiresAt: callUpRows.map(call => call.ends_at).sort()[0]! } : {}),
       roster: playerRows.map((player) => ({ id: player.id, clubId: player.club_id, userId: player.user_id,
-        displayName: player.ea_id, eaId: player.ea_id, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
+        displayName: player.ea_id, eaId: player.ea_id, nickname: player.nickname, jerseyNumber: player.jersey_number, position: player.position, category: player.category, sortOrder: player.sort_order,
         role: memberRows.find((member) => member.user_id === player.user_id)?.role ?? null })),
       callUp: next ? { id: next.id, clubId: next.club_id, title: t("Convocatoria del club"), startsAt: next.starts_at, status: next.status, closesAt: next.closes_at, endsAt: next.ends_at,
         timezone: next.timezone, opponent: t("Por confirmar"), slots: responses.length,

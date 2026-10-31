@@ -13,7 +13,7 @@ import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { PlayerActivityDialog } from './player-activity-dialog';
 
-export type EditablePlayer = { id: string; eaId: string; jerseyNumber: number | null; category: RosterCategory; userId: string | null; isActive: boolean };
+export type EditablePlayer = { id: string; eaId: string; nickname: string | null; jerseyNumber: number | null; category: RosterCategory; userId: string | null; isActive: boolean };
 export function PlayerEditor({ player = null, self = false }: { player?: EditablePlayer | null; self?: boolean }) {
   useLanguage();
   const { session, isDemo } = useAuth();
@@ -23,6 +23,7 @@ export function PlayerEditor({ player = null, self = false }: { player?: Editabl
   const [eaId, setEaId] = useState(player?.eaId ?? '');
   const displayedEaId = self ? accountEaId ?? '' : eaId;
   const [jersey, setJersey] = useState(player?.jerseyNumber?.toString() ?? '');
+  const [nickname, setNickname] = useState(player?.nickname ?? '');
   const [category, setCategory] = useState<RosterCategory>(player?.category ?? 'midfielders');
   const [linkedUserId, setLinkedUserId] = useState(player?.userId ?? null);
   const [busy, setBusy] = useState(false);
@@ -40,13 +41,14 @@ export function PlayerEditor({ player = null, self = false }: { player?: Editabl
     if (!clubId || !admin || isDemo || busy) return;
     const trimmed = displayedEaId.trim();
     if (!trimmed || trimmed.length > 64) return setMessage(t("El EA ID debe tener entre 1 y 64 caracteres."));
+    if (nickname.trim().length > 24) return setMessage('El apodo no puede superar 24 caracteres.');
     if (jersey.trim() && (!/^[0-9]{1,2}$/.test(jersey.trim()) || Number(jersey) < 1 || Number(jersey) > 99)) return setMessage(t("El dorsal debe estar entre 1 y 99 o quedar vacío."));
     setBusy(true);
     setMessage('');
     try {
-      if (self) await createMyPlayer(clubId, category, jersey.trim() ? Number(jersey) : undefined);
-      else if (player) await updatePlayer(player.id, { ea_id: trimmed, jersey_number: jersey.trim() ? Number(jersey) : null, category });
-      else await createPlayer(clubId, { eaId: trimmed, ...(jersey.trim() ? { jerseyNumber: Number(jersey) } : {}), category });
+      if (self) await createMyPlayer(clubId, category, jersey.trim() ? Number(jersey) : undefined, nickname.trim() || undefined);
+      else if (player) await updatePlayer(player.id, { ea_id: trimmed, nickname: nickname.trim() || null, jersey_number: jersey.trim() ? Number(jersey) : null, category });
+      else await createPlayer(clubId, { eaId: trimmed, ...(nickname.trim() ? { nickname: nickname.trim() } : {}), ...(jersey.trim() ? { jerseyNumber: Number(jersey) } : {}), category });
       refreshRoster();
       router.replace(player && !player.isActive ? '/inactive-players' : '/roster');
     } catch (error) { setMessage(typeof error === 'object' && error !== null && 'code' in error && (error.code === 'P0041' || error.code === '23505') ? t('Ya hay un jugador activo con ese ID de EA o una cuenta vinculada en uso. Revisa la plantilla.') : backendErrorMessage(error)); }
@@ -64,12 +66,13 @@ export function PlayerEditor({ player = null, self = false }: { player?: Editabl
     } catch (error) { setMessage(backendErrorMessage(error)); accounts.reload(); }
     finally { setBusy(false); setPendingLink(null); }
   }
-  const dirty = Boolean(player && (eaId.trim() !== player.eaId || jersey.trim() !== (player.jerseyNumber?.toString() ?? '') || category !== player.category));
+  const dirty = Boolean(player && (eaId.trim() !== player.eaId || nickname.trim() !== (player.nickname ?? '') || jersey.trim() !== (player.jerseyNumber?.toString() ?? '') || category !== player.category));
   const freeAccounts = accounts.data?.members.filter((member) => !accounts.data?.players.some((existing) => existing.user_id === member.user_id)) ?? [];
   return <Screen>
     <Heading title={self ? t('Crear mi ficha') : player ? t("Editar ficha") : t("Añadir jugador")} subtitle={activeClub?.name ?? ''} />
     {isDemo ? <DemoNotice /> : null}
     <Field label={t("ID de EA Sports FC")} value={displayedEaId} onChangeText={setEaId} maxLength={64} autoCapitalize="none" editable={!busy && !self} />
+    <Field label="Apodo para alineaciones (opcional)" value={nickname} onChangeText={setNickname} maxLength={24} editable={!busy} />
     <Field label={t("Dorsal (opcional)")} value={jersey} onChangeText={setJersey} maxLength={2} keyboardType="number-pad" editable={!busy} />
     <Body>{t("Categoría principal · {{v0}}", { v0: t(categoryLabels[category]) })}</Body>
     <Options value={category} options={categories.map((value) => ({ value, label: t(categoryLabels[value]) }))} onChange={setCategory} disabled={busy} />

@@ -21,8 +21,8 @@ export default function EditPlayerScreen() {
   }, [clubId, id]);
   const result = useResource(`player:${session?.user.id}:${clubId}:${id}`, load, Boolean(clubId && session && typeof id === 'string') && !isDemo);
   const demoPlayer = isDemo ? roster.find((player) => player.id === id) : null;
-  const player = demoPlayer ? { ...demoPlayer, isActive: true } : result.data ? {
-    id: result.data.id, eaId: result.data.ea_id, jerseyNumber: result.data.jersey_number, category: result.data.category,
+  const player = demoPlayer ? { ...demoPlayer, nickname: demoPlayer.nickname ?? null, isActive: true } : result.data ? {
+    id: result.data.id, eaId: result.data.ea_id, nickname: result.data.nickname, jerseyNumber: result.data.jersey_number, category: result.data.category,
     userId: result.data.user_id, isActive: result.data.is_active,
   } : null;
   if (result.isLoading) return <LoadingScreen label={t("Cargando ficha…")} />;

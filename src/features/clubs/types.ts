@@ -9,6 +9,7 @@ export type RosterPlayer = {
   userId: string | null;
   displayName: string;
   eaId: string;
+  nickname?: string | null;
   jerseyNumber: number | null;
   position: Enums<'player_position'>;
   category: Enums<'roster_category'>;

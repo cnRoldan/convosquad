@@ -894,6 +894,7 @@ export type Database = {
           id: string;
           club_id: string;
           ea_id: string;
+          nickname: string | null;
           jersey_number: number | null;
           position: Database['public']['Enums']['player_position'];
           user_id: string | null;
@@ -906,6 +907,7 @@ export type Database = {
           id?: string;
           club_id: string;
           ea_id: string;
+          nickname?: string | null;
           jersey_number?: number | null;
           position?: Database['public']['Enums']['player_position'];
           user_id?: string | null;
@@ -918,6 +920,7 @@ export type Database = {
           id?: string;
           club_id?: string;
           ea_id?: string;
+          nickname?: string | null;
           jersey_number?: number | null;
           position?: Database['public']['Enums']['player_position'];
           user_id?: string | null;

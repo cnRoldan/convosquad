@@ -9,19 +9,21 @@ export async function listPlayers(clubId: string, includeInactive = false) {
   return unwrap(await query);
 }
 
-export async function createPlayer(clubId: string, input: { eaId: string; jerseyNumber?: number; category: RosterCategory }) {
-  return unwrap(await requireSupabase().rpc('add_or_restore_player', {
+export async function createPlayer(clubId: string, input: { eaId: string; nickname?: string; jerseyNumber?: number; category: RosterCategory }) {
+  const player = unwrap(await requireSupabase().rpc('add_or_restore_player', {
     p_club_id: clubId, p_ea_id: input.eaId, ...(input.jerseyNumber === undefined ? {} : { p_jersey_number: input.jerseyNumber }), p_category: input.category,
   }).single());
+  return input.nickname ? updatePlayer(player.id, { nickname: input.nickname }) : player;
 }
 
-export async function createMyPlayer(clubId: string, category: RosterCategory, jerseyNumber?: number) {
-  return unwrap(await requireSupabase().rpc('create_my_player', {
+export async function createMyPlayer(clubId: string, category: RosterCategory, jerseyNumber?: number, nickname?: string) {
+  const player = unwrap(await requireSupabase().rpc('create_my_player', {
     p_club_id: clubId, p_category: category, ...(jerseyNumber === undefined ? {} : { p_jersey_number: jerseyNumber }),
   }).single());
+  return nickname ? updatePlayer(player.id, { nickname }) : player;
 }
 
-export async function updatePlayer(playerId: string, input: { ea_id?: string; jersey_number?: number | null; category?: RosterCategory; is_active?: boolean }) {
+export async function updatePlayer(playerId: string, input: { ea_id?: string; nickname?: string | null; jersey_number?: number | null; category?: RosterCategory; is_active?: boolean }) {
   return unwrap(await requireSupabase().from('players').update(input).eq('id', playerId).select().single());
 }
 
