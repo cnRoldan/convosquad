@@ -1253,6 +1253,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_lineup_draft: {
+        Args: {
+          p_draft_id: string;
+        };
+        Returns: undefined;
+      };
       delete_lineup_preference: {
         Args: {
           p_club_id: string;

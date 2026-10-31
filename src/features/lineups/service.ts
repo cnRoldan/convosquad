@@ -33,6 +33,10 @@ export async function publishLineupDraft(draftId: string) {
   const { error } = await requireSupabase().rpc('publish_lineup_draft', { p_draft_id: draftId }); if (error) throw error;
 }
 
+export async function deleteLineupDraft(draftId: string) {
+  const { error } = await requireSupabase().rpc('delete_lineup_draft', { p_draft_id: draftId }); if (error) throw error;
+}
+
 export async function loadLineup(clubId: string, callId: string, captain: boolean) {
   const [players, roster, saved, guests, trials, aids, rosterTrials, call, preference] = await Promise.all([
     listCallUpPlayers(callId), listPlayers(clubId),
