@@ -33,7 +33,7 @@ export default function CallUpPlayerTotalsScreen() {
     {premium.error ? <Message error>No se pudo comprobar el acceso Prémium.</Message> : null}
     {premium.data ? <>
       <Body>Las suplencias cuentan a quienes marcaron Disponible o Backup y no entraron en el once publicado.</Body>
-      <Options value={sort} onChange={setSort} options={[{ value: 'available', label: 'Más disponibles' }, { value: 'least-available', label: 'Menos disponibles' }, { value: 'substitutes', label: 'Más suplencias' }, { value: 'least-substitutes', label: 'Menos suplencias' }, { value: 'pending', label: 'Más pendientes' }, { value: 'slowest', label: 'Más lentos' }, { value: 'streak', label: 'Mayor racha' }]} />
+      <Options value={sort} onChange={setSort} options={[{ value: 'available', label: 'Más disponibles' }, { value: 'least-available', label: 'Menos disponibles' }, { value: 'substitutes', label: 'Más suplencias' }, { value: 'least-substitutes', label: 'Más titularidades' }, { value: 'pending', label: 'Más pendientes' }, { value: 'slowest', label: 'Más lentos' }, { value: 'streak', label: 'Mayor racha' }]} />
       {totals.isLoading ? <Body>Cargando estadísticas…</Body> : null}
       {totals.error ? <Message error>No se pudieron cargar las estadísticas.</Message> : null}
       {players.map(player => <Card key={player.player_id} title={player.player_name}><Body>Suplencias: {player.substitute_count}</Body><Body>Disponibilidad: {player.available_count + player.backup_count} de {player.total_call_ups}</Body><Body>Pendientes (sin ser backup): {player.pending_non_backup_count}</Body><Body>Mayor racha sin estar disponible: {player.longest_unavailable_streak}</Body><Body>Tiempo medio de respuesta: {formatResponseTime(player.average_response_seconds)}</Body></Card>)}
