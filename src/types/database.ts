@@ -1289,7 +1289,7 @@ export type Database = {
         Args: {
           p_club_id: string;
         };
-        Returns: { player_id: string; player_name: string; total_call_ups: number; available_count: number; unavailable_count: number; backup_count: number; unanswered_count: number; substitute_count: number; average_response_seconds: number }[];
+        Returns: { player_id: string; player_name: string; total_call_ups: number; available_count: number; unavailable_count: number; backup_count: number; unanswered_count: number; pending_non_backup_count: number; substitute_count: number; longest_unavailable_streak: number; average_response_seconds: number }[];
       };
       get_player_performance: {
         Args: {

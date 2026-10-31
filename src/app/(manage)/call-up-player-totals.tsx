@@ -26,7 +26,7 @@ export default function CallUpPlayerTotalsScreen() {
       <Body>Las suplencias cuentan a quienes marcaron Disponible o Backup y no entraron en el once publicado.</Body>
       {totals.isLoading ? <Body>Cargando estadísticas…</Body> : null}
       {totals.error ? <Message error>No se pudieron cargar las estadísticas.</Message> : null}
-      {players.map(player => <Card key={player.player_id} title={player.player_name}><Body>Suplencias: {player.substitute_count}</Body><Body>Disponibilidad: {player.available_count + player.backup_count} de {player.total_call_ups}</Body></Card>)}
+      {players.map(player => <Card key={player.player_id} title={player.player_name}><Body>Suplencias: {player.substitute_count}</Body><Body>Disponibilidad: {player.available_count + player.backup_count} de {player.total_call_ups}</Body><Body>Pendientes (sin ser backup): {player.pending_non_backup_count}</Body><Body>Mayor racha sin estar disponible: {player.longest_unavailable_streak}</Body><Body>Tiempo medio de respuesta: {formatResponseTime(player.average_response_seconds)}</Body></Card>)}
       {!totals.isLoading && players.length === 0 ? <Body>Aún no hay convocatorias finalizadas con datos de jugadores.</Body> : null}
       <Button secondary label="Actualizar" onPress={totals.reload} />
     </> : <>
@@ -36,3 +36,10 @@ export default function CallUpPlayerTotalsScreen() {
   </Screen>;
 }
 const styles = StyleSheet.create({ preview: { height: 560, borderRadius: 24, overflow: 'hidden' }, tint: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(9,18,14,0.35)' }, overlay: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(3,8,6,0.48)' } });
+
+function formatResponseTime(seconds: number | null) {
+  if (seconds === null || !Number.isFinite(seconds)) return 'Sin datos';
+  if (seconds < 60) return `${Math.round(seconds)} s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)} min`;
+  return `${(seconds / 3600).toFixed(1)} h`;
+}
