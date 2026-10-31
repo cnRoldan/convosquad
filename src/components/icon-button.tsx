@@ -22,19 +22,20 @@ const paths = {
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
 } as const;
 
-export function IconButton({ icon, label, onPress, disabled = false, danger = false, variant = 'outlined' }: {
+export function IconButton({ icon, label, onPress, disabled = false, danger = false, variant = 'outlined', size = 44 }: {
   icon: keyof typeof paths;
   label: string;
   onPress: () => void;
   disabled?: boolean;
   danger?: boolean;
   variant?: 'outlined' | 'plain';
+  size?: number;
 }) {
   const whatsapp = icon === 'whatsapp';
   const color = disabled ? colors.muted : whatsapp ? '#25D366' : danger ? colors.danger : colors.primary;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}
     disabled={disabled} onPress={onPress}
-    style={({ pressed }) => [styles.button, whatsapp && styles.whatsapp, variant === 'plain' && styles.plain, (pressed || disabled) && styles.dimmed]}>
+    style={({ pressed }) => [styles.button, { width: size, height: size, borderRadius: Math.round(size * 0.27) }, whatsapp && styles.whatsapp, variant === 'plain' && styles.plain, (pressed || disabled) && styles.dimmed]}>
     <Svg width={whatsapp ? 24 : 20} height={whatsapp ? 24 : 20} viewBox="0 0 24 24" fill={whatsapp ? color : 'none'} stroke={whatsapp ? 'none' : color}
       strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...(Platform.OS === 'web' ? { 'aria-hidden': true } : { accessible: false, accessibilityElementsHidden: true })}>
       <Path d={paths[icon]} />
