@@ -37,6 +37,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
   const [conflict,setConflict]=useState(false);
   const [sharing,setSharing]=useState(false);
   const [colorPicker,setColorPicker]=useState(false);
+  const [editingColor,setEditingColor]=useState<'shirt' | 'jersey'>('shirt');
   const [customColor,setCustomColor]=useState('#B4F16C');
   const [customJerseyColor,setCustomJerseyColor]=useState('#0B1210');
   const shareImageRef = useRef<View>(null);
@@ -129,7 +130,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
         <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => { change(resetPreset(document, selectedPreset, preference)); setLayoutChanged(false); }} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><ClubCrest path={crestPath} name={clubName} size={38} /><Text numberOfLines={1} style={{ flex: 1, color: '#F3F8F1', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>{clubName}</Text></View> : null}
@@ -172,13 +173,17 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     </Modal>
     <Modal transparent visible={colorPicker} onRequestClose={() => setColorPicker(false)}>
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><Card title="Color personalizado">
-        <Body>Elige ambos tonos visualmente o escribe sus códigos hexadecimales.</Body>
-        <ColorPicker value={customColor} onChangeJS={result => setCustomColor(result.hex)} style={{ gap: 12 }} sliderThickness={22} thumbSize={24} thumbColor={colors.text}>
+        <Body>Selecciona primero el color que quieres editar y elígelo visualmente.</Body>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <Pressable accessibilityRole="button" accessibilityState={{ selected: editingColor === 'shirt' }} onPress={() => setEditingColor('shirt')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: editingColor === 'shirt' ? colors.primary : colors.border, backgroundColor: customColor }}><Text style={{ color: customJerseyColor, fontWeight: '800', textAlign: 'center' }}>Camiseta</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityState={{ selected: editingColor === 'jersey' }} onPress={() => setEditingColor('jersey')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: editingColor === 'jersey' ? colors.primary : colors.border, backgroundColor: customJerseyColor }}><Text style={{ color: customColor, fontWeight: '800', textAlign: 'center' }}>Dorsales</Text></Pressable>
+        </View>
+        <ColorPicker key={editingColor} value={editingColor === 'shirt' ? customColor : customJerseyColor} onChangeJS={result => { if (editingColor === 'shirt') setCustomColor(result.hex); else setCustomJerseyColor(result.hex); }} style={{ gap: 12 }} sliderThickness={22} thumbSize={24} thumbColor={colors.text}>
           <Panel1 style={{ height: 190, borderRadius: 14 }} />
           <HueSlider style={{ borderRadius: 12 }} />
           <Preview hideInitialColor style={{ borderRadius: 12 }} />
         </ColorPicker>
-        <Field label="Color hexadecimal" value={customColor} onChangeText={setCustomColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
+        <Field label="Color de la camiseta" value={customColor} onChangeText={setCustomColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
         <Field label="Color de dorsales" value={customJerseyColor} onChangeText={setCustomJerseyColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
         <Button label="Aplicar colores" disabled={busy || !normalizeHex(customColor) || !normalizeHex(customJerseyColor)} onPress={() => void saveColors()} />
         <Button secondary label="Cerrar" onPress={() => setColorPicker(false)} />
