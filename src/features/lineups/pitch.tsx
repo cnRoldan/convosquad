@@ -2,10 +2,11 @@ import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { PlayerToken } from './player-token';
+import { IconButton } from '@/components/icon-button';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
-type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; jerseyColor: string; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragging?: (dragging: boolean) => void };
+type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragging?: (dragging: boolean) => void };
 const height = 520;
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
@@ -13,6 +14,7 @@ export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, i
   return <View ref={imageRef} collapsable={false} style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <PitchMarkings />
     {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} />)}
+    {props.onTogglePositionLock ? <View style={styles.lock}><IconButton icon={props.positionLocked ? 'lock' : 'unlock'} label={props.positionLocked ? 'Desbloquear posiciones' : 'Bloquear posiciones'} onPress={props.onTogglePositionLock} /></View> : null}
   </View>;
 });
 
@@ -47,7 +49,7 @@ function Position(props: Props & { slot: Slot; width: number }) {
   // PanResponder stores these callbacks; it never invokes them during render.
   // eslint-disable-next-line react-hooks/refs
   const [responder] = useState(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, gesture) => latest.current.editable && latest.current.slot.id !== 0 && Math.abs(gesture.dx) + Math.abs(gesture.dy) > 8,
+    onMoveShouldSetPanResponder: (_, gesture) => latest.current.editable && !latest.current.positionLocked && latest.current.slot.id !== 0 && Math.abs(gesture.dx) + Math.abs(gesture.dy) > 8,
     onPanResponderGrant: () => {
       origin.current = { x: latest.current.slot.x, y: latest.current.slot.y };
       latest.current.onDragging?.(true);
@@ -71,4 +73,5 @@ const styles = StyleSheet.create({
   pitch: { height, borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
+  lock: { position: 'absolute', right: 8, bottom: 8 },
 });

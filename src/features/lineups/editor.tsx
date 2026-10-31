@@ -23,6 +23,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
   const [playerColor, setPlayerColor] = useState('#B4F16C');
   const [jerseyColor, setJerseyColor] = useState('#0B1210');
   const [selectedPreset, setSelectedPreset] = useState<SelectedPreset>(null);
+  const [basePreset, setBasePreset] = useState<Formation | 'custom'>('4-3-3');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [revision, setRevision] = useState(0);
   const [slot, setSlot] = useState<number | null>(null);
@@ -33,6 +34,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
   const [active,setActive]=useState(false);
   const [dragging,setDragging]=useState(false);
   const [layoutChanged,setLayoutChanged]=useState(false);
+  const [positionLocked,setPositionLocked]=useState(false);
   const [dirty,setDirty]=useState(false);
   const [conflict,setConflict]=useState(false);
   const [sharing,setSharing]=useState(false);
@@ -47,7 +49,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     setBusy(true);
     try {
       const data = await loadLineup(clubId, callId, captain);
-      setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(presetFor(data.document, data.preference)); setRevision(data.revision); setMessage('');
+      const preset = presetFor(data.document, data.preference);
+      setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setBasePreset(preset ?? data.document?.formation ?? '4-3-3'); setRevision(data.revision); setMessage('');
       setActive(data.active);setDirty(false);setLayoutChanged(false);setConflict(false);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
@@ -63,7 +66,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         if(dirty){
           if(data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{setDocument(data.document);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setSelectedPreset(presetFor(data.document,data.preference));setLayoutChanged(false);}
+        }else{const preset=presetFor(data.document,data.preference);setDocument(data.document);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setSelectedPreset(preset);setBasePreset(preset ?? data.document?.formation ?? '4-3-3');setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
@@ -83,6 +86,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     try {
       setPreference(await saveLineupPreference(clubId, layoutFromLineup(document)));
       setSelectedPreset('custom');
+      setBasePreset('custom');
       setLayoutChanged(false);
       setMessage('Posición personalizada guardada para los capitanes del club.');
     } catch { setMessage('No se pudo guardar la posición personalizada.'); }
@@ -93,7 +97,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     try {
       await deleteLineupPreference(clubId);
       setPreference(null);
-      if (selectedPreset === 'custom') setSelectedPreset(null);
+      if (selectedPreset === 'custom') { setSelectedPreset(null); setBasePreset(document?.formation ?? '4-3-3'); }
       setMessage('Posición personalizada eliminada.');
     } catch { setMessage('No se pudo eliminar la posición personalizada.'); }
     finally { setBusy(false); }
@@ -126,15 +130,15 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
       {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <PresetChip key={f} label={f} selected={selectedPreset === f} disabled={!editable} onPress={() => { change(applyPreset(document, f)); setSelectedPreset(f); setLayoutChanged(false); }} />)}
-        {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
+        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <PresetChip key={f} label={f} selected={selectedPreset === f} disabled={!editable} onPress={() => { change(applyPreset(document, f)); setSelectedPreset(f); setBasePreset(f); setLayoutChanged(false); }} />)}
+        {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setBasePreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
-        <IconButton icon="eraser" label="Restaurar posición del preset" disabled={!editable} onPress={() => { change(resetPreset(document, selectedPreset, preference)); setLayoutChanged(false); }} />
+        <IconButton icon="undo" label="Deshacer cambios de posición" disabled={!editable || !layoutChanged} onPress={() => { change(resetPreset(document, basePreset, preference)); setSelectedPreset(basePreset); setLayoutChanged(false); }} />
         <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><ClubCrest path={crestPath} name={clubName} size={38} /><Text numberOfLines={1} style={{ flex: 1, color: '#F3F8F1', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>{clubName}</Text></View> : null}
-        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
+        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => setPositionLocked(value => !value) : undefined} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Text style={{ color: '#B7C7B9', fontSize: 9, fontWeight: '700' }}>Powered by</Text><Image source={require('../../../assets/images/icon.png')} style={{ width: 15, height: 15, borderRadius: 4 }} /><Text style={{ color: '#F3F8F1', fontSize: 10, fontWeight: '800' }}>ConvoSquad</Text></View> : null}
       </View>
       <Button label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing} onPress={() => void shareImage()} />
