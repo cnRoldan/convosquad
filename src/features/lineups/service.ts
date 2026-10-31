@@ -7,7 +7,7 @@ import type { Json } from '@/types/database';
 import { inheritLineup, reconcileLineup, type Candidate, type Lineup, type LineupLayout } from './model';
 
 export type LineupAccess = { activated: boolean; premium: boolean; remaining: number; allowed: boolean };
-export type LineupDraft = { id: string; ordinal: number; title: string; document: Lineup; revision: number; submittedAt: string | null; createdBy: string; updatedBy: string; updatedAt: string; upVotes: number; downVotes: number; myVote: boolean | null; published: boolean };
+export type LineupDraft = { id: string; ordinal: number; title: string; document: Lineup; revision: number; submittedAt: string | null; createdBy: string; updatedBy: string; updatedAt: string; upVotes: number; downVotes: number; myVote: boolean | null; published: boolean; suggestedChanges: number; suggestedBy: string | null };
 
 export async function readLineupAccess(callId: string): Promise<LineupAccess> {
   return unwrap(await requireSupabase().rpc('read_lineup_access', { p_call_id: callId })) as unknown as LineupAccess;
@@ -21,8 +21,8 @@ export async function listLineupDrafts(callId: string): Promise<LineupDraft[]> {
   return unwrap(await requireSupabase().rpc('list_lineup_drafts', { p_call_id: callId })) as unknown as LineupDraft[];
 }
 
-export async function saveLineupDraft(callId: string, draft: LineupDraft | null, title: string, document: Lineup, submit = false) {
-  return unwrap(await requireSupabase().rpc('save_lineup_draft', { p_call_id: callId, p_draft_id: (draft?.id ?? null) as unknown as string, p_revision: draft?.revision ?? 0, p_title: title, p_document: document as unknown as Json, p_submit: submit })) as unknown as Pick<LineupDraft, 'id' | 'ordinal' | 'title' | 'document' | 'revision' | 'submittedAt'>;
+export async function saveLineupDraft(callId: string, draft: LineupDraft | null, title: string, document: Lineup, submit = false, suggestedChanges = 0) {
+  return unwrap(await requireSupabase().rpc('save_lineup_draft', { p_call_id: callId, p_draft_id: (draft?.id ?? null) as unknown as string, p_revision: draft?.revision ?? 0, p_title: title, p_document: document as unknown as Json, p_submit: submit, p_suggested_changes: suggestedChanges })) as unknown as Pick<LineupDraft, 'id' | 'ordinal' | 'title' | 'document' | 'revision' | 'submittedAt'>;
 }
 
 export async function voteLineupDraft(draftId: string, approved: boolean) {
