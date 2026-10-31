@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'npm:@supabase/supabase-js@2.117.3';
 import { authorizedWorker } from '../_shared/push-event.ts';
 import { dispatchReminders, type ReminderStore } from '../_shared/reminder-worker.ts';
 
