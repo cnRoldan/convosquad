@@ -1,7 +1,7 @@
 import { pushCopy } from './push-language.ts';
 import { createHash, timingSafeEqual } from 'node:crypto';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export type PushEventInput = { clubId: string; callUpId: string | null; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'evaluation_deadline' | 'club_approved' | 'club_join_request'; clubName?: string | null; actorEaId?: string | null; availability?: string | null };
+export type PushEventInput = { clubId: string; callUpId: string | null; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'evaluation_deadline' | 'club_approved' | 'club_join_request' | 'lineup_review' | 'lineup_suggestion' | 'lineup_selected' | 'lineup_not_selected'; clubName?: string | null; actorEaId?: string | null; availability?: string | null; lineupDraftId?: string | null; lineupDraftTitle?: string | null };
 export function parsePushEvent(data: unknown): PushEventInput | null {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   if (Object.keys(data).some(key => !['clubId','callUpId','eventKey','kind'].includes(key))) return null;
@@ -26,6 +26,19 @@ export function pushMessage(event: PushEventInput, token: string, recipientUserI
     to: token, title: text.club_approved, body: `${event.clubName?.slice(0, 100) ?? 'ConvoSquad'} ${text.admissionBody}`,
     channelId: 'call-ups', sound: 'default',
     data: { type: 'club_approved', clubId: event.clubId, ...(recipientUserId ? { userId: recipientUserId } : {}) },
+  };
+  if (event.kind === 'lineup_review' || event.kind === 'lineup_suggestion') return {
+    to: token, title: text[event.kind],
+    body: event.kind === 'lineup_review'
+      ? `🗳️ ${event.actorEaId?.slice(0, 100) ?? text.player} ha solicitado valoración para ${event.lineupDraftTitle?.slice(0, 80) ?? 'una alineación'} de ${event.clubName?.slice(0, 100) ?? 'tu club'}. Entra y valora.`
+      : `💡 ${event.actorEaId?.slice(0, 100) ?? text.player} sugiere un cambio para ${event.lineupDraftTitle?.slice(0, 80) ?? 'una alineación'} de ${event.clubName?.slice(0, 100) ?? 'tu club'}. Entra y valora.`,
+    channelId: 'call-ups', sound: 'default', data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, ...(recipientUserId ? { userId: recipientUserId } : {}), kind: 'lineup_review', ...(event.lineupDraftId ? { draftId: event.lineupDraftId } : {}) },
+  };
+  if (event.kind === 'lineup_selected' || event.kind === 'lineup_not_selected') return {
+    to: token, title: text[event.kind], body: event.kind === 'lineup_selected'
+      ? `🎉 ¡Enhorabuena! ${event.clubName?.slice(0, 100) ?? 'Tu club'} te ha seleccionado para formar parte de su 11.`
+      : `⚽ ${event.clubName?.slice(0, 100) ?? 'Tu club'} ha publicado la alineación. Esta vez no entras en el 11.`,
+    channelId: 'call-ups', sound: 'default', data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, ...(recipientUserId ? { userId: recipientUserId } : {}) },
   };
   return {
     to: token, title: text[event.kind],

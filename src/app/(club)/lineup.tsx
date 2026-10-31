@@ -10,7 +10,7 @@ import { activateLineupAccess, readLineupAccess, type LineupAccess } from '@/fea
 
 export default function LineupScreen() {
   useLanguage(); const { activeClub, currentMembership } = useClub();
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, draft } = useLocalSearchParams<{ id?: string; draft?: string }>();
   const [noticeVisible, setNoticeVisible] = useState(true);
   const [access, setAccess] = useState<LineupAccess | null>(null);
   const [opening, setOpening] = useState(false);
@@ -31,7 +31,7 @@ export default function LineupScreen() {
     try { setAccess(await activateLineupAccess(id)); }
     finally { setOpening(false); }
   }
-  if (id && activeClub && access?.allowed) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}`} clubId={activeClub.id} clubName={activeClub.name} crestPath={activeClub.crestPath} callId={id} captain={currentMembership?.role === 'admin'} />;
+  if (id && activeClub && access?.allowed) return <LineupEditor key={`${activeClub.id}:${id}:${currentMembership?.role}:${draft ?? ''}`} clubId={activeClub.id} clubName={activeClub.name} crestPath={activeClub.crestPath} callId={id} captain={currentMembership?.role === 'admin'} {...(draft ? { initialDraftId: draft } : {})} />;
   if (id && activeClub && access) return <Screen compact>
     <Heading title={t('Tu 11')} subtitle={activeClub.name} />
     <View style={styles.pitch}>

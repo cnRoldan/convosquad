@@ -46,8 +46,8 @@ function CallUpNotificationScreen() {
       }).catch(error => { setActionResult({ key: actionKey, text: callUpErrorMessage(error), error: true }); });
       return;
     }
-    selectClub(clubId); clearPush(); router.replace({ pathname: intent?.rating ? '/call-up-ratings' : '/call-up', params: { id: callUpId } });
-  }, [clubId, callUpId, destination, isRecovery, selectClub, clearPush, session?.user.id, intent?.response, intent?.rating, call.data?.status, wrongAccount, ratingDenied, closed, actionKey]);
+    selectClub(clubId); clearPush(); router.replace(intent?.lineupReview ? { pathname: '/lineup', params: { id: callUpId, draft: intent.draftId } } : { pathname: intent?.rating ? '/call-up-ratings' : '/call-up', params: { id: callUpId } });
+  }, [clubId, callUpId, destination, isRecovery, selectClub, clearPush, session?.user.id, intent?.response, intent?.rating, intent?.lineupReview, intent?.draftId, call.data?.status, wrongAccount, ratingDenied, closed, actionKey]);
   if (!result && (isLoading || loadingClubs || call.isLoading)) return <LoadingScreen label={t("Comprobando acceso a la convocatoria…")} />;
   if (clubError) return <Screen><Message error>{t("No se pudo comprobar el club. Comprueba tu conexión.")}</Message><Button label={t("Reintentar")} onPress={refresh} /></Screen>;
   return <Screen>

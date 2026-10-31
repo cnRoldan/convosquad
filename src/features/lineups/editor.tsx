@@ -19,7 +19,7 @@ import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, r
 
 type SelectedPreset = Formation | 'custom' | null;
 
-export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: { clubId: string; clubName: string; crestPath?: string | null | undefined; callId: string; captain: boolean }) {
+export function LineupEditor({ clubId, clubName, crestPath, callId, captain, initialDraftId }: { clubId: string; clubName: string; crestPath?: string | null | undefined; callId: string; captain: boolean; initialDraftId?: string }) {
   const [document, setDocument] = useState<Lineup | null>(null);
   const [preference, setPreference] = useState<LineupLayout | null>(null);
   const [playerColor, setPlayerColor] = useState('#B4F16C');
@@ -60,13 +60,15 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     setBusy(true);
     try {
       const [data, rows] = await Promise.all([loadLineup(clubId, callId, captain), captain ? listLineupDrafts(callId) : Promise.resolve([])]);
-      const preset = presetFor(data.document, data.preference);
-      setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setBasePreset(preset ?? data.document?.formation ?? '4-3-3'); setRevision(data.revision); setMessage('');
+      const requested = initialDraftId ? rows.find(draft => draft.id === initialDraftId) : null;
+      const loadedDocument = requested?.document ?? data.document;
+      const preset = presetFor(loadedDocument, data.preference);
+      setDocument(loadedDocument); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setBasePreset(preset ?? loadedDocument?.formation ?? '4-3-3'); setRevision(data.revision); setMessage('');
       setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
-      setDrafts(rows);
+      setDrafts(rows); if (requested) setActiveDraftId(requested.id);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
-  }, [clubId, callId, captain]);
+  }, [clubId, callId, captain, initialDraftId]);
   useEffect(() => { const timer=setTimeout(()=>void reload(),0);return ()=>clearTimeout(timer); }, [reload]);
   useEffect(() => { void listClubMembers(clubId).then(rows => setCaptainCount(rows.filter(row => row.role === 'admin' && row.is_active).length)).catch(() => undefined); }, [clubId]);
   useEffect(()=>{
