@@ -446,6 +446,7 @@ export type Database = {
           updated_at: string;
           player_color: string;
           jersey_color: string;
+          position_locked: boolean;
         };
         Insert: {
           club_id: string;
@@ -454,6 +455,7 @@ export type Database = {
           updated_at?: string;
           player_color?: string;
           jersey_color?: string;
+          position_locked?: boolean;
         };
         Update: {
           club_id?: string;
@@ -462,6 +464,7 @@ export type Database = {
           updated_at?: string;
           player_color?: string;
           jersey_color?: string;
+          position_locked?: boolean;
         };
         Relationships: [
           { foreignKeyName: 'club_lineup_preferences_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -1522,6 +1525,13 @@ export type Database = {
           p_jersey_color: string;
         };
         Returns: Json;
+      };
+      set_lineup_position_lock: {
+        Args: {
+          p_club_id: string;
+          p_locked: boolean;
+        };
+        Returns: boolean;
       };
       set_notification_preferences: {
         Args: {

@@ -12,7 +12,7 @@ import { AddLineupPlayer, type GuestInput } from './add-player';
 import { shareLineupImage } from './share-image';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
-import { deleteLineupPreference, loadLineup, saveLineup, saveLineupPreference, setLineupPlayerColors } from './service';
+import { deleteLineupPreference, loadLineup, saveLineup, saveLineupPreference, setLineupPlayerColors, setLineupPositionLock } from './service';
 import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup, type LineupLayout } from './model';
 
 type SelectedPreset = Formation | 'custom' | null;
@@ -51,7 +51,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
       const data = await loadLineup(clubId, callId, captain);
       const preset = presetFor(data.document, data.preference);
       setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setBasePreset(preset ?? data.document?.formation ?? '4-3-3'); setRevision(data.revision); setMessage('');
-      setActive(data.active);setDirty(false);setLayoutChanged(false);setConflict(false);
+      setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
   }, [clubId, callId, captain]);
@@ -66,7 +66,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         if(dirty){
           if(data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{const preset=presetFor(data.document,data.preference);setDocument(data.document);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setSelectedPreset(preset);setBasePreset(preset ?? data.document?.formation ?? '4-3-3');setLayoutChanged(false);}
+        }else{const preset=presetFor(data.document,data.preference);setDocument(data.document);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setBasePreset(preset ?? data.document?.formation ?? '4-3-3');setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
@@ -111,6 +111,12 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     catch { setMessage('No se pudieron guardar los colores de los jugadores.'); }
     finally { setBusy(false); }
   }
+  async function togglePositionLock() {
+    setBusy(true);
+    try { setPositionLocked(await setLineupPositionLock(clubId, !positionLocked)); }
+    catch { setMessage('No se pudo guardar el candado de posiciones.'); }
+    finally { setBusy(false); }
+  }
   async function shareImage() {
     setSharing(true); setMessage('');
     try { await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))); await shareLineupImage(shareImageRef); }
@@ -138,7 +144,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
       </View> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><ClubCrest path={crestPath} name={clubName} size={38} /><Text numberOfLines={1} style={{ flex: 1, color: '#F3F8F1', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>{clubName}</Text></View> : null}
-        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => setPositionLocked(value => !value) : undefined} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
+        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Text style={{ color: '#B7C7B9', fontSize: 9, fontWeight: '700' }}>Powered by</Text><Image source={require('../../../assets/images/icon.png')} style={{ width: 15, height: 15, borderRadius: 4 }} /><Text style={{ color: '#F3F8F1', fontSize: 10, fontWeight: '800' }}>ConvoSquad</Text></View> : null}
       </View>
       <Button label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing} onPress={() => void shareImage()} />
