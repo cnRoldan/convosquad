@@ -150,7 +150,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     const id=unwrap(await requireSupabase().rpc('add_lineup_guest',{p_call_id:callId,p_kind:input.kind,p_name:input.name,p_notes:input.notes,p_phone:input.phone,p_retain:input.retain}));
     setCandidates(current=>[...current,{id,name:input.name,active:true,eligible:false,manual:true}]);include(id);
   }
-  return <Screen scrollEnabled={!dragging}>
+  return <Screen scrollEnabled={!dragging} onRefresh={() => void reload()} refreshing={busy}>
+    <View style={{ alignItems: 'flex-start' }}><IconButton icon="back" label="Volver a la convocatoria" onPress={() => router.replace('/call-up')} /></View>
     <View style={{ marginVertical: 12 }}><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Elige la formación</Text></View>
     {message ? <Body>{message}</Body> : null}
     {busy ? <Body>Cargando…</Body> : null}
@@ -177,8 +178,6 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       </Card>
       {captain ? <><Button label={activeDraft?.submittedAt ? "Sugerir cambios" : "Guardar borrador"} disabled={!editable || Boolean(activeDraft?.submittedAt && !dirty)} onPress={() => openDraft(activeDraft?.submittedAt ? 'suggest' : 'save')} />{captainCount > 1 ? <Button label="Enviar para valoración" disabled={!editable || (!dirty && (!activeDraft || Boolean(activeDraft.submittedAt)))} onPress={() => openDraft('send')} /> : null}<Button label={activeDraft?.published ? "Republicar 11" : "Publicar 11"} disabled={!editable || !canPublish(document) || Boolean(activeDraft?.published && !dirty)} onPress={() => setConfirmPublish(true)} />{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
     </> : !busy ? <Body>El capitán todavía está preparando el 11.</Body> : null}
-    <Button secondary label="Recargar" disabled={busy} onPress={() => void reload()} />
-    <Button secondary label="Regresar" onPress={()=>router.replace('/call-up')} />
     {adding && document ? <AddLineupPlayer playerColor={playerColor} jerseyColor={jerseyColor} candidates={candidates.filter(p=>!document.bench.includes(p.id)&&!document.slots.some(s=>s.playerId===p.id))} select={include} create={create} close={()=>setAdding(false)} /> : null}
     <Modal transparent visible={slot !== null} onRequestClose={() => setSlot(null)}>
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><ScrollView style={{ maxHeight: '80%' }}><Card title="Cambiar jugador">
