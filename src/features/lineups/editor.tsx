@@ -3,16 +3,18 @@ import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { router } from 'expo-router';
 import { Body, Button, Card, Field, Heading, Screen } from '@/components/ui';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { IconButton } from '@/components/icon-button';
 import { colors } from '@/theme';
 import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 import { ClubCrest } from '@/features/clubs/club-crest';
+import { listClubMembers } from '@/features/clubs/service';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
 import { shareLineupImage } from './share-image';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
-import { deleteLineupPreference, loadLineup, saveLineup, saveLineupPreference, setLineupPlayerColors, setLineupPositionLock } from './service';
+import { deleteLineupPreference, listLineupDrafts, loadLineup, publishLineupDraft, saveLineupDraft, saveLineupPreference, setLineupPlayerColors, setLineupPositionLock, voteLineupDraft, type LineupDraft } from './service';
 import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup, type LineupLayout } from './model';
 
 type SelectedPreset = Formation | 'custom' | null;
@@ -38,6 +40,13 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
   const [dirty,setDirty]=useState(false);
   const [conflict,setConflict]=useState(false);
   const [sharing,setSharing]=useState(false);
+  const [drafts,setDrafts]=useState<LineupDraft[]>([]);
+  const [activeDraftId,setActiveDraftId]=useState<string | null>(null);
+  const [draftMode,setDraftMode]=useState<'save'|'review'|null>(null);
+  const [draftTitle,setDraftTitle]=useState('');
+  const [confirmPublish,setConfirmPublish]=useState(false);
+  const [published,setPublished]=useState(false);
+  const [captainCount,setCaptainCount]=useState(1);
   const [colorPicker,setColorPicker]=useState(false);
   const [editingColor,setEditingColor]=useState<'shirt' | 'jersey'>('shirt');
   const [customColor,setCustomColor]=useState('#B4F16C');
@@ -45,17 +54,20 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
   const shareImageRef = useRef<View>(null);
   const editable=captain && active && !busy && !conflict;
   function change(next:Lineup) {setDocument(next);setDirty(true);}
+  const activeDraft = drafts.find(draft => draft.id === activeDraftId) ?? null;
   const reload = useCallback(async () => {
     setBusy(true);
     try {
-      const data = await loadLineup(clubId, callId, captain);
+      const [data, rows] = await Promise.all([loadLineup(clubId, callId, captain), captain ? listLineupDrafts(callId) : Promise.resolve([])]);
       const preset = presetFor(data.document, data.preference);
       setDocument(data.document); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setBasePreset(preset ?? data.document?.formation ?? '4-3-3'); setRevision(data.revision); setMessage('');
       setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
+      setDrafts(rows);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
   }, [clubId, callId, captain]);
   useEffect(() => { const timer=setTimeout(()=>void reload(),0);return ()=>clearTimeout(timer); }, [reload]);
+  useEffect(() => { void listClubMembers(clubId).then(rows => setCaptainCount(rows.filter(row => row.role === 'admin' && row.is_active).length)).catch(() => undefined); }, [clubId]);
   useEffect(()=>{
     let live=true;
     const timer=setInterval(()=>{
@@ -71,15 +83,16 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
     },10000);
     return ()=>{live=false;clearInterval(timer);};
   },[clubId,callId,captain,busy,dragging,adding,slot,benchPlayer,dirty,revision]);
-  async function save(publish: boolean) {
-    if (!document) return;
+  function openDraft(mode: 'save' | 'review') { setDraftMode(mode); setDraftTitle(activeDraft?.title ?? `Borrador #${drafts.length + 1}`); }
+  async function saveDraft() {
+    if (!document || !draftMode || !draftTitle.trim()) return;
     setBusy(true);
-    try { setRevision(await saveLineup(callId, revision, document, publish)); setDirty(false);setMessage(publish ? 'Once publicado.' : 'Borrador guardado.'); }
-    catch (error) {
-      setMessage(typeof error === 'object' && error !== null && 'code' in error && error.code === '40001'
-        ? 'Otro capitán ha cambiado el once. Recarga antes de continuar.' : 'No se pudo guardar el once.');
-    } finally { setBusy(false); }
+    try { const saved = await saveLineupDraft(callId, activeDraft, draftTitle.trim(), document, draftMode === 'review'); setActiveDraftId(saved.id); setDraftMode(null); setDirty(false); await reload(); setMessage(draftMode === 'review' ? 'Borrador enviado para valoración.' : 'Borrador guardado.'); }
+    catch { setMessage('No se pudo guardar el borrador.'); }
+    finally { setBusy(false); }
   }
+  async function vote(approved: boolean) { if (!activeDraft) return; setBusy(true); try { await voteLineupDraft(activeDraft.id, approved); await reload(); } catch { setMessage('No se pudo registrar la valoración.'); } finally { setBusy(false); } }
+  async function publishDraft() { if (!document) return; setBusy(true); try { const saved = activeDraft ?? await saveLineupDraft(callId, null, `Borrador #${drafts.length + 1}`, document); await publishLineupDraft(saved.id); setActiveDraftId(saved.id); setPublished(true); setDirty(false); setConfirmPublish(false); await reload(); setMessage('Once publicado.'); } catch { setMessage('No se pudo publicar el once.'); } finally { setBusy(false); } }
   async function saveCustomLayout() {
     if (!document) return;
     setBusy(true);
@@ -142,19 +155,20 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         <IconButton icon="undo" label="Deshacer cambios de posición" disabled={!editable || !layoutChanged} onPress={() => { change(resetPreset(document, basePreset, preference)); setSelectedPreset(basePreset); setLayoutChanged(false); }} />
         <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
+      {captain && drafts.length ? <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => setActiveDraftId(null)} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); change(draft.document); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView> : null}
+      {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}><Body>Modificado por: {activeDraft.updatedBy}</Body>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}</Card> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><ClubCrest path={crestPath} name={clubName} size={38} /><Text numberOfLines={1} style={{ flex: 1, color: '#F3F8F1', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>{clubName}</Text></View> : null}
         <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Text style={{ color: '#B7C7B9', fontSize: 9, fontWeight: '700' }}>Powered by</Text><Image source={require('../../../assets/images/icon.png')} style={{ width: 15, height: 15, borderRadius: 4 }} /><Text style={{ color: '#F3F8F1', fontSize: 10, fontWeight: '800' }}>ConvoSquad</Text></View> : null}
       </View>
-      <Button label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing} onPress={() => void shareImage()} />
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
           {document.bench.map(id => <Pressable accessibilityRole="button" accessibilityLabel={`Gestionar ${candidates.find(p => p.id === id)?.name ?? 'jugador'} en el banquillo`} disabled={!editable} key={id} onPress={() => setBenchPlayer(id)}><PlayerToken compact color={playerColor} jerseyColor={jerseyColor} player={candidates.find(p => p.id === id)} /></Pressable>)}
           {captain ? <Pressable accessibilityRole="button" accessibilityLabel="Añadir al banquillo" disabled={!editable} onPress={()=>setAdding(true)} style={{opacity:editable?1:0.45}}><PlayerToken compact /></Pressable> : null}
         </ScrollView>
       </Card>
-      {captain ? <><Button label="Guardar borrador" disabled={!editable} onPress={() => void save(false)} /><Button label="Publicar 11" disabled={!editable || !canPublish(document)} onPress={() => void save(true)} />{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
+      {captain ? <><Button label={activeDraft?.submittedAt && dirty ? "Sugerir cambios" : "Guardar borrador"} disabled={!editable} onPress={() => openDraft(activeDraft?.submittedAt && dirty ? 'review' : 'save')} />{captainCount > 1 ? <Button label="Enviar para valoración" disabled={!editable} onPress={() => openDraft('review')} /> : null}<Button label="Publicar 11" disabled={!editable || !canPublish(document)} onPress={() => setConfirmPublish(true)} />{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
     </> : !busy ? <Body>El capitán todavía está preparando el 11.</Body> : null}
     <Button secondary label="Recargar" disabled={busy} onPress={() => void reload()} />
     <Button secondary label="Regresar" onPress={()=>router.replace('/call-up')} />
@@ -199,6 +213,9 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain }: {
         <Button secondary label="Cerrar" onPress={() => setColorPicker(false)} />
       </Card></View>
     </Modal>
+    <Modal transparent visible={draftMode !== null} onRequestClose={() => setDraftMode(null)}><View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><Card title={draftMode === 'review' ? 'Enviar para valoración' : 'Guardar borrador'}><Body>{draftMode === 'review' ? 'Solicitarás la valoración de los capitanes de la plantilla.' : 'Pon un nombre para reconocer este once.'}</Body><Field label="Título del borrador" value={draftTitle} onChangeText={setDraftTitle} maxLength={80} editable={!busy} /><Button label={draftMode === 'review' ? 'Enviar' : 'Guardar'} disabled={busy || !draftTitle.trim()} onPress={() => void saveDraft()} /><Button secondary label="Cerrar" onPress={() => setDraftMode(null)} /></Card></View></Modal>
+    <ConfirmDialog visible={confirmPublish} title="Publicar 11" description={activeDraft?.submittedAt ? `Publicarás ${activeDraft.title}. Los jugadores verán este once oficialmente.` : 'Vas a publicar esta alineación sin haberla sometido a valoración con el resto de capitanes. ¿Deseas continuar?'} confirmLabel="Publicar 11" busy={busy} onCancel={() => setConfirmPublish(false)} onConfirm={() => void publishDraft()} />
+    <Modal transparent visible={published} onRequestClose={() => setPublished(false)}><View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><Card title="🎉 Once publicado"><Body>La alineación ya es oficial para el equipo.</Body><Button label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing} onPress={() => void shareImage()} /><Button secondary label="Cerrar" onPress={() => setPublished(false)} /></Card></View></Modal>
   </Screen>;
 }
 

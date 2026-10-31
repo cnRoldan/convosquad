@@ -68,6 +68,80 @@ export type Database = {
           { foreignKeyName: 'call_up_contacts_trial_id_fkey'; columns: ["trial_id"]; isOneToOne: true; referencedRelation: 'call_up_trials'; referencedColumns: ["id"]; },
         ];
       };
+      call_up_lineup_draft_votes: {
+        Row: {
+          draft_id: string;
+          user_id: string;
+          approved: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          draft_id: string;
+          user_id: string;
+          approved: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          draft_id?: string;
+          user_id?: string;
+          approved?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'call_up_lineup_draft_votes_draft_id_fkey'; columns: ["draft_id"]; isOneToOne: false; referencedRelation: 'call_up_lineup_drafts'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineup_draft_votes_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      call_up_lineup_drafts: {
+        Row: {
+          id: string;
+          club_id: string;
+          call_up_id: string;
+          ordinal: number;
+          title: string;
+          document: Json;
+          revision: number;
+          created_by: string;
+          updated_by: string;
+          submitted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          call_up_id: string;
+          ordinal: number;
+          title: string;
+          document: Json;
+          revision?: number;
+          created_by: string;
+          updated_by: string;
+          submitted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          call_up_id?: string;
+          ordinal?: number;
+          title?: string;
+          document?: Json;
+          revision?: number;
+          created_by?: string;
+          updated_by?: string;
+          submitted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'call_up_lineup_drafts_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineup_drafts_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineup_drafts_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineup_drafts_updated_by_fkey'; columns: ["updated_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       call_up_lineups: {
         Row: {
           call_up_id: string;
@@ -1265,6 +1339,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      list_lineup_drafts: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
+      };
       list_lineup_guests: {
         Args: {
           p_call_id: string;
@@ -1305,6 +1385,12 @@ export type Database = {
           p_existing_player_id?: string;
         };
         Returns: Database['public']['Tables']['players']['Row'][];
+      };
+      publish_lineup_draft: {
+        Args: {
+          p_draft_id: string;
+        };
+        Returns: undefined;
       };
       read_club_activation: {
         Args: {
@@ -1466,6 +1552,17 @@ export type Database = {
         };
         Returns: number;
       };
+      save_lineup_draft: {
+        Args: {
+          p_call_id: string;
+          p_draft_id: string;
+          p_revision: number;
+          p_title: string;
+          p_document: Json;
+          p_submit?: boolean;
+        };
+        Returns: Json;
+      };
       save_lineup_preference: {
         Args: {
           p_club_id: string;
@@ -1608,6 +1705,13 @@ export type Database = {
           p_closes_at?: string;
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
+      };
+      vote_lineup_draft: {
+        Args: {
+          p_draft_id: string;
+          p_approved: boolean;
+        };
+        Returns: undefined;
       };
       withdraw_trial: {
         Args: {
