@@ -15,6 +15,6 @@ const styles = StyleSheet.create({
   circle: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#B4F16C', justifyContent: 'center', alignItems: 'center' },
   empty: { backgroundColor: '#A5AEA8' },
   number: { fontWeight: '700', color: '#0B1210', fontSize: 16 },
-  nameBadge: { width: '100%', overflow: 'hidden', backgroundColor: '#F1F8EC', borderRadius: 5, paddingHorizontal: 4, paddingVertical: 2 },
-  name: { fontSize: 11, fontWeight: '700', color: '#0B1210', textAlign: 'center' },
+  nameBadge: { width: '100%', overflow: 'hidden', backgroundColor: 'rgba(6, 18, 12, 0.84)', borderRadius: 5, paddingHorizontal: 4, paddingVertical: 2 },
+  name: { fontSize: 11, fontWeight: '800', color: '#FFFFFF', textAlign: 'center', textShadowColor: '#06120C', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 },
 });
