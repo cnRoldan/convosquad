@@ -15,5 +15,5 @@ const styles = StyleSheet.create({
   circle: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#B4F16C', justifyContent: 'center', alignItems: 'center' },
   empty: { backgroundColor: '#A5AEA8' },
   number: { fontWeight: '700', color: '#0B1210', fontSize: 16 },
-  name: { width: '100%', fontSize: 11, color: '#FFFFFF', textAlign: 'center', backgroundColor: '#14241C', borderRadius: 4, paddingHorizontal: 3 },
+  name: { width: '100%', fontSize: 11, fontWeight: '700', color: '#0B1210', textAlign: 'center', backgroundColor: '#F1F8EC', borderRadius: 5, paddingHorizontal: 3, paddingVertical: 1 },
 });
