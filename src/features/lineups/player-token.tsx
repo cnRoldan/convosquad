@@ -6,7 +6,7 @@ export function PlayerToken({ player, emptyLabel = '+', compact = false, color =
     <View style={[styles.circle, player ? { backgroundColor: color } : styles.empty]}>
       <Text style={[styles.number, { color: jerseyColor }]}>{player ? player.jerseyNumber ?? '—' : emptyLabel}</Text>
     </View>
-    {player ? <Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>{player.name}</Text> : null}
+    {player ? <View style={styles.nameBadge}><Text numberOfLines={1} ellipsizeMode="tail" style={styles.name}>{player.name}</Text></View> : null}
   </View>;
 }
 const styles = StyleSheet.create({
@@ -15,5 +15,6 @@ const styles = StyleSheet.create({
   circle: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#B4F16C', justifyContent: 'center', alignItems: 'center' },
   empty: { backgroundColor: '#A5AEA8' },
   number: { fontWeight: '700', color: '#0B1210', fontSize: 16 },
-  name: { width: '100%', fontSize: 11, fontWeight: '700', color: '#0B1210', textAlign: 'center', backgroundColor: '#F1F8EC', borderRadius: 5, paddingHorizontal: 3, paddingVertical: 1 },
+  nameBadge: { width: '100%', overflow: 'hidden', backgroundColor: '#F1F8EC', borderRadius: 5, paddingHorizontal: 4, paddingVertical: 2 },
+  name: { fontSize: 11, fontWeight: '700', color: '#0B1210', textAlign: 'center' },
 });
