@@ -9,6 +9,7 @@ import { useAuth } from './auth-context';
 import { authErrorMessage, loginAccount, registerAccount } from './service';
 import { eaIdPattern } from './ea-account';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { LoadingScreen } from '@/components/loading';
 
 export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   useLanguage();
@@ -20,7 +21,8 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  if (!isLoading && session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
+  if (isLoading) return <LoadingScreen label={t("Comprobando tu sesión…")} />;
+  if (session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
 
   async function submit() {
     if (!eaIdPattern.test(eaId.trim())) return setMessage(t("El ID de EA debe tener entre 3 y 24 letras, números, guiones o guiones bajos."));

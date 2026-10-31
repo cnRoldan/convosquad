@@ -1,10 +1,17 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
+import { LoadingScreen } from '@/components/loading';
+import { useAuth } from '@/features/auth/auth-context';
 
 export default function WelcomeScreen() {
   useLanguage();
+  const { session, isLoading, isDemo, isRecovery } = useAuth();
+  // Wait for Supabase to restore AsyncStorage before deciding that the user is
+  // a guest. This prevents the welcome/login screen from flashing on launch.
+  if (isLoading) return <LoadingScreen label={t("Comprobando tu sesión…")} />;
+  if (session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : { pathname: '/clubs', params: { auto: '1' } }} />;
   return (
     <Screen>
       <Heading title={t("Tu equipo. A una convocatoria de distancia.")} subtitle={t("Organiza tus noches de Clubes Pro y reúne a tu plantilla.")} />
