@@ -1,7 +1,9 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Body, Button, Card, Heading, Message, Options, Screen } from '@/components/ui';
+import { View } from 'react-native';
+import { Body, Button, Card, Field, Heading, Message, Options, Screen } from '@/components/ui';
+import { IconButton } from '@/components/icon-button';
 import { PlayerCard } from '@/features/players/player-card';
 import { PlayerActivityDialog } from '@/features/players/player-activity-dialog';
 import { useClub } from '@/features/clubs/club-context';
@@ -20,6 +22,8 @@ export default function RosterScreen() {
   const { session, isDemo } = useAuth();
   const clubId = activeClub?.id; const admin = currentMembership?.role === 'admin';
   const [filter, setFilter] = useState<'all' | 'registered' | 'unregistered'>('all');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const { activity } = useLocalSearchParams<{ activity?: string }>();
   const [pendingRemoval, setPendingRemoval] = useState<{ id: string; eaId: string; isActive: boolean; scope: string } | null>(null);
   const [removed, setRemoved] = useState(false);
@@ -29,9 +33,12 @@ export default function RosterScreen() {
   const result = useResource(`players:${session?.user.id}:${clubId}:${admin}:${rosterVersion}`, load, Boolean(session && clubId) && !isDemo);
   const players = (isDemo ? roster.map(player => ({ ...player, isActive: true })) : result.data?.map(player => ({
     id: player.id, eaId: player.ea_id, displayName: player.ea_id, jerseyNumber: player.jersey_number,
-    category: player.category, sortOrder: player.sort_order, userId: player.user_id, isActive: player.is_active,
+    category: player.category, sortOrder: player.sort_order, userId: player.user_id, isActive: player.is_active, nickname: player.nickname,
   })) ?? []).sort(compareRoster);
-  const displayed = players.filter(player => player.isActive && (filter === 'all' || (filter === 'registered' ? Boolean(player.userId) : !player.userId)));
+  const normalizedSearch = search.trim().toLocaleLowerCase();
+  const displayed = players.filter(player => player.isActive
+    && (filter === 'all' || (filter === 'registered' ? Boolean(player.userId) : !player.userId))
+    && (!normalizedSearch || [player.eaId, player.nickname, player.jerseyNumber?.toString()].some(value => value?.toLocaleLowerCase().includes(normalizedSearch))));
   async function move(category: RosterCategory, id: string, direction: -1 | 1) {
     if (!clubId || !admin || filter !== 'all' || isDemo || busy) return;
     const ids = moveItem(players.filter(player => player.category === category && player.isActive).map(player => player.id), id, direction); if (!ids) return;
@@ -47,7 +54,11 @@ export default function RosterScreen() {
     {notice ? <Message>{notice}</Message> : null}
     {activity === 'removed' || removed ? <Message>{t("Jugador quitado de la plantilla. Su cuenta y convocatorias anteriores se conservan.")}</Message> : null}
     {message ? <Message error>{message}</Message> : null}
-    <Options value={filter} onChange={setFilter} options={[{ value: 'all', label: t("Todos") }, { value: 'registered', label: t("Registrados") }, { value: 'unregistered', label: t("Sin registrar") }]} />
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View style={{ flex: 1 }}><Options value={filter} onChange={setFilter} options={[{ value: 'all', label: t("Todos") }, { value: 'registered', label: t("Registrados") }, { value: 'unregistered', label: t("Sin registrar") }]} /></View>
+      <IconButton icon="search" label="Buscar jugadores" onPress={() => setSearchOpen(open => !open)} variant={searchOpen ? 'plain' : 'outlined'} />
+    </View>
+    {searchOpen ? <Field label="Buscar jugador" value={search} onChangeText={setSearch} placeholder="Dorsal, apodo o EA ID" autoFocus /> : null}
     {admin ? <>
       <Button secondary label={t("Jugadores inactivos")} onPress={() => router.push('/inactive-players')} />
       <Button label={t("Añadir jugador")} onPress={() => router.push('/players/new')} />

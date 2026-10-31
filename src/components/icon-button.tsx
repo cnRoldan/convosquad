@@ -18,6 +18,7 @@ const paths = {
   save: 'M4 3h13l4 4v14H3V3h1zM7 3v6h10V3M7 21v-8h10v8',
   eraser: 'm7 21-4-4a2 2 0 0 1 0-3l9-9a2 2 0 0 1 3 0l6 6a2 2 0 0 1 0 3l-7 7H7zm1-6 4 4m-4-4 5-5 4 4-5 5',
   undo: 'M9 14l-4-4 4-4M5 10h8a6 6 0 0 1 6 6v1',
+  search: 'm21 21-4.35-4.35M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0z',
   unlock: 'M7 10h11v11H6V10h1zm1 0V6a4 4 0 0 1 7-2',
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
 } as const;
