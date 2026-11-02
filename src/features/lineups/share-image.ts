@@ -4,7 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
 
 export async function shareLineupImage(viewRef: RefObject<View | null>) {
-  const uri = await captureRef(viewRef, { format: 'png', quality: 0.95, result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile' });
+  const uri = await captureRef(viewRef, { format: 'png', quality: 1, width: 1324, height: 1190, result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile' });
   if (Platform.OS !== 'web') {
     if (!await Sharing.isAvailableAsync()) throw new Error('Sharing unavailable');
     await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Compartir el 11' });
