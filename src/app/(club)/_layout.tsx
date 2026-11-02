@@ -26,7 +26,7 @@ export default function ClubLayout() {
         ...headerBackOptions(() => {
           if (router.canGoBack()) router.back();
           else router.replace('/call-up');
-        }, t('Volver a la convocatoria')),
+        }, t('Convocatoria actual')),
       }} />
       <Tabs.Screen name="premium" options={{ href: null }} />
     </Tabs>
