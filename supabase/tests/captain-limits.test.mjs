@@ -20,4 +20,7 @@ test('free clubs allow two captains and Premium removes the quota', async () => 
   await db.query("insert into public.club_feature_entitlements(club_id,lineup_premium_until) values($1,'infinity')", [club.id]);
   await query(owner, "select public.set_club_member($1,$2,'admin',true)", [club.id, second]);
   assert.equal((await db.query("select count(*)::integer count from public.club_members where club_id=$1 and role='admin' and is_active", [club.id])).rows[0].count, 3);
+  await db.query("update public.club_feature_entitlements set lineup_premium_until='epoch' where club_id=$1", [club.id]);
+  const captains = (await db.query("select user_id from public.club_members where club_id=$1 and role='admin' and is_active order by created_at", [club.id])).rows.map(row => row.user_id);
+  assert.deepEqual(captains, [owner, first]);
 });

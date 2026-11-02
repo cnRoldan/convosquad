@@ -34,6 +34,7 @@ function ClubSettingsContent() {
   const [filter, setFilter] = useState<'all' | 'captains' | 'players'>('all');
   const admin = currentMembership?.role === 'admin';
   const data = result.data;
+  const captainCount = data?.accounts.filter(account => account.role === 'admin').length ?? 0;
   async function changeCaptain() {
     if (!clubId || !pending || !admin || isDemo || busy) return;
     setBusy(true); setMessage('');
@@ -45,7 +46,7 @@ function ClubSettingsContent() {
     finally { setBusy(false); setPending(null); }
   }
   return <Screen>
-    <Heading title={t("Capitanes")} subtitle={activeClub?.name ?? ''} />
+    <Heading title={t("Capitanes")} subtitle={activeClub?.name ?? ''} action={data ? <CaptainQuota count={captainCount} premium={data.premium} /> : undefined} />
     {isDemo ? <DemoNotice /> : null}
     {result.isLoading ? <Body>{t("Cargando configuración…")}</Body> : null}
     {result.error ? <><Message error>{result.error}</Message><Button secondary label={t("Reintentar")} onPress={result.reload} /></> : null}
@@ -56,27 +57,31 @@ function ClubSettingsContent() {
         <CaptainFilter label={t('Todos')} selected={filter === 'all'} onPress={() => setFilter('all')} />
         <CaptainFilter label={t('Capitanes actuales')} selected={filter === 'captains'} onPress={() => setFilter('captains')} />
         <CaptainFilter label={t('No capitanes')} selected={filter === 'players'} onPress={() => setFilter('players')} />
-        <View accessibilityLabel={data.premium ? `${data.accounts.filter(account => account.role === 'admin').length} capitanes, plazas ilimitadas` : `${data.accounts.filter(account => account.role === 'admin').length} de 2 capitanes`} style={{ minHeight: 38, paddingHorizontal: 12, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
-          <Text style={{ color: colors.primary, fontWeight: '900' }}>{data.accounts.filter(account => account.role === 'admin').length}/{data.premium ? '∞' : '2'}</Text>
-        </View>
       </View>
       {!data.premium ? <Body>{t('Prémium permite añadir capitanes ilimitados.')}</Body> : null}
       {data.accounts.filter(account => filter === 'all' || (filter === 'captains' ? account.role === 'admin' : account.role !== 'admin')).map(account => {
           const player = data.players.find(row => row.user_id === account.user_id);
           const creator = data.club.created_by === account.user_id;
           const name = player?.ea_id ?? account.profiles?.username ?? t("Miembro");
-          const captainLimitReached = !data.premium && account.role !== 'admin' && data.accounts.filter(row => row.role === 'admin').length >= 2;
+          const captainLimitReached = !data.premium && account.role !== 'admin' && captainCount >= 2;
           return <Card key={account.id} title={name}>
             <Body>{creator ? t("Creador · capitán") : account.role === 'admin' ? t("Capitán") : t("Jugador")}</Body>
             {!creator && (player || account.role === 'admin') ? <Button secondary
               label={account.role === 'admin' ? t("Quitar capitanía a {{v0}}", { v0: name }) : t("Designar capitán a {{v0}}", { v0: name })}
               disabled={busy || !admin || captainLimitReached} onPress={() => setPending({ userId: account.user_id, name, role: account.role === 'admin' ? 'player' : 'admin' })} /> : null}
+            {captainLimitReached ? <Body>{t('Desasigna a un capitán antes de designar a otro.')}</Body> : null}
             {!creator && !player && account.role !== 'admin' ? <Body>{t("Vincula esta cuenta con una ficha activa para designarla capitán.")}</Body> : null}
           </Card>;
         })}
     </> : null}
     <ConfirmDialog visible={Boolean(pending)} title={pending?.role === 'admin' ? t("Designar capitán") : t("Quitar capitanía")} description={`${pending?.name ?? ''}: ${pending?.role === 'admin' ? t("podrá administrar este club y crear convocatorias.") : t("conservará su cuenta y ficha como jugador.")}`} confirmLabel={t("Confirmar")} busy={busy} onCancel={() => setPending(null)} onConfirm={() => { void changeCaptain(); }} />
   </Screen>;
+}
+
+function CaptainQuota({ count, premium }: { count: number; premium: boolean }) {
+  return <View accessibilityLabel={premium ? `${count} capitanes, plazas ilimitadas` : `${count} de 2 capitanes`} style={{ minHeight: 34, paddingHorizontal: 10, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+    <Text style={{ color: colors.primary, fontWeight: '900' }}>{count}/{premium ? '∞' : '2'}</Text>
+  </View>;
 }
 
 function CaptainFilter({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
