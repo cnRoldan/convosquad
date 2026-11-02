@@ -12,7 +12,7 @@ import { SessionIdentity } from './session-identity';
 export function Screen({ children, compact = false, footer, onRefresh, refreshing = false, scrollEnabled = true }: PropsWithChildren<{ compact?: boolean; footer?: ReactNode; onRefresh?: (() => void) | undefined; refreshing?: boolean; scrollEnabled?: boolean }>) {
   useLanguage();
   const segments = useSegments();
-  const hasHeader = segments.some(segment => segment === '(account)' || segment === '(manage)');
+  const hasHeader = segments.some(segment => segment === '(account)' || segment === '(manage)' || segment === 'lineup');
   const [footerHeight, setFooterHeight] = useState(0);
   return (
     <SafeAreaView style={styles.safe} edges={hasHeader ? ['left', 'right'] : ['top', 'left', 'right']}>

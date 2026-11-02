@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
-import { router } from 'expo-router';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { IconButton } from '@/components/icon-button';
@@ -151,8 +150,6 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     setCandidates(current=>[...current,{id,name:input.name,active:true,eligible:false,manual:true}]);include(id);
   }
   return <Screen scrollEnabled={!dragging} onRefresh={() => void reload()} refreshing={busy}>
-    <View style={{ alignItems: 'flex-start' }}><IconButton icon="back" label="Volver a la convocatoria" onPress={() => router.replace('/call-up')} /></View>
-    <View style={{ marginVertical: 12 }}><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Elige la formación</Text></View>
     {message ? <Body>{message}</Body> : null}
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
