@@ -20,17 +20,19 @@ export async function configureRevenueCat(userId: string) {
   return true;
 }
 
-export async function premiumPackage(userId: string): Promise<PurchasesPackage | null> {
+export async function offeringPackage(userId: string, offeringIdentifier: string, packageIdentifier: '$rc_monthly' | '$rc_annual' | '$rc_lifetime'): Promise<PurchasesPackage | null> {
   if (!await configureRevenueCat(userId)) return null;
-  return (await Purchases.getOfferings()).current?.availablePackages[0] ?? null;
+  const offerings = await Purchases.getOfferings();
+  const offering = offerings.all[offeringIdentifier] ?? (offeringIdentifier === 'premium' ? offerings.current : null);
+  return offering?.availablePackages.find(item => item.identifier === packageIdentifier) ?? null;
 }
 
-export async function purchasePremium(userId: string, item: PurchasesPackage) {
+export async function purchaseRevenueCatPackage(userId: string, item: PurchasesPackage) {
   await configureRevenueCat(userId);
   return Purchases.purchasePackage(item);
 }
 
-export async function restorePremium(userId: string) {
+export async function restoreRevenueCatPurchases(userId: string) {
   await configureRevenueCat(userId);
   return Purchases.restorePurchases();
 }

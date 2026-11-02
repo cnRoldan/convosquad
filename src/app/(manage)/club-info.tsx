@@ -8,7 +8,8 @@ import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { CrestSettings } from '@/features/clubs/crest-settings';
 import { TimezonePicker } from '@/features/clubs/timezone-picker';
-import { deleteClub, getClubSettings, readClubActivation, updateClub } from '@/features/clubs/service';
+import { beginClubPurchase, deleteClub, getClubSettings, readClubActivation, updateClub } from '@/features/clubs/service';
+import { offeringPackage, purchaseRevenueCatPackage, revenueCatReady } from '@/features/billing/revenuecat';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { colors } from '@/theme';
@@ -45,6 +46,19 @@ function ClubInfoForm({ club }: { club: Tables<'clubs'> }) {
   const activation = useResource(`club-activation:${club.id}:${session?.user.id}`, () => readClubActivation(club.id), Boolean(session && !isDemo));
   const admin = currentMembership?.role === 'admin' && !isDemo;
   const owner = club.created_by === session?.user.id;
+  async function activateClub() {
+    if (!session?.user.id || !admin || busy) return;
+    setBusy(true); setError(false); setMessage('');
+    try {
+      const item = await offeringPackage(session.user.id, 'club_activation', '$rc_lifetime');
+      if (!item) throw new Error('offer');
+      await beginClubPurchase(club.id, item.product.identifier);
+      await purchaseRevenueCatPackage(session.user.id, item);
+      setMessage('Compra completada. Estamos activando el club. Puede tardar unos segundos.');
+      activation.reload();
+    } catch (cause) { setError(true); setMessage(backendErrorMessage(cause)); }
+    finally { setBusy(false); }
+  }
   async function save() {
     if (!admin || busy) return;
     setError(true); setMessage('');
@@ -78,6 +92,10 @@ function ClubInfoForm({ club }: { club: Tables<'clubs'> }) {
       <Button label={busy ? t("Guardando…") : t("Guardar información")} disabled={!admin || busy} onPress={() => { void save(); }} />
     </Card>
     <CrestSettings />
+    {!activation.isLoading && !activation.data?.activated ? <Card title="Activa tu club">
+      <Body>{activation.data?.canCreateCallUps ? 'Tu prueba de 10 días está activa. Activa el club para siempre por 2,99 €.' : 'La prueba gratuita ha finalizado. Activa el club para volver a crear convocatorias.'}</Body>
+      {!revenueCatReady() ? <Body>Las compras estarán disponibles cuando terminemos de configurar la tienda.</Body> : <Button label={busy ? 'Procesando…' : 'Activar club · 2,99 €'} disabled={!admin || busy} onPress={() => { void activateClub(); }} />}
+    </Card> : null}
     {message ? <Message error={error}>{message}</Message> : null}
     {owner ? <Card title={t("Eliminar club")}>
       <Body>{t("Se eliminarán la plantilla, las convocatorias y el historial de este club. Las cuentas de los jugadores se conservarán.")}</Body>
