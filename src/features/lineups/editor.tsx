@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { IconButton } from '@/components/icon-button';
 import { colors } from '@/theme';
 import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
-import { ClubCrest } from '@/features/clubs/club-crest';
+import { LineupShareCard } from './share-card';
 import { listClubMembers } from '@/features/clubs/service';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
@@ -180,9 +180,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => setActiveDraftId(null)} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); setDocument(draft.document); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
-        {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><ClubCrest path={crestPath} name={clubName} size={38} /><Text numberOfLines={1} style={{ flex: 1, color: '#F3F8F1', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>{clubName}</Text></View> : null}
-        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable && !sharing ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable && !sharing} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
-        {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Text style={{ color: '#B7C7B9', fontSize: 9, fontWeight: '700' }}>Powered by</Text><Image source={require('../../../assets/images/icon.png')} style={{ width: 15, height: 15, borderRadius: 4 }} /><Text style={{ color: '#F3F8F1', fontSize: 10, fontWeight: '800' }}>ConvoSquad</Text></View> : null}
+        {sharing ? <LineupShareCard clubName={clubName} crestPath={crestPath} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} /> : <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
       </View>
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
