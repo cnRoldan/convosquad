@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, G, Image, LinearGradient, Path, Rect, Stop, Text } from 'react-native-svg';
 import type { Candidate, Lineup } from './model';
+import { recognizeFormation } from './recognize-formation';
 
 export function LineupShareCard(props: Parameters<typeof LineupPoster>[0]) {
   return <View style={styles.card}><LineupPoster {...props} /></View>;
@@ -22,7 +23,7 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
     </G> : null}
     <Text x={crestUrl ? 192 : 68} y={85} fill="#BDFF43" fontFamily="Arial" fontSize={19} fontWeight="bold" letterSpacing={3}>ONCE TITULAR</Text>
     <Text x={crestUrl ? 192 : 68} y={140} fill="#FFFFFF" fontFamily="Arial" fontSize={clubName.length > 25 ? 32 : 44} fontWeight="bold">{clubName.toUpperCase()}</Text>
-    <Text x={1250} y={95} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={22} fontWeight="bold">{lineup.formation}</Text>
+    <Text x={1250} y={95} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={22} fontWeight="bold">{recognizeFormation(lineup.slots).formation}</Text>
     {lineup.slots.map(slot => {
       const player = candidates.find(candidate => candidate.id === slot.playerId);
       if (!player) return null;
