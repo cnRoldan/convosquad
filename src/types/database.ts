@@ -106,6 +106,9 @@ export type Database = {
           submitted_at: string | null;
           created_at: string;
           updated_at: string;
+          last_suggested_changes: number;
+          last_suggested_by: string | null;
+          last_suggested_at: string | null;
         };
         Insert: {
           id?: string;
@@ -120,6 +123,9 @@ export type Database = {
           submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          last_suggested_changes?: number;
+          last_suggested_by?: string | null;
+          last_suggested_at?: string | null;
         };
         Update: {
           id?: string;
@@ -134,11 +140,15 @@ export type Database = {
           submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
+          last_suggested_changes?: number;
+          last_suggested_by?: string | null;
+          last_suggested_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'call_up_lineup_drafts_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
           { foreignKeyName: 'call_up_lineup_drafts_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
           { foreignKeyName: 'call_up_lineup_drafts_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineup_drafts_last_suggested_by_fkey'; columns: ["last_suggested_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
           { foreignKeyName: 'call_up_lineup_drafts_updated_by_fkey'; columns: ["updated_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
@@ -150,6 +160,9 @@ export type Database = {
           published: Json | null;
           revision: number;
           updated_at: string;
+          published_draft_id: string | null;
+          published_by: string | null;
+          published_at: string | null;
         };
         Insert: {
           call_up_id: string;
@@ -158,6 +171,9 @@ export type Database = {
           published?: Json | null;
           revision?: number;
           updated_at?: string;
+          published_draft_id?: string | null;
+          published_by?: string | null;
+          published_at?: string | null;
         };
         Update: {
           call_up_id?: string;
@@ -166,10 +182,15 @@ export type Database = {
           published?: Json | null;
           revision?: number;
           updated_at?: string;
+          published_draft_id?: string | null;
+          published_by?: string | null;
+          published_at?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'call_up_lineups_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: true; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
           { foreignKeyName: 'call_up_lineups_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineups_published_by_fkey'; columns: ["published_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'call_up_lineups_published_draft_id_fkey'; columns: ["published_draft_id"]; isOneToOne: false; referencedRelation: 'call_up_lineup_drafts'; referencedColumns: ["id"]; },
         ];
       };
       call_up_players: {
@@ -574,6 +595,81 @@ export type Database = {
           { foreignKeyName: 'club_members_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      club_purchase_intents: {
+        Row: {
+          id: string;
+          club_id: string;
+          user_id: string;
+          kind: Database['public']['Enums']['club_billing_kind'];
+          product_id: string;
+          created_at: string;
+          expires_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          user_id: string;
+          kind: Database['public']['Enums']['club_billing_kind'];
+          product_id: string;
+          created_at?: string;
+          expires_at?: string;
+          completed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          user_id?: string;
+          kind?: Database['public']['Enums']['club_billing_kind'];
+          product_id?: string;
+          created_at?: string;
+          expires_at?: string;
+          completed_at?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_purchase_intents_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'club_purchase_intents_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
+      club_store_purchases: {
+        Row: {
+          store: string;
+          original_transaction_id: string;
+          club_id: string;
+          purchaser_user_id: string;
+          kind: Database['public']['Enums']['club_billing_kind'];
+          product_id: string;
+          expires_at: string | null;
+          revoked_at: string | null;
+          last_event_at: string;
+        };
+        Insert: {
+          store: string;
+          original_transaction_id: string;
+          club_id: string;
+          purchaser_user_id: string;
+          kind: Database['public']['Enums']['club_billing_kind'];
+          product_id: string;
+          expires_at?: string | null;
+          revoked_at?: string | null;
+          last_event_at?: string;
+        };
+        Update: {
+          store?: string;
+          original_transaction_id?: string;
+          club_id?: string;
+          purchaser_user_id?: string;
+          kind?: Database['public']['Enums']['club_billing_kind'];
+          product_id?: string;
+          expires_at?: string | null;
+          revoked_at?: string | null;
+          last_event_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'club_store_purchases_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'club_store_purchases_purchaser_user_id_fkey'; columns: ["purchaser_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       club_trial_claims: {
         Row: {
           user_id: string;
@@ -894,7 +990,6 @@ export type Database = {
           id: string;
           club_id: string;
           ea_id: string;
-          nickname: string | null;
           jersey_number: number | null;
           position: Database['public']['Enums']['player_position'];
           user_id: string | null;
@@ -902,12 +997,12 @@ export type Database = {
           created_at: string;
           category: Database['public']['Enums']['roster_category'];
           sort_order: number;
+          nickname: string | null;
         };
         Insert: {
           id?: string;
           club_id: string;
           ea_id: string;
-          nickname?: string | null;
           jersey_number?: number | null;
           position?: Database['public']['Enums']['player_position'];
           user_id?: string | null;
@@ -915,12 +1010,12 @@ export type Database = {
           created_at?: string;
           category: Database['public']['Enums']['roster_category'];
           sort_order?: number;
+          nickname?: string | null;
         };
         Update: {
           id?: string;
           club_id?: string;
           ea_id?: string;
-          nickname?: string | null;
           jersey_number?: number | null;
           position?: Database['public']['Enums']['player_position'];
           user_id?: string | null;
@@ -928,6 +1023,7 @@ export type Database = {
           created_at?: string;
           category?: Database['public']['Enums']['roster_category'];
           sort_order?: number;
+          nickname?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'players_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -1051,6 +1147,8 @@ export type Database = {
           admission_request_id: string | null;
           recipient_user_id: string | null;
           club_name_snapshot: string | null;
+          lineup_draft_id: string | null;
+          lineup_draft_title: string | null;
         };
         Insert: {
           id?: string;
@@ -1070,6 +1168,8 @@ export type Database = {
           admission_request_id?: string | null;
           recipient_user_id?: string | null;
           club_name_snapshot?: string | null;
+          lineup_draft_id?: string | null;
+          lineup_draft_title?: string | null;
         };
         Update: {
           id?: string;
@@ -1089,11 +1189,14 @@ export type Database = {
           admission_request_id?: string | null;
           recipient_user_id?: string | null;
           club_name_snapshot?: string | null;
+          lineup_draft_id?: string | null;
+          lineup_draft_title?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'push_events_actor_user_id_fkey'; columns: ["actor_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
           { foreignKeyName: 'push_events_admission_request_id_fkey'; columns: ["admission_request_id"]; isOneToOne: false; referencedRelation: 'join_requests'; referencedColumns: ["id"]; },
           { foreignKeyName: 'push_events_club_id_call_up_id_fkey'; columns: ["club_id","call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["club_id","id"]; },
+          { foreignKeyName: 'push_events_lineup_draft_id_fkey'; columns: ["lineup_draft_id"]; isOneToOne: false; referencedRelation: 'call_up_lineup_drafts'; referencedColumns: ["id"]; },
           { foreignKeyName: 'push_events_recipient_user_id_fkey'; columns: ["recipient_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
@@ -1145,6 +1248,25 @@ export type Database = {
           p_jersey_number?: number;
         };
         Returns: Database['public']['Tables']['players']['Row'][];
+      };
+      apply_revenuecat_event: {
+        Args: {
+          p_app_user_id: string;
+          p_original_app_user_id: string;
+          p_product_id: string;
+          p_original_transaction_id: string;
+          p_store: string;
+          p_event_type: string;
+          p_expiration_at?: string;
+        };
+        Returns: Json;
+      };
+      begin_club_purchase: {
+        Args: {
+          p_club_id: string;
+          p_product_id: string;
+        };
+        Returns: string;
       };
       claim_push_deliveries: {
         Args: {
@@ -1569,6 +1691,7 @@ export type Database = {
           p_title: string;
           p_document: Json;
           p_submit?: boolean;
+          p_suggested_changes?: number;
         };
         Returns: Json;
       };
@@ -1732,6 +1855,7 @@ export type Database = {
     Enums: {
       availability_status: 'unanswered' | 'available' | 'unavailable' | 'backup';
       call_up_status: 'draft' | 'open' | 'closed' | 'cancelled';
+      club_billing_kind: 'premium' | 'activation';
       club_role: 'admin' | 'player';
       join_request_status: 'pending' | 'approved' | 'rejected';
       player_position: 'POR' | 'DFC' | 'LI' | 'LD' | 'MCD' | 'MC' | 'MCO' | 'MI' | 'MD' | 'EI' | 'ED' | 'DC';
