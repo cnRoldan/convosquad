@@ -1,7 +1,8 @@
 import type { RosterCategory } from '../players/categories.ts';
 
-export type FieldCategory = Exclude<RosterCategory, 'backups'>;
 import type { Slot } from './model.ts';
+
+export type FieldCategory = Exclude<RosterCategory, 'backups'>;
 
 // The editor faces the opponent's goal: smaller y = further forward.
 // Cluster nearby depths, allowing small drags without changing the formation.
