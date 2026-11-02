@@ -542,6 +542,7 @@ export type Database = {
           player_color: string;
           jersey_color: string;
           position_locked: boolean;
+          goalkeeper_color: string;
         };
         Insert: {
           club_id: string;
@@ -551,6 +552,7 @@ export type Database = {
           player_color?: string;
           jersey_color?: string;
           position_locked?: boolean;
+          goalkeeper_color?: string;
         };
         Update: {
           club_id?: string;
@@ -560,6 +562,7 @@ export type Database = {
           player_color?: string;
           jersey_color?: string;
           position_locked?: boolean;
+          goalkeeper_color?: string;
         };
         Relationships: [
           { foreignKeyName: 'club_lineup_preferences_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
@@ -1739,6 +1742,15 @@ export type Database = {
           p_is_active: boolean;
         };
         Returns: Database['public']['Tables']['club_members']['Row'][];
+      };
+      set_lineup_kit_colors: {
+        Args: {
+          p_club_id: string;
+          p_player_color: string;
+          p_jersey_color: string;
+          p_goalkeeper_color: string;
+        };
+        Returns: Json;
       };
       set_lineup_player_color: {
         Args: {

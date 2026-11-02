@@ -1,3 +1,4 @@
+import { goalkeeperNumberColor } from './kit-colors';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
@@ -30,6 +31,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [document, setDocument] = useState<Lineup | null>(null);
   const [preference, setPreference] = useState<LineupLayout | null>(null);
   const [playerColor, setPlayerColor] = useState('#B4F16C');
+  const [goalkeeperColor, setGoalkeeperColor] = useState('#F4A83A');
+  const [customGoalkeeperColor, setCustomGoalkeeperColor] = useState('#F4A83A');
   const [jerseyColor, setJerseyColor] = useState('#0B1210');
   const [selectedPreset, setSelectedPreset] = useState<SelectedPreset>(null);
   const [history, setHistory] = useState<Lineup[]>([]);
@@ -61,7 +64,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [published,setPublished]=useState(false);
   const [captainCount,setCaptainCount]=useState(1);
   const [colorPicker,setColorPicker]=useState(false);
-  const [editingColor,setEditingColor]=useState<'shirt' | 'jersey'>('shirt');
+  const [editingColor,setEditingColor]=useState<'shirt' | 'jersey' | 'goalkeeper'>('shirt');
   const [customColor,setCustomColor]=useState('#B4F16C');
   const [customJerseyColor,setCustomJerseyColor]=useState('#0B1210');
   const shareImageRef = useRef<View>(null);
@@ -92,7 +95,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       const requested = rows.find(draft => draft.id === activeDraftIdRef.current);
       const loadedDocument = requested?.document ?? data.document;
       const preset = presetFor(loadedDocument, data.preference);
-      setDocument(loadedDocument); setHistory([]); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setRevision(data.revision); setMessage('');
+      setDocument(loadedDocument); setHistory([]); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor);setGoalkeeperColor(data.goalkeeperColor); setSelectedPreset(preset); setRevision(data.revision); setMessage('');
       setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
       setDrafts(rows); setActiveDraftId(requested?.id ?? null);
     } catch { setMessage('No se pudo cargar el once.'); }
@@ -114,7 +117,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         if(dirty){
           if(selectedId ? !selected || selected.revision !== activeDraft?.revision : data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{const preset=presetFor(refreshedDocument,data.preference);setDocument(refreshedDocument);setActiveDraftId(selected?.id ?? null);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
+        }else{const preset=presetFor(refreshedDocument,data.preference);setDocument(refreshedDocument);setActiveDraftId(selected?.id ?? null);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setGoalkeeperColor(data.goalkeeperColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
@@ -155,11 +158,11 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     finally { setBusy(false); }
   }
   async function saveColors() {
-    const player = normalizeHex(customColor), jersey = normalizeHex(customJerseyColor);
-    if (!player || !jersey) { setMessage('Introduce colores hexadecimales válidos, por ejemplo #B4F16C.'); return; }
-    if (player === playerColor && jersey === jerseyColor) { setColorPicker(false); return; }
+    const player = normalizeHex(customColor), jersey = normalizeHex(customJerseyColor), goalkeeper = normalizeHex(customGoalkeeperColor);
+    if (!player || !jersey || !goalkeeper) { setMessage('Introduce colores hexadecimales válidos, por ejemplo #B4F16C.'); return; }
+    if (player === playerColor && jersey === jerseyColor && goalkeeper === goalkeeperColor) { setColorPicker(false); return; }
     setBusy(true);
-    try { const result = await setLineupPlayerColors(clubId, player, jersey); setPlayerColor(result.playerColor); setJerseyColor(result.jerseyColor); setCustomColor(result.playerColor); setCustomJerseyColor(result.jerseyColor); setColorPicker(false); setMessage('Colores de los jugadores guardados.'); }
+    try { const result = await setLineupPlayerColors(clubId, player, jersey, goalkeeper); setPlayerColor(result.playerColor); setJerseyColor(result.jerseyColor); setCustomColor(result.playerColor); setCustomJerseyColor(result.jerseyColor);setGoalkeeperColor(result.goalkeeperColor);setCustomGoalkeeperColor(result.goalkeeperColor); setColorPicker(false); setMessage('Colores de los jugadores guardados.'); }
     catch { setMessage('No se pudieron guardar los colores de los jugadores.'); }
     finally { setBusy(false); }
   }
@@ -210,12 +213,12 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
         <IconButton icon="undo" label="Deshacer último cambio" disabled={!editable || history.length === 0 || dragging} onPress={undo} />
-        <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
+        <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setCustomGoalkeeperColor(goalkeeperColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
-        {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} /> : <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
+        {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} goalkeeperColor={goalkeeperColor} /> : <LineupPitch goalkeeperColor={goalkeeperColor} playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
       </View>
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">
@@ -254,15 +257,17 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Pressable accessibilityRole="button" accessibilityState={{ selected: editingColor === 'shirt' }} onPress={() => setEditingColor('shirt')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: editingColor === 'shirt' ? colors.primary : colors.border, backgroundColor: customColor }}><Text style={{ color: customJerseyColor, fontWeight: '800', textAlign: 'center' }}>Camiseta</Text></Pressable>
           <Pressable accessibilityRole="button" accessibilityState={{ selected: editingColor === 'jersey' }} onPress={() => setEditingColor('jersey')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: editingColor === 'jersey' ? colors.primary : colors.border, backgroundColor: customJerseyColor }}><Text style={{ color: customColor, fontWeight: '800', textAlign: 'center' }}>Dorsales</Text></Pressable>
+          <Pressable accessibilityRole="button" accessibilityState={{ selected: editingColor === 'goalkeeper' }} onPress={() => setEditingColor('goalkeeper')} style={{ flex: 1, minHeight: 48, justifyContent: 'center', paddingHorizontal: 10, borderRadius: 12, borderWidth: 2, borderColor: editingColor === 'goalkeeper' ? colors.primary : colors.border, backgroundColor: customGoalkeeperColor }}><Text style={{ color: goalkeeperNumberColor(customGoalkeeperColor), fontWeight: '800', textAlign: 'center' }}>Portero</Text></Pressable>
         </View>
-        <ColorPicker key={editingColor} value={editingColor === 'shirt' ? customColor : customJerseyColor} onChangeJS={result => { if (editingColor === 'shirt') setCustomColor(result.hex); else setCustomJerseyColor(result.hex); }} style={{ gap: 12 }} sliderThickness={22} thumbSize={24} thumbColor={colors.text}>
+        <ColorPicker key={editingColor} value={editingColor === 'shirt' ? customColor : editingColor === 'goalkeeper' ? customGoalkeeperColor : customJerseyColor} onChangeJS={result => { if (editingColor === 'shirt') setCustomColor(result.hex); else if (editingColor === 'goalkeeper') setCustomGoalkeeperColor(result.hex); else setCustomJerseyColor(result.hex); }} style={{ gap: 12 }} sliderThickness={22} thumbSize={24} thumbColor={colors.text}>
           <Panel1 style={{ height: 190, borderRadius: 14 }} />
           <HueSlider style={{ borderRadius: 12 }} />
           <Preview hideInitialColor style={{ borderRadius: 12 }} />
         </ColorPicker>
         <Field label="Color de la camiseta" value={customColor} onChangeText={setCustomColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
         <Field label="Color de dorsales" value={customJerseyColor} onChangeText={setCustomJerseyColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
-        <Button label="Aplicar colores" disabled={busy || !normalizeHex(customColor) || !normalizeHex(customJerseyColor)} onPress={() => void saveColors()} />
+        <Field label="Color del portero" value={customGoalkeeperColor} onChangeText={setCustomGoalkeeperColor} autoCapitalize="characters" maxLength={7} editable={!busy} />
+        <Button label="Aplicar colores" disabled={busy || !normalizeHex(customColor) || !normalizeHex(customJerseyColor) || !normalizeHex(customGoalkeeperColor)} onPress={() => void saveColors()} />
         <Button secondary label="Cerrar" onPress={() => setColorPicker(false)} />
       </Card></View>
     </Modal>

@@ -1,3 +1,4 @@
+import { goalkeeperNumberColor } from './kit-colors';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, G, Image, LinearGradient, Path, Rect, Stop, Text } from 'react-native-svg';
 import type { Candidate, Lineup } from './model';
@@ -9,7 +10,7 @@ export function LineupShareCard(props: Parameters<typeof LineupPoster>[0]) {
 
 // All artwork and text share one coordinate system on every platform. Exporting
 // the SVG directly on web avoids CSS/layout differences in DOM screenshot tools.
-export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColor, numberColor }: { clubName: string; crestUrl: string | null; lineup: Lineup; candidates: Candidate[]; shirtColor: string; numberColor: string }) {
+export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColor, numberColor, goalkeeperColor = '#F4A83A' }: { clubName: string; crestUrl: string | null; lineup: Lineup; candidates: Candidate[]; shirtColor: string; numberColor: string; goalkeeperColor?: string }) {
   return <Svg width="100%" height="100%" viewBox="0 0 1324 1190">
     <Defs>
       <LinearGradient id="headerShade" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#000" stopOpacity="0.7" /><Stop offset="1" stopColor="#000" stopOpacity="0" /></LinearGradient>
@@ -39,10 +40,10 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
         return width + advance * nameFontSize;
       }, 0);
       return <G key={slot.id} transform={`translate(${x} ${y}) scale(${scale})`}>
-        <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill={shirtColor} stroke="#101A14" strokeWidth={3} />
+        <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill={slot.id === 0 ? goalkeeperColor : shirtColor} stroke="#101A14" strokeWidth={3} />
         <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill="url(#fabricShade)" />
         <Path d="M-19-56q19 24 38 0" fill="#09120C" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={2} />
-        <Text x={0} y={19} textAnchor="middle" fill={numberColor} fontFamily="Arial" fontSize={43} fontWeight="bold">{player.jerseyNumber ?? '—'}</Text>
+        <Text x={0} y={19} textAnchor="middle" fill={slot.id === 0 ? goalkeeperNumberColor(goalkeeperColor) : numberColor} fontFamily="Arial" fontSize={43} fontWeight="bold">{player.jerseyNumber ?? '—'}</Text>
         <Rect x={-nameWidth / 2} y={60} width={nameWidth} height={34} rx={6} fill="#03100A" fillOpacity={0.85} />
         <Text x={0} y={84} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={nameFontSize} fontWeight="bold">{player.name}</Text>
       </G>;

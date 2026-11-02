@@ -1,3 +1,4 @@
+import { goalkeeperNumberColor } from './kit-colors';
 import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
@@ -6,7 +7,7 @@ import { IconButton } from '@/components/icon-button';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
-type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
+type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; goalkeeperColor?: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
 const height = 520;
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
@@ -66,7 +67,7 @@ function Position(props: Props & { slot: Slot; width: number }) {
   const player = props.candidates.find(p => p.id === props.slot.playerId);
   return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * height - 24 }]}>
     <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : 'Posición vacía'} style={styles.target}>
-      <PlayerToken player={player} color={props.playerColor} jerseyColor={props.jerseyColor} />
+      <PlayerToken player={player} color={props.slot.id === 0 ? props.goalkeeperColor ?? '#F4A83A' : props.playerColor} jerseyColor={props.slot.id === 0 ? goalkeeperNumberColor(props.goalkeeperColor ?? '#F4A83A') : props.jerseyColor} />
     </Pressable>
   </View>;
 }
