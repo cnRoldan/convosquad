@@ -31,19 +31,26 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
       const x = 662 + (slot.x - 0.5) * (850 + 300 * depth);
       const y = 340 + depth * 710;
       const scale = 0.85 + depth * 0.22;
+      const nameFontSize = player.name.length > 17 ? 14 : player.name.length > 12 ? 17 : 21;
+      // Approximate Arial Bold glyph advances in SVG coordinates so short
+      // names get a compact badge on both native and web exports.
+      const nameWidth = 20 + Array.from(player.name).reduce((width, character) => {
+        const advance = /[ilIjtfr.,' ]/.test(character) ? 0.32 : /[MW@%]/.test(character) ? 0.9 : /[A-Z0-9]/.test(character) ? 0.7 : 0.59;
+        return width + advance * nameFontSize;
+      }, 0);
       return <G key={slot.id} transform={`translate(${x} ${y}) scale(${scale})`}>
         <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill={shirtColor} stroke="#101A14" strokeWidth={3} />
         <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill="url(#fabricShade)" />
         <Path d="M-19-56q19 24 38 0" fill="#09120C" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={2} />
-        <Text x={0} y={26} textAnchor="middle" fill={numberColor} fontFamily="Arial" fontSize={43} fontWeight="bold">{player.jerseyNumber ?? '—'}</Text>
-        <Rect x={-93} y={60} width={186} height={34} rx={6} fill="#03100A" fillOpacity={0.85} />
-        <Text x={0} y={84} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={player.name.length > 17 ? 14 : player.name.length > 12 ? 17 : 21} fontWeight="bold">{player.name}</Text>
+        <Text x={0} y={19} textAnchor="middle" fill={numberColor} fontFamily="Arial" fontSize={43} fontWeight="bold">{player.jerseyNumber ?? '—'}</Text>
+        <Rect x={-nameWidth / 2} y={60} width={nameWidth} height={34} rx={6} fill="#03100A" fillOpacity={0.85} />
+        <Text x={0} y={84} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={nameFontSize} fontWeight="bold">{player.name}</Text>
       </G>;
     })}
-    <Rect x={856} y={1092} width={377} height={66} rx={14} fill="#041007" fillOpacity={0.97} stroke="#BDFF43" strokeOpacity={0.3} />
-    <Text x={936} y={1133} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={14}>Powered by</Text>
-    <Image href={require('../../../assets/images/icon.png')} x={941} y={1096} width={58} height={58} preserveAspectRatio="xMidYMid meet" />
-    <Text x={1209} y={1136} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={28} fontWeight="bold">ConvoSquad</Text>
+    <Rect x={896} y={1092} width={337} height={66} rx={14} fill="#041007" fillOpacity={0.97} stroke="#BDFF43" strokeOpacity={0.3} />
+    <Text x={910} y={1133} fill="#FFFFFF" fontFamily="Arial" fontSize={14}>Powered by</Text>
+    <Image href={require('../../../assets/images/icon.png')} x={987} y={1096} width={58} height={58} preserveAspectRatio="xMidYMid meet" />
+    <Text x={1037} y={1136} fill="#FFFFFF" fontFamily="Arial" fontSize={28} fontWeight="bold">ConvoSquad</Text>
   </Svg>;
 }
 
