@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -7,6 +7,7 @@ import { IconButton } from '@/components/icon-button';
 import { colors } from '@/theme';
 import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 import { LineupShareCard } from './share-card';
+import { getClubCrestUrl } from '@/features/clubs/crest';
 import { listClubMembers } from '@/features/clubs/service';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
@@ -53,6 +54,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [customColor,setCustomColor]=useState('#B4F16C');
   const [customJerseyColor,setCustomJerseyColor]=useState('#0B1210');
   const shareImageRef = useRef<View>(null);
+  const [shareCrestUrl, setShareCrestUrl] = useState<string | null>(null);
   const editable=captain && active && !busy && !conflict;
   function change(next: Lineup, remember = true) {
     if (remember && document) setHistory(current => [...current, document].slice(-historyLimit));
@@ -154,7 +156,13 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   }
   async function shareImage() {
     setSharing(true); setMessage('');
-    try { await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))); await shareLineupImage(shareImageRef); }
+    try {
+      const crestUrl = crestPath ? await getClubCrestUrl(crestPath) : null;
+      if (crestUrl) await Image.prefetch(crestUrl);
+      setShareCrestUrl(crestUrl);
+      await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+      await shareLineupImage(shareImageRef);
+    }
     catch { setMessage('No se pudo generar la imagen. Inténtalo de nuevo.'); }
     finally { setSharing(false); }
   }
@@ -180,7 +188,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => setActiveDraftId(null)} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); setDocument(draft.document); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
-        {sharing ? <LineupShareCard clubName={clubName} crestPath={crestPath} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} /> : <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
+        {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} /> : <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
       </View>
       <Card title="Banquillo">
         <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{gap:4,paddingVertical:8}} accessibilityLabel="Jugadores del banquillo">

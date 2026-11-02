@@ -1,19 +1,9 @@
-import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, G, Image, LinearGradient, Path, Rect, Stop, Text } from 'react-native-svg';
-import { useAuth } from '@/features/auth/auth-context';
-import { clubCrestCache } from '@/features/clubs/crest';
-import { useResource } from '@/hooks/use-resource';
 import type { Candidate, Lineup } from './model';
 
-export function LineupShareCard({ clubName, crestPath, lineup, candidates, shirtColor, numberColor }: { clubName: string; crestPath?: string | null | undefined; lineup: Lineup; candidates: Candidate[]; shirtColor: string; numberColor: string }) {
-  const { session } = useAuth();
-  const userId = session?.user.id ?? '';
-  const load = useCallback(() => crestPath && userId ? clubCrestCache.get(userId, crestPath) : Promise.resolve(null), [crestPath, userId]);
-  const crest = useResource(`share-crest:${userId}:${crestPath}`, load, Boolean(crestPath && userId));
-  return <View style={styles.card}>
-    <LineupPoster clubName={clubName} crestUrl={crest.data ?? null} lineup={lineup} candidates={candidates} shirtColor={shirtColor} numberColor={numberColor} />
-  </View>;
+export function LineupShareCard(props: Parameters<typeof LineupPoster>[0]) {
+  return <View style={styles.card}><LineupPoster {...props} /></View>;
 }
 
 // All artwork and text share one coordinate system on every platform. Exporting
@@ -46,7 +36,9 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
         <Text x={0} y={84} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={player.name.length > 17 ? 14 : player.name.length > 12 ? 17 : 21} fontWeight="bold">{player.name}</Text>
       </G>;
     })}
-    <Text x={1245} y={1142} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={21} fontWeight="bold">Powered by ConvoSquad</Text>
+    <Text x={940} y={1142} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={17}>Powered by</Text>
+    <Image href={require('../../../assets/images/icon.png')} x={950} y={1103} width={58} height={58} preserveAspectRatio="xMidYMid meet" />
+    <Text x={1245} y={1142} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={29} fontWeight="bold">ConvoSquad</Text>
   </Svg>;
 }
 
