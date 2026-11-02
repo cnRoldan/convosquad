@@ -17,6 +17,7 @@ import { deleteLineupDraft, deleteLineupPreference, listLineupDrafts, loadLineup
 import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup, type LineupLayout } from './model';
 
 type SelectedPreset = Formation | 'custom' | null;
+const historyLimit = 50;
 
 export function LineupEditor({ clubId, clubName, crestPath, callId, captain, initialDraftId }: { clubId: string; clubName: string; crestPath?: string | null | undefined; callId: string; captain: boolean; initialDraftId?: string }) {
   const [document, setDocument] = useState<Lineup | null>(null);
@@ -24,7 +25,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [playerColor, setPlayerColor] = useState('#B4F16C');
   const [jerseyColor, setJerseyColor] = useState('#0B1210');
   const [selectedPreset, setSelectedPreset] = useState<SelectedPreset>(null);
-  const [basePreset, setBasePreset] = useState<Formation | 'custom'>('4-3-3');
+  const [history, setHistory] = useState<Lineup[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [revision, setRevision] = useState(0);
   const [slot, setSlot] = useState<number | null>(null);
@@ -53,7 +54,23 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [customJerseyColor,setCustomJerseyColor]=useState('#0B1210');
   const shareImageRef = useRef<View>(null);
   const editable=captain && active && !busy && !conflict;
-  function change(next:Lineup) {setDocument(next);setDirty(true);}
+  function change(next: Lineup, remember = true) {
+    if (remember && document) setHistory(current => [...current, document].slice(-historyLimit));
+    setDocument(next);
+    setDirty(true);
+  }
+  function beginDrag() {
+    if (document) setHistory(current => [...current, document].slice(-historyLimit));
+  }
+  function undo() {
+    const previous = history.at(-1);
+    if (!previous) return;
+    setDocument(previous);
+    setHistory(current => current.slice(0, -1));
+    setDirty(true);
+    setSelectedPreset(null);
+    setLayoutChanged(true);
+  }
   const activeDraft = drafts.find(draft => draft.id === activeDraftId) ?? null;
   const reload = useCallback(async () => {
     setBusy(true);
@@ -62,7 +79,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       const requested = initialDraftId ? rows.find(draft => draft.id === initialDraftId) : null;
       const loadedDocument = requested?.document ?? data.document;
       const preset = presetFor(loadedDocument, data.preference);
-      setDocument(loadedDocument); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setBasePreset(preset ?? loadedDocument?.formation ?? '4-3-3'); setRevision(data.revision); setMessage('');
+      setDocument(loadedDocument); setHistory([]); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setRevision(data.revision); setMessage('');
       setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
       setDrafts(rows); if (requested) setActiveDraftId(requested.id);
     } catch { setMessage('No se pudo cargar el once.'); }
@@ -80,7 +97,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         if(dirty){
           if(data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{const preset=presetFor(data.document,data.preference);setDocument(data.document);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setBasePreset(preset ?? data.document?.formation ?? '4-3-3');setLayoutChanged(false);}
+        }else{const preset=presetFor(data.document,data.preference);setDocument(data.document);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
@@ -105,7 +122,6 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     try {
       setPreference(await saveLineupPreference(clubId, layoutFromLineup(document)));
       setSelectedPreset('custom');
-      setBasePreset('custom');
       setLayoutChanged(false);
       setMessage('Posición personalizada guardada para los capitanes del club.');
     } catch { setMessage('No se pudo guardar la posición personalizada.'); }
@@ -116,7 +132,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     try {
       await deleteLineupPreference(clubId);
       setPreference(null);
-      if (selectedPreset === 'custom') { setSelectedPreset(null); setBasePreset(document?.formation ?? '4-3-3'); }
+      if (selectedPreset === 'custom') setSelectedPreset(null);
       setMessage('Posición personalizada eliminada.');
     } catch { setMessage('No se pudo eliminar la posición personalizada.'); }
     finally { setBusy(false); }
@@ -143,7 +159,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     finally { setSharing(false); }
   }
   function include(id: string) {
-    setDocument(d => d ? {...d,bench:[...new Set([...d.bench,id])],manualIds:[...new Set([...(d.manualIds??[]),id])],excludedIds:d.excludedIds?.filter(excludedId=>excludedId!==id)} : d);setDirty(true); setAdding(false);
+    if (document) change({...document,bench:[...new Set([...document.bench,id])],manualIds:[...new Set([...(document.manualIds??[]),id])],excludedIds:document.excludedIds?.filter(excludedId=>excludedId!==id)});
+    setAdding(false);
   }
   async function create(input: GuestInput) {
     const id=unwrap(await requireSupabase().rpc('add_lineup_guest',{p_call_id:callId,p_kind:input.kind,p_name:input.name,p_notes:input.notes,p_phone:input.phone,p_retain:input.retain}));
@@ -154,17 +171,17 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
       {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <PresetChip key={f} label={f} selected={selectedPreset === f} disabled={!editable} onPress={() => { change(applyPreset(document, f)); setSelectedPreset(f); setBasePreset(f); setLayoutChanged(false); }} />)}
-        {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setBasePreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
+        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <PresetChip key={f} label={f} selected={selectedPreset === f} disabled={!editable} onPress={() => { change(applyPreset(document, f)); setSelectedPreset(f); setLayoutChanged(false); }} />)}
+        {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
-        <IconButton icon="undo" label="Deshacer cambios de posición" disabled={!editable || !layoutChanged} onPress={() => { change(resetPreset(document, basePreset, preference)); setSelectedPreset(basePreset); setLayoutChanged(false); }} />
+        <IconButton icon="undo" label="Deshacer último cambio" disabled={!editable || history.length === 0 || dragging} onPress={undo} />
         <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
-      {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => setActiveDraftId(null)} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); change(draft.document); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
+      {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => setActiveDraftId(null)} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); setDocument(draft.document); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9 }}><ClubCrest path={crestPath} name={clubName} size={38} /><Text numberOfLines={1} style={{ flex: 1, color: '#F3F8F1', fontSize: 20, fontWeight: '900', letterSpacing: 0.5 }}>{clubName}</Text></View> : null}
-        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable && !sharing ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable && !sharing} onChange={next => { change(next); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
+        <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable && !sharing ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable && !sharing} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />
         {sharing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}><Text style={{ color: '#B7C7B9', fontSize: 9, fontWeight: '700' }}>Powered by</Text><Image source={require('../../../assets/images/icon.png')} style={{ width: 15, height: 15, borderRadius: 4 }} /><Text style={{ color: '#F3F8F1', fontSize: 10, fontWeight: '800' }}>ConvoSquad</Text></View> : null}
       </View>
       <Card title="Banquillo">
@@ -243,9 +260,4 @@ function presetFor(document: Lineup | null, preference: LineupLayout | null): Se
   if (!document) return null;
   if (preference && document.formation === preference.formation && document.slots.every(slot => preference.slots.some(saved => saved.id === slot.id && saved.x === slot.x && saved.y === slot.y))) return 'custom';
   return document.formation;
-}
-
-function resetPreset(document: Lineup, selected: SelectedPreset, preference: LineupLayout | null): Lineup {
-  if (selected === 'custom' && preference) return applyLayout(document, preference);
-  return applyPreset(document, selected && selected !== 'custom' ? selected : document.formation);
 }

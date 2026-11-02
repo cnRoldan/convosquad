@@ -6,7 +6,7 @@ import { IconButton } from '@/components/icon-button';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
-type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragging?: (dragging: boolean) => void };
+type Props = { lineup: Lineup; candidates: Candidate[]; editable: boolean; playerColor: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
 const height = 520;
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
@@ -52,6 +52,7 @@ function Position(props: Props & { slot: Slot; width: number }) {
     onMoveShouldSetPanResponder: (_, gesture) => latest.current.editable && !latest.current.positionLocked && latest.current.slot.id !== 0 && Math.abs(gesture.dx) + Math.abs(gesture.dy) > 8,
     onPanResponderGrant: () => {
       origin.current = { x: latest.current.slot.x, y: latest.current.slot.y };
+      latest.current.onDragStart?.();
       latest.current.onDragging?.(true);
     },
     onPanResponderMove: (_, gesture) => {
