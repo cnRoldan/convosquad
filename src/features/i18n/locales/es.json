@@ -809,5 +809,14 @@
   "Abandonar club": "Abandonar club",
   "¿Abandonar {{v0}}?": "¿Abandonar {{v0}}?",
   "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.",
-  "este club": "este club"
+  "este club": "este club",
+  "Prémium": "Prémium",
+  "Club Prémium": "Club Prémium",
+  "Convocatoria actual": "Convocatoria actual",
+  "Alineación histórica": "Alineación histórica",
+  "Compara la disponibilidad, el tiempo de respuesta y las suplencias de cada jugador.": "Compara la disponibilidad, el tiempo de respuesta y las suplencias de cada jugador.",
+  "Capitanes actuales": "Capitanes actuales",
+  "No capitanes": "No capitanes",
+  "Prémium permite añadir capitanes ilimitados.": "Prémium permite añadir capitanes ilimitados.",
+  "Desasigna a un capitán antes de designar a otro.": "Desasigna a un capitán antes de designar a otro."
 }

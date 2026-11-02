@@ -50,7 +50,12 @@ export default function SearchClubsScreen() {
       const pending = result.data?.requests.some((request) => request.club_id === club.club_id && request.status === 'pending');
       return <Card key={club.club_id}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Text style={{ flex: 1, color: colors.text, fontSize: 20, fontWeight: '700' }}>{club.name}</Text>
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+            <Text style={{ flexShrink: 1, color: colors.text, fontSize: 20, fontWeight: '700' }}>{club.name}</Text>
+            {club.is_premium ? <View accessibilityLabel={t('Club Prémium')} style={{ borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: '#79602B', backgroundColor: '#302719' }}>
+              <Text style={{ color: '#FFD36B', fontSize: 11, fontWeight: '800' }}>⭐ {t('Prémium')}</Text>
+            </View> : null}
+          </View>
           <ClubCrest path={club.crest_path} name={club.name} />
         </View>
         {club.description ? <Body>{club.description}</Body> : null}

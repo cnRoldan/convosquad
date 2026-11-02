@@ -1726,7 +1726,7 @@ export type Database = {
         Args: {
           p_query: string;
         };
-        Returns: Database['public']['Tables']['club_directory']['Row'][];
+        Returns: { club_id: string; name: string; description: string; crest_path: string; is_premium: boolean }[];
       };
       set_club_crest: {
         Args: {

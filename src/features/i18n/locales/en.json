@@ -809,5 +809,14 @@
   "Abandonar club": "Leave club",
   "¿Abandonar {{v0}}?": "Leave {{v0}}?",
   "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "You will leave the club and your player profile will be removed from the active roster. Previous call-ups will keep your history.",
-  "este club": "this club"
+  "este club": "this club",
+  "Prémium": "Premium",
+  "Club Prémium": "Premium club",
+  "Convocatoria actual": "Current call-up",
+  "Alineación histórica": "Historical lineup",
+  "Compara la disponibilidad, el tiempo de respuesta y las suplencias de cada jugador.": "Compare availability, response times and substitute appearances for each player.",
+  "Capitanes actuales": "Current captains",
+  "No capitanes": "Non-captains",
+  "Prémium permite añadir capitanes ilimitados.": "Premium allows unlimited captains.",
+  "Desasigna a un capitán antes de designar a otro.": "Remove one captain before appointing another."
 }

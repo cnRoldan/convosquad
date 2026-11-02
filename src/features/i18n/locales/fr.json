@@ -809,5 +809,14 @@
   "Abandonar club": "Quitter le club",
   "¿Abandonar {{v0}}?": "Quitter {{v0}} ?",
   "Dejarás de pertenecer al club y tu ficha saldrá de la plantilla. Las convocatorias anteriores conservarán tu historial.": "Vous quitterez le club et votre fiche sortira de l’effectif actif. Les convocations précédentes conserveront votre historique.",
-  "este club": "ce club"
+  "este club": "ce club",
+  "Prémium": "Premium",
+  "Club Prémium": "Club Premium",
+  "Convocatoria actual": "Convocation actuelle",
+  "Alineación histórica": "Composition historique",
+  "Compara la disponibilidad, el tiempo de respuesta y las suplencias de cada jugador.": "Comparez la disponibilité, le délai de réponse et les présences comme remplaçant de chaque joueur.",
+  "Capitanes actuales": "Capitaines actuels",
+  "No capitanes": "Non-capitaines",
+  "Prémium permite añadir capitanes ilimitados.": "Premium permet un nombre illimité de capitaines.",
+  "Desasigna a un capitán antes de designar a otro.": "Retirez le rôle de capitaine à un membre avant d’en nommer un autre."
 }
