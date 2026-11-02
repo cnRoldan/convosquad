@@ -48,7 +48,12 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [conflict,setConflict]=useState(false);
   const [sharing,setSharing]=useState(false);
   const [drafts,setDrafts]=useState<LineupDraft[]>([]);
-  const [activeDraftId,setActiveDraftId]=useState<string | null>(null);
+  const [activeDraftId,setActiveDraftIdState]=useState<string | null>(initialDraftId ?? null);
+  const activeDraftIdRef = useRef<string | null>(initialDraftId ?? null);
+  const setActiveDraftId = useCallback((id: string | null) => {
+    activeDraftIdRef.current = id;
+    setActiveDraftIdState(id);
+  }, []);
   const [draftMode,setDraftMode]=useState<'save'|'send'|'suggest'|null>(null);
   const [draftTitle,setDraftTitle]=useState('');
   const [confirmPublish,setConfirmPublish]=useState(false);
@@ -84,32 +89,36 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     setBusy(true);
     try {
       const [data, rows] = await Promise.all([loadLineup(clubId, callId, captain), captain ? listLineupDrafts(callId) : Promise.resolve([])]);
-      const requested = initialDraftId ? rows.find(draft => draft.id === initialDraftId) : null;
+      const requested = rows.find(draft => draft.id === activeDraftIdRef.current);
       const loadedDocument = requested?.document ?? data.document;
       const preset = presetFor(loadedDocument, data.preference);
       setDocument(loadedDocument); setHistory([]); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor); setSelectedPreset(preset); setRevision(data.revision); setMessage('');
       setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
-      setDrafts(rows); if (requested) setActiveDraftId(requested.id);
+      setDrafts(rows); setActiveDraftId(requested?.id ?? null);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
-  }, [clubId, callId, captain, initialDraftId]);
+  }, [clubId, callId, captain, setActiveDraftId]);
   useEffect(() => { const timer=setTimeout(()=>void reload(),0);return ()=>clearTimeout(timer); }, [reload]);
   useEffect(() => { void listClubMembers(clubId).then(rows => setCaptainCount(rows.filter(row => row.role === 'admin' && row.is_active).length)).catch(() => undefined); }, [clubId]);
   useEffect(()=>{
     let live=true;
     const timer=setInterval(()=>{
       if(busy||dragging||adding||slot!==null||benchPlayer!==null) return;
-      void loadLineup(clubId,callId,captain).then(data=>{
-        if(!live) return;
+      const selectedId = activeDraftIdRef.current;
+      void Promise.all([loadLineup(clubId,callId,captain), captain ? listLineupDrafts(callId) : Promise.resolve([])]).then(([data, rows])=>{
+        if(!live || selectedId !== activeDraftIdRef.current) return;
+        const selected = rows.find(draft => draft.id === selectedId);
+        const refreshedDocument = selected?.document ?? data.document;
+        setDrafts(rows);
         setActive(data.active);setCandidates(data.candidates);
         if(dirty){
-          if(data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
+          if(selectedId ? !selected || selected.revision !== activeDraft?.revision : data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{const preset=presetFor(data.document,data.preference);setDocument(data.document);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
+        }else{const preset=presetFor(refreshedDocument,data.preference);setDocument(refreshedDocument);setActiveDraftId(selected?.id ?? null);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
-  },[clubId,callId,captain,busy,dragging,adding,slot,benchPlayer,dirty,revision]);
+  },[clubId,callId,captain,busy,dragging,adding,slot,benchPlayer,dirty,revision,activeDraftId,activeDraft?.revision,setActiveDraftId]);
   function openDraft(mode: 'save' | 'send' | 'suggest') { setDraftMode(mode); setDraftTitle(mode === 'send' && (!activeDraft || activeDraft.submittedAt) ? `Borrador #${drafts.length + 1}` : activeDraft?.title ?? `Borrador #${drafts.length + 1}`); }
   async function saveDraft() {
     if (!document || !draftMode || !draftTitle.trim()) return;
@@ -203,7 +212,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         <IconButton icon="undo" label="Deshacer último cambio" disabled={!editable || history.length === 0 || dragging} onPress={undo} />
         <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
-      {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => setActiveDraftId(null)} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); setDocument(draft.document); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
+      {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
         {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} /> : <LineupPitch playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
