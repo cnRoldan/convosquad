@@ -37,11 +37,22 @@ test('uses app categories, retaining wide defenders and grouping all forwards', 
   assert.equal(category(slots, 6), 'midfielders');
   assert.equal(category(slots, 9), 'attackers');
   const advanced = preset('4-2-3-1');
-  for (const slot of advanced.filter(s => s.y < 0.40)) assert.equal(category(advanced, slot.id), 'attackers');
+  for (const slot of advanced.filter(s => s.y < 0.30)) assert.equal(category(advanced, slot.id), 'attackers');
   assert.equal(recognizeFormation(slots).formation, '3-5-2');
 });
 test('does not invent a formation for invalid, incomplete or unstructured layouts', () => {
   assert.equal(recognizeFormation(preset('4-3-3').slice(1)).formation, 'Personalizada');
   assert.equal(recognizeFormation(preset('4-3-3').map(s => ({...s, y: 0.4}))).formation, 'Personalizada');
   assert.equal(recognizeFormation(preset('4-3-3').map(s => s.id === 1 ? {...s, y: NaN} : s)).formation, 'Personalizada');
+});
+
+test('expanded midfield applies through both central and wide lanes', () => {
+  const slots = preset('3-5-2');
+  const category = (x, y) => recognizeFormation(slots.map(s => s.id === 4 ? {...s, x, y} : s)).positions.find(p => p.slotId === 4).category;
+  assert.equal(category(0.5, 0.30), 'midfielders');
+  assert.equal(category(0.1, 0.30), 'wide_backs');
+  assert.equal(category(0.5, 0.69), 'midfielders');
+  assert.equal(category(0.1, 0.69), 'wide_backs');
+  assert.equal(category(0.1, 0.70), 'centre_backs');
+  assert.equal(category(0.5, 0.29), 'attackers');
 });

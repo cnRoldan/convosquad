@@ -28,8 +28,8 @@ export function recognizeFormation(slots: readonly Slot[]) {
     // Defensive depth takes precedence over width: an open centre-back in
     // a back three must never become a wing-back just because x is wide.
     let category: FieldCategory;
-    if (slot.y >= 0.58) category = 'centre_backs';
-    else if (slot.y < 0.40) category = 'attackers';
+    if (slot.y >= 0.70) category = 'centre_backs';
+    else if (slot.y < 0.30) category = 'attackers';
     else if (slot.x <= 0.22 || slot.x >= 0.78) category = 'wide_backs';
     else category = 'midfielders';
     positions.push({ slotId: slot.id, category });
