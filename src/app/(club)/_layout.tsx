@@ -20,13 +20,10 @@ export default function ClubLayout() {
       <Tabs.Screen name="call-up" options={{ title: t("Convocatoria"), tabBarAccessibilityLabel: t("Convocatoria"), tabBarIcon: ({ color }) => <NavigationIcon name="user-round-check" color={color} /> }} />
       <Tabs.Screen name="lineup" options={{
         href: null,
-        title: t('Elige la formación'),
+        title: t('Convocatoria actual'),
         headerShown: true,
         headerShadowVisible: false,
-        ...headerBackOptions(() => {
-          if (router.canGoBack()) router.back();
-          else router.replace('/call-up');
-        }, t('Convocatoria actual')),
+        ...headerBackOptions(() => router.replace('/call-up'), t('Convocatoria actual')),
       }} />
       <Tabs.Screen name="premium" options={{ href: null }} />
     </Tabs>
