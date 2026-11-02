@@ -8,6 +8,7 @@ export default function ManageLayout() {
   return <ClubAccess admin><Stack screenOptions={{ ...headerBackOptions(() => { if (router.canGoBack()) router.back(); else router.replace('/home'); }, t('Volver')), headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
     <Stack.Screen name="club-info" options={{ title: t("Editar información") }} />
     <Stack.Screen name="club-settings" options={{ title: t("Capitanes") }} />
+    <Stack.Screen name="lineup-history" options={{ title: t("Alineación histórica") }} />
     <Stack.Screen name="call-up-history" options={{ title: t("Historial de convocatorias") }} />
     <Stack.Screen name="call-up-ratings" options={{ title: t("Valorar jugadores") }} />
     <Stack.Screen name="call-up-player-totals" options={{ title: t("Total por jugador") }} />

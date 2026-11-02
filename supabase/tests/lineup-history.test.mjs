@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { before, after, test } from 'node:test';
+import { createTestDatabase, asUser } from '../../scripts/database-test-utils.mjs';
+const owner='85000000-0000-4000-8000-000000000001',other='85000000-0000-4000-8000-000000000002';
+let db,club,call;
+const query=(user,sql,args=[])=>asUser(db,user,tx=>tx.query(sql,args));
+const document={formation:'3-5-2',slots:Array.from({length:11},(_,id)=>({id,x:.5,y:id===0?.9:.4,playerId:null})),bench:[]};
+before(async()=>{
+ db=await createTestDatabase();
+ for(const [id,username] of [[owner,'HistoryCaptain'],[other,'HistoryOutsider']])await db.query('insert into auth.users(id,raw_user_meta_data) values($1,$2)',[id,{username}]);
+ club=(await query(owner,"select * from public.create_club('Historic lineup')")).rows[0];
+ call=(await query(owner,"select * from public.create_call_up($1,'2035-10-01T20:00:00Z','open')",[club.id])).rows[0];
+ await db.query("insert into public.club_feature_entitlements(club_id,lineup_premium_until) values($1,'infinity')",[club.id]);
+ await query(owner,"select public.set_lineup_kit_colors($1,'#123456','#FFFFFF','#ABCDEF')",[club.id]);
+ await db.query('insert into public.call_up_lineups(call_up_id,club_id,draft,published) values($1,$2,$3,$3)',[call.id,club.id,document]);
+ await db.query("update public.call_ups set starts_at=clock_timestamp()-interval '2 days',ends_at=clock_timestamp()-interval '1 day' where id=$1",[call.id]);
+});
+after(async()=>db?.close());
+test('stores the published snapshot and requires Premium at read time',async()=>{
+ const read=async()=>(await query(owner,'select public.read_historical_lineup($1) value',[call.id])).rows[0].value;
+ const before=await read();assert.equal(before.allowed,true);assert.deepEqual(before.snapshot.lineup,document);assert.equal(before.snapshot.shirtColor,'#123456');
+ await query(owner,"select public.set_lineup_kit_colors($1,'#000000','#FFFFFF','#FFFFFF')",[club.id]);
+ assert.equal((await read()).snapshot.shirtColor,'#123456');
+ await db.query('update public.club_feature_entitlements set lineup_premium_until=null where club_id=$1',[club.id]);
+ assert.deepEqual(await read(),{allowed:false});
+ for(const fn of ['read_lineup','list_lineup_drafts']) await assert.rejects(query(owner,`select public.${fn}($1)`,[call.id]),{code:'42501'});
+ await assert.rejects(query(other,'select public.read_historical_lineup($1)',[call.id]),{code:'42501'});
+ await db.query("update public.club_feature_entitlements set lineup_premium_until='infinity' where club_id=$1",[club.id]);
+ assert.equal((await read()).allowed,true);
+});

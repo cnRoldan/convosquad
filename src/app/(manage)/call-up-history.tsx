@@ -30,6 +30,7 @@ export default function CallUpHistoryScreen() {
     {result.data?.map(call => <Card key={call.id} title={formatMatchDate(call.starts_at, call.timezone)}>
       <Body>{t(callUpStatusLabel(call, undefined, true))}</Body>
       <Button secondary label={t("Consultar convocatoria del {{v0}}", { v0: call.local_date })} onPress={() => router.push({ pathname: '/call-up', params: { id: call.id, history: '1' } })} />
+      <Button secondary label="Consultar alineación" onPress={() => router.push({ pathname: '/lineup-history', params: { id: call.id } })} />
     </Card>)}
     {result.data?.length === 0 ? <Body>{t("No hay convocatorias de días anteriores.")}</Body> : null}
     {!isDemo ? <Button secondary label={t("Actualizar historial")} disabled={result.isLoading} onPress={result.reload} /> : <Body>{t("El historial real requiere una cuenta de capitán.")}</Body>}

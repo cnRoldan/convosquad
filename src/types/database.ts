@@ -163,6 +163,7 @@ export type Database = {
           published_draft_id: string | null;
           published_by: string | null;
           published_at: string | null;
+          historical_snapshot: Json | null;
         };
         Insert: {
           call_up_id: string;
@@ -174,6 +175,7 @@ export type Database = {
           published_draft_id?: string | null;
           published_by?: string | null;
           published_at?: string | null;
+          historical_snapshot?: Json | null;
         };
         Update: {
           call_up_id?: string;
@@ -185,6 +187,7 @@ export type Database = {
           published_draft_id?: string | null;
           published_by?: string | null;
           published_at?: string | null;
+          historical_snapshot?: Json | null;
         };
         Relationships: [
           { foreignKeyName: 'call_up_lineups_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: true; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
@@ -1537,6 +1540,12 @@ export type Database = {
           p_club_id: string;
         };
         Returns: boolean;
+      };
+      read_historical_lineup: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
       };
       read_lineup: {
         Args: {
