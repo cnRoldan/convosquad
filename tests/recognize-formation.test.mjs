@@ -8,7 +8,7 @@ test('recognizes every preset independently of the stored formation and array or
     const result = recognizeFormation(preset(name).reverse());
     assert.equal(result.formation, name);
     assert.equal(result.positions.length, 11);
-    assert.equal(result.positions.find(p => p.slotId === 0).position, 'POR');
+    assert.equal(result.positions.find(p => p.slotId === 0).category, 'goalkeepers');
   }
 });
 test('small positional adjustments preserve the line while a tactical move changes it', () => {
@@ -25,11 +25,20 @@ test('recognizes a custom diamond without a predefined preset', () => {
   slots[8].y = 0.28;
   assert.equal(recognizeFormation(slots).formation, '4-1-2-1-2');
 });
-test('infers familiar FC position zones for presets', () => {
-  const positions = recognizeFormation(preset('4-3-3')).positions.map(p => p.position);
-  assert.deepEqual(positions, ['POR', 'LI', 'DFC', 'DFC', 'LD', 'MC', 'MC', 'MC', 'EI', 'DC', 'ED']);
-  assert.equal(recognizeFormation(preset('4-2-3-1')).positions.filter(p => p.position === 'MCD').length, 2);
-  assert.equal(recognizeFormation(preset('3-5-2')).positions.filter(p => p.position === 'DFC').length, 3);
+test('uses app categories, retaining wide defenders and grouping all forwards', () => {
+  const category = (slots, id) => recognizeFormation(slots).positions.find(p => p.slotId === id).category;
+  const slots = preset('3-5-2');
+  slots[1].x = 0.08;
+  slots[3].x = 0.92;
+  assert.equal(category(slots, 1), 'centre_backs');
+  assert.equal(category(slots, 3), 'centre_backs');
+  assert.equal(category(slots, 4), 'wide_backs');
+  assert.equal(category(slots, 8), 'wide_backs');
+  assert.equal(category(slots, 6), 'midfielders');
+  assert.equal(category(slots, 9), 'attackers');
+  const advanced = preset('4-2-3-1');
+  for (const slot of advanced.filter(s => s.y < 0.40)) assert.equal(category(advanced, slot.id), 'attackers');
+  assert.equal(recognizeFormation(slots).formation, '3-5-2');
 });
 test('does not invent a formation for invalid, incomplete or unstructured layouts', () => {
   assert.equal(recognizeFormation(preset('4-3-3').slice(1)).formation, 'Personalizada');
