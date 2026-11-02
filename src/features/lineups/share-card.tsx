@@ -30,7 +30,7 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
       if (!player) return null;
       const depth = Math.max(0, Math.min(1, slot.y));
       const x = 662 + (slot.x - 0.5) * (850 + 300 * depth);
-      const y = 340 + depth * 710;
+      const y = 340 + depth * 710 + (slot.id === 0 ? 24 : 0);
       const scale = 0.85 + depth * 0.22;
       const nameFontSize = player.name.length > 17 ? 14 : player.name.length > 12 ? 17 : 21;
       // Approximate Arial Bold glyph advances in SVG coordinates so short
