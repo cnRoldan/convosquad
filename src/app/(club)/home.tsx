@@ -1,3 +1,4 @@
+import { requireSupabase } from '@/lib/supabase';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { router, useFocusEffect, usePathname } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -35,7 +36,16 @@ export default function HomeScreen() {
   const ratingCalls = useResource(`home-rating-call:${session?.user.id}:${clubId}`, loadRatingCalls, Boolean(session && clubId && admin && !isDemo));
   const { reload: reloadRatingCalls } = ratingCalls;
   const ratingCall = ratingCalls.data?.[0];
-  const pendingRequests = requests.error || !activeClub ? 0 : requests.incoming.filter(request => request.club_id === activeClub.id).length;
+  const loadPlayerLinks = useCallback(async () => {
+    if (!clubId) return 0;
+    const { data, error } = await requireSupabase().rpc('list_player_link_requests', { p_club_id: clubId });
+    if (error) throw error;
+    return Array.isArray(data) ? data.length : 0;
+  }, [clubId]);
+  const playerLinks = useResource(`home-player-links:${session?.user.id}:${clubId}`, loadPlayerLinks, Boolean(session && clubId && admin && !isDemo));
+  const reloadPlayerLinks = playerLinks.reload;
+  useFocusEffect(useCallback(() => { reloadPlayerLinks(); }, [reloadPlayerLinks]));
+  const pendingRequests = requests.error || !activeClub ? 0 : requests.incoming.filter(request => request.club_id === activeClub.id).length + (playerLinks.data ?? 0);
   useFocusEffect(useCallback(() => { refreshRoster(); reloadRatingCalls(); }, [refreshRoster, reloadRatingCalls]));
   useCallUpSync(`home:${session?.user.id}:${activeClub?.id}`, activeClub?.id, Boolean(session && activeClub && !isDemo && pathname === '/home'), refreshRoster);
   useEffect(() => {

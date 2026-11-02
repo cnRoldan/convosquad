@@ -952,6 +952,34 @@ export type Database = {
           { foreignKeyName: 'notification_preferences_user_id_fkey'; columns: ["user_id"]; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      player_link_requests: {
+        Row: {
+          club_id: string;
+          user_id: string;
+          player_id: string;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          club_id: string;
+          user_id: string;
+          player_id: string;
+          status?: string;
+          created_at?: string;
+        };
+        Update: {
+          club_id?: string;
+          user_id?: string;
+          player_id?: string;
+          status?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'player_link_requests_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'player_link_requests_player_id_fkey'; columns: ["player_id"]; isOneToOne: false; referencedRelation: 'players'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'player_link_requests_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       player_ratings: {
         Row: {
           call_up_player_id: string;
@@ -1281,6 +1309,15 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['push_deliveries']['Row'][];
       };
+      complete_player_onboarding: {
+        Args: {
+          p_club_id: string;
+          p_jersey: number;
+          p_category: Database['public']['Enums']['roster_category'];
+          p_nickname: string;
+        };
+        Returns: string;
+      };
       create_call_up: {
         Args: {
           p_club_id: string;
@@ -1488,6 +1525,12 @@ export type Database = {
         };
         Returns: { id: string; name: string; kind: string; retained: boolean; trial_id: string; aid_id: string; source_trial_id: string }[];
       };
+      list_player_link_requests: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: Json;
+      };
       list_rating_call_ups: {
         Args: {
           p_club_id: string;
@@ -1514,6 +1557,12 @@ export type Database = {
           p_limit?: number;
         };
         Returns: string;
+      };
+      prepare_player_onboarding: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: Json;
       };
       promote_trial: {
         Args: {
@@ -1615,6 +1664,13 @@ export type Database = {
         };
         Returns: undefined;
       };
+      request_player_link: {
+        Args: {
+          p_club_id: string;
+          p_player_id: string;
+        };
+        Returns: undefined;
+      };
       request_to_join: {
         Args: {
           p_club_id: string;
@@ -1651,6 +1707,14 @@ export type Database = {
           p_player_id?: string;
         };
         Returns: Database['public']['Tables']['join_requests']['Row'][];
+      };
+      review_player_link: {
+        Args: {
+          p_club_id: string;
+          p_user_id: string;
+          p_approve: boolean;
+        };
+        Returns: undefined;
       };
       revoke_club_invitation: {
         Args: {

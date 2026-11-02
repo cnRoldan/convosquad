@@ -1,3 +1,4 @@
+import { PlayerLinkRequests } from '@/features/invitations/player-link-requests';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { Body, Button, DemoNotice, Heading, Message, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
@@ -15,7 +16,7 @@ export default function JoinRequestsScreen() {
     {isDemo ? <DemoNotice /> : null}
     {requests.isLoading ? <Body>{t('Cargando solicitudes…')}</Body> : null}
     {requests.error ? <Message error>{requests.error}</Message> : null}
-    {activeClub && !isDemo ? <IncomingRequests clubId={activeClub.id} /> : null}
+    {activeClub && !isDemo ? <><IncomingRequests clubId={activeClub.id} /><PlayerLinkRequests clubId={activeClub.id} /></> : null}
     <Button secondary label={t('Actualizar')} disabled={isDemo || requests.isLoading} onPress={requests.refresh} />
   </Screen>;
 }

@@ -38,7 +38,7 @@ export default function InviteScreen() {
       if (!ownClub) await redeemClubInvitation(invitation.clubId, invitation.token);
       await reloadClubs(invitation.clubId);
       clearInvite();
-      router.replace('/home');
+      router.replace({ pathname: '/complete-player', params: { club: invitation.clubId } });
     } catch (error) {
       setMessage(typeof error === 'object' && error !== null && 'code' in error && error.code === '22023'
         ? t("La invitación no es válida, ha caducado, está revocada o se han agotado sus usos. Solicita un enlace nuevo.")

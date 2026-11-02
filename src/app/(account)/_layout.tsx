@@ -11,6 +11,7 @@ export default function AccountLayout() {
     <Stack.Screen name="notifications" options={{ title: t("Notificaciones") }} />
     <Stack.Screen name="create-club" options={{ title: t("Crear club") }} />
     <Stack.Screen name="search-clubs" options={{ title: t("Buscar clubes") }} />
+    <Stack.Screen name="complete-player" options={{ title: 'Tu ficha de jugador' }} />
     <Stack.Screen name="my-requests" options={{ title: t("Mis solicitudes") }} />
   </Stack></AuthAccess>;
 }
