@@ -15,9 +15,15 @@ import { shareLineupImage } from './share-image';
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 import { deleteLineupDraft, deleteLineupPreference, listLineupDrafts, loadLineup, publishLineupDraft, saveLineupDraft, saveLineupPreference, setLineupPlayerColors, setLineupPositionLock, voteLineupDraft, type LineupDraft } from './service';
-import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Formation, type Lineup, type LineupLayout } from './model';
+import { applyLayout, applyPreset, assignPlayer, canPublish, layoutFromLineup, preset, reconcileLineup, removeFromBench, sendToBench, type Candidate, type Preset, type Lineup, type LineupLayout } from './model';
 
-type SelectedPreset = Formation | 'custom' | null;
+type SelectedPreset = Preset | 'custom' | null;
+const formationPresets: { id: Preset; label: string }[] = [
+  { id: '4-3-3', label: '4-3-3' }, { id: '4-4-2', label: '4-4-2' },
+  { id: '4-4-2-diamond', label: '4-4-2 · Rombo' }, { id: '4-2-3-1', label: '4-2-3-1' },
+  { id: '3-5-2', label: '3-5-2' }, { id: '3-5-2-one-pivot', label: '3-5-2 · 1 pivote' },
+  { id: '3-5-2-two-pivots', label: '3-5-2 · 2 pivotes' },
+];
 const historyLimit = 50;
 
 export function LineupEditor({ clubId, clubName, crestPath, callId, captain, initialDraftId }: { clubId: string; clubName: string; crestPath?: string | null | undefined; callId: string; captain: boolean; initialDraftId?: string }) {
@@ -191,7 +197,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
       {captain ? <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
-        {(['4-3-3', '4-4-2', '4-2-3-1', '3-5-2'] as Formation[]).map(f => <PresetChip key={f} label={f} selected={selectedPreset === f} disabled={!editable} onPress={() => { change(applyPreset(document, f)); setSelectedPreset(f); setLayoutChanged(false); }} />)}
+        {formationPresets.map(({ id, label }) => <PresetChip key={id} label={label} selected={selectedPreset === id} disabled={!editable} onPress={() => { change(applyPreset(document, id)); setSelectedPreset(id); setLayoutChanged(false); }} />)}
         {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
         <IconButton icon="undo" label="Deshacer último cambio" disabled={!editable || history.length === 0 || dragging} onPress={undo} />
@@ -277,5 +283,5 @@ function PresetChip({ label, selected, published = false, disabled, onPress }: {
 function presetFor(document: Lineup | null, preference: LineupLayout | null): SelectedPreset {
   if (!document) return null;
   if (preference && document.formation === preference.formation && document.slots.every(slot => preference.slots.some(saved => saved.id === slot.id && saved.x === slot.x && saved.y === slot.y))) return 'custom';
-  return document.formation;
+  return formationPresets.find(({ id }) => preset(id).every(point => document.slots.some(slot => slot.id === point.id && Math.abs(slot.x - point.x) < 0.001 && Math.abs(slot.y - point.y) < 0.001)))?.id ?? null;
 }

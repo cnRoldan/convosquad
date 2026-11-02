@@ -34,5 +34,11 @@ export function recognizeFormation(slots: readonly Slot[]) {
     else category = 'midfielders';
     positions.push({ slotId: slot.id, category });
   }
-  return { formation: plausible ? rows.map(row => row.length).join('-') : 'Personalizada', positions };
+  const defenseCount = positions.filter(item => item.category === 'centre_backs').length;
+  const midfieldCount = positions.filter(item => item.category === 'midfielders' || item.category === 'wide_backs').length;
+  const attackCount = positions.filter(item => item.category === 'attackers').length;
+  const formation = defenseCount === 3 && midfieldCount === 5 && attackCount === 2
+    ? '3-5-2'
+    : plausible ? rows.map(row => row.length).join('-') : 'Personalizada';
+  return { formation, positions };
 }

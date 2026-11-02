@@ -3,13 +3,21 @@ import type { RosterCategory } from '@/features/players/categories';
 export type Candidate = { id: string; name: string; eligible: boolean; active: boolean; manual?: boolean; jerseyNumber?: number | null | undefined; category?: RosterCategory | undefined };
 export type Slot = { id: number; x: number; y: number; playerId: string | null };
 export type Formation = '4-3-3' | '4-4-2' | '4-2-3-1' | '3-5-2';
+export type Preset = Formation | '3-5-2-one-pivot' | '3-5-2-two-pivots' | '4-4-2-diamond';
 export type Lineup = { formation: Formation; slots: Slot[]; bench: string[]; manualIds?: string[]; excludedIds?: string[] | undefined };
 export type LineupLayout = { formation: Formation; slots: Pick<Slot, 'id' | 'x' | 'y'>[] };
 const lines: Record<Formation, number[]> = { '4-3-3': [4, 3, 3], '4-4-2': [4, 4, 2], '4-2-3-1': [4, 2, 3, 1], '3-5-2': [3, 5, 2] };
 
-export function preset(formation: Formation): Slot[] {
+export function preset(formation: Preset): Slot[] {
+  const variants: Partial<Record<Preset, [number, number][]>> = {
+    '3-5-2-one-pivot': [[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.5,.60],[.34,.34],[.66,.34],[.84,.45],[.36,.15],[.64,.15]],
+    '3-5-2-two-pivots': [[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.35,.56],[.65,.56],[.84,.45],[.5,.33],[.36,.15],[.64,.15]],
+    '4-4-2-diamond': [[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.5,.58],[.27,.45],[.73,.45],[.5,.32],[.36,.15],[.64,.15]],
+  };
+  const coordinates = variants[formation];
+  if (coordinates) return [{ id: 0, x: .5, y: .9, playerId: null }, ...coordinates.map(([x,y], index) => ({ id: index + 1, x, y, playerId: null }))];
   const slots: Slot[] = [{ id: 0, x: 0.5, y: 0.9, playerId: null }];
-  lines[formation].forEach((count, row, rows) => {
+  lines[formation as Formation].forEach((count, row, rows) => {
     for (let column = 0; column < count; column++) slots.push({
       id: slots.length, x: (column + 1) / (count + 1), y: 0.72 - row * (0.57 / (rows.length - 1)), playerId: null,
     });
@@ -26,8 +34,9 @@ export function inheritLineup(previous: Lineup | null, candidates: Candidate[]):
   return { formation: previous?.formation ?? '4-3-3', slots, bench };
 }
 
-export function applyPreset(lineup: Lineup, formation: Formation): Lineup {
-  return { ...lineup, formation, slots: preset(formation).map(s => ({ ...s, playerId: lineup.slots.find(old => old.id === s.id)?.playerId ?? null })) };
+export function applyPreset(lineup: Lineup, selected: Preset): Lineup {
+  const formation: Formation = selected.startsWith('3-5-2') ? '3-5-2' : selected === '4-4-2-diamond' ? '4-4-2' : selected as Formation;
+  return { ...lineup, formation, slots: preset(selected).map(s => ({ ...s, playerId: lineup.slots.find(old => old.id === s.id)?.playerId ?? null })) };
 }
 
 export function layoutFromLineup(lineup: Lineup): LineupLayout {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { preset } from '../src/features/lineups/model.ts';
+import { applyPreset, preset } from '../src/features/lineups/model.ts';
 import { recognizeFormation } from '../src/features/lineups/recognize-formation.ts';
 
 test('recognizes every preset independently of the stored formation and array order', () => {
@@ -14,7 +14,7 @@ test('recognizes every preset independently of the stored formation and array or
 test('small positional adjustments preserve the line while a tactical move changes it', () => {
   const slots = preset('3-5-2');
   assert.equal(recognizeFormation(slots.map(s => s.id === 4 ? {...s, y: s.y + 0.04} : s)).formation, '3-5-2');
-  assert.equal(recognizeFormation(slots.map(s => s.id === 4 ? {...s, y: 0.62} : s)).formation, '4-4-2');
+  assert.equal(recognizeFormation(slots.map(s => s.id === 4 ? {...s, y: 0.72} : s)).formation, '4-4-2');
 });
 test('recognizes a custom diamond without a predefined preset', () => {
   const slots = preset('4-4-2');
@@ -55,4 +55,19 @@ test('expanded midfield applies through both central and wide lanes', () => {
   assert.equal(category(0.1, 0.69), 'wide_backs');
   assert.equal(category(0.1, 0.70), 'centre_backs');
   assert.equal(category(0.5, 0.29), 'attackers');
+});
+
+test('new presets retain player assignments and use the existing stored formation format', () => {
+  const lineup = { formation: '4-3-3', slots: preset('4-3-3').map((s, i) => ({...s, playerId: String(i)})), bench: [] };
+  for (const [name, stored, displayed] of [
+    ['3-5-2-one-pivot', '3-5-2', '3-5-2'],
+    ['3-5-2-two-pivots', '3-5-2', '3-5-2'],
+    ['4-4-2-diamond', '4-4-2', '4-1-2-1-2'],
+  ]) {
+    const result = applyPreset(lineup, name);
+    assert.equal(result.formation, stored);
+    assert.equal(recognizeFormation(result.slots).formation, displayed);
+    assert.deepEqual(result.slots.map(s => s.playerId), lineup.slots.map(s => s.playerId));
+  }
+  assert.notDeepEqual(preset('3-5-2-one-pivot'), preset('3-5-2-two-pivots'));
 });
