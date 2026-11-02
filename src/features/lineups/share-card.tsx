@@ -19,7 +19,7 @@ export function LineupShareCard({ clubName, crestPath, lineup, candidates, shirt
 }
 
 function Stadium() {
-  return <Svg pointerEvents="none" width="100%" height="100%" viewBox="0 0 360 620" preserveAspectRatio="none" style={StyleSheet.absoluteFill}>
+  return <Svg pointerEvents="none" width="100%" height="100%" viewBox="0 0 360 620" preserveAspectRatio="none" style={[StyleSheet.absoluteFill, { zIndex: 0 }]}>
     <Defs>
       <LinearGradient id="night" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#050C18" /><Stop offset="0.28" stopColor="#10233A" /><Stop offset="1" stopColor="#06130C" /></LinearGradient>
       <LinearGradient id="grass" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#2A874D" /><Stop offset="1" stopColor="#103B27" /></LinearGradient>
@@ -52,20 +52,20 @@ function SharePlayer({ slot, player, shirtColor, numberColor }: { slot: Slot; pl
 }
 
 const styles = StyleSheet.create({
-  card: { width: '100%', aspectRatio: 0.58, overflow: 'hidden', backgroundColor: '#07100D', borderRadius: 18 },
-  header: { height: '18%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 9, gap: 10 },
+  card: { width: '100%', aspectRatio: 0.72, overflow: 'hidden', backgroundColor: '#07100D', borderRadius: 18 },
+  header: { zIndex: 1, height: '16%', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 9, gap: 10 },
   crest: { width: 46, height: 46, alignItems: 'center', justifyContent: 'center', borderRadius: 23, backgroundColor: 'rgba(2,8,14,0.5)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
   heading: { flex: 1, minWidth: 0 },
-  kicker: { color: '#FFD071', fontSize: 8, fontWeight: '900', letterSpacing: 1.2 },
-  club: { color: '#F7FCEB', fontSize: 20, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase', textShadowColor: '#000', textShadowRadius: 4 },
+  kicker: { color: '#FFD071', fontSize: 9, fontWeight: '900', letterSpacing: 1.2 },
+  club: { color: '#FFFFFF', fontSize: 21, fontWeight: '900', letterSpacing: 0.6, textTransform: 'uppercase', textShadowColor: '#000', textShadowRadius: 4 },
   formation: { minWidth: 54, alignItems: 'flex-end' },
-  formationLabel: { color: '#B8C7C0', fontSize: 7, fontWeight: '800', letterSpacing: 0.7 },
+  formationLabel: { color: '#E5EEE8', fontSize: 8, fontWeight: '800', letterSpacing: 0.7 },
   formationValue: { color: '#FFFFFF', fontSize: 17, fontWeight: '900' },
-  pitchArea: { position: 'absolute', top: '16%', left: 0, right: 0, bottom: '8%' },
+  pitchArea: { zIndex: 1, position: 'absolute', top: '14%', left: 0, right: 0, bottom: '8%' },
   player: { position: 'absolute', width: 80, marginLeft: -40, marginTop: -25, alignItems: 'center' },
   number: { position: 'absolute', top: 16, fontSize: 12, fontWeight: '900', textShadowColor: 'rgba(0,0,0,0.55)', textShadowRadius: 1 },
-  playerName: { marginTop: -1, maxWidth: 80, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5, overflow: 'hidden', backgroundColor: 'rgba(2,8,12,0.76)', color: '#FFFFFF', fontSize: 8, fontWeight: '900', textAlign: 'center', textShadowColor: '#000', textShadowRadius: 2 },
-  footer: { position: 'absolute', height: '8%', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: 'rgba(2,8,13,0.8)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)' },
+  playerName: { marginTop: -1, maxWidth: 80, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 5, overflow: 'hidden', backgroundColor: 'rgba(2,8,12,0.88)', color: '#FFFFFF', fontSize: 9, fontWeight: '900', textAlign: 'center', textShadowColor: '#000', textShadowRadius: 2 },
+  footer: { zIndex: 1, position: 'absolute', height: '8%', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, backgroundColor: 'rgba(2,8,13,0.8)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)' },
   footerBrand: { color: '#B4F16C', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   footerCopy: { color: '#B7C7B9', fontSize: 7, fontWeight: '800', letterSpacing: 0.6 },
 });
