@@ -32,6 +32,10 @@
   },
   "submit": {
     "production": {
+      "android": {
+        "track": "alpha",
+        "releaseStatus": "completed"
+      },
       "ios": {
         "ascAppId": "6824663674",
         "appleTeamId": "525YGU2J8U"
