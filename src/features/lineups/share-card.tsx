@@ -16,7 +16,10 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
     </Defs>
     <Image href={require('../../../assets/images/lineup-share-template.png')} x={0} y={0} width={1324} height={1190} preserveAspectRatio="xMidYMid slice" />
     <Rect x={30} y={20} width={1264} height={180} fill="url(#headerShade)" />
-    {crestUrl ? <Image href={{ uri: crestUrl }} x={65} y={58} width={106} height={106} preserveAspectRatio="xMidYMid meet" /> : null}
+    {crestUrl ? <G>
+      <Rect x={56} y={49} width={124} height={124} rx={18} fill="#041007" fillOpacity={0.9} stroke="#BDFF43" strokeOpacity={0.35} />
+      <Image href={{ uri: crestUrl }} x={65} y={58} width={106} height={106} preserveAspectRatio="xMidYMid meet" />
+    </G> : null}
     <Text x={crestUrl ? 192 : 68} y={85} fill="#BDFF43" fontFamily="Arial" fontSize={19} fontWeight="bold" letterSpacing={3}>ONCE TITULAR</Text>
     <Text x={crestUrl ? 192 : 68} y={140} fill="#FFFFFF" fontFamily="Arial" fontSize={clubName.length > 25 ? 32 : 44} fontWeight="bold">{clubName.toUpperCase()}</Text>
     <Text x={1250} y={95} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={22} fontWeight="bold">{lineup.formation}</Text>
@@ -36,9 +39,10 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
         <Text x={0} y={84} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={player.name.length > 17 ? 14 : player.name.length > 12 ? 17 : 21} fontWeight="bold">{player.name}</Text>
       </G>;
     })}
-    <Text x={940} y={1142} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={17}>Powered by</Text>
-    <Image href={require('../../../assets/images/icon.png')} x={950} y={1103} width={58} height={58} preserveAspectRatio="xMidYMid meet" />
-    <Text x={1245} y={1142} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={29} fontWeight="bold">ConvoSquad</Text>
+    <Rect x={856} y={1092} width={377} height={66} rx={14} fill="#041007" fillOpacity={0.97} stroke="#BDFF43" strokeOpacity={0.3} />
+    <Text x={936} y={1133} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={14}>Powered by</Text>
+    <Image href={require('../../../assets/images/icon.png')} x={941} y={1096} width={58} height={58} preserveAspectRatio="xMidYMid meet" />
+    <Text x={1209} y={1136} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={28} fontWeight="bold">ConvoSquad</Text>
   </Svg>;
 }
 

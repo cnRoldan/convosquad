@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -8,7 +8,7 @@ import { colors } from '@/theme';
 import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 import { LineupShareCard } from './share-card';
 import { getClubCrestUrl } from '@/features/clubs/crest';
-import { listClubMembers } from '@/features/clubs/service';
+import { getClubSettings, listClubMembers } from '@/features/clubs/service';
 import { LineupPitch } from './pitch';
 import { AddLineupPlayer, type GuestInput } from './add-player';
 import { shareLineupImage } from './share-image';
@@ -157,9 +157,21 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   async function shareImage() {
     setSharing(true); setMessage('');
     try {
-      const crestUrl = crestPath ? await getClubCrestUrl(crestPath) : null;
-      if (crestUrl) await Image.prefetch(crestUrl);
-      setShareCrestUrl(crestUrl);
+      const club = await getClubSettings(clubId);
+      const currentCrestPath = club.crest_path ?? crestPath;
+      let embeddedCrest: string | null = null;
+      if (currentCrestPath) {
+        const response = await fetch(await getClubCrestUrl(currentCrestPath));
+        if (!response.ok) throw new Error('No se pudo cargar el escudo.');
+        const blob = await response.blob();
+        embeddedCrest = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(new Error('No se pudo preparar el escudo.'));
+          reader.readAsDataURL(blob);
+        });
+      }
+      setShareCrestUrl(embeddedCrest);
       await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
       await shareLineupImage(shareImageRef);
     }
