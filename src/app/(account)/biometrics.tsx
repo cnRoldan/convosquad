@@ -4,8 +4,10 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { Body, Button, Card, Heading, Message, Screen } from '@/components/ui';
 import { useBiometrics } from '@/features/auth/biometric-provider';
 import { useAuth } from '@/features/auth/auth-context';
+import { t, useLanguage } from '@/features/i18n/runtime';
 
 export default function BiometricsScreen() {
+  useLanguage();
   const { state, lock } = useBiometrics();
   const { isDemo } = useAuth();
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -26,15 +28,15 @@ export default function BiometricsScreen() {
     setMessage(success ? state.enabled ? 'Acceso biométrico desactivado en este dispositivo.' : 'Acceso biométrico activado en este dispositivo.' : 'No se ha cambiado la configuración. Puedes volver a intentarlo.');
   }
   return <Screen>
-    <Heading title="Acceso biométrico" />
-    {Platform.OS === 'web' ? <Body>Esta función está disponible en la app para iOS y Android.</Body> : <Card title={label}>
-      <Body>Protege tu sesión al abrir la app y cuando vuelvas después de 30 segundos fuera de ella. La primera vez debes iniciar sesión con tu ID de EA y contraseña.</Body>
-      <Body>El sistema puede ofrecerte el código de desbloqueo del dispositivo como alternativa.</Body>
-      <Body>{state.enabled ? 'Activado en este dispositivo.' : 'Desactivado en este dispositivo.'}</Body>
-      {available === false ? <Message>Configura Face ID, huella u otra biometría segura en los ajustes de tu dispositivo.</Message> : null}
+    <Heading title={t('Acceso biométrico')} />
+    {Platform.OS === 'web' ? <Body>{t('Esta función está disponible en la app para iOS y Android.')}</Body> : <Card title={t(label)}>
+      <Body>{t('Protege tu sesión al abrir la app y cuando vuelvas después de 30 segundos fuera de ella. La primera vez debes iniciar sesión con tu ID de EA y contraseña.')}</Body>
+      <Body>{t('El sistema puede ofrecerte el código de desbloqueo del dispositivo como alternativa.')}</Body>
+      <Body>{t(state.enabled ? 'Activado en este dispositivo.' : 'Desactivado en este dispositivo.')}</Body>
+      {available === false ? <Message>{t('Configura Face ID, huella u otra biometría segura en los ajustes de tu dispositivo.')}</Message> : null}
       <Button label={state.busy ? 'Comprobando…' : state.enabled ? 'Desactivar acceso biométrico' : 'Activar acceso biométrico'} disabled={state.busy || isDemo || !state.ready || (!state.enabled && !available)} onPress={() => void change()} />
     </Card>}
-    {message ? <Message>{message}</Message> : null}
-    {state.error ? <Message error>{state.error}</Message> : null}
+    {message ? <Message>{t(message)}</Message> : null}
+    {state.error ? <Message error>{t(state.error)}</Message> : null}
   </Screen>;
 }

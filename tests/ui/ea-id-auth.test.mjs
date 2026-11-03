@@ -576,6 +576,22 @@ test('plantilla: jugadores no reciben teléfonos ni acciones de gestión de prue
 });
 
 
+test('login y registro permiten cambiar idioma sin sesión y lo conservan al recargar', async () => {
+ const f=await fixture({browserLanguage:'en-US'});
+ try {
+  const {page}=f;await page.goto(`${origin}/login`);
+  await page.getByRole('button',{name:'Change language',exact:true}).click();
+  await page.getByRole('radio',{name:'Español',exact:true}).click();
+  await page.getByRole('heading',{name:'Nos vemos en el campo',exact:true}).waitFor();
+  await page.reload();await page.getByRole('button',{name:'Cambiar idioma',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Quiero registrarme',exact:true}).click();
+  await page.getByRole('button',{name:'Cambiar idioma',exact:true}).click();
+  await page.getByRole('radio',{name:'Français',exact:true}).click();
+  await page.getByRole('button',{name:'Changer de langue',exact:true}).waitFor();
+  assert.equal(f.requests.some(request=>request.endpoint==='set_preferred_language'),false);
+ } finally {await f.close();}
+});
+
 test('idioma junto al ID cambia en modal, se conserva al recargar y no cambia nombres del club', async () => {
  const f=await fixture({clubRole:'admin'});
  try {

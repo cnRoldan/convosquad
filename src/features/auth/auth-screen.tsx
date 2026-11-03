@@ -1,4 +1,6 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
+import { LanguageSelector } from '@/features/i18n/language-selector';
+import { View } from 'react-native';
 import { useState } from 'react';
 import { Redirect, router } from 'expo-router';
 import { usePendingPush } from '@/features/notifications/pending-push-context';
@@ -51,6 +53,7 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <Screen>
+      <View style={{ alignItems: 'flex-end' }}><LanguageSelector /></View>
       <Heading title={isRegister ? t("Únete al vestuario") : t("Nos vemos en el campo")} subtitle={isRegister ? t("Tu ID de EA y una contraseña. Sin correo ni confirmaciones.") : t("Accede a tus clubes con tu ID de EA y contraseña.")} />
       <Field label={t("ID de EA")} value={eaId} onChangeText={setEaId} autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" maxLength={24} editable={!busy} />
       <Field label={t("Contraseña")} value={password} onChangeText={setPassword} secureTextEntry autoCapitalize="none" autoComplete={isRegister ? 'new-password' : 'current-password'} textContentType={isRegister ? 'newPassword' : 'password'} editable={!busy} />

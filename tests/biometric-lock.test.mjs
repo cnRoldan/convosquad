@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BiometricLock } from '../src/features/auth/biometric-lock.ts';
+import { BiometricLock, needsNativeLockCover } from '../src/features/auth/biometric-lock.ts';
 function setup(enabled=true){let now=0,calls=0;const flags=new Map([['a',enabled],['b',true]]);let authenticate=async()=>true;
  const lock=new BiometricLock({read:async u=>flags.get(u)??false,write:async(u,e)=>{flags.set(u,e);},authenticate:async()=>{calls++;return authenticate();},now:()=>now});
  return {lock,flags,calls:()=>calls,time:v=>{now=v;},auth:fn=>{authenticate=fn;}};
@@ -38,4 +38,89 @@ test('backgrounded authentication cannot reveal the app',async()=>{
  const f=setup();await f.lock.setUser('a');let resolve;f.auth(()=>new Promise(r=>{resolve=r;}));
  const request=f.lock.unlock();f.lock.appState('background');resolve(true);await request;
  assert.equal(f.lock.snapshot().hidden,true);assert.equal(f.lock.snapshot().locked,true);
+});
+
+test('Face ID success before the inactive-to-active event unlocks once and keeps the privacy cover until active', async () => {
+ const f=setup();await f.lock.setUser('a');let resolve;
+ f.auth(()=>new Promise(r=>{resolve=r;}));
+ const request=f.lock.unlockAutomatically();
+ f.lock.appState('inactive');resolve(true);await request;
+ assert.equal(f.lock.snapshot().locked,false);
+ assert.equal(f.lock.snapshot().hidden,true);
+ assert.equal(needsNativeLockCover(f.lock.snapshot(),true,true),true);
+ f.lock.appState('active');await f.lock.unlockAutomatically();
+ assert.equal(f.lock.snapshot().hidden,false);
+ assert.equal(f.lock.snapshot().locked,false);
+ assert.equal(f.calls(),1);
+ assert.equal(f.lock.snapshot().userId,'a');
+ assert.equal(f.flags.get('a'),true);
+});
+
+test('cancellation and failure never retry automatically when iOS returns to active', async () => {
+ for(const failure of [async()=>false,async()=>{throw Error('unavailable');}]) {
+  const f=setup();await f.lock.setUser('a');f.auth(failure);
+  await f.lock.unlockAutomatically();
+  for(const state of ['inactive','active','active','inactive','active']) {
+   f.lock.appState(state);await f.lock.unlockAutomatically();
+  }
+  assert.equal(f.calls(),1);
+  assert.equal(f.lock.snapshot().locked,true);
+  assert.equal(f.lock.snapshot().userId,'a');
+  assert.equal(f.flags.get('a'),true);
+  f.auth(async()=>true);await f.lock.unlock();
+  assert.equal(f.calls(),2);assert.equal(f.lock.snapshot().locked,false);
+ }
+});
+
+test('enabling while Face ID is inactive does not request another authentication on return', async () => {
+ const f=setup(false);await f.lock.setUser('a');let resolve;
+ f.auth(()=>new Promise(r=>{resolve=r;}));
+ const enabling=f.lock.setEnabled(true);
+ f.lock.appState('inactive');
+ assert.equal(needsNativeLockCover(f.lock.snapshot(),true,false),false);
+ resolve(true);
+ assert.equal(await enabling,true);
+ assert.equal(f.lock.snapshot().hidden,true);
+ assert.equal(needsNativeLockCover(f.lock.snapshot(),true,false),false);
+ f.lock.appState('active');await f.lock.unlockAutomatically();
+ assert.equal(f.calls(),1);assert.equal(f.lock.snapshot().locked,false);
+ assert.equal(f.flags.get('a'),true);
+});
+
+test('real background invalidates authentication even if the app returns before the result', async () => {
+ const f=setup();await f.lock.setUser('a');let resolve;
+ f.auth(()=>new Promise(r=>{resolve=r;}));
+ const request=f.lock.unlockAutomatically();
+ f.lock.appState('background');f.lock.appState('active');resolve(true);await request;
+ assert.equal(f.lock.snapshot().locked,true);
+ f.auth(async()=>true);await f.lock.unlockAutomatically();
+ assert.equal(f.calls(),2);assert.equal(f.lock.snapshot().locked,false);
+});
+
+test('restoring the same account does not relock an authenticated session', async () => {
+ const f=setup();await f.lock.setUser('a');await f.lock.unlockAutomatically();
+ await f.lock.setUser('a');await f.lock.unlockAutomatically();
+ assert.equal(f.calls(),1);assert.equal(f.lock.snapshot().locked,false);
+});
+
+test('switching accounts waits for the existing system prompt before authenticating the next account', async () => {
+ const f=setup();await f.lock.setUser('a');let resolve;
+ f.auth(()=>new Promise(r=>{resolve=r;}));
+ const request=f.lock.unlockAutomatically();
+ await f.lock.setUser('b');await f.lock.unlockAutomatically();
+ assert.equal(f.calls(),1);assert.equal(f.lock.snapshot().busy,true);
+ resolve(true);await request;
+ assert.equal(f.lock.snapshot().locked,true);
+ f.auth(async()=>true);await f.lock.unlockAutomatically();
+ assert.equal(f.calls(),2);assert.equal(f.lock.snapshot().locked,false);
+});
+
+test('a prolonged inactive interruption after successful authentication still enforces the 30 second limit', async () => {
+ const f=setup();await f.lock.setUser('a');let resolve;
+ f.auth(()=>new Promise(r=>{resolve=r;}));const request=f.lock.unlockAutomatically();
+ f.lock.appState('inactive');resolve(true);await request;
+ f.time(30001);f.lock.appState('active');
+ assert.equal(f.lock.snapshot().locked,true);
+ f.auth(async()=>true);await f.lock.unlockAutomatically();
+ assert.equal(f.calls(),2);assert.equal(f.lock.snapshot().locked,false);
 });
