@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, G, Image, LinearGradient, Path, Rect, Stop, Text } from 'react-native-svg';
 import type { Candidate, Lineup } from './model';
 import { recognizeFormation } from './recognize-formation';
+import { posterPlayers } from './poster-layout';
 
 export function LineupShareCard(props: Parameters<typeof LineupPoster>[0]) {
   return <View style={styles.card}><LineupPoster {...props} /></View>;
@@ -25,27 +26,16 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
     <Text x={crestUrl ? 192 : 68} y={85} fill="#BDFF43" fontFamily="Arial" fontSize={19} fontWeight="bold" letterSpacing={3}>ONCE TITULAR</Text>
     <Text x={crestUrl ? 192 : 68} y={140} fill="#FFFFFF" fontFamily="Arial" fontSize={clubName.length > 25 ? 32 : 44} fontWeight="bold">{clubName.toUpperCase()}</Text>
     <Text x={1250} y={95} textAnchor="end" fill="#FFFFFF" fontFamily="Arial" fontSize={22} fontWeight="bold">{recognizeFormation(lineup.slots).formation}</Text>
-    {lineup.slots.map(slot => {
-      const player = candidates.find(candidate => candidate.id === slot.playerId);
-      if (!player) return null;
-      const depth = Math.max(0, Math.min(1, slot.y));
-      const x = 662 + (slot.x - 0.5) * (850 + 300 * depth);
-      const y = 340 + depth * 710 + (slot.id === 0 ? 24 : 0);
-      const scale = 0.85 + depth * 0.22;
-      const nameFontSize = player.name.length > 17 ? 14 : player.name.length > 12 ? 17 : 21;
-      // Approximate Arial Bold glyph advances in SVG coordinates so short
-      // names get a compact badge on both native and web exports.
-      const nameWidth = 20 + Array.from(player.name).reduce((width, character) => {
-        const advance = /[ilIjtfr.,' ]/.test(character) ? 0.32 : /[MW@%]/.test(character) ? 0.9 : /[A-Z0-9]/.test(character) ? 0.7 : 0.59;
-        return width + advance * nameFontSize;
-      }, 0);
+    {posterPlayers(lineup, candidates).map(({ slot, player, x, y, scale, fontSize: nameFontSize, nameWidth }) => {
       return <G key={slot.id} transform={`translate(${x} ${y}) scale(${scale})`}>
-        <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill={slot.id === 0 ? goalkeeperColor : shirtColor} stroke="#101A14" strokeWidth={3} />
-        <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill="url(#fabricShade)" />
-        <Path d="M-19-56q19 24 38 0" fill="#09120C" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={2} />
-        <Text x={0} y={19} textAnchor="middle" fill={slot.id === 0 ? goalkeeperNumberColor(goalkeeperColor) : numberColor} fontFamily="Arial" fontSize={43} fontWeight="bold">{player.jerseyNumber ?? '—'}</Text>
-        <Rect x={-nameWidth / 2} y={60} width={nameWidth} height={34} rx={6} fill="#03100A" fillOpacity={0.85} />
-        <Text x={0} y={84} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={nameFontSize} fontWeight="bold">{player.name}</Text>
+        <G scale={0.8}>
+          <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill={slot.id === 0 ? goalkeeperColor : shirtColor} stroke="#101A14" strokeWidth={3} />
+          <Path d="M-19-56-38-48-62-25-47 2-31-8-31 51h62V-8L47 2l15-27-24-23-19-8Z" fill="url(#fabricShade)" />
+          <Path d="M-19-56q19 24 38 0" fill="#09120C" stroke="#FFFFFF" strokeOpacity={0.3} strokeWidth={2} />
+          <Text x={0} y={19} textAnchor="middle" fill={slot.id === 0 ? goalkeeperNumberColor(goalkeeperColor) : numberColor} fontFamily="Arial" fontSize={43} fontWeight="bold">{player.jerseyNumber ?? '—'}</Text>
+        </G>
+        <Rect x={-nameWidth / 2} y={44} width={nameWidth} height={34} rx={6} fill="#03100A" fillOpacity={0.85} />
+        <Text x={0} y={68} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={nameFontSize} fontWeight="bold">{player.name}</Text>
       </G>;
     })}
     <Rect x={896} y={1092} width={337} height={66} rx={14} fill="#041007" fillOpacity={0.97} stroke="#BDFF43" strokeOpacity={0.3} />
