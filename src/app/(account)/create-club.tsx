@@ -2,7 +2,7 @@ import { t, useLanguage } from '@/features/i18n/runtime';
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Switch, View } from 'react-native';
-import { Body, Button, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
+import { Body, Button, Card, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { CrestPicker } from '@/features/clubs/crest-picker';
 import { uploadClubCrest, type ClubCrestImage } from '@/features/clubs/crest';
 import { TimezonePicker } from '@/features/clubs/timezone-picker';
@@ -53,11 +53,18 @@ export default function CreateClubScreen() {
     {isDemo ? <DemoNotice /> : null}
     <CrestPicker image={crest} onChange={image => { setCrest(image); setCrestUploaded(false); }} disabled={busy || isDemo} />
     <Field label={t("Nombre del club")} value={name} onChangeText={setName} maxLength={80} editable={!busy && !createdClubId} />
+    <Body>{t("Elige bien el nombre: solo podrás cambiarlo después de activar el club.")}</Body>
     <Field label={t("Descripción (opcional)")} value={description} onChangeText={setDescription} maxLength={500} multiline editable={!busy && !createdClubId} />
     <TimezonePicker value={timezone} onChange={setTimezone} disabled={busy || Boolean(createdClubId)} />
     <View style={{ gap: 8 }}><Body>{t("Mostrar nombre y descripción en el buscador público")}</Body>
       <Switch accessibilityLabel={t("Mostrar el club en el buscador público")} value={isPublic} onValueChange={setPublic} disabled={busy || Boolean(createdClubId)} trackColor={{ true: colors.primary }} />
     </View>
+    <Card title={t("Antes de crear tu club")}>
+      <Body>{t("El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.")}</Body>
+      <Body>{t("Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.")}</Body>
+      <Body>{t("Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.")}</Body>
+      <Body>{t("La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.")}</Body>
+    </Card>
     {message ? <Message error>{message}</Message> : null}
     <Button label={busy ? createdClubId ? t("Cargando el club…") : t("Creando el club…") : createdClubId ? t("Entrar al club creado") : t("Crear club")} disabled={busy || isDemo} onPress={() => { void submit(); }} />
     <Button secondary label={t("Volver a mis clubes")} disabled={busy} onPress={() => router.replace('/clubs')} />

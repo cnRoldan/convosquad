@@ -881,5 +881,11 @@
   "Activar acceso biométrico": "Activar acceso biométrico",
   "Acceso biométrico desactivado en este dispositivo.": "Acceso biométrico desactivado en este dispositivo.",
   "Acceso biométrico activado en este dispositivo.": "Acceso biométrico activado en este dispositivo.",
-  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "No se ha cambiado la configuración. Puedes volver a intentarlo."
+  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "No se ha cambiado la configuración. Puedes volver a intentarlo.",
+  "Elige bien el nombre: solo podrás cambiarlo después de activar el club.": "Elige bien el nombre: solo podrás cambiarlo después de activar el club.",
+  "Antes de crear tu club": "Antes de crear tu club",
+  "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.": "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.",
+  "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.": "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.",
+  "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.": "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.",
+  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium."
 }

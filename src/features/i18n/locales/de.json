@@ -881,5 +881,11 @@
   "Activar acceso biométrico": "Biometrischen Zugriff aktivieren",
   "Acceso biométrico desactivado en este dispositivo.": "Biometrischer Zugriff auf diesem Gerät deaktiviert.",
   "Acceso biométrico activado en este dispositivo.": "Biometrischer Zugriff auf diesem Gerät aktiviert.",
-  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "Die Einstellungen wurden nicht geändert. Du kannst es erneut versuchen."
+  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "Die Einstellungen wurden nicht geändert. Du kannst es erneut versuchen.",
+  "Elige bien el nombre: solo podrás cambiarlo después de activar el club.": "Wähle den Namen sorgfältig: Du kannst ihn erst nach der Aktivierung des Vereins ändern.",
+  "Antes de crear tu club": "Bevor du deinen Verein erstellst",
+  "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.": "Der erste Verein, den du mit deinem Konto erstellst, umfasst eine 10-tägige Testphase zum Erstellen von Spieltagskadern. Sie beginnt mit der Erstellung des Vereins.",
+  "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.": "Nach der Testphase musst du den Verein aktivieren, um weitere Spieltagskader zu erstellen. Für weitere Vereine, die du erstellst, gilt diese Testphase nicht.",
+  "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.": "Ohne Premium kannst du das Aufstellungsfeld für 6 Spieltagskader pro Monat und Verein nutzen. Wenn du „Stelle deine Elf auf!“ für einen neuen Spieltagskader öffnest, wird einer dieser kostenlosen Zugriffe verwendet.",
+  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "Die Vereinsaktivierung und das Premium-Abonnement sind voneinander unabhängig. Die 10-tägige Testphase aktiviert Premium nicht."
 }

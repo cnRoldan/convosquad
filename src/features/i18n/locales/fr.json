@@ -881,5 +881,11 @@
   "Activar acceso biométrico": "Activer l’accès biométrique",
   "Acceso biométrico desactivado en este dispositivo.": "Accès biométrique désactivé sur cet appareil.",
   "Acceso biométrico activado en este dispositivo.": "Accès biométrique activé sur cet appareil.",
-  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "Les paramètres n’ont pas été modifiés. Vous pouvez réessayer."
+  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "Les paramètres n’ont pas été modifiés. Vous pouvez réessayer.",
+  "Elige bien el nombre: solo podrás cambiarlo después de activar el club.": "Choisis bien le nom : tu ne pourras le modifier qu’après avoir activé le club.",
+  "Antes de crear tu club": "Avant de créer ton club",
+  "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.": "Le premier club créé avec ton compte inclut un essai de 10 jours pour créer des convocations. L’essai commence à la création du club.",
+  "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.": "Après l’essai, tu devras activer le club pour continuer à créer des convocations. Les clubs suivants que tu créeras ne bénéficient pas de cet essai.",
+  "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.": "Sans Prémium, tu peux utiliser le terrain de composition pour 6 convocations par mois et par club. Ouvrir « Compose ton 11 ! » pour une nouvelle convocation utilise un de ces accès gratuits.",
+  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "L’activation du club et l’abonnement Prémium sont indépendants. L’essai de 10 jours n’active pas Prémium."
 }

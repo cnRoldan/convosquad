@@ -881,5 +881,11 @@
   "Activar acceso biométrico": "Enable biometric access",
   "Acceso biométrico desactivado en este dispositivo.": "Biometric access disabled on this device.",
   "Acceso biométrico activado en este dispositivo.": "Biometric access enabled on this device.",
-  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "The settings were not changed. You can try again."
+  "No se ha cambiado la configuración. Puedes volver a intentarlo.": "The settings were not changed. You can try again.",
+  "Elige bien el nombre: solo podrás cambiarlo después de activar el club.": "Choose the name carefully: you can only change it after activating the club.",
+  "Antes de crear tu club": "Before creating your club",
+  "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.": "The first club you create with your account includes a 10-day trial for creating call-ups. The trial starts when you create the club.",
+  "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.": "After the trial, you will need to activate the club to keep creating call-ups. Any further clubs you create do not include this trial.",
+  "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.": "Without Premium, you can use the lineup pitch for 6 call-ups per month per club. Opening “Build your XI!” for a new call-up uses one of these free accesses.",
+  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "Club activation and the Premium subscription are separate. The 10-day trial does not activate Premium."
 }
