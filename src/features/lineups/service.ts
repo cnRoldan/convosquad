@@ -3,6 +3,7 @@ import { unwrap } from '@/lib/backend-result';
 import { listCallUpPlayers, listCallUpTrials, listAids, getCallUp } from '@/features/call-ups/service';
 import { listTrials } from '@/features/trials/service';
 import { listPlayers } from '@/features/players/service';
+import { listPlayerIncidents } from '@/features/incidents/service';
 import type { Json } from '@/types/database';
 import { inheritLineup, reconcileLineup, type Candidate, type Lineup, type LineupLayout } from './model';
 
@@ -29,8 +30,8 @@ export async function voteLineupDraft(draftId: string, approved: boolean) {
   const { error } = await requireSupabase().rpc('vote_lineup_draft', { p_draft_id: draftId, p_approved: approved }); if (error) throw error;
 }
 
-export async function publishLineupDraft(draftId: string) {
-  const { error } = await requireSupabase().rpc('publish_lineup_draft', { p_draft_id: draftId }); if (error) throw error;
+export async function publishLineupDraft(draftId: string, acknowledgedIncidents: string[] = []) {
+  const { error } = await requireSupabase().rpc('publish_lineup_draft', { p_draft_id: draftId, p_acknowledged_incidents: acknowledgedIncidents }); if (error) throw error;
 }
 
 export async function deleteLineupDraft(draftId: string) {
@@ -38,12 +39,13 @@ export async function deleteLineupDraft(draftId: string) {
 }
 
 export async function loadLineup(clubId: string, callId: string, captain: boolean) {
-  const [players, roster, saved, guests, trials, aids, rosterTrials, call, preference] = await Promise.all([
+  const [players, roster, saved, guests, trials, aids, rosterTrials, call, preference, incidents] = await Promise.all([
     listCallUpPlayers(callId), listPlayers(clubId),
     requireSupabase().rpc('read_lineup', { p_call_id: callId }).then(unwrap),
     requireSupabase().rpc('list_lineup_guests', { p_call_id: callId }).then(unwrap),
     listCallUpTrials(callId), listAids(callId), listTrials(clubId), getCallUp(clubId,callId),
     requireSupabase().rpc('read_lineup_preference', { p_club_id: clubId }).then(unwrap),
+    captain ? listPlayerIncidents(clubId) : Promise.resolve([]),
   ]);
   const data = saved as unknown as { revision: number; document: Lineup | null; inherited: boolean };
   const eligible = new Set(players.filter(p => p.availability === 'available' || p.availability === 'backup').map(p => p.source_player_id));
@@ -54,7 +56,7 @@ export async function loadLineup(clubId: string, callId: string, captain: boolea
   candidates.push(...aids.filter(a=>!guests.some(g=>g.aid_id===a.id || g.id===a.lineup_guest_id)).map(a=>({id:a.id,name:a.body,active:true,eligible:false})));
   const active=['open','closed'].includes(call.status)&&new Date(call.ends_at).getTime()>Date.now();
   const customLayout = isLineupLayout(preference) ? preference : null;
-  return { revision: data.revision, candidates, active, preference: customLayout, playerColor: isPlayerColor(preference) ? preference.playerColor : '#B4F16C', goalkeeperColor: isGoalkeeperColor(preference) ? preference.goalkeeperColor : '#F4A83A', jerseyColor: isJerseyColor(preference) ? preference.jerseyColor : '#0B1210', positionLocked: isPositionLocked(preference) ? preference.positionLocked : true, document: captain && data.inherited ? inheritLineup(data.document, candidates) : data.document && active ? reconcileLineup(data.document,candidates) : data.document };
+  return { revision: data.revision, candidates, incidents, active, preference: customLayout, playerColor: isPlayerColor(preference) ? preference.playerColor : '#B4F16C', goalkeeperColor: isGoalkeeperColor(preference) ? preference.goalkeeperColor : '#F4A83A', jerseyColor: isJerseyColor(preference) ? preference.jerseyColor : '#0B1210', positionLocked: isPositionLocked(preference) ? preference.positionLocked : true, document: captain && data.inherited ? inheritLineup(data.document, candidates) : data.document && active ? reconcileLineup(data.document,candidates) : data.document };
 }
 
 export async function saveLineup(callId: string, revision: number, document: Lineup, publish: boolean) {

@@ -14,6 +14,9 @@ import { t, useLanguage } from '@/features/i18n/runtime';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
+import { listPlayerIncidents, type PlayerIncident } from '@/features/incidents/service';
+import { incidentLabel } from '@/features/incidents/model';
+import { RecordIncidentModal } from '@/features/incidents/components';
 import type { Tables } from '@/types/database';
 
 export default function CallUpRatingsScreen() {
@@ -22,8 +25,8 @@ export default function CallUpRatingsScreen() {
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
   const load = useCallback(async () => {
     if (!clubId || !id) return null;
-    const [call, players, ratings, eligibleCalls] = await Promise.all([getCallUp(clubId, id), listCallUpPlayers(id), listRatings(id), listRatingCalls(clubId)]);
-    return { call, players, ratings, eligible: eligibleCalls.some(candidate => candidate.id === id) };
+    const [call, players, ratings, eligibleCalls, incidents] = await Promise.all([getCallUp(clubId, id), listCallUpPlayers(id), listRatings(id), listRatingCalls(clubId), listPlayerIncidents(clubId, false, id)]);
+    return { call, players, ratings, incidents, eligible: eligibleCalls.some(candidate => candidate.id === id) };
   }, [clubId, id]);
   const [savedFor, setSavedFor] = useState<string | null>(null);
   const result = useResource(`ratings:${session?.user.id}:${clubId}:${id}`, load, Boolean(session && clubId && id) && !isDemo);
@@ -31,16 +34,19 @@ export default function CallUpRatingsScreen() {
   if (!result.data || result.error) return <Screen><Message error>{result.error ?? t('No se encontró la convocatoria.')}</Message><Button label={t('Reintentar')} onPress={result.reload} /></Screen>;
   return <RatingsEditor key={`${session?.user.id}:${clubId}:${id}:${result.version}`} {...result.data} notice={savedFor === `${clubId}:${id}`} onSaved={saved => { setSavedFor(saved ? `${clubId}:${id}` : null); result.reload(); }} />;
 }
-function RatingsEditor({ call, players, ratings, eligible, onSaved, notice }: {
-  call: Tables<'call_ups'>; players: Tables<'call_up_players'>[]; ratings: Tables<'player_ratings'>[]; eligible: boolean; onSaved: (saved?: boolean) => void; notice: boolean;
+function RatingsEditor({ call, players, ratings, incidents: initialIncidents, eligible, onSaved, notice }: {
+  call: Tables<'call_ups'>; players: Tables<'call_up_players'>[]; ratings: Tables<'player_ratings'>[]; incidents: PlayerIncident[]; eligible: boolean; onSaved: (saved?: boolean) => void; notice: boolean;
 }) {
   useLanguage();
   const { activeClub } = useClub();
+  const [incidents, setIncidents] = useState(initialIncidents);
+  const [incidentEntry, setIncidentEntry] = useState<Tables<'call_up_players'> | null>(null);
+  const [incidentSaved, setIncidentSaved] = useState(false);
   const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState('');
   const visiblePlayers = players.filter(player => player.availability === 'available'
-    || ratings.some(rating => rating.call_up_player_id === player.id) || addedPlayers.includes(player.id));
+    || ratings.some(rating => rating.call_up_player_id === player.id) || incidents.some(incident => incident.call_up_player_id === player.id) || addedPlayers.includes(player.id));
   const remainingPlayers = players.filter(player => !visiblePlayers.includes(player));
   const [choices, setChoices] = useState<Record<string, RatingChoice>>(() => Object.fromEntries(players.map(player => {
     const saved = ratings.find(rating => rating.call_up_player_id === player.id);
@@ -73,6 +79,7 @@ function RatingsEditor({ call, players, ratings, eligible, onSaved, notice }: {
     {call.evaluation_at ? <Body>{t('Plazo para valorar: hasta {{v0}}', { v0: formatMatchDate(new Date(ratingDeadline(call)).toISOString(), call.timezone) })}</Body> : null}
     {!available ? <Message>{t('Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.')}</Message> : null}
     {notice ? <Message>{t("Valoraciones guardadas.")}</Message> : null}
+    {incidentSaved ? <Message>{t('Incidencia registrada. La marca estará vigente durante una semana.')}</Message> : null}
     {message ? <Message error>{message}</Message> : null}
     {visiblePlayers.map(player => <Card key={player.id} title={player.ea_id_snapshot}>
       <View style={{ gap: 6 }}>
@@ -85,6 +92,8 @@ function RatingsEditor({ call, players, ratings, eligible, onSaved, notice }: {
           {Array.from({ length: 11 }, (_, value) => <Picker.Item key={value} label={String(value)} value={String(value)} />)}
         </Picker>
       </View>
+      {incidents.filter(incident => incident.call_up_player_id === player.id).map(incident => <Body key={incident.id}>{t(incidentLabel(incident.kind))}{incident.note ? ` · ${incident.note}` : ''}</Body>)}
+      <Button secondary label={t('Registrar incidencia')} disabled={!available || busy || !player.source_player_id} onPress={() => { setIncidentSaved(false); setIncidentEntry(player); }} />
     </Card>)}
     {!visiblePlayers.length ? <Body>{t('No hay jugadores que valorar.')}</Body> : null}
     {remainingPlayers.length ? addingPlayer ? <Card title={t('Añadir jugador a la valoración')}>
@@ -103,5 +112,9 @@ function RatingsEditor({ call, players, ratings, eligible, onSaved, notice }: {
     <Button label={t('Guardar valoraciones')} disabled={busy || !available || !changes.length} onPress={() => { void save(); }} />
     <Button secondary label={t('Recargar valoraciones')} disabled={busy} onPress={() => onSaved(false)} />
     <Button secondary label={t('Ver rendimiento del club')} onPress={() => router.replace('/performance')} />
+    <Button secondary label={t('Histórico de incidencias')} onPress={() => router.push('/incident-history')} />
+    {incidentEntry ? <RecordIncidentModal key={incidentEntry.id} callId={call.id} entryId={incidentEntry.id} playerName={incidentEntry.ea_id_snapshot} close={() => setIncidentEntry(null)} saved={incident => {
+      setIncidents(current => [incident, ...current]); setIncidentEntry(null); setIncidentSaved(true);
+    }} /> : null}
   </Screen>;
 }

@@ -97,6 +97,7 @@ export default function HomeScreen() {
         <Button secondary label={t("Capitanes")} onPress={() => router.push('/club-settings')} />
         <Button secondary label={t("Valoraciones y rendimiento")} onPress={() => router.navigate('/performance')} />
         <Button secondary label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} />
+        <Button secondary label={t('Histórico de incidencias')} onPress={() => router.push('/incident-history')} />
         {!hasCurrentCallUp && !rosterLoading && !rosterError ? <Button secondary label={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} /> : null}
         <Button secondary label={t("Solicitudes pendientes")} badge={pendingRequests} floatingBadge
           {...(pendingRequests ? { accessibilityLabel: t('Solicitudes pendientes, {{v0}} pendientes de revisión', { v0: pendingRequests }) } : {})}

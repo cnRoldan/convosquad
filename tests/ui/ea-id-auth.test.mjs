@@ -116,6 +116,8 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
       return route.fulfill({json: createdCall});
     }
     if (endpoint === 'set_rating_visibility') { assert.equal(clubRole,'admin'); club.ratings_visibility=body.p_visibility; return route.fulfill({json:null}); }
+    if (endpoint === 'list_player_incidents') { assert.equal(clubRole,'admin'); return route.fulfill({json:[]}); }
+    if (endpoint === 'list_player_link_requests') { assert.equal(clubRole,'admin'); return route.fulfill({json:[]}); }
     if (['list_rating_call_ups','get_player_performance','get_player_rating_history','save_player_ratings','player_ratings'].includes(endpoint)) {
       const visibleRatings = clubRole === 'admin' || club.ratings_visibility === 'members' ? ratings : club.ratings_visibility === 'self' ? ratings.filter(rating=>rating.player_id==='player-0') : [];
       if (['list_rating_call_ups','save_player_ratings'].includes(endpoint)) assert.equal(clubRole,'admin');

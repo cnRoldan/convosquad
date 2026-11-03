@@ -952,6 +952,63 @@ export type Database = {
           { foreignKeyName: 'notification_preferences_user_id_fkey'; columns: ["user_id"]; isOneToOne: true; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      player_incidents: {
+        Row: {
+          id: string;
+          club_id: string;
+          call_up_id: string | null;
+          call_up_player_id: string | null;
+          player_id: string | null;
+          player_name: string;
+          match_starts_at: string;
+          match_timezone: string;
+          kind: string;
+          note: string;
+          recorded_by: string | null;
+          captain_name: string;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          call_up_id?: string | null;
+          call_up_player_id?: string | null;
+          player_id?: string | null;
+          player_name: string;
+          match_starts_at: string;
+          match_timezone: string;
+          kind: string;
+          note?: string;
+          recorded_by?: string | null;
+          captain_name: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          call_up_id?: string | null;
+          call_up_player_id?: string | null;
+          player_id?: string | null;
+          player_name?: string;
+          match_starts_at?: string;
+          match_timezone?: string;
+          kind?: string;
+          note?: string;
+          recorded_by?: string | null;
+          captain_name?: string;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'player_incidents_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'player_incidents_call_up_player_id_fkey'; columns: ["call_up_player_id"]; isOneToOne: false; referencedRelation: 'call_up_players'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'player_incidents_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'player_incidents_player_id_fkey'; columns: ["player_id"]; isOneToOne: false; referencedRelation: 'players'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'player_incidents_recorded_by_fkey'; columns: ["recorded_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       player_link_requests: {
         Row: {
           club_id: string;
@@ -1525,6 +1582,15 @@ export type Database = {
         };
         Returns: { id: string; name: string; kind: string; retained: boolean; trial_id: string; aid_id: string; source_trial_id: string }[];
       };
+      list_player_incidents: {
+        Args: {
+          p_club_id: string;
+          p_active_only?: boolean;
+          p_call_up_id?: string;
+          p_offset?: number;
+        };
+        Returns: Database['public']['Tables']['player_incidents']['Row'][];
+      };
       list_player_link_requests: {
         Args: {
           p_club_id: string;
@@ -1575,6 +1641,7 @@ export type Database = {
       publish_lineup_draft: {
         Args: {
           p_draft_id: string;
+          p_acknowledged_incidents?: string[];
         };
         Returns: undefined;
       };
@@ -1611,6 +1678,15 @@ export type Database = {
       read_lineup_preference: {
         Args: {
           p_club_id: string;
+        };
+        Returns: Json;
+      };
+      record_player_incident: {
+        Args: {
+          p_call_up_id: string;
+          p_entry_id: string;
+          p_kind: string;
+          p_note?: string;
         };
         Returns: Json;
       };

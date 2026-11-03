@@ -11,6 +11,7 @@ export default function ManageLayout() {
     <Stack.Screen name="lineup-history" options={{ title: t("Alineación histórica") }} />
     <Stack.Screen name="call-up-history" options={{ title: t("Historial de convocatorias") }} />
     <Stack.Screen name="call-up-ratings" options={{ title: t("Valorar jugadores") }} />
+    <Stack.Screen name="incident-history" options={{ title: t('Histórico de incidencias') }} />
     <Stack.Screen name="call-up-player-totals" options={{ title: t("Total por jugador") }} />
     <Stack.Screen name="trial-history" options={{ title: t("Historial de pruebas") }} />
     <Stack.Screen name="create-call-up" options={{ title: t("Crear convocatoria") }} />
