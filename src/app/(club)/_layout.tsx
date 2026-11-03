@@ -1,3 +1,4 @@
+import { useLeaveGuardRouter } from '@/components/navigation-leave-guard';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { Tabs } from 'expo-router/js-tabs';
 import { NavigationIcon } from '@/components/navigation-icon';
@@ -8,8 +9,9 @@ import { colors } from '@/theme';
 
 export default function ClubLayout() {
   useLanguage();
+  const leaveGuardRouter = useLeaveGuardRouter();
   return <ClubAccess>
-    <Tabs screenOptions={{
+    <Tabs UNSTABLE_router={leaveGuardRouter} screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: colors.primary,
       tabBarInactiveTintColor: colors.muted,

@@ -1,6 +1,8 @@
+import { NavigationLeaveGuardProvider } from '@/components/navigation-leave-guard';
+import { GuardedStack as Stack, useGuardedStackRouter } from '@/components/guarded-stack';
 import { BiometricProvider } from '@/features/auth/biometric-provider';
 import { LanguageProvider } from '@/features/i18n/language-provider';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { ClubProvider } from '@/features/clubs/club-context';
@@ -17,6 +19,10 @@ const theme = {
 };
 
 export default function RootLayout() {
+  return <NavigationLeaveGuardProvider><RootNavigation /></NavigationLeaveGuardProvider>;
+}
+function RootNavigation() {
+  const leaveGuardRouter = useGuardedStackRouter();
   return (
     <ThemeProvider value={theme}>
       <AuthProvider>
@@ -28,7 +34,7 @@ export default function RootLayout() {
           <RequestsProvider>
             <NativePushLifecycle />
             <StatusBar style="light" />
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack UNSTABLE_router={leaveGuardRouter} screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="clubs" />
