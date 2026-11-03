@@ -485,6 +485,14 @@ test('consulta histórica es de solo lectura y vuelve a la convocatoria actual s
   const f = await fixture({role: 'admin', historical: true});
   try {
     const {page} = f;
+    await page.getByText('CONVOSQUAD · CLUBES PRO', {exact: true}).scrollIntoViewIfNeeded();
+    const back = page.getByRole('button', {name: 'Volver a la convocatoria actual', exact: true});
+    const backBounds = await back.boundingBox();
+    const identityBounds = await page.getByRole('button', {name: 'Sesión iniciada como fixture', exact: true}).boundingBox();
+    assert.ok(backBounds.y + backBounds.height <= identityBounds.y, 'back button belongs to the top header, above the identity row');
+    assert.equal(await page.getByText('Volver a la convocatoria actual', {exact: true}).count(), 0);
+    mkdirSync('test-results', {recursive: true});
+    await page.screenshot({path: 'test-results/historical-call-up-header.png'});
     assert.equal(await page.getByRole('button', {name: 'Crear convocatoria', exact: true}).count(), 0);
     assert.equal(await page.getByRole('button', {name: 'Historial de convocatorias', exact: true}).count(), 0);
     assert.equal(await page.getByRole('button', {name: 'Actualizar convocatoria', exact: true}).count(), 0);

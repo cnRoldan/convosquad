@@ -5,6 +5,8 @@ import { votingDeadlinePassed } from '@/features/call-ups/closing-time';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { Tabs } from 'expo-router/js-tabs';
+import { headerBackOptions } from '@/components/header-back-options';
 import { Body, Button, Heading, Message, Options, Screen } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
 import { useClub } from '@/features/clubs/club-context';
@@ -143,11 +145,13 @@ export default function CallUpScreen() {
     } catch { setNotice('No se pudo abrir Tu 11. Inténtalo de nuevo.'); }
     finally { setOpeningLineup(false); }
   }
-  return <Screen compact footer={availabilityFooter} onRefresh={enabled ? refresh : undefined} refreshing={calls.isLoading || snapshots.isLoading || contacts.isLoading}>
-    {historical ? <View style={styles.toolbar}>
-      <IconButton icon="back" label={t("Volver a la convocatoria actual")} onPress={returnToCurrent} />
-      <Text style={styles.date}>{t("Volver a la convocatoria actual")}</Text>
-    </View> : null}
+  return <Screen compact headerShown={historical} footer={availabilityFooter} onRefresh={enabled ? refresh : undefined} refreshing={calls.isLoading || snapshots.isLoading || contacts.isLoading}>
+    <Tabs.Screen options={{
+      headerShown: historical,
+      headerTitle: t('Convocatoria histórica'),
+      headerShadowVisible: false,
+      ...headerBackOptions(returnToCurrent, t('Volver a la convocatoria actual')),
+    }} />
     <Heading title={historical ? t("Convocatoria histórica") : t("Convocatoria")} subtitle={activeClub?.name ?? ''}
       action={<View style={styles.headingActions}>
         {!historical && admin ? <IconButton icon="history" label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} /> : null}
