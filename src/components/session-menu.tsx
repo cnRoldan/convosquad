@@ -1,5 +1,6 @@
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { t, useLanguage } from '@/features/i18n/runtime';
@@ -51,6 +52,7 @@ export function SessionMenu({ eaId }: { eaId: string }) {
             </Svg>}
             <Text style={styles.itemText}>{t('Cerrar sesión')}</Text>
           </Pressable>
+          {Platform.OS !== 'web' ? <Pressable accessibilityRole="menuitem" style={styles.item} onPress={() => { close(); router.push('/biometrics'); }}><Text style={styles.itemText}>Acceso biométrico</Text></Pressable> : null}
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         </View>
       </View>

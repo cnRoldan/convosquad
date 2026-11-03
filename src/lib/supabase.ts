@@ -1,5 +1,5 @@
 import 'react-native-url-polyfill/auto';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { nativeSessionStorage } from './session-storage';
 import { createClient, processLock } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import type { Database } from '@/types/database';
@@ -16,7 +16,7 @@ export const supabaseConfigurationError = error;
 export const supabase = configuration
   ? createClient<Database>(configuration.url, configuration.publishableKey, {
       auth: {
-        ...(Platform.OS !== 'web' ? { storage: AsyncStorage, lock: processLock } : {}),
+        ...(Platform.OS !== 'web' ? { storage: nativeSessionStorage, lock: processLock } : {}),
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,

@@ -1,3 +1,4 @@
+import { BiometricProvider } from '@/features/auth/biometric-provider';
 import { LanguageProvider } from '@/features/i18n/language-provider';
 import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -20,6 +21,7 @@ export default function RootLayout() {
     <ThemeProvider value={theme}>
       <AuthProvider>
       <LanguageProvider>
+      <BiometricProvider>
         <PendingPushProvider>
         <PendingInviteProvider>
           <ClubProvider>
@@ -44,6 +46,7 @@ export default function RootLayout() {
           </ClubProvider>
         </PendingInviteProvider>
         </PendingPushProvider>
+      </BiometricProvider>
       </LanguageProvider>
       </AuthProvider>
     </ThemeProvider>
