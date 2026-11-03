@@ -2,6 +2,7 @@ import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
 import { router } from 'expo-router';
 import { Switch, View } from 'react-native';
+import { PURCHASES_ERROR_CODE } from 'react-native-purchases';
 import { Body, Button, Card, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { useAuth } from '@/features/auth/auth-context';
@@ -49,14 +50,30 @@ function ClubInfoForm({ club }: { club: Tables<'clubs'> }) {
   async function activateClub() {
     if (!session?.user.id || !admin || busy) return;
     setBusy(true); setError(false); setMessage('');
+    let stage: 'catalog' | 'intent' | 'purchase' = 'catalog';
     try {
       const item = await offeringPackage(session.user.id, 'club_activation', '$rc_lifetime');
-      if (!item) throw new Error('offer');
+      if (!item) {
+        setError(true); setMessage('La compra de activación todavía no está disponible en la tienda. Inténtalo más tarde.');
+        return;
+      }
+      stage = 'intent';
       await beginClubPurchase(club.id, item.product.identifier);
+      stage = 'purchase';
       await purchaseRevenueCatPackage(session.user.id, item);
       setMessage('Compra completada. Estamos activando el club. Puede tardar unos segundos.');
       activation.reload();
-    } catch (cause) { setError(true); setMessage(backendErrorMessage(cause)); }
+    } catch (cause) {
+      const code = typeof cause === 'object' && cause !== null && 'code' in cause ? String(cause.code) : null;
+      const cancelled = code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR || (typeof cause === 'object' && cause !== null && 'userCancelled' in cause && cause.userCancelled === true);
+      const pending = code === PURCHASES_ERROR_CODE.PAYMENT_PENDING_ERROR;
+      setError(!cancelled && !pending);
+      if (cancelled) setMessage('Compra cancelada. No se ha activado el club.');
+      else if (pending) setMessage('El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.');
+      else if ([PURCHASES_ERROR_CODE.CONFIGURATION_ERROR, PURCHASES_ERROR_CODE.PRODUCT_NOT_AVAILABLE_FOR_PURCHASE_ERROR, PURCHASES_ERROR_CODE.INVALID_CREDENTIALS_ERROR].some(value => value === code)) setMessage('La compra de activación todavía no está disponible en la tienda. Inténtalo más tarde.');
+      else if ([PURCHASES_ERROR_CODE.NETWORK_ERROR, PURCHASES_ERROR_CODE.OFFLINE_CONNECTION_ERROR, PURCHASES_ERROR_CODE.PRODUCT_REQUEST_TIMED_OUT_ERROR].some(value => value === code)) setMessage('No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.');
+      else setMessage(stage === 'intent' ? backendErrorMessage(cause) : 'No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.');
+    }
     finally { setBusy(false); }
   }
   async function save() {
@@ -96,7 +113,7 @@ function ClubInfoForm({ club }: { club: Tables<'clubs'> }) {
       <Body>{activation.data?.canCreateCallUps ? 'Tu prueba de 10 días está activa. Activa el club para siempre por 2,99 €.' : 'La prueba gratuita ha finalizado. Activa el club para volver a crear convocatorias.'}</Body>
       {!revenueCatReady() ? <Body>Las compras estarán disponibles cuando terminemos de configurar la tienda.</Body> : <Button label={busy ? 'Procesando…' : 'Activar club · 2,99 €'} disabled={!admin || busy} onPress={() => { void activateClub(); }} />}
     </Card> : null}
-    {message ? <Message error={error}>{message}</Message> : null}
+    {message ? <Message error={error}>{t(message)}</Message> : null}
     {owner ? <Card title={t("Eliminar club")}>
       <Body>{t("Se eliminarán la plantilla, las convocatorias y el historial de este club. Las cuentas de los jugadores se conservarán.")}</Body>
       <Button secondary label={t("Eliminar club")} disabled={!admin || busy} onPress={() => setDeleting(true)} />

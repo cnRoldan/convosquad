@@ -887,5 +887,10 @@
   "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.": "The first club you create with your account includes a 10-day trial for creating call-ups. The trial starts when you create the club.",
   "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.": "After the trial, you will need to activate the club to keep creating call-ups. Any further clubs you create do not include this trial.",
   "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.": "Without Premium, you can use the lineup pitch for 6 call-ups per month per club. Opening “Build your XI!” for a new call-up uses one of these free accesses.",
-  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "Club activation and the Premium subscription are separate. The 10-day trial does not activate Premium."
+  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "Club activation and the Premium subscription are separate. The 10-day trial does not activate Premium.",
+  "La compra de activación todavía no está disponible en la tienda. Inténtalo más tarde.": "The activation purchase is not yet available in the store. Please try again later.",
+  "Compra cancelada. No se ha activado el club.": "Purchase cancelled. The club has not been activated.",
+  "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.": "Payment is awaiting approval. The club will be activated when the store confirms the purchase.",
+  "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.": "Could not connect to the store. Check your connection and try again.",
+  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "Could not start or complete the purchase in the store. Please try again later."
 }

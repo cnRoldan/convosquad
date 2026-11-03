@@ -3,6 +3,7 @@
 Comprobación de las tiendas y la configuración remota:
 
 - App Store Connect tiene creadas las suscripciones `com.convosquad.premium.monthly` y `com.convosquad.premium.yearly`. Ambas están en `MISSING_METADATA`. El producto de activación `com.convosquad.club.activation` también está en `MISSING_METADATA` y es de tipo `NON_CONSUMABLE`.
+- Tras el fallo de activación observado en TestFlight, se confirmó que el producto no tenía localización ni disponibilidad configuradas. Se añadieron su nombre/descripción en `es-ES` y disponibilidad en España. Sigue en `MISSING_METADATA` y no tiene captura de revisión. La compra no está validada en dispositivo. El cliente ahora distingue catálogo/configuración, cancelación, pago pendiente y conexión en lugar de presentar cualquier fallo como un problema de red.
 - RevenueCat devuelve para iOS el offering `premium` con paquetes mensual y anual y `club_activation` con el paquete de activación.
 - EAS production tiene las claves públicas de RevenueCat para iOS y Android (`EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY`). La clave Android se incorporará a la siguiente compilación; no modifica las aplicaciones ya instaladas.
 - La consulta del catálogo con la clave pública de Android responde HTTP 200, pero los offerings `default`, `premium` y `club_activation` aún no contienen paquetes para Google Play. Falta importar y asociar sus productos en RevenueCat.

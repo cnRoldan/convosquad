@@ -887,5 +887,10 @@
   "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.": "El primer club que crees con tu cuenta incluye 10 días de prueba para crear convocatorias. La prueba empieza al crear el club.",
   "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.": "Después de la prueba, tendrás que activar el club para seguir creando convocatorias. Los siguientes clubes que crees no incluyen esta prueba.",
   "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.": "Sin Prémium, puedes usar el campo de alineación en 6 convocatorias al mes por club. Al pulsar «¡Forma tu 11!» en una convocatoria nueva, se utiliza uno de esos accesos gratuitos.",
-  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium."
+  "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.": "La activación del club y la suscripción Prémium son independientes. La prueba de 10 días no activa Prémium.",
+  "La compra de activación todavía no está disponible en la tienda. Inténtalo más tarde.": "La compra de activación todavía no está disponible en la tienda. Inténtalo más tarde.",
+  "Compra cancelada. No se ha activado el club.": "Compra cancelada. No se ha activado el club.",
+  "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.": "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.",
+  "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.": "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.",
+  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde."
 }
