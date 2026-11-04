@@ -25,7 +25,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -37,11 +37,16 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const club = { id: clubId, name: 'Incidents club', timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
   if (suggestions) roster[11].category = 'attackers';
+  if (posterExample) {
+    const names=['Rojo impar','Selu','Salsinhes','MAZO NEGRO','Junior','k1mbowx','Boni','Pulpito','Twichpapiiisunda','Manoliko','istateclapeain02'];
+    const numbers=[23,22,24,31,12,20,8,80,18,91,5];
+    for(let i=0;i<11;i++){roster[i].ea_id=names[i];roster[i].jersey_number=numbers[i];}
+  }
   const next = { id: nextId, club_id: clubId, starts_at: new Date(now + 3600000).toISOString(), ends_at: new Date(now + 10800000).toISOString(), evaluation_at: null, timezone: club.timezone, status: 'open', status_version: 1 };
   const past = { ...next, id: pastId, starts_at: new Date(now - 7200000).toISOString(), ends_at: new Date(now - 3600000).toISOString(), evaluation_at: new Date(now - 3600000).toISOString() };
   const entries = roster.map((player, i) => ({ id: uuid(30 + i), call_up_id: pastId, club_id: clubId, source_player_id: player.id, ea_id_snapshot: player.ea_id, user_id: player.user_id, availability: 'available', category_snapshot: player.category, position_snapshot: 'MC', jersey_number_snapshot: i + 1, sort_order_snapshot: i }));
-  const positions = [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
-  let document = { formation: '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id] };
+  const positions = posterExample ? [[.5,.9],[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.5,.56],[.34,.34],[.66,.34],[.84,.45],[.36,.15],[.64,.15]] : [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
+  let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id] };
   let draft = null;
   let positionLocked = true;
   const makeIncident = (index, id, expired = false) => ({ id: uuid(id), club_id: clubId, call_up_id: pastId, call_up_player_id: entries[index].id, player_id: roster[index].id, player_name: roster[index].ea_id, match_starts_at: past.starts_at, match_timezone: club.timezone, kind: 'late', note: 'Llegó veinte minutos tarde', recorded_by: userId, captain_name: 'Capitán', created_at: new Date(now - (expired ? 8 : 1) * 86400000).toISOString(), expires_at: new Date(now + (expired ? -86400000 : expiresSoon && index === 0 ? 60000 : 6 * 86400000)).toISOString() });
@@ -162,6 +167,24 @@ test('roster suggestions remain usable if position history fails', async () => {
     await f.page.getByLabel('Jugadores sugeridos',{exact:true}).getByRole('button',{name:'Elegir Jugador_12',exact:true}).click();
     await f.page.getByRole('button',{name:'Jugador_12, dorsal 12',exact:true}).waitFor();
   } finally { await f.close(); }
+});
+
+test('generated poster downloads a full resolution PNG for a custom pivot lineup', async () => {
+  const f=await fixture({posterExample:true});
+  try {
+    const {page}=f;
+    await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
+    await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
+    await page.getByText('🎉 Once publicado',{exact:true}).waitFor();
+    const pending=page.waitForEvent('download');
+    await page.getByRole('button',{name:'Generar imagen',exact:true}).click();
+    const download=await pending;
+    assert.equal(download.suggestedFilename(),'convosquad-once.png');
+    const file='/workspace/shared/lineup-uniform-shirts.png';
+    await download.saveAs(file);
+    const png=readFileSync(file);
+    assert.equal(png.readUInt32BE(16),1324);assert.equal(png.readUInt32BE(20),1190);
+  } finally {await f.close();}
 });
 
 test('lineup expands on iPad and Surface, keeps editing state on resize and returns to one column on mobile', async () => {
