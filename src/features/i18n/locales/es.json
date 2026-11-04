@@ -892,5 +892,14 @@
   "Compra cancelada. No se ha activado el club.": "Compra cancelada. No se ha activado el club.",
   "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.": "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.",
   "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.": "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.",
-  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde."
+  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.",
+  "Sugerencias": "Sugerencias",
+  "Consultando posiciones anteriores…": "Consultando posiciones anteriores…",
+  "No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.": "No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.",
+  "No hay sugerencias para esta posición entre los jugadores del campo y el banquillo.": "No hay sugerencias para esta posición entre los jugadores del campo y el banquillo.",
+  "Jugadores sugeridos": "Jugadores sugeridos",
+  "Elegir {{v0}}": "Elegir {{v0}}",
+  "Posición de plantilla": "Posición de plantilla",
+  "Ya jugó aquí · 1 convocatoria": "Ya jugó aquí · 1 convocatoria",
+  "Ya jugó aquí · {{v0}} convocatorias": "Ya jugó aquí · {{v0}} convocatorias"
 }

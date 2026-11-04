@@ -6,6 +6,9 @@ import { LineupIncidentsModal } from '@/features/incidents/components';
 import { t } from '@/features/i18n/runtime';
 import { useLeaveGuard } from '@/components/navigation-leave-guard';
 import { goalkeeperNumberColor } from './kit-colors';
+import { useResource } from '@/hooks/use-resource';
+import { suggestPlayers } from './suggestions';
+import { lineupPositionExperience } from './service';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Platform, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PlayerToken } from './player-token';
@@ -58,6 +61,9 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const currentPublishIncidents = activeIncidents(publishIncidents, incidentClock);
   const [revision, setRevision] = useState(0);
   const [slot, setSlot] = useState<number | null>(null);
+  const loadExperience = useCallback(() => lineupPositionExperience(callId), [callId]);
+  const experience = useResource(`lineup-experience:${clubId}:${callId}`, loadExperience, captain && slot !== null);
+  const suggestions = document && slot !== null ? suggestPlayers(document, slot, candidates, experience.data ?? []) : [];
   const [benchPlayer, setBenchPlayer] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -308,6 +314,17 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
           {document.slots.some(s => s.id !== slot && s.playerId) ? <><Body>Campo</Body><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 4, paddingVertical: 8 }} accessibilityLabel="Intercambiar con jugador del campo">
             {document.slots.filter(s => s.id !== slot && s.playerId).map(s => { const player = candidates.find(p => p.id === s.playerId); return <Pressable accessibilityRole="button" accessibilityLabel={`Intercambiar con ${player?.name ?? 'jugador'}`} disabled={!editable} key={s.id} onPress={() => { if (s.playerId) { change(assignPlayer(document, slot, s.playerId)); setSlot(null); } }}><PlayerToken compact warning={Boolean(player && incidentPlayerIds.has(player.id))} color={playerColor} jerseyColor={jerseyColor} player={player} /></Pressable>; })}
           </ScrollView></> : null}
+          <Body>{t('Sugerencias')}</Body>
+          {experience.isLoading ? <Body>{t('Consultando posiciones anteriores…')}</Body> : null}
+          {experience.error ? <><Body>{t('No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.')}</Body><Button secondary label={t('Reintentar')} onPress={experience.reload} /></> : null}
+          {!experience.isLoading && !suggestions.length ? <Body>{t('No hay sugerencias para esta posición entre los jugadores del campo y el banquillo.')}</Body> : null}
+          <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 12, paddingVertical: 8 }} accessibilityLabel={t('Jugadores sugeridos')}>
+            {suggestions.map(({ player, rosterMatch, appearances }) => <Pressable key={player.id} accessibilityRole="button" accessibilityLabel={t('Elegir {{v0}}', { v0: player.name })} disabled={!editable} onPress={() => { change(assignPlayer(document, slot, player.id)); setSlot(null); }} style={{ width: 120, alignItems: 'center', gap: 4 }}>
+              <PlayerToken compact warning={incidentPlayerIds.has(player.id)} color={playerColor} jerseyColor={jerseyColor} player={player} />
+              {rosterMatch ? <Text style={{ color: colors.muted, textAlign: 'center', fontSize: 12 }}>{t('Posición de plantilla')}</Text> : null}
+              {appearances > 0 ? <Text style={{ color: colors.muted, textAlign: 'center', fontSize: 12 }}>{t(appearances === 1 ? 'Ya jugó aquí · 1 convocatoria' : 'Ya jugó aquí · {{v0}} convocatorias', { v0: appearances })}</Text> : null}
+            </Pressable>)}
+          </ScrollView>
         </> : null}
         <Button label="Cerrar" onPress={() => setSlot(null)} />
       </Card></ScrollView></View>

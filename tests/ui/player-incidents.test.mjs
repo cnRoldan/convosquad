@@ -25,7 +25,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false } = {}) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -36,6 +36,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
+  if (suggestions) roster[11].category = 'attackers';
   const next = { id: nextId, club_id: clubId, starts_at: new Date(now + 3600000).toISOString(), ends_at: new Date(now + 10800000).toISOString(), evaluation_at: null, timezone: club.timezone, status: 'open', status_version: 1 };
   const past = { ...next, id: pastId, starts_at: new Date(now - 7200000).toISOString(), ends_at: new Date(now - 3600000).toISOString(), evaluation_at: new Date(now - 3600000).toISOString() };
   const entries = roster.map((player, i) => ({ id: uuid(30 + i), call_up_id: pastId, club_id: clubId, source_player_id: player.id, ea_id_snapshot: player.ea_id, user_id: player.user_id, availability: 'available', category_snapshot: player.category, position_snapshot: 'MC', jersey_number_snapshot: i + 1, sort_order_snapshot: i }));
@@ -56,7 +57,11 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     const body = request.method() === 'POST' ? request.postDataJSON() : null;
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
-    if (endpoint === 'list_player_incidents') {
+    if (endpoint === 'lineup_position_experience') {
+      assert.equal(role, 'admin'); assert.equal(body.p_call_id, nextId);
+      if (historyError) return route.fulfill({ status: 500, json: { message: 'History unavailable' } });
+      result = suggestions ? [{player_id:roster[4].id,category:'attackers',appearances:3}] : [];
+    } else if (endpoint === 'list_player_incidents') {
       state.incidentReads++;
       assert.equal(role, 'admin');
       result = incidents.filter(incident => (!body.p_active_only || Date.parse(incident.expires_at) > (expiresSoon ? now : Date.now())) && (!body.p_call_up_id || incident.call_up_id === body.p_call_up_id));
@@ -122,6 +127,38 @@ test('lineup warns only for active starters, lists details and requires renewed 
     await page.getByRole('button', { name: 'Publicar 11', exact: true }).last().click();
     await page.getByText('🎉 Once publicado', { exact: true }).waitFor();
     assert.equal(f.publications.length, 2);
+  } finally { await f.close(); }
+});
+
+test('suggestions select a bench attacker, then swap an experienced midfielder into an empty attacking slot', async () => {
+  const f = await fixture({ suggestions: true });
+  try {
+    const { page } = f;
+    await page.getByRole('button', {name:'Jugador_10, dorsal 10',exact:true}).click();
+    const suggested=page.getByLabel('Jugadores sugeridos',{exact:true});
+    await suggested.getByText('Ya jugó aquí · 3 convocatorias',{exact:true}).waitFor();
+    await suggested.getByText('Posición de plantilla',{exact:true}).waitFor();
+    assert.equal(await suggested.getByRole('button').count(),2);
+    await suggested.getByRole('button',{name:'Elegir Jugador_12',exact:true}).click();
+    await page.getByRole('button',{name:'Jugador_12, dorsal 12',exact:true}).click();
+    await page.getByRole('button',{name:'Mandar al banquillo',exact:true}).click();
+    await page.getByRole('button',{name:'Posición vacía',exact:true}).click();
+    await page.getByLabel('Jugadores sugeridos',{exact:true}).getByRole('button',{name:'Elegir Jugador_5',exact:true}).click();
+    await page.getByRole('button',{name:'Jugador_5, dorsal 5',exact:true}).click();
+    await page.getByText('Cambiar jugador',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+    assert.equal(await page.getByText('Tienes cambios sin guardar.',{exact:true}).count(),1);
+    assert.equal(await page.getByRole('button',{name:'Posición vacía',exact:true}).count(),1);
+  } finally { await f.close(); }
+});
+
+test('roster suggestions remain usable if position history fails', async () => {
+  const f=await fixture({suggestions:true,historyError:true});
+  try {
+    await f.page.getByRole('button',{name:'Jugador_10, dorsal 10',exact:true}).click();
+    await f.page.getByText('No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.',{exact:true}).waitFor();
+    await f.page.getByLabel('Jugadores sugeridos',{exact:true}).getByRole('button',{name:'Elegir Jugador_12',exact:true}).click();
+    await f.page.getByRole('button',{name:'Jugador_12, dorsal 12',exact:true}).waitFor();
   } finally { await f.close(); }
 });
 

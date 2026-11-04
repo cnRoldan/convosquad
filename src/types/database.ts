@@ -1557,6 +1557,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      lineup_position_experience: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: { player_id: string; category: string; appearances: number }[];
+      };
       link_player_account: {
         Args: {
           p_player_id: string;

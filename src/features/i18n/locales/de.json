@@ -892,5 +892,14 @@
   "Compra cancelada. No se ha activado el club.": "Kauf abgebrochen. Der Verein wurde nicht aktiviert.",
   "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.": "Die Zahlung wartet auf Genehmigung. Der Verein wird aktiviert, sobald der Store den Kauf bestätigt.",
   "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.": "Keine Verbindung zum Store möglich. Prüfe deine Verbindung und versuche es erneut.",
-  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "Der Kauf im Store konnte nicht gestartet oder abgeschlossen werden. Versuche es später erneut."
+  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "Der Kauf im Store konnte nicht gestartet oder abgeschlossen werden. Versuche es später erneut.",
+  "Sugerencias": "Vorschläge",
+  "Consultando posiciones anteriores…": "Bisherige Positionen werden geprüft…",
+  "No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.": "Der Positionsverlauf konnte nicht geladen werden. Passende Kaderpositionen werden angezeigt.",
+  "No hay sugerencias para esta posición entre los jugadores del campo y el banquillo.": "Für diese Position gibt es keine Vorschläge unter den Spielern auf dem Feld und der Bank.",
+  "Jugadores sugeridos": "Vorgeschlagene Spieler",
+  "Elegir {{v0}}": "{{v0}} auswählen",
+  "Posición de plantilla": "Kaderposition",
+  "Ya jugó aquí · 1 convocatoria": "Hat hier bereits gespielt · 1 Spieltagskader",
+  "Ya jugó aquí · {{v0}} convocatorias": "Hat hier bereits gespielt · {{v0}} Spieltagskader"
 }

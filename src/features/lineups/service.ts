@@ -6,8 +6,12 @@ import { listPlayers } from '@/features/players/service';
 import { listPlayerIncidents } from '@/features/incidents/service';
 import type { Json } from '@/types/database';
 import { inheritLineup, reconcileLineup, type Candidate, type Lineup, type LineupLayout } from './model';
+import type { PositionExperience } from './suggestions';
 
 export type LineupAccess = { activated: boolean; premium: boolean; remaining: number; allowed: boolean };
+export async function lineupPositionExperience(callId: string): Promise<PositionExperience[]> {
+  return unwrap(await requireSupabase().rpc('lineup_position_experience', { p_call_id: callId })) as PositionExperience[];
+}
 export type LineupDraft = { id: string; ordinal: number; title: string; document: Lineup; revision: number; submittedAt: string | null; createdBy: string; updatedBy: string; updatedAt: string; upVotes: number; downVotes: number; myVote: boolean | null; published: boolean; publishedBy: string | null; suggestedChanges: number; suggestedBy: string | null };
 
 export async function readLineupAccess(callId: string): Promise<LineupAccess> {

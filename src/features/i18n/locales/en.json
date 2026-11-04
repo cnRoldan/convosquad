@@ -892,5 +892,14 @@
   "Compra cancelada. No se ha activado el club.": "Purchase cancelled. The club has not been activated.",
   "El pago está pendiente de aprobación. El club se activará cuando la tienda confirme la compra.": "Payment is awaiting approval. The club will be activated when the store confirms the purchase.",
   "No se pudo conectar con la tienda. Comprueba tu conexión y vuelve a intentarlo.": "Could not connect to the store. Check your connection and try again.",
-  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "Could not start or complete the purchase in the store. Please try again later."
+  "No se pudo iniciar o completar la compra en la tienda. Inténtalo más tarde.": "Could not start or complete the purchase in the store. Please try again later.",
+  "Sugerencias": "Suggestions",
+  "Consultando posiciones anteriores…": "Checking previous positions…",
+  "No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.": "Could not load position history. Showing roster position matches.",
+  "No hay sugerencias para esta posición entre los jugadores del campo y el banquillo.": "No suggestions for this position among players on the pitch and bench.",
+  "Jugadores sugeridos": "Suggested players",
+  "Elegir {{v0}}": "Choose {{v0}}",
+  "Posición de plantilla": "Roster position",
+  "Ya jugó aquí · 1 convocatoria": "Previously played here · 1 call-up",
+  "Ya jugó aquí · {{v0}} convocatorias": "Previously played here · {{v0}} call-ups"
 }
