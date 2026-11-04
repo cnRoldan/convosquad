@@ -8,13 +8,13 @@ import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
 type Props = { lineup: Lineup; candidates: Candidate[]; incidentPlayerIds?: ReadonlySet<string>; editable: boolean; playerColor: string; goalkeeperColor?: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
-const height = 520;
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
   const [width, setWidth] = useState(1);
-  return <View ref={imageRef} collapsable={false} style={styles.pitch} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
+  const height = Math.max(520, Math.min(960, Math.round(width * 1.35)));
+  return <View testID="lineup-pitch" ref={imageRef} collapsable={false} style={[styles.pitch, { height }]} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <PitchMarkings />
-    {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} />)}
+    {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} height={height} />)}
     {props.onTogglePositionLock ? <View style={styles.lock}><IconButton icon={props.positionLocked ? 'lock' : 'unlock'} label={props.positionLocked ? 'Desbloquear posiciones' : 'Bloquear posiciones'} onPress={props.onTogglePositionLock} /></View> : null}
   </View>;
 });
@@ -43,36 +43,38 @@ function PitchMarkings() {
   </Svg>;
 }
 
-function Position(props: Props & { slot: Slot; width: number }) {
+function Position(props: Props & { slot: Slot; width: number; height: number }) {
   const latest = useRef(props);
   useLayoutEffect(() => { latest.current = props; });
   const origin = useRef({ x: props.slot.x, y: props.slot.y });
+  const didDrag = useRef(false);
   // PanResponder stores these callbacks; it never invokes them during render.
   // eslint-disable-next-line react-hooks/refs
   const [responder] = useState(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, gesture) => latest.current.editable && !latest.current.positionLocked && latest.current.slot.id !== 0 && Math.abs(gesture.dx) + Math.abs(gesture.dy) > 8,
     onPanResponderGrant: () => {
+      didDrag.current = true;
       origin.current = { x: latest.current.slot.x, y: latest.current.slot.y };
       latest.current.onDragStart?.();
       latest.current.onDragging?.(true);
     },
     onPanResponderMove: (_, gesture) => {
       const current = latest.current;
-      current.onChange(moveSlot(current.lineup, current.slot.id, origin.current.x + gesture.dx / current.width, origin.current.y + gesture.dy / height));
+      current.onChange(moveSlot(current.lineup, current.slot.id, origin.current.x + gesture.dx / current.width, origin.current.y + gesture.dy / current.height));
     },
     onPanResponderRelease: () => latest.current.onDragging?.(false),
     onPanResponderTerminate: () => latest.current.onDragging?.(false),
     onPanResponderTerminationRequest: () => false,
   }));
   const player = props.candidates.find(p => p.id === props.slot.playerId);
-  return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * height - 24 }]}>
-    <Pressable disabled={!props.editable} onPress={() => props.onSelect(props.slot)} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : 'Posición vacía'} style={styles.target}>
+  return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * props.height - 24 }]}>
+    <Pressable disabled={!props.editable} onPressIn={() => { didDrag.current = false; }} onPress={() => { if (!didDrag.current) props.onSelect(props.slot); }} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : 'Posición vacía'} style={styles.target}>
       <PlayerToken player={player} warning={Boolean(player && props.incidentPlayerIds?.has(player.id))} color={props.slot.id === 0 ? props.goalkeeperColor ?? '#F4A83A' : props.playerColor} jerseyColor={props.slot.id === 0 ? goalkeeperNumberColor(props.goalkeeperColor ?? '#F4A83A') : props.jerseyColor} />
     </Pressable>
   </View>;
 }
 const styles = StyleSheet.create({
-  pitch: { height, borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
+  pitch: { borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
   lock: { position: 'absolute', right: 8, bottom: 8 },

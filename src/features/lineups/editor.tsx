@@ -10,7 +10,7 @@ import { useResource } from '@/hooks/use-resource';
 import { suggestPlayers } from './suggestions';
 import { lineupPositionExperience } from './service';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Platform, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Platform, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { PlayerToken } from './player-token';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -38,6 +38,8 @@ const formationPresets: { id: Preset; label: string }[] = [
 const historyLimit = 50;
 
 export function LineupEditor({ clubId, clubName, crestPath, callId, captain, initialDraftId }: { clubId: string; clubName: string; crestPath?: string | null | undefined; callId: string; captain: boolean; initialDraftId?: string }) {
+  const { width: windowWidth } = useWindowDimensions();
+  const tablet = windowWidth >= 800;
   const leaveGuard = useLeaveGuard();
   const leaving = useSyncExternalStore(leaveGuard.subscribe, leaveGuard.snapshot, leaveGuard.snapshot);
   const baseline = useRef<Lineup | null>(null);
@@ -276,7 +278,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     const id=unwrap(await requireSupabase().rpc('add_lineup_guest',{p_call_id:callId,p_kind:input.kind,p_name:input.name,p_notes:input.notes,p_phone:input.phone,p_retain:input.retain}));
     setCandidates(current=>[...current,{id,name:input.name,active:true,eligible:false,manual:true}]);include(id);
   }
-  return <Screen scrollEnabled={!dragging} onRefresh={() => void reload()} refreshing={busy}>
+  return <Screen wide scrollEnabled={!dragging} onRefresh={() => void reload()} refreshing={busy}>
     {message ? <Body>{message}</Body> : null}
     {busy ? <Body>Cargando…</Body> : null}
     {document ? <>
@@ -289,9 +291,11 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       </View> : null}
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); baseline.current = draft.document; setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
-      <View ref={shareImageRef} collapsable={false} style={sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined}>
+      <View testID="lineup-workspace" style={{ flexDirection: tablet ? 'row' : 'column', alignItems: 'stretch', gap: 20 }}>
+      <View ref={shareImageRef} collapsable={false} style={[tablet ? { flex: 1, minWidth: 0 } : undefined, sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined]}>
         {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} goalkeeperColor={goalkeeperColor} /> : <LineupPitch incidentPlayerIds={incidentPlayerIds} goalkeeperColor={goalkeeperColor} playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
       </View>
+      <View testID="lineup-controls" style={{ gap: 20, ...(tablet ? { width: 280 } : {}) }}>
       {captain && selectedIncidents.length ? <Button secondary label="Consultar incidencias de jugadores" onPress={() => setShowIncidents(true)} /> : null}
       {captain ? <Button secondary label="Histórico de incidencias" onPress={() => router.push('/incident-history')} /> : null}
       <Card title="Banquillo">
@@ -301,6 +305,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         </ScrollView>
       </Card>
       {captain ? <><Button label={activeDraft?.submittedAt ? "Sugerir cambios" : "Guardar borrador"} disabled={!editable || Boolean(activeDraft?.submittedAt && !dirty)} onPress={() => openDraft(activeDraft?.submittedAt ? 'suggest' : 'save')} />{captainCount > 1 ? <Button label="Enviar para valoración" disabled={!editable || (!dirty && (!activeDraft || Boolean(activeDraft.submittedAt)))} onPress={() => openDraft('send')} /> : null}<Button label={activeDraft?.published ? "Republicar 11" : "Publicar 11"} disabled={!editable || !canPublish(document) || Boolean(activeDraft?.published && !dirty)} onPress={() => void requestPublish()} />{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
+      </View>
+      </View>
     </> : !busy ? <Body>El capitán todavía está preparando el 11.</Body> : null}
     {adding && document ? <AddLineupPlayer incidentPlayerIds={incidentPlayerIds} playerColor={playerColor} jerseyColor={jerseyColor} candidates={candidates.filter(p=>!document.bench.includes(p.id)&&!document.slots.some(s=>s.playerId===p.id))} select={include} create={create} close={()=>setAdding(false)} /> : null}
     <Modal transparent visible={slot !== null} onRequestClose={() => setSlot(null)}>

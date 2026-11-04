@@ -25,8 +25,8 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false } = {}) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'es-ES' });
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, viewport = { width: 390, height: 844 } } = {}) {
+  const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const now = Date.now();
@@ -43,6 +43,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const positions = [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
   let document = { formation: '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id] };
   let draft = null;
+  let positionLocked = true;
   const makeIncident = (index, id, expired = false) => ({ id: uuid(id), club_id: clubId, call_up_id: pastId, call_up_player_id: entries[index].id, player_id: roster[index].id, player_name: roster[index].ea_id, match_starts_at: past.starts_at, match_timezone: club.timezone, kind: 'late', note: 'Llegó veinte minutos tarde', recorded_by: userId, captain_name: 'Capitán', created_at: new Date(now - (expired ? 8 : 1) * 86400000).toISOString(), expires_at: new Date(now + (expired ? -86400000 : expiresSoon && index === 0 ? 60000 : 6 * 86400000)).toISOString() });
   const incidents = [makeIncident(0, 100), makeIncident(1, 101, true), makeIncident(11, 102)];
   const user = { id: userId, aud: 'authenticated', role: 'authenticated', email: 'fixture@example.test', app_metadata: {}, user_metadata: {}, created_at: past.starts_at };
@@ -88,7 +89,8 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     } else if (endpoint === 'read_lineup_access') result = { allowed: true, premium: true, activated: true, remaining: 6 };
     else if (endpoint === 'read_lineup') result = { document, revision: 0, inherited: false };
     else if (endpoint === 'list_lineup_drafts') result = draft ? [draft] : [];
-    else if (endpoint === 'read_lineup_preference') result = { playerColor: '#4C000B', jerseyColor: '#B3FF61', goalkeeperColor: '#F4A83A', positionLocked: true };
+    else if (endpoint === 'set_lineup_position_lock') { positionLocked=body.p_locked; result=positionLocked; }
+    else if (endpoint === 'read_lineup_preference') result = { playerColor: '#4C000B', jerseyColor: '#B3FF61', goalkeeperColor: '#F4A83A', positionLocked };
     else if (endpoint === 'list_rating_call_ups') result = [past];
     else if (endpoint === 'set_preferred_language') result = null;
     else if (endpoint === 'clubs') result = request.headers().accept?.includes('object') ? club : [club];
@@ -159,6 +161,52 @@ test('roster suggestions remain usable if position history fails', async () => {
     await f.page.getByText('No se pudo consultar el histórico. Se muestran las coincidencias de plantilla.',{exact:true}).waitFor();
     await f.page.getByLabel('Jugadores sugeridos',{exact:true}).getByRole('button',{name:'Elegir Jugador_12',exact:true}).click();
     await f.page.getByRole('button',{name:'Jugador_12, dorsal 12',exact:true}).waitFor();
+  } finally { await f.close(); }
+});
+
+test('lineup expands on iPad and Surface, keeps editing state on resize and returns to one column on mobile', async () => {
+  const f=await fixture({viewport:{width:1032,height:1376}});
+  try {
+    const {page}=f;
+    const pitch=page.getByTestId('lineup-pitch'),controls=page.getByTestId('lineup-controls');
+    await pitch.waitFor();
+    for(const size of [{width:1032,height:1376},{width:912,height:1368}]) {
+      await page.setViewportSize(size);
+      await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-testid="lineup-workspace"]')).flexDirection==='row');
+      const p=await pitch.boundingBox(),c=await controls.boundingBox();
+      assert.ok(p.width>size.width*.6,`pitch width ${p.width} at ${size.width}`);
+      assert.ok(p.height>520);
+      assert.ok(c.x>=p.x+p.width+15);
+      assert.ok(Math.abs(c.y-p.y)<2);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    }
+    await page.getByRole('button',{name:'Desbloquear posiciones',exact:true}).click();
+    await page.getByRole('button',{name:'Bloquear posiciones',exact:true}).waitFor();
+    const moving=page.getByRole('button',{name:'Jugador_2, dorsal 2',exact:true});
+    const before=await moving.boundingBox(),field=await pitch.boundingBox();
+    const dx=field.width*.08,dy=-field.height*.07;
+    await page.mouse.move(before.x+before.width/2,before.y+before.height/2);
+    await page.mouse.down();
+    await page.mouse.move(before.x+before.width/2+dx,before.y+before.height/2+dy,{steps:12});
+    await page.mouse.up();
+    const after=await moving.boundingBox();
+    // PanResponder starts after its movement threshold, so a few initial pixels are ignored.
+    assert.ok(Math.abs(after.x-before.x-dx)<10,`horizontal drag: ${JSON.stringify({before,after,dx,dy,field})}`);
+    assert.ok(Math.abs(after.y-before.y-dy)<10,`vertical drag: ${after.y-before.y} expected ${dy}`);
+    await page.getByRole('button',{name:'Jugador_10, dorsal 10',exact:true}).click();
+    await page.getByRole('button',{name:'Mandar al banquillo',exact:true}).click();
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-testid="lineup-workspace"]')).flexDirection==='column');
+    const p=await pitch.boundingBox(),c=await controls.boundingBox();
+    assert.ok(p.width>=300 && p.width<=390);
+    assert.equal(p.height,520);
+    assert.ok(c.y>=p.y+p.height+15);
+    assert.equal(await page.getByRole('button',{name:'Posición vacía',exact:true}).count(),1);
+    assert.equal(await page.getByText('Tienes cambios sin guardar.',{exact:true}).count(),1);
+    await page.setViewportSize({width:1032,height:1376});
+    await page.waitForFunction(()=>getComputedStyle(document.querySelector('[data-testid="lineup-workspace"]')).flexDirection==='row');
+    assert.equal(await page.getByRole('button',{name:'Posición vacía',exact:true}).count(),1);
+    await page.screenshot({path:'/workspace/shared/lineup-tablet-responsive.png',fullPage:true});
   } finally { await f.close(); }
 });
 
