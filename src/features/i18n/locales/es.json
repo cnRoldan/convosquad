@@ -919,5 +919,8 @@
   "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.",
   "Indicaciones": "Indicaciones",
   "Deja el texto vacío para quitar la indicación del borrador.": "Deja el texto vacío para quitar la indicación del borrador.",
-  "Guardar indicaciones": "Guardar indicaciones"
+  "Guardar indicaciones": "Guardar indicaciones",
+  "Eliminar indicación": "Eliminar indicación",
+  "Eliminar indicación de {{v0}}": "Eliminar indicación de {{v0}}",
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "Se eliminará la indicación de {{v0}} y el jugador dejará de verla."
 }

@@ -86,6 +86,30 @@ test('validation is atomic and legacy saves preserve private notes',async()=>{
  const list=(await query(captain,'select public.list_lineup_drafts($1) value',[call.id])).rows[0].value;
  assert.equal(list.find(d=>d.id===draft.id).instructions[players[0].id],'Captain instructions');
 });
+test('captains can delete a published instruction without resurrecting it or deleting a newer replacement',async()=>{
+ draft=await save({[players[1].id]:'Delete A',[players[2].id]:'Keep B'},draft,document);
+ await publish();
+ const note=(await read(a))[0];
+ for(const user of [a,outsider])await assert.rejects(query(user,'select public.delete_lineup_instruction($1)',[note.id]),{code:'42501'});
+ await query(captain,'select public.delete_lineup_instruction($1)',[note.id]);
+ assert.deepEqual(await read(a),[]);
+ assert.deepEqual((await read(b)).map(i=>i.body),['Keep B']);
+ assert.equal((await db.query('select count(*) from public.lineup_draft_instructions where draft_id=$1 and player_id=$2',[draft.id,players[1].id])).rows[0].count,0);
+ const deliveries=(await db.query('select d.state from public.push_deliveries d join public.push_events e on e.id=d.event_id where e.lineup_instruction_id=$1',[note.id])).rows;
+ assert.deepEqual(deliveries.map(d=>d.state),['skipped']);
+ await assert.rejects(save({[players[1].id]:'Stale editor'}),{code:'40001'});
+ draft=(await query(captain,'select public.list_lineup_drafts($1) value',[call.id])).rows[0].value.find(d=>d.id===draft.id);
+ await publish();assert.deepEqual(await read(a),[]);
+ draft=await save({[players[1].id]:'Replacement A'});await publish();
+ await query(captain,'select public.delete_lineup_instruction($1)',[note.id]);
+ assert.deepEqual((await read(a)).map(i=>i.body),['Replacement A']);
+ const replacement=(await read(a))[0];
+ draft=await save({[players[1].id]:'New unpublished edit'});
+ await query(captain,'select public.delete_lineup_instruction($1)',[replacement.id]);
+ const notes=(await query(captain,'select public.list_lineup_drafts($1) value',[call.id])).rows[0].value.find(d=>d.id===draft.id).instructions;
+ assert.equal(notes[players[1].id],'New unpublished edit');
+ draft=await save({[players[0].id]:'Captain instructions'});
+});
 test('captains receive their own assigned instructions; revoked membership and ended calls skip pending deliveries',async()=>{
  await publish();
  const self=(await read(captain)).find(i=>i.player_id===players[0].id);

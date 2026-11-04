@@ -1553,6 +1553,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_lineup_instruction: {
+        Args: {
+          p_instruction_id: string;
+        };
+        Returns: undefined;
+      };
       delete_lineup_preference: {
         Args: {
           p_club_id: string;

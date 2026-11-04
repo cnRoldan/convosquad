@@ -919,5 +919,8 @@
   "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "Eine Benachrichtigung wird nur gesendet, wenn der Spieler ein mit dem Verein verknüpftes Konto und aktivierte Benachrichtigungen hat.",
   "Indicaciones": "Anweisungen",
   "Deja el texto vacío para quitar la indicación del borrador.": "Lasse den Text leer, um die Anweisung aus dem Entwurf zu entfernen.",
-  "Guardar indicaciones": "Anweisungen speichern"
+  "Guardar indicaciones": "Anweisungen speichern",
+  "Eliminar indicación": "Anweisung löschen",
+  "Eliminar indicación de {{v0}}": "Anweisung für {{v0}} löschen",
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "Die Anweisung für {{v0}} wird gelöscht und dem Spieler nicht mehr angezeigt."
 }

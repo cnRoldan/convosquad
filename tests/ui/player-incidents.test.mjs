@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, instructionSaves: [], instructionReads: 0 };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -102,6 +102,11 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       draft.published=true;
       publishedInstructions=Object.entries(draft.instructions??{}).filter(([id])=>document.slots.some(slot=>slot.playerId===id)).map(([id,text],index)=>({id:uuid(120+index),player_id:id,player_name:roster.find(p=>p.id===id).ea_id,body:text,captain_name:'Capitán',published_at:new Date().toISOString(),recipient_linked:Boolean(roster.find(p=>p.id===id).user_id),recipient:roster.find(p=>p.id===id).user_id}));
       result = null;
+    } else if (endpoint === 'delete_lineup_instruction') {
+      assert.equal(role,'admin');
+      state.instructionDeletes.push(body.p_instruction_id);
+      publishedInstructions=publishedInstructions.filter(note=>note.id!==body.p_instruction_id);
+      result=null;
     } else if (endpoint === 'read_lineup_instructions') {
       state.instructionReads++;
       assert.ok([nextId,pastId].includes(body.p_call_id));
@@ -197,11 +202,13 @@ test('players see only their published instructions and the targeted notificatio
     const {page}=f;
     await page.getByRole('button',{name:'Mis indicaciones',exact:true}).click();
     await page.getByText('Indicación privada para Selu',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Eliminar indicación de Selu',exact:true}).count(),0);
     assert.equal(await page.getByText('Indicación privada para otro jugador',{exact:true}).count(),0);
     await page.getByRole('button',{name:'Cerrar',exact:true}).click();
     await page.goto(`${origin}/notification?club=${clubId}&call=${nextId}&instructions=1&user=${userId}`);
     await page.waitForURL('**/call-up?*');
     await page.getByText('Indicación privada para Selu',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Eliminar indicación de Selu',exact:true}).count(),0);
     assert.equal(await page.getByText('Indicación privada para otro jugador',{exact:true}).count(),0);
   } finally {await f.close();}
 });
@@ -393,4 +400,21 @@ test('an open lineup removes expired marks, consultation and publication warning
     assert.equal(await consultation.count(), 0);
     assert.equal(await f.page.getByLabel('Incidencias vigentes', { exact: true }).count(), 1, 'only the benched player still has an active incident');
   } finally { await f.close(); }
+});
+
+ test('captain confirms deletion from the published instructions list',async()=>{
+ const f=await fixture({seedInstructions:true});
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Indicaciones de jugadores',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar indicación de Selu',exact:true}).click();
+  await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+  assert.equal(f.state.instructionDeletes.length,0);
+  await page.getByText('Indicación privada para Selu',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Eliminar indicación de Selu',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar indicación',exact:true}).click();
+  await page.getByText('Indicación privada para otro jugador',{exact:true}).waitFor();
+  assert.equal(await page.getByText('Indicación privada para Selu',{exact:true}).count(),0);
+  assert.deepEqual(f.state.instructionDeletes,[uuid(120)]);
+ } finally {await f.close();}
 });

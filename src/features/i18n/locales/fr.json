@@ -919,5 +919,8 @@
   "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "Une notification sera envoyée uniquement si le joueur possède un compte lié au club et a activé les notifications.",
   "Indicaciones": "Consignes",
   "Deja el texto vacío para quitar la indicación del borrador.": "Laisse le texte vide pour retirer la consigne du brouillon.",
-  "Guardar indicaciones": "Enregistrer les consignes"
+  "Guardar indicaciones": "Enregistrer les consignes",
+  "Eliminar indicación": "Supprimer la consigne",
+  "Eliminar indicación de {{v0}}": "Supprimer la consigne de {{v0}}",
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "La consigne de {{v0}} sera supprimée et le joueur ne la verra plus."
 }

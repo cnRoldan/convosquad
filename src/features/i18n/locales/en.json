@@ -919,5 +919,8 @@
   "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "A notification will only be sent if the player has an account linked to the club and notifications enabled.",
   "Indicaciones": "Instructions",
   "Deja el texto vacío para quitar la indicación del borrador.": "Leave the text empty to remove the instruction from the draft.",
-  "Guardar indicaciones": "Save instructions"
+  "Guardar indicaciones": "Save instructions",
+  "Eliminar indicación": "Delete instruction",
+  "Eliminar indicación de {{v0}}": "Delete instruction for {{v0}}",
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "The instruction for {{v0}} will be deleted and the player will no longer see it."
 }
