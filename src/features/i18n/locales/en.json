@@ -928,5 +928,11 @@
   "No alineado: {{v0}}": "Did not play: {{v0}}",
   "No alineado": "Did not play",
   "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Rate from 0 to 10. The trash icon marks “Did not play”: it does not count as zero or towards the average.",
-  "Desliza para ver todas las notas.": "Swipe to see all scores."
+  "Desliza para ver todas las notas.": "Swipe to see all scores.",
+  "Valoración media capitanes: {{v0}}": "Captains’ average rating: {{v0}}",
+  "Tu nota se guarda por separado. La media usa las notas guardadas de este partido.": "Your rating is saved separately. The average uses saved ratings for this match.",
+  "Sin valoraciones": "No ratings",
+  "No se pudieron actualizar las medias de este partido.": "Could not update the averages for this match.",
+  "Actualizar medias": "Refresh averages",
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Your rating changed in another session. Reload before saving."
 }

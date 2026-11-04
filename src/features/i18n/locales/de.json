@@ -928,5 +928,11 @@
   "No alineado: {{v0}}": "Nicht eingesetzt: {{v0}}",
   "No alineado": "Nicht eingesetzt",
   "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Bewerte von 0 bis 10. Der Papierkorb markiert „Nicht eingesetzt“: Dies zählt weder als Null noch zum Durchschnitt.",
-  "Desliza para ver todas las notas.": "Wische, um alle Noten zu sehen."
+  "Desliza para ver todas las notas.": "Wische, um alle Noten zu sehen.",
+  "Valoración media capitanes: {{v0}}": "Durchschnittliche Kapitänsbewertung: {{v0}}",
+  "Tu nota se guarda por separado. La media usa las notas guardadas de este partido.": "Deine Note wird separat gespeichert. Der Durchschnitt verwendet die gespeicherten Noten für dieses Spiel.",
+  "Sin valoraciones": "Keine Bewertungen",
+  "No se pudieron actualizar las medias de este partido.": "Die Durchschnittsnoten für dieses Spiel konnten nicht aktualisiert werden.",
+  "Actualizar medias": "Durchschnitte aktualisieren",
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Deine Bewertung wurde in einer anderen Sitzung geändert. Lade sie vor dem Speichern neu."
 }

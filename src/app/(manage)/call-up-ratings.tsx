@@ -10,8 +10,8 @@ import { useClub } from '@/features/clubs/club-context';
 import { getCallUp, listCallUpPlayers } from '@/features/call-ups/service';
 import { ratingVisibility, ratingVisibilityMessage } from '@/features/ratings/visibility';
 import { ratingDeadline, ratingWindowOpen } from '@/features/ratings/window';
-import { listRatingCalls, listRatings, saveRatings, ratingError, readRatingLineup, type RatingLineup, type RatingChoice, type RatingChange } from '@/features/ratings/service';
-import { t, useLanguage } from '@/features/i18n/runtime';
+import { listRatingAverages, listRatingCalls, listRatings, saveRatings, ratingError, readRatingLineup, type RatingLineup, type RatingChoice, type RatingChange } from '@/features/ratings/service';
+import { intlLocale, t, useLanguage } from '@/features/i18n/runtime';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
@@ -40,6 +40,13 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
 }) {
   useLanguage();
   const { activeClub } = useClub();
+  const { session } = useAuth();
+  const loadAverages = useCallback(() => listRatingAverages(call.id), [call.id]);
+  const averages = useResource(`rating-averages:${session?.user.id}:${call.club_id}:${call.id}`, loadAverages, Boolean(session));
+  useEffect(() => {
+    const timer = setInterval(averages.reload, 20000);
+    return () => clearInterval(timer);
+  }, [averages.reload]);
   const [incidents, setIncidents] = useState(initialIncidents);
   const [incidentEntry, setIncidentEntry] = useState<Tables<'call_up_players'> | null>(null);
   const [incidentSaved, setIncidentSaved] = useState(false);
@@ -84,7 +91,14 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
     {notice ? <Message>{t("Valoraciones guardadas.")}</Message> : null}
     {incidentSaved ? <Message>{t('Incidencia registrada. La marca estará vigente durante una semana.')}</Message> : null}
     {message ? <Message error>{message}</Message> : null}
+    <Body>{t('Tu nota se guarda por separado. La media usa las notas guardadas de este partido.')}</Body>
+    {averages.error ? <><Message error>{t('No se pudieron actualizar las medias de este partido.')}</Message><Button secondary label={t('Actualizar medias')} onPress={averages.reload} /></> : null}
     {visiblePlayers.map(player => <Card key={player.id} title={player.ea_id_snapshot}>
+      <Body>{t('Valoración media capitanes: {{v0}}', { v0: (() => {
+        const average = averages.data?.find(row => row.call_up_player_id === player.id)?.average_score;
+        if (average !== null && average !== undefined) return new Intl.NumberFormat(intlLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(average);
+        return t(averages.error ? 'No disponible' : averages.isLoading ? 'Cargando…' : 'Sin valoraciones');
+      })() })}</Body>
       <View style={{ gap: 6 }}>
         <Text style={{ color: colors.muted, fontSize: 13 }}>{t('Valoración')}</Text>
         <RatingSelector playerName={player.ea_id_snapshot} value={choices[player.id] ?? ''} disabled={!available || busy}

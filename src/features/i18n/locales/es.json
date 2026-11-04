@@ -928,5 +928,11 @@
   "No alineado: {{v0}}": "No alineado: {{v0}}",
   "No alineado": "No alineado",
   "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.",
-  "Desliza para ver todas las notas.": "Desliza para ver todas las notas."
+  "Desliza para ver todas las notas.": "Desliza para ver todas las notas.",
+  "Valoración media capitanes: {{v0}}": "Valoración media capitanes: {{v0}}",
+  "Tu nota se guarda por separado. La media usa las notas guardadas de este partido.": "Tu nota se guarda por separado. La media usa las notas guardadas de este partido.",
+  "Sin valoraciones": "Sin valoraciones",
+  "No se pudieron actualizar las medias de este partido.": "No se pudieron actualizar las medias de este partido.",
+  "Actualizar medias": "Actualizar medias",
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar."
 }

@@ -26,14 +26,14 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const now = Date.now();
-  if (expiresSoon) await page.clock.install({ time: now });
+  if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -89,7 +89,9 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       const index = entries.findIndex(entry => entry.id === body.p_entry_id);
       const incident = { ...makeIncident(index, 110), kind: body.p_kind, note: body.p_note };
       incidents.push(incident); result = incident;
-    } else if (endpoint === 'save_player_ratings') { state.ratings++; state.ratingChanges.push(body); result = 1; }
+    } else if (endpoint === 'read_my_player_ratings') { assert.equal(body.p_call_up_id,pastId); result=[]; }
+    else if (endpoint === 'read_call_up_rating_averages') { assert.equal(body.p_call_up_id,pastId); result=ratingMeans?[{call_up_player_id:uuid(30),average_score:state.ratings ? 8 : state.averageScore,rating_count:2},{call_up_player_id:uuid(31),average_score:0,rating_count:1}]:[]; }
+    else if (endpoint === 'save_my_player_ratings') { state.ratings++; state.ratingChanges.push(body); result = 1; }
     else if (endpoint === 'publish_lineup_draft') {
       publications.push(body);
       if (race && publications.length === 1) {
@@ -445,5 +447,25 @@ test('rating buttons distinguish zero, ten, not rated and not selected',async()=
   assert.equal('score' in f.state.ratingChanges[1].p_ratings[0],false);
   await page.getByLabel('Valoración de Selu',{exact:true}).scrollIntoViewIfNeeded();
   await page.screenshot({path:'/workspace/shared/rating-selector.png',fullPage:false});
+ }finally {await f.close();}
+});
+
+test('captain sees match averages separately from their own unsaved rating',async()=>{
+ const f=await fixture({route:'/call-up-ratings',ratingMeans:true});
+ try {
+  const {page}=f;
+  await page.getByText('Valoración media capitanes: 7,50',{exact:true}).waitFor();
+  await page.getByText('Valoración media capitanes: 0,00',{exact:true}).waitFor();
+  assert.ok(await page.getByText('Valoración media capitanes: Sin valoraciones',{exact:true}).count()>0);
+  assert.equal(await page.getByRole('radio',{name:'Sin valorar: Selu',exact:true}).getAttribute('aria-checked'),'true');
+  await page.getByRole('radio',{name:'Nota 10 para Selu',exact:true}).click();
+  await page.getByText('Valoración media capitanes: 7,50',{exact:true}).waitFor();
+  f.state.averageScore=9;
+  await page.clock.runFor(20000);
+  await page.getByText('Valoración media capitanes: 9,00',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('radio',{name:'Nota 10 para Selu',exact:true}).getAttribute('aria-checked'),'true');
+  await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
+  await page.getByText('Valoración media capitanes: 8,00',{exact:true}).waitFor();
+  assert.equal(f.state.ratingChanges[0].p_ratings[0].score,10);
  }finally {await f.close();}
 });

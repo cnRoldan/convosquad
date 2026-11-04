@@ -10,6 +10,7 @@ const prepare=async()=> (await server('select * from public.prepare_due_call_up_
 const claim=async(id)=>(await server('select * from public.claim_push_deliveries($1)',[id])).rows;
 async function fixture(age='20 hours') {
  const club=(await query(captain,"select * from public.create_club($1)",[`Deadline ${++sequence}`])).rows[0];
+ await db.query('insert into public.club_feature_entitlements(club_id,club_activated_at) values($1,now()) on conflict(club_id) do update set club_activated_at=now()',[club.id]);
  for(const [user,role] of [[second,'admin'],[player,'player']]) await db.query('insert into public.club_members(club_id,user_id,role) values($1,$2,$3)',[club.id,user,role]);
  await query(captain,"insert into public.players(club_id,ea_id,category) values($1,'Available player','midfielders')",[club.id]);
  const call=await create(club.id,age);

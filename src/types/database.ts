@@ -1726,6 +1726,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      read_call_up_rating_averages: {
+        Args: {
+          p_call_up_id: string;
+        };
+        Returns: { call_up_player_id: string; average_score: number; rating_count: number }[];
+      };
       read_club_activation: {
         Args: {
           p_club_id: string;
@@ -1767,6 +1773,12 @@ export type Database = {
           p_club_id: string;
         };
         Returns: Json;
+      };
+      read_my_player_ratings: {
+        Args: {
+          p_call_up_id: string;
+        };
+        Returns: Database['public']['Tables']['player_ratings']['Row'][];
       };
       read_rating_lineup: {
         Args: {
@@ -1960,6 +1972,13 @@ export type Database = {
           p_slots: Json;
         };
         Returns: Json;
+      };
+      save_my_player_ratings: {
+        Args: {
+          p_call_up_id: string;
+          p_ratings: Json;
+        };
+        Returns: number;
       };
       save_player_ratings: {
         Args: {

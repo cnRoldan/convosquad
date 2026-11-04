@@ -928,5 +928,11 @@
   "No alineado: {{v0}}": "N’a pas joué : {{v0}}",
   "No alineado": "N’a pas joué",
   "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Notez de 0 à 10. La corbeille indique « N’a pas joué » : cela ne compte ni comme un zéro ni dans la moyenne.",
-  "Desliza para ver todas las notas.": "Faites défiler pour voir toutes les notes."
+  "Desliza para ver todas las notas.": "Faites défiler pour voir toutes les notes.",
+  "Valoración media capitanes: {{v0}}": "Note moyenne des capitaines : {{v0}}",
+  "Tu nota se guarda por separado. La media usa las notas guardadas de este partido.": "Votre note est enregistrée séparément. La moyenne utilise les notes enregistrées pour ce match.",
+  "Sin valoraciones": "Aucune note",
+  "No se pudieron actualizar las medias de este partido.": "Impossible de mettre à jour les moyennes de ce match.",
+  "Actualizar medias": "Actualiser les moyennes",
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Votre note a été modifiée dans une autre session. Rechargez avant d’enregistrer."
 }
