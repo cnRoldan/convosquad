@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { before, after, test } from 'node:test';
 import { chromium } from 'playwright';
+import { posterGeometry } from '../../src/features/lineups/poster-geometry.ts';
 
 let browser, server, origin;
 const root = path.resolve('dist-ui');
@@ -25,7 +26,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -34,7 +35,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const errors = [], unexpected = [], publications = [];
   const state = { incidentReads: 0, recorded: [], ratings: 0, instructionSaves: [], instructionReads: 0 };
   page.on('pageerror', error => errors.push(error.message));
-  const club = { id: clubId, name: 'Incidents club', timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
+  const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
   if (suggestions) roster[11].category = 'attackers';
   if (posterExample) {
@@ -65,6 +66,13 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     const request = route.request(), url = new URL(request.url()), endpoint = url.pathname.split('/').at(-1);
     if (url.origin === origin) return route.continue();
     if (url.hostname !== 'auth.example.test') { unexpected.push(url.hostname); return route.abort(); }
+    if(url.pathname.includes('/storage/v1/object/')) {
+      if(request.method()==='GET') {
+        await new Promise(resolve=>setTimeout(resolve,250));
+        return route.fulfill({contentType:'image/png',body:readFileSync('assets/images/icon.png')});
+      }
+      return route.fulfill({json:{signedURL:`/object/sign/club-crests/${clubId}/crest.png?token=fixture`}});
+    }
     const body = request.method() === 'POST' ? request.postDataJSON() : null;
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
@@ -240,8 +248,8 @@ test('roster suggestions remain usable if position history fails', async () => {
   } finally { await f.close(); }
 });
 
-test('generated poster downloads a full resolution PNG for a custom pivot lineup', async () => {
-  const f=await fixture({posterExample:true});
+for(const withCrest of [false,true]) test(`generated portrait poster downloads readable players ${withCrest?'with the embedded crest':'without a club crest'}`, async () => {
+  const f=await fixture({posterExample:true,withCrest});
   try {
     const {page}=f;
     await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
@@ -252,10 +260,21 @@ test('generated poster downloads a full resolution PNG for a custom pivot lineup
     await page.getByRole('button',{name:'Generar imagen',exact:true}).click();
     const download=await pending;
     assert.equal(download.suggestedFilename(),'convosquad-once.png');
-    const file='/workspace/shared/lineup-uniform-shirts.png';
+    const file=withCrest?'/workspace/shared/lineup-field-focused-crest.png':'/workspace/shared/lineup-field-focused.png';
     await download.saveAs(file);
     const png=readFileSync(file);
-    assert.equal(png.readUInt32BE(16),1324);assert.equal(png.readUInt32BE(20),1190);
+    assert.equal(png.readUInt32BE(16),posterGeometry.width);assert.equal(png.readUInt32BE(20),posterGeometry.height);
+    if(withCrest) {
+      const pixels=await page.evaluate(async data=>{
+        const image=new Image();image.src=data;await image.decode();
+        const canvas=document.createElement('canvas');canvas.width=1324;canvas.height=1550;
+        const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+        const dataBytes=ctx.getImageData(66,60,104,102).data;let bright=0;
+        for(let i=0;i<dataBytes.length;i+=4)if(dataBytes[i]>100&&dataBytes[i+1]>130&&dataBytes[i+2]<140)bright++;
+        return bright;
+      },'data:image/png;base64,'+png.toString('base64'));
+      assert.ok(pixels>100,'the exported crest region contains the image, not an empty frame');
+    }
   } finally {await f.close();}
 });
 

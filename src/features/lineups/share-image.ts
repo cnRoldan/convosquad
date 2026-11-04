@@ -2,9 +2,10 @@ import type { RefObject } from 'react';
 import { Platform, type View } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { captureRef } from 'react-native-view-shot';
+import { posterGeometry } from './poster-geometry';
 
 export async function shareLineupImage(viewRef: RefObject<View | null>) {
-  const uri = Platform.OS === 'web' ? await renderWebPoster(viewRef) : await captureRef(viewRef, { format: 'png', quality: 1, width: 1324, height: 1190, result: 'tmpfile' });
+  const uri = Platform.OS === 'web' ? await renderWebPoster(viewRef) : await captureRef(viewRef, { format: 'png', quality: 1, width: posterGeometry.width, height: posterGeometry.height, result: 'tmpfile' });
   if (Platform.OS !== 'web') {
     if (!await Sharing.isAvailableAsync()) throw new Error('Sharing unavailable');
     await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Compartir el 11' });
@@ -27,8 +28,8 @@ async function renderWebPoster(viewRef: RefObject<View | null>) {
   if (!original) throw new Error('Lineup poster is not ready');
   const svg = original.cloneNode(true) as SVGSVGElement;
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  svg.setAttribute('width', '1324');
-  svg.setAttribute('height', '1190');
+  svg.setAttribute('width', String(posterGeometry.width));
+  svg.setAttribute('height', String(posterGeometry.height));
   // Embed raster resources before serializing: standalone SVGs cannot resolve
   // external images reliably when drawn onto a browser canvas.
   await Promise.all(Array.from(svg.querySelectorAll('image')).map(async element => {
@@ -52,11 +53,11 @@ async function renderWebPoster(viewRef: RefObject<View | null>) {
     image.src = url;
     await image.decode();
     const canvas = document.createElement('canvas');
-    canvas.width = 1324;
-    canvas.height = 1190;
+    canvas.width = posterGeometry.width;
+    canvas.height = posterGeometry.height;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas unavailable');
-    context.drawImage(image, 0, 0, 1324, 1190);
+    context.drawImage(image, 0, 0, posterGeometry.width, posterGeometry.height);
     return canvas.toDataURL('image/png');
   } finally { URL.revokeObjectURL(url); }
 }

@@ -19,6 +19,7 @@ import { IconButton } from '@/components/icon-button';
 import { colors } from '@/theme';
 import ColorPicker, { HueSlider, Panel1, Preview } from 'reanimated-color-picker';
 import { LineupShareCard } from './share-card';
+import { createPosterReadiness, type PosterAsset } from './poster-readiness';
 import { getClubCrestUrl } from '@/features/clubs/crest';
 import { getClubSettings, listClubMembers } from '@/features/clubs/service';
 import { LineupPitch } from './pitch';
@@ -82,6 +83,10 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [dirty,setDirty]=useState(false);
   const [conflict,setConflict]=useState(false);
   const [sharing,setSharing]=useState(false);
+  const [renderingPoster,setRenderingPoster]=useState(false);
+  const [posterAssetLoaded,setPosterAssetLoaded]=useState<(asset: PosterAsset) => void>(() => () => undefined);
+  const posterReadiness=useRef<ReturnType<typeof createPosterReadiness> | null>(null);
+  useEffect(() => () => posterReadiness.current?.cancel(), []);
   const [drafts,setDrafts]=useState<LineupDraft[]>([]);
   const [activeDraftId,setActiveDraftIdState]=useState<string | null>(initialDraftId ?? null);
   const activeDraftIdRef = useRef<string | null>(initialDraftId ?? null);
@@ -255,7 +260,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     finally { setBusy(false); }
   }
   async function shareImage() {
-    setSharing(true); setMessage('');
+    setSharing(true); setRenderingPoster(false); setMessage('');
     try {
       const club = await getClubSettings(clubId);
       const currentCrestPath = club.crest_path ?? crestPath;
@@ -271,12 +276,16 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
           reader.readAsDataURL(blob);
         });
       }
-      setShareCrestUrl(embeddedCrest);
+      const gate = createPosterReadiness(Boolean(embeddedCrest), 15000, Platform.OS !== 'web');
+      posterReadiness.current = gate;
+      setPosterAssetLoaded(() => gate.loaded);
+      setShareCrestUrl(embeddedCrest); setRenderingPoster(true);
+      await gate.ready;
       await new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
       await shareLineupImage(shareImageRef);
     }
     catch { setMessage('No se pudo generar la imagen. Inténtalo de nuevo.'); }
-    finally { setSharing(false); }
+    finally { posterReadiness.current?.cancel(); posterReadiness.current = null; setRenderingPoster(false); setSharing(false); }
   }
   function include(id: string) {
     if (document) change({...document,bench:[...new Set([...document.bench,id])],manualIds:[...new Set([...(document.manualIds??[]),id])],excludedIds:document.excludedIds?.filter(excludedId=>excludedId!==id)});
@@ -300,8 +309,8 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); baseline.current = draft.document; baselineInstructions.current = draft.instructions ?? {}; setInstructions(draft.instructions ?? {}); setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View testID="lineup-workspace" style={{ flexDirection: tablet ? 'row' : 'column', alignItems: 'stretch', gap: 20 }}>
-      <View ref={shareImageRef} collapsable={false} style={[tablet ? { flex: 1, minWidth: 0 } : undefined, sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined]}>
-        {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} goalkeeperColor={goalkeeperColor} /> : <LineupPitch incidentPlayerIds={incidentPlayerIds} goalkeeperColor={goalkeeperColor} playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
+      <View ref={shareImageRef} collapsable={false} style={[tablet ? { flex: 1, minWidth: 0 } : undefined, renderingPoster ? { backgroundColor: '#0B1210', alignSelf: 'flex-start', ...(tablet ? {} : { width: '100%' }) } : undefined]}>
+        {renderingPoster ? <LineupShareCard onAssetLoad={posterAssetLoaded} clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} goalkeeperColor={goalkeeperColor} /> : <LineupPitch incidentPlayerIds={incidentPlayerIds} goalkeeperColor={goalkeeperColor} playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
       </View>
       <View testID="lineup-controls" style={{ gap: 20, ...(tablet ? { width: 280 } : {}) }}>
       <LineupInstructionsButton callId={callId} captain={captain} />
