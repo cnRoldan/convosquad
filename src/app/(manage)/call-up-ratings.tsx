@@ -3,6 +3,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Picker } from '@react-native-picker/picker';
 import { Text, View } from 'react-native';
 import { Body, Button, Card, Heading, Message, Screen } from '@/components/ui';
+import { RatingSelector } from '@/features/ratings/rating-selector';
 import { LoadingScreen } from '@/components/loading';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
@@ -73,7 +74,7 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
   return <Screen>
     <Heading title={t('Valorar jugadores')} subtitle={formatMatchDate(call.starts_at, call.timezone)} />
     <Body>{t(ratingVisibilityMessage(ratingVisibility(activeClub?.ratingsVisibility)))}</Body>
-    <Body>{t('Puntúa de 0 a 10. «No convocado» no cuenta como un cero ni entra en la media.')}</Body>
+    <Body>{t('Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.')}</Body>
     <Body>{t('Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.')}</Body>
     {!lineup.published ? <Message>{t('No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.')}</Message> : null}
     {savedOutsideLineup ? <Message>{t('Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.')}</Message> : null}
@@ -86,13 +87,8 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
     {visiblePlayers.map(player => <Card key={player.id} title={player.ea_id_snapshot}>
       <View style={{ gap: 6 }}>
         <Text style={{ color: colors.muted, fontSize: 13 }}>{t('Valoración')}</Text>
-        <Picker<RatingChoice> accessibilityLabel={t('Valoración de {{v0}}', { v0: player.ea_id_snapshot })} selectedValue={choices[player.id] ?? ''} enabled={Boolean(available) && !busy}
-          onValueChange={value => setChoices(current => ({ ...current, [player.id]: value as RatingChoice }))}
-          style={{ color: colors.text, backgroundColor: colors.surface, minHeight: 48 }}>
-          <Picker.Item label={t('Sin valorar')} value="" />
-          <Picker.Item label={t('No convocado')} value="not_selected" />
-          {Array.from({ length: 11 }, (_, value) => <Picker.Item key={value} label={String(value)} value={String(value)} />)}
-        </Picker>
+        <RatingSelector playerName={player.ea_id_snapshot} value={choices[player.id] ?? ''} disabled={!available || busy}
+          onChange={value => setChoices(current => ({ ...current, [player.id]: value }))} />
       </View>
       {incidents.filter(incident => incident.call_up_player_id === player.id).map(incident => <Body key={incident.id}>{t(incidentLabel(incident.kind))}{incident.note ? ` · ${incident.note}` : ''}</Body>)}
       <Button secondary label={t('Registrar incidencia')} disabled={!available || busy || !player.source_player_id} onPress={() => { setIncidentSaved(false); setIncidentEntry(player); }} />

@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -89,7 +89,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       const index = entries.findIndex(entry => entry.id === body.p_entry_id);
       const incident = { ...makeIncident(index, 110), kind: body.p_kind, note: body.p_note };
       incidents.push(incident); result = incident;
-    } else if (endpoint === 'save_player_ratings') { state.ratings++; result = 1; }
+    } else if (endpoint === 'save_player_ratings') { state.ratings++; state.ratingChanges.push(body); result = 1; }
     else if (endpoint === 'publish_lineup_draft') {
       publications.push(body);
       if (race && publications.length === 1) {
@@ -335,14 +335,14 @@ test('incident recording keeps unsaved ratings and history includes archived rec
   const f = await fixture({ route: '/call-up-ratings' });
   try {
     const { page } = f;
-    const score = page.getByRole('combobox', { name: 'Valoración de Selu', exact: true });
-    await score.selectOption('8');
+    const score = page.getByRole('radio', { name: 'Nota 8 para Selu', exact: true });
+    await score.click();
     await page.getByRole('button', { name: 'Registrar incidencia', exact: true }).first().click();
     await page.getByRole('combobox', { name: 'Motivo de la incidencia' }).selectOption('no_show');
     await page.getByRole('textbox', { name: 'Observación', exact: true }).fill('No entró y avisó al capitán');
     await page.getByRole('button', { name: 'Guardar incidencia', exact: true }).click();
     await page.getByText('Incidencia registrada. La marca estará vigente durante una semana.', { exact: true }).waitFor();
-    assert.equal(await score.inputValue(), '8');
+    assert.equal(await score.getAttribute('aria-checked'), 'true');
     assert.equal(f.state.ratings, 0);
     assert.equal(f.state.recorded[0].p_kind, 'no_show');
     await page.getByRole('button', { name: 'Histórico de incidencias', exact: true }).click();
@@ -354,13 +354,13 @@ test('incident recording keeps unsaved ratings and history includes archived rec
 test('ratings initially show published starters even when unavailable, and omit an available bench player with an incident',async()=>{
   const f=await fixture({route:'/call-up-ratings'});
   try {
-    await f.page.getByRole('combobox',{name:'Valoración de Selu',exact:true}).waitFor();
-    assert.equal(await f.page.getByRole('combobox',{name:/^Valoración de /}).count(),11);
-    assert.equal(await f.page.getByRole('combobox',{name:'Valoración de Jugador_12',exact:true}).count(),0);
+    await f.page.getByLabel('Valoración de Selu',{exact:true}).waitFor();
+    assert.equal(await f.page.getByLabel(/^Valoración de /).count(),11);
+    assert.equal(await f.page.getByLabel('Valoración de Jugador_12',{exact:true}).count(),0);
     await f.page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
     await f.page.getByRole('combobox',{name:'Jugador que añadir a la valoración',exact:true}).selectOption(uuid(41));
     await f.page.getByRole('button',{name:'Añadir a la valoración',exact:true}).click();
-    await f.page.getByRole('combobox',{name:'Valoración de Jugador_12',exact:true}).waitFor();
+    await f.page.getByLabel('Valoración de Jugador_12',{exact:true}).waitFor();
     assert.equal(f.state.ratings,0);
   } finally {await f.close();}
 });
@@ -369,11 +369,11 @@ test('without a published XI, ratings explain manual selection instead of using 
   const f=await fixture({route:'/call-up-ratings',noPublishedLineup:true});
   try {
     await f.page.getByText('No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.',{exact:true}).waitFor();
-    assert.equal(await f.page.getByRole('combobox',{name:/^Valoración de /}).count(),0);
+    assert.equal(await f.page.getByLabel(/^Valoración de /).count(),0);
     await f.page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
     await f.page.getByRole('combobox',{name:'Jugador que añadir a la valoración',exact:true}).selectOption(uuid(30));
     await f.page.getByRole('button',{name:'Añadir a la valoración',exact:true}).click();
-    await f.page.getByRole('combobox',{name:'Valoración de Selu',exact:true}).waitFor();
+    await f.page.getByLabel('Valoración de Selu',{exact:true}).waitFor();
   } finally {await f.close();}
 });
 
@@ -417,4 +417,33 @@ test('an open lineup removes expired marks, consultation and publication warning
   assert.equal(await page.getByText('Indicación privada para Selu',{exact:true}).count(),0);
   assert.deepEqual(f.state.instructionDeletes,[uuid(120)]);
  } finally {await f.close();}
+});
+
+test('rating buttons distinguish zero, ten, not rated and not selected',async()=>{
+ const f=await fixture({route:'/call-up-ratings'});
+ try {
+  const {page}=f;
+  const zero=page.getByRole('radio',{name:'Nota 0 para Selu',exact:true});
+  const ten=page.getByRole('radio',{name:'Nota 10 para Selu',exact:true});
+  const clear=page.getByRole('radio',{name:'Sin valorar: Selu',exact:true});
+  await zero.click();assert.equal(await zero.getAttribute('aria-checked'),'true');
+  await ten.click();assert.equal(await ten.getAttribute('aria-checked'),'true');
+  assert.equal(await zero.getAttribute('aria-checked'),'false');
+  await page.getByRole('button',{name:'No alineado: Selu',exact:true}).click();
+  await page.getByText('No alineado',{exact:true}).waitFor();
+  await clear.click();assert.equal(await clear.getAttribute('aria-checked'),'true');
+  assert.equal(await page.getByText('No alineado',{exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).isDisabled(),true);
+  await zero.click();
+  await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
+  await page.getByText('Valoraciones guardadas.',{exact:true}).waitFor();
+  assert.equal(f.state.ratingChanges[0].p_ratings[0].score,0);
+  await page.getByRole('button',{name:'No alineado: Selu',exact:true}).click();
+  await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
+  await page.getByText('Valoraciones guardadas.',{exact:true}).waitFor();
+  assert.equal(f.state.ratingChanges[1].p_ratings[0].not_selected,true);
+  assert.equal('score' in f.state.ratingChanges[1].p_ratings[0],false);
+  await page.getByLabel('Valoración de Selu',{exact:true}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:'/workspace/shared/rating-selector.png',fullPage:false});
+ }finally {await f.close();}
 });

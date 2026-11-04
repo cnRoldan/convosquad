@@ -922,5 +922,11 @@
   "Guardar indicaciones": "Anweisungen speichern",
   "Eliminar indicación": "Anweisung löschen",
   "Eliminar indicación de {{v0}}": "Anweisung für {{v0}} löschen",
-  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "Die Anweisung für {{v0}} wird gelöscht und dem Spieler nicht mehr angezeigt."
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "Die Anweisung für {{v0}} wird gelöscht und dem Spieler nicht mehr angezeigt.",
+  "Nota {{v0}} para {{v1}}": "Note {{v0}} für {{v1}}",
+  "Sin valorar: {{v0}}": "Nicht bewertet: {{v0}}",
+  "No alineado: {{v0}}": "Nicht eingesetzt: {{v0}}",
+  "No alineado": "Nicht eingesetzt",
+  "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Bewerte von 0 bis 10. Der Papierkorb markiert „Nicht eingesetzt“: Dies zählt weder als Null noch zum Durchschnitt.",
+  "Desliza para ver todas las notas.": "Wische, um alle Noten zu sehen."
 }

@@ -922,5 +922,11 @@
   "Guardar indicaciones": "Enregistrer les consignes",
   "Eliminar indicación": "Supprimer la consigne",
   "Eliminar indicación de {{v0}}": "Supprimer la consigne de {{v0}}",
-  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "La consigne de {{v0}} sera supprimée et le joueur ne la verra plus."
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "La consigne de {{v0}} sera supprimée et le joueur ne la verra plus.",
+  "Nota {{v0}} para {{v1}}": "Note {{v0}} pour {{v1}}",
+  "Sin valorar: {{v0}}": "Non évalué : {{v0}}",
+  "No alineado: {{v0}}": "N’a pas joué : {{v0}}",
+  "No alineado": "N’a pas joué",
+  "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Notez de 0 à 10. La corbeille indique « N’a pas joué » : cela ne compte ni comme un zéro ni dans la moyenne.",
+  "Desliza para ver todas las notas.": "Faites défiler pour voir toutes les notes."
 }

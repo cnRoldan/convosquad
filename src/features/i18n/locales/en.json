@@ -922,5 +922,11 @@
   "Guardar indicaciones": "Save instructions",
   "Eliminar indicación": "Delete instruction",
   "Eliminar indicación de {{v0}}": "Delete instruction for {{v0}}",
-  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "The instruction for {{v0}} will be deleted and the player will no longer see it."
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "The instruction for {{v0}} will be deleted and the player will no longer see it.",
+  "Nota {{v0}} para {{v1}}": "Score {{v0}} for {{v1}}",
+  "Sin valorar: {{v0}}": "Not rated: {{v0}}",
+  "No alineado: {{v0}}": "Did not play: {{v0}}",
+  "No alineado": "Did not play",
+  "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Rate from 0 to 10. The trash icon marks “Did not play”: it does not count as zero or towards the average.",
+  "Desliza para ver todas las notas.": "Swipe to see all scores."
 }

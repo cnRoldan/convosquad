@@ -922,5 +922,11 @@
   "Guardar indicaciones": "Guardar indicaciones",
   "Eliminar indicación": "Eliminar indicación",
   "Eliminar indicación de {{v0}}": "Eliminar indicación de {{v0}}",
-  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "Se eliminará la indicación de {{v0}} y el jugador dejará de verla."
+  "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.": "Se eliminará la indicación de {{v0}} y el jugador dejará de verla.",
+  "Nota {{v0}} para {{v1}}": "Nota {{v0}} para {{v1}}",
+  "Sin valorar: {{v0}}": "Sin valorar: {{v0}}",
+  "No alineado: {{v0}}": "No alineado: {{v0}}",
+  "No alineado": "No alineado",
+  "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.": "Puntúa de 0 a 10. La papelera marca «No alineado»: no cuenta como un cero ni entra en la media.",
+  "Desliza para ver todas las notas.": "Desliza para ver todas las notas."
 }
