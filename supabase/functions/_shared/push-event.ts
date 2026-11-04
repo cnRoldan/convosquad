@@ -1,7 +1,7 @@
 import { pushCopy } from './push-language.ts';
 import { createHash, timingSafeEqual } from 'node:crypto';
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export type PushEventInput = { clubId: string; callUpId: string | null; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'evaluation_deadline' | 'club_approved' | 'club_join_request' | 'lineup_review' | 'lineup_suggestion' | 'lineup_selected' | 'lineup_not_selected'; clubName?: string | null; actorEaId?: string | null; availability?: string | null; lineupDraftId?: string | null; lineupDraftTitle?: string | null };
+export type PushEventInput = { clubId: string; callUpId: string | null; eventKey: string; kind: 'published' | 'pending' | 'reminder' | 'vote' | 'cancelled' | 'evaluation' | 'evaluation_deadline' | 'club_approved' | 'club_join_request' | 'lineup_review' | 'lineup_suggestion' | 'lineup_selected' | 'lineup_not_selected' | 'lineup_instruction'; clubName?: string | null; actorEaId?: string | null; availability?: string | null; lineupDraftId?: string | null; lineupDraftTitle?: string | null };
 export function parsePushEvent(data: unknown): PushEventInput | null {
   if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
   if (Object.keys(data).some(key => !['clubId','callUpId','eventKey','kind'].includes(key))) return null;
@@ -16,6 +16,11 @@ export function authorizedWorker(header: string | null, secret: string | undefin
 }
 export function pushMessage(event: PushEventInput, token: string, recipientUserId?: string | null, canVote = true, language = 'es') {
   const text = pushCopy(language);
+  if (event.kind === 'lineup_instruction') return {
+    to: token, title: text.lineup_instruction, body: text.instructionBody,
+    channelId: 'call-ups', sound: 'default',
+    data: { type: 'call_up', clubId: event.clubId, callUpId: event.callUpId, kind: 'lineup_instruction', ...(recipientUserId ? { userId: recipientUserId } : {}) },
+  };
   if (event.kind === 'club_join_request') return {
     to: token, title: text.club_join_request,
     body: `${event.actorEaId?.slice(0, 100) ?? text.player} ${text.joinRequestBody} ${event.clubName?.slice(0, 100) ?? 'ConvoSquad'}. ${text.reviewRequests}`,

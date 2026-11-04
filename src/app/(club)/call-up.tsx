@@ -31,11 +31,12 @@ import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
 import type { Tables } from '@/types/database';
+import { LineupInstructionsButton } from '@/features/lineups/instructions';
 import { activateLineupAccess } from '@/features/lineups/service';
 
 export default function CallUpScreen() {
   useLanguage();
-  const { id: routeId, history } = useLocalSearchParams<{ id?: string; history?: string }>();
+  const { id: routeId, history, instructions: openInstructions } = useLocalSearchParams<{ id?: string; history?: string; instructions?: string }>();
   const id = routeId || undefined;
   const { activeClub, currentMembership, upcomingCallUp, roster, rosterVersion, refreshRoster } = useClub(); const { session, isDemo } = useAuth();
   const clubId = activeClub?.id; const admin = currentMembership?.role === 'admin';
@@ -173,6 +174,7 @@ export default function CallUpScreen() {
       {admin && call.evaluation_at && historical ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
       {votingClosed && !historical ? <Body>{t("El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.")}</Body> : null}
       {!historical && (call.status === 'open' || call.status === 'closed') ? <Button label={openingLineup ? 'Abriendo Tu 11…' : admin ? t('¡Forma tu 11!') : t('Consulta el 11')} disabled={openingLineup} onPress={() => void openLineup()} /> : null}
+      <LineupInstructionsButton key={`${call.id}:${openInstructions ?? ''}`} callId={call.id} captain={admin} initiallyOpen={openInstructions === '1'} />
       {admin && !historical ? <CallUpAdministration key={`${scope}:${call.id}:${call.updated_at}`} call={call} onDeleted={() => handleDeleted(call.id)} onSaved={(message, reset) => { if (reset) { setLastResponse(null); setPending(null); setResponseMessage(null); } setNotice(message ?? "Convocatoria actualizada. La fotografía y respuestas se conservan."); refreshRoster(); refresh(); }} /> : null}
       {admin && contacts.error ? <Message error>{t("No se pudieron cargar los teléfonos privados. Actualiza la convocatoria antes de editarlos.")}</Message> : null}
       {snapshots.error ? <Body>{t("Respuestas no disponibles.")}</Body> : <CompactRoster key={responseScope} players={players}

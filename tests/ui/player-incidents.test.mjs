@@ -25,14 +25,14 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const now = Date.now();
   if (expiresSoon) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0 };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, instructionSaves: [], instructionReads: 0 };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -49,6 +49,10 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const positions = posterExample ? [[.5,.9],[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.5,.56],[.34,.34],[.66,.34],[.84,.45],[.36,.15],[.64,.15]] : [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
   let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id] };
   let draft = null;
+  let publishedInstructions = seedInstructions ? [
+    {id:uuid(120),player_id:roster[0].id,player_name:roster[0].ea_id,body:'Indicación privada para Selu',captain_name:'Capitán',published_at:past.ends_at,recipient_linked:true,recipient:userId},
+    {id:uuid(121),player_id:roster[1].id,player_name:roster[1].ea_id,body:'Indicación privada para otro jugador',captain_name:'Capitán',published_at:past.ends_at,recipient_linked:true,recipient:uuid(999)},
+  ] : [];
   let positionLocked = true;
   const makeIncident = (index, id, expired = false) => ({ id: uuid(id), club_id: clubId, call_up_id: pastId, call_up_player_id: entries[index].id, player_id: roster[index].id, player_name: roster[index].ea_id, match_starts_at: past.starts_at, match_timezone: club.timezone, kind: 'late', note: 'Llegó veinte minutos tarde', recorded_by: userId, captain_name: 'Capitán', created_at: new Date(now - (expired ? 8 : 1) * 86400000).toISOString(), expires_at: new Date(now + (expired ? -86400000 : expiresSoon && index === 0 ? 60000 : 6 * 86400000)).toISOString() });
   const incidents = [makeIncident(0, 100), makeIncident(1, 101, true), makeIncident(11, 102)];
@@ -87,10 +91,17 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       assert.ok(body.p_acknowledged_incidents.includes(uuid(100)));
       if (race) assert.ok(body.p_acknowledged_incidents.includes(uuid(103)));
       assert.ok(!body.p_acknowledged_incidents.includes(uuid(102)), 'bench incident must not be acknowledged');
+      draft.published=true;
+      publishedInstructions=Object.entries(draft.instructions??{}).filter(([id])=>document.slots.some(slot=>slot.playerId===id)).map(([id,text],index)=>({id:uuid(120+index),player_id:id,player_name:roster.find(p=>p.id===id).ea_id,body:text,captain_name:'Capitán',published_at:new Date().toISOString(),recipient_linked:Boolean(roster.find(p=>p.id===id).user_id),recipient:roster.find(p=>p.id===id).user_id}));
       result = null;
-    } else if (endpoint === 'save_lineup_draft') {
+    } else if (endpoint === 'read_lineup_instructions') {
+      state.instructionReads++;
+      assert.ok([nextId,pastId].includes(body.p_call_id));
+      result=publishedInstructions.filter(note=>role==='admin'||note.recipient===userId).map(({recipient:_,...note})=>note);
+    } else if (endpoint === 'save_lineup_draft' || endpoint === 'save_lineup_draft_with_instructions') {
+      if(endpoint==='save_lineup_draft_with_instructions')state.instructionSaves.push(body);
       document = body.p_document;
-      draft = { id: uuid(90), ordinal: 1, title: body.p_title, document, revision: (draft?.revision ?? 0) + 1, submittedAt: null, createdBy: 'Capitán', updatedBy: 'Capitán', upVotes: 0, downVotes: 0, published: false };
+      draft = { id: uuid(90), ordinal: 1, title: body.p_title, document, instructions:body.p_instructions??draft?.instructions??{}, revision: (draft?.revision ?? 0) + 1, submittedAt: null, createdBy: 'Capitán', updatedBy: 'Capitán', upVotes: 0, downVotes: 0, published: false };
       result = draft;
     } else if (endpoint === 'read_lineup_access') result = { allowed: true, premium: true, activated: true, remaining: 6 };
     else if (endpoint === 'read_lineup') result = { document, revision: 0, inherited: false };
@@ -106,7 +117,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     else if (endpoint === 'players') result = roster;
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? past : next) : [next];
     else if (endpoint === 'call_up_players') result = entries;
-    else if (['list_lineup_guests', 'call_up_trials', 'call_up_aids', 'club_trials', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences'].includes(endpoint)) result = [];
+    else if (['list_lineup_guests', 'call_up_trials', 'call_up_aids', 'club_trials', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     return route.fulfill({ json: result });
   });
@@ -137,6 +148,64 @@ test('lineup warns only for active starters, lists details and requires renewed 
     await page.getByText('🎉 Once publicado', { exact: true }).waitFor();
     assert.equal(f.publications.length, 2);
   } finally { await f.close(); }
+});
+
+test('captain saves private instructions with the draft and publishes them separately from the XI',async()=>{
+  const f=await fixture();
+  try {
+    const {page}=f;
+    await page.getByRole('button',{name:'Selu, dorsal 1',exact:true}).click();
+    await page.getByRole('button',{name:'Añadir indicaciones',exact:true}).click();
+    await page.getByRole('textbox',{name:'Indicaciones',exact:true}).fill('Saca en corto y busca al pivote.');
+    await page.getByRole('button',{name:'Guardar indicaciones',exact:true}).click();
+    await page.getByText('Tienes cambios sin guardar.',{exact:true}).waitFor();
+    assert.equal(f.state.instructionSaves.length,0);
+    await page.getByRole('button',{name:'Guardar borrador',exact:true}).click();
+    await page.getByRole('button',{name:'Guardar',exact:true}).click();
+    await page.getByText('Borrador guardado.',{exact:true}).waitFor();
+    assert.equal(f.state.instructionSaves[0].p_instructions[uuid(10)],'Saca en corto y busca al pivote.');
+    assert.equal('instructions' in f.state.instructionSaves[0].p_document,false);
+    await page.getByRole('button',{name:'Indicaciones de jugadores',exact:true}).click();
+    await page.getByText('No hay indicaciones publicadas para esta convocatoria.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+    await page.getByRole('button',{name:'Selu, dorsal 1',exact:true}).click();
+    await page.getByRole('button',{name:'Editar indicaciones',exact:true}).click();
+    assert.equal(await page.getByRole('textbox',{name:'Indicaciones',exact:true}).inputValue(),'Saca en corto y busca al pivote.');
+    await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+    await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
+    await page.getByText('Vas a publicar una alineación con jugadores que tienen incidencias.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
+    await page.getByText('🎉 Once publicado',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+    await page.getByRole('button',{name:'Indicaciones de jugadores',exact:true}).click();
+    await page.getByText('Saca en corto y busca al pivote.',{exact:true}).waitFor();
+  } finally {await f.close();}
+});
+
+test('players see only their published instructions and the targeted notification opens them',async()=>{
+  const f=await fixture({role:'player',seedInstructions:true});
+  try {
+    const {page}=f;
+    await page.getByRole('button',{name:'Mis indicaciones',exact:true}).click();
+    await page.getByText('Indicación privada para Selu',{exact:true}).waitFor();
+    assert.equal(await page.getByText('Indicación privada para otro jugador',{exact:true}).count(),0);
+    await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+    await page.goto(`${origin}/notification?club=${clubId}&call=${nextId}&instructions=1&user=${userId}`);
+    await page.waitForURL('**/call-up?*');
+    await page.getByText('Indicación privada para Selu',{exact:true}).waitFor();
+    assert.equal(await page.getByText('Indicación privada para otro jugador',{exact:true}).count(),0);
+  } finally {await f.close();}
+});
+
+test('instruction notification for another account does not open private instructions',async()=>{
+  const f=await fixture({role:'player',seedInstructions:true});
+  try {
+    await f.page.goto(`${origin}/notification?club=${clubId}&call=${nextId}&instructions=1&user=${uuid(999)}`);
+    await f.page.getByText('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.',{exact:true}).waitFor();
+    assert.equal(await f.page.getByText('Indicación privada para Selu',{exact:true}).count(),0);
+    assert.equal(f.state.instructionReads,0);
+  } finally {await f.close();}
 });
 
 test('suggestions select a bench attacker, then swap an experienced midfielder into an empty attacking slot', async () => {
@@ -176,6 +245,7 @@ test('generated poster downloads a full resolution PNG for a custom pivot lineup
   try {
     const {page}=f;
     await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
+    await page.getByText('Vas a publicar una alineación con jugadores que tienen incidencias.',{exact:true}).waitFor();
     await page.getByRole('button',{name:'Publicar 11',exact:true}).last().click();
     await page.getByText('🎉 Once publicado',{exact:true}).waitFor();
     const pending=page.waitForEvent('download');

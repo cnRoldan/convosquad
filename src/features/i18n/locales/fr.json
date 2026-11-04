@@ -904,5 +904,20 @@
   "Ya jugó aquí · {{v0}} convocatorias": "A déjà joué ici · {{v0}} convocations",
   "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "Les titulaires du onze publié sont affichés, quel que soit leur vote. Tu peux ajouter d’autres joueurs de la convocation s’ils ont participé au dernier moment.",
   "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "Aucun onze n’a été publié pour cette convocation. Ajoute manuellement les joueurs qui ont participé pour les évaluer.",
-  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Des joueurs hors du onze ont des évaluations ou incidents enregistrés. Ajoute le joueur à l’évaluation pour les consulter."
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Des joueurs hors du onze ont des évaluations ou incidents enregistrés. Ajoute le joueur à l’évaluation pour les consulter.",
+  "Indicaciones de jugadores": "Consignes des joueurs",
+  "Mis indicaciones": "Mes consignes",
+  "Cargando indicaciones…": "Chargement des consignes…",
+  "No hay indicaciones publicadas para esta convocatoria.": "Aucune consigne publiée pour cette convocation.",
+  "No tienes indicaciones publicadas para esta convocatoria.": "Tu n’as aucune consigne publiée pour cette convocation.",
+  "Indicaciones de {{v0}}": "Consignes de {{v0}}",
+  "Sin cuenta vinculada: la indicación solo está disponible para los capitanes.": "Aucun compte lié : seuls les capitaines peuvent consulter cette consigne.",
+  "Editar indicaciones": "Modifier les consignes",
+  "Añadir indicaciones": "Ajouter des consignes",
+  "Indicaciones para {{v0}}": "Consignes pour {{v0}}",
+  "El jugador recibirá estas indicaciones al publicar el once. Solo él y los capitanes podrán consultarlas.": "Le joueur recevra ces consignes à la publication du onze. Seuls ce joueur et les capitaines pourront les consulter.",
+  "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "Une notification sera envoyée uniquement si le joueur possède un compte lié au club et a activé les notifications.",
+  "Indicaciones": "Consignes",
+  "Deja el texto vacío para quitar la indicación del borrador.": "Laisse le texte vide pour retirer la consigne du brouillon.",
+  "Guardar indicaciones": "Enregistrer les consignes"
 }

@@ -12,10 +12,10 @@ import { getCallUp, respondFromNotification } from '@/features/call-ups/service'
 import { useResource } from '@/hooks/use-resource';
 function CallUpNotificationScreen() {
   useLanguage();
-  const params = useLocalSearchParams<{ club?: string; call?: string; rating?: string; user?: string }>();
+  const params = useLocalSearchParams<{ club?: string; call?: string; rating?: string; user?: string; instructions?: string }>();
   const { session, isDemo, isLoading, exitDemo, isRecovery } = useAuth(); const { availableClubs, ownMemberships, isLoading: loadingClubs, selectClub, error: clubError, refresh } = useClub();
   const { pendingPush, rememberPush, clearPush } = usePendingPush();
-  const incoming = readPushIntent({ type: 'call_up', clubId: params.club, callUpId: params.call, ...(params.rating === '1' ? { kind: 'evaluation_deadline', userId: params.user } : {}) });
+  const incoming = readPushIntent({ type: 'call_up', clubId: params.club, callUpId: params.call, ...(params.rating === '1' ? { kind: 'evaluation_deadline', userId: params.user } : params.instructions === '1' ? { kind: 'lineup_instruction', userId: params.user } : {}) });
   const intent = params.club || params.call ? incoming : pendingPush;
   const member = Boolean(intent && availableClubs.some(club => club.id === intent.clubId));
   const opened = useRef<string | null>(null);
@@ -29,7 +29,7 @@ function CallUpNotificationScreen() {
   const call = useResource(`push-link:${session?.user.id}:${intent?.clubId}:${intent?.callUpId}`, load, Boolean(session && member && !isDemo && !isRecovery));
   const destination = intent ? notificationDestination(intent, Boolean(session && !isDemo), availableClubs, call.data) : 'unavailable';
   const response = intent?.response;
-  const wrongAccount = Boolean(session && ((response && response.userId !== session.user.id) || (intent?.rating && intent.userId !== session.user.id)));
+  const wrongAccount = Boolean(session && ((response && response.userId !== session.user.id) || ((intent?.rating || intent?.lineupInstructions) && intent.userId !== session.user.id)));
   const ratingDenied = Boolean(intent?.rating && !ownMemberships.some(member => member.clubId === clubId && member.role === 'admin'));
   const closed = Boolean(response && call.data && call.data.status !== 'open');
   const actionKey = `${session?.user.id}:${response?.actionId}`;
@@ -46,14 +46,14 @@ function CallUpNotificationScreen() {
       }).catch(error => { setActionResult({ key: actionKey, text: callUpErrorMessage(error), error: true }); });
       return;
     }
-    selectClub(clubId); clearPush(); router.replace(intent?.lineupReview ? { pathname: '/lineup', params: { id: callUpId, draft: intent.draftId } } : { pathname: intent?.rating ? '/call-up-ratings' : '/call-up', params: { id: callUpId } });
-  }, [clubId, callUpId, destination, isRecovery, selectClub, clearPush, session?.user.id, intent?.response, intent?.rating, intent?.lineupReview, intent?.draftId, call.data?.status, wrongAccount, ratingDenied, closed, actionKey]);
+    selectClub(clubId); clearPush(); router.replace(intent?.lineupReview ? { pathname: '/lineup', params: { id: callUpId, draft: intent.draftId } } : { pathname: intent?.rating ? '/call-up-ratings' : '/call-up', params: { id: callUpId, ...(intent?.lineupInstructions ? { instructions: '1' } : {}) } });
+  }, [clubId, callUpId, destination, isRecovery, selectClub, clearPush, session?.user.id, intent?.response, intent?.rating, intent?.lineupReview, intent?.draftId, intent?.lineupInstructions, call.data?.status, wrongAccount, ratingDenied, closed, actionKey]);
   if (!result && (isLoading || loadingClubs || call.isLoading)) return <LoadingScreen label={t("Comprobando acceso a la convocatoria…")} />;
   if (clubError) return <Screen><Message error>{t("No se pudo comprobar el club. Comprueba tu conexión.")}</Message><Button label={t("Reintentar")} onPress={refresh} /></Screen>;
   return <Screen>
     <Heading title={t("Aviso de convocatoria")} />
-    {result ? <><Message error={result.error}>{result.text}</Message><Button label={t("Abrir convocatoria")} onPress={() => { if (clubId && callUpId) { selectClub(clubId); clearPush(); router.replace({ pathname: '/call-up', params: { id: callUpId } }); } }} /></>
-      : wrongAccount ? <Message error>{intent?.rating ? t('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.') : t("Este aviso pertenece a otra cuenta. Abre la convocatoria con tu cuenta para responder.")}</Message>
+    {result ? <><Message error={result.error}>{result.text}</Message><Button label={t("Abrir convocatoria")} onPress={() => { if (clubId && callUpId) { selectClub(clubId); clearPush(); router.replace({ pathname: '/call-up', params: { id: callUpId, ...(intent?.lineupInstructions ? { instructions: '1' } : {}) } }); } }} /></>
+      : wrongAccount ? <Message error>{(intent?.rating || intent?.lineupInstructions) ? t('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.') : t("Este aviso pertenece a otra cuenta. Abre la convocatoria con tu cuenta para responder.")}</Message>
       : intent?.rating && session && ratingDenied ? <Message error>{t('Solo los capitanes de este club pueden gestionar las valoraciones.')}</Message>
       : closed ? <Message>{t("La votación está cerrada. No puedes modificar tu voto.")}</Message>
       : response && destination === 'call-up' ? <Body>{t("Guardando tu respuesta…")}</Body>

@@ -866,6 +866,31 @@ export type Database = {
           { foreignKeyName: 'join_requests_user_id_fkey'; columns: ["user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      lineup_draft_instructions: {
+        Row: {
+          draft_id: string;
+          player_id: string;
+          body: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          draft_id: string;
+          player_id: string;
+          body: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          draft_id?: string;
+          player_id?: string;
+          body?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [
+          { foreignKeyName: 'lineup_draft_instructions_draft_id_fkey'; columns: ["draft_id"]; isOneToOne: false; referencedRelation: 'call_up_lineup_drafts'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_draft_instructions_player_id_fkey'; columns: ["player_id"]; isOneToOne: false; referencedRelation: 'players'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_draft_instructions_updated_by_fkey'; columns: ["updated_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
       lineup_guest_calls: {
         Row: {
           guest_id: string;
@@ -930,6 +955,47 @@ export type Database = {
           { foreignKeyName: 'lineup_guests_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
           { foreignKeyName: 'lineup_guests_source_trial_id_fkey'; columns: ["source_trial_id"]; isOneToOne: false; referencedRelation: 'club_trials'; referencedColumns: ["id"]; },
           { foreignKeyName: 'lineup_guests_trial_id_fkey'; columns: ["trial_id"]; isOneToOne: false; referencedRelation: 'call_up_trials'; referencedColumns: ["id"]; },
+        ];
+      };
+      lineup_instructions: {
+        Row: {
+          id: string;
+          call_up_id: string;
+          club_id: string;
+          player_id: string;
+          recipient_user_id: string | null;
+          player_name: string;
+          body: string;
+          captain_name: string;
+          published_at: string;
+        };
+        Insert: {
+          id?: string;
+          call_up_id: string;
+          club_id: string;
+          player_id: string;
+          recipient_user_id?: string | null;
+          player_name: string;
+          body: string;
+          captain_name: string;
+          published_at?: string;
+        };
+        Update: {
+          id?: string;
+          call_up_id?: string;
+          club_id?: string;
+          player_id?: string;
+          recipient_user_id?: string | null;
+          player_name?: string;
+          body?: string;
+          captain_name?: string;
+          published_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'lineup_instructions_call_up_id_fkey'; columns: ["call_up_id"]; isOneToOne: false; referencedRelation: 'call_ups'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_instructions_club_id_fkey'; columns: ["club_id"]; isOneToOne: false; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_instructions_player_id_fkey'; columns: ["player_id"]; isOneToOne: false; referencedRelation: 'players'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'lineup_instructions_recipient_user_id_fkey'; columns: ["recipient_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
       notification_preferences: {
@@ -1240,6 +1306,7 @@ export type Database = {
           club_name_snapshot: string | null;
           lineup_draft_id: string | null;
           lineup_draft_title: string | null;
+          lineup_instruction_id: string | null;
         };
         Insert: {
           id?: string;
@@ -1261,6 +1328,7 @@ export type Database = {
           club_name_snapshot?: string | null;
           lineup_draft_id?: string | null;
           lineup_draft_title?: string | null;
+          lineup_instruction_id?: string | null;
         };
         Update: {
           id?: string;
@@ -1282,6 +1350,7 @@ export type Database = {
           club_name_snapshot?: string | null;
           lineup_draft_id?: string | null;
           lineup_draft_title?: string | null;
+          lineup_instruction_id?: string | null;
         };
         Relationships: [
           { foreignKeyName: 'push_events_actor_user_id_fkey'; columns: ["actor_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
@@ -1681,6 +1750,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      read_lineup_instructions: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: { id: string; player_id: string; player_name: string; body: string; captain_name: string; published_at: string; recipient_linked: boolean }[];
+      };
       read_lineup_preference: {
         Args: {
           p_club_id: string;
@@ -1856,6 +1931,19 @@ export type Database = {
           p_document: Json;
           p_submit?: boolean;
           p_suggested_changes?: number;
+        };
+        Returns: Json;
+      };
+      save_lineup_draft_with_instructions: {
+        Args: {
+          p_call_id: string;
+          p_draft_id: string;
+          p_revision: number;
+          p_title: string;
+          p_document: Json;
+          p_submit?: boolean;
+          p_suggested_changes?: number;
+          p_instructions?: Json;
         };
         Returns: Json;
       };

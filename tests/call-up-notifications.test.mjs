@@ -58,3 +58,18 @@ test('worker distingue votos y avisos pendientes, añade acciones y no reenvía 
   const notice=pushMessage({clubId,callUpId,eventKey:'notice',kind:'reminder'},'ExpoPushToken[fixture]',userId);
   assert.match(notice.title,/Último aviso/);assert.equal(notice.categoryId,availabilityCategory);
 });
+
+test('private lineup instructions use a targeted read-only notice and survive intent restoration',()=>{
+ for(const language of ['es','en','de','fr']){
+  const message=pushMessage({clubId,callUpId,eventKey:'instruction:one',kind:'lineup_instruction',actorEaId:'CONFIDENTIAL_BODY'},'ExpoPushToken[fixture]',userId,false,language);
+  assert.equal(message.data.kind,'lineup_instruction');assert.equal(message.data.userId,userId);
+  assert.equal(message.categoryId,undefined);assert.ok(!JSON.stringify(message).includes('CONFIDENTIAL_BODY'));
+  const parsed=readPushIntent(message.data);
+  assert.deepEqual(parsed,{clubId,callUpId,userId,lineupInstructions:true});
+  assert.deepEqual(readNotificationResponse(message.data,'default','notification','default'),parsed);
+  assert.deepEqual(readPushIntent({type:'call_up',...parsed}),parsed);
+  assert.equal(readPushIntent({...message.data,userId:'invalid'}),null);
+  assert.equal(readPushIntent({...message.data,userId:undefined}),null);
+  assert.equal(readNotificationResponse(message.data,notificationActions[0].identifier,'notification','default'),null);
+ }
+});

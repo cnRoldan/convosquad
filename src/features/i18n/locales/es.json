@@ -904,5 +904,20 @@
   "Ya jugó aquí · {{v0}} convocatorias": "Ya jugó aquí · {{v0}} convocatorias",
   "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.",
   "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.",
-  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración."
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.",
+  "Indicaciones de jugadores": "Indicaciones de jugadores",
+  "Mis indicaciones": "Mis indicaciones",
+  "Cargando indicaciones…": "Cargando indicaciones…",
+  "No hay indicaciones publicadas para esta convocatoria.": "No hay indicaciones publicadas para esta convocatoria.",
+  "No tienes indicaciones publicadas para esta convocatoria.": "No tienes indicaciones publicadas para esta convocatoria.",
+  "Indicaciones de {{v0}}": "Indicaciones de {{v0}}",
+  "Sin cuenta vinculada: la indicación solo está disponible para los capitanes.": "Sin cuenta vinculada: la indicación solo está disponible para los capitanes.",
+  "Editar indicaciones": "Editar indicaciones",
+  "Añadir indicaciones": "Añadir indicaciones",
+  "Indicaciones para {{v0}}": "Indicaciones para {{v0}}",
+  "El jugador recibirá estas indicaciones al publicar el once. Solo él y los capitanes podrán consultarlas.": "El jugador recibirá estas indicaciones al publicar el once. Solo él y los capitanes podrán consultarlas.",
+  "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.",
+  "Indicaciones": "Indicaciones",
+  "Deja el texto vacío para quitar la indicación del borrador.": "Deja el texto vacío para quitar la indicación del borrador.",
+  "Guardar indicaciones": "Guardar indicaciones"
 }

@@ -904,5 +904,20 @@
   "Ya jugó aquí · {{v0}} convocatorias": "Previously played here · {{v0}} call-ups",
   "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "The published starting XI is shown regardless of availability votes. You can add other players from the call-up if they took part at the last minute.",
   "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "No starting XI was published for this call-up. Manually add the players who took part to rate them.",
-  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Some players outside the starting XI have saved ratings or incidents. Add a player to the rating list to view them."
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Some players outside the starting XI have saved ratings or incidents. Add a player to the rating list to view them.",
+  "Indicaciones de jugadores": "Player instructions",
+  "Mis indicaciones": "My instructions",
+  "Cargando indicaciones…": "Loading instructions…",
+  "No hay indicaciones publicadas para esta convocatoria.": "There are no published instructions for this call-up.",
+  "No tienes indicaciones publicadas para esta convocatoria.": "You have no published instructions for this call-up.",
+  "Indicaciones de {{v0}}": "Instructions from {{v0}}",
+  "Sin cuenta vinculada: la indicación solo está disponible para los capitanes.": "No linked account: this instruction is only available to captains.",
+  "Editar indicaciones": "Edit instructions",
+  "Añadir indicaciones": "Add instructions",
+  "Indicaciones para {{v0}}": "Instructions for {{v0}}",
+  "El jugador recibirá estas indicaciones al publicar el once. Solo él y los capitanes podrán consultarlas.": "The player will receive these instructions when the starting XI is published. Only this player and the captains can read them.",
+  "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "A notification will only be sent if the player has an account linked to the club and notifications enabled.",
+  "Indicaciones": "Instructions",
+  "Deja el texto vacío para quitar la indicación del borrador.": "Leave the text empty to remove the instruction from the draft.",
+  "Guardar indicaciones": "Save instructions"
 }

@@ -1,0 +1,100 @@
+import assert from 'node:assert/strict';
+import { before, after, test } from 'node:test';
+import { createTestDatabase, asUser } from '../../scripts/database-test-utils.mjs';
+import { preset } from '../../src/features/lineups/model.ts';
+const uid=n=>`95000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const captain=uid(1),a=uid(2),b=uid(3),outsider=uid(4);
+let db,club,call,players,document,draft,counter=0;
+const query=(user,sql,args=[])=>asUser(db,user,tx=>tx.query(sql,args));
+const read=async user=>(await query(user,'select * from public.read_lineup_instructions($1)',[call.id])).rows;
+const save=async(notes,previous=draft,doc=document)=>(await query(captain,'select public.save_lineup_draft_with_instructions($1,$2,$3,$4,$5,false,0,$6) value',[call.id,previous?.id??null,previous?.revision??0,previous?.title??`Instructions draft ${++counter}`,doc,notes])).rows[0].value;
+const publish=()=>query(captain,'select public.publish_lineup_draft($1)',[draft.id]);
+const claim=id=>db.transaction(async tx=>{await tx.exec('set local role service_role');return (await tx.query('select * from public.claim_push_deliveries($1)',[id])).rows;});
+before(async()=>{
+ db=await createTestDatabase();
+ for(const [id,name] of [[captain,'InstructionsCaptain'],[a,'InstructionsA'],[b,'InstructionsB'],[outsider,'InstructionsOutsider']]) await db.query('insert into auth.users(id,raw_user_meta_data) values($1,$2)',[id,{username:name}]);
+ club=(await query(captain,"select * from public.create_club('Private instructions')")).rows[0];
+ for(const user of [a,b])await db.query("insert into public.club_members(club_id,user_id,role) values($1,$2,'player')",[club.id,user]);
+ players=[];
+ for(let n=0;n<12;n++) players.push((await query(captain,"select * from public.add_or_restore_player(p_club_id=>$1,p_ea_id=>$2,p_category=>'midfielders')",[club.id,`InstructionsPlayer${n}`])).rows[0]);
+ for(const [index,user] of [[0,captain],[1,a],[2,b]])await db.query('update public.players set user_id=$2 where id=$1',[players[index].id,user]);
+ call=(await query(captain,"select * from public.create_call_up($1,'2035-11-01T20:00:00Z','open')",[club.id])).rows[0];
+ await query(captain,'select public.activate_lineup_access($1)',[call.id]);
+ document={formation:'4-3-3',slots:preset('4-3-3').map(s=>({...s,playerId:players[s.id].id})),bench:[]};
+ for(const [index,user] of [captain,a,b].entries())await query(user,'select public.register_push_device($1,$2,\'ios\')',[uid(100+index),`ExpoPushToken[Instructions${index}]`]);
+});
+after(async()=>db?.close());
+test('draft instructions are captain-only and never appear in the public lineup document',async()=>{
+ draft=await save({[players[1].id]:'Stay wide A',[players[2].id]:'Press high B',[players[3].id]:'No linked account'},null);
+ assert.equal(draft.instructions[players[1].id],'Stay wide A');
+ assert.deepEqual(await read(a),[]);
+ const list=(await query(captain,'select public.list_lineup_drafts($1) value',[call.id])).rows[0].value;
+ assert.equal(list[0].instructions[players[2].id],'Press high B');
+ await assert.rejects(query(a,'select public.list_lineup_drafts($1)',[call.id]),{code:'42501'});
+ await assert.rejects(query(a,'select * from public.lineup_draft_instructions'),{code:'42501'});
+ assert.equal((await db.query("select count(*) from public.push_events where kind='lineup_instruction'")).rows[0].count,0);
+});
+test('publication delivers only the personal instruction; captains see all; unlinked players generate no push',async()=>{
+ await publish();
+ assert.deepEqual((await read(a)).map(i=>i.body),['Stay wide A']);
+ assert.deepEqual((await read(b)).map(i=>i.body),['Press high B']);
+ assert.equal((await read(captain)).length,3);
+ assert.equal((await read(captain)).find(i=>i.player_id===players[3].id).recipient_linked,false);
+ await assert.rejects(read(outsider),{code:'42501'});
+ await assert.rejects(query(a,'select * from public.lineup_instructions'),{code:'42501'});
+ const publicLineup=(await query(a,'select public.read_lineup($1) value',[call.id])).rows[0].value;
+ assert.ok(!JSON.stringify(publicLineup).includes('Stay wide'));
+ const events=(await db.query("select * from public.push_events where kind='lineup_instruction'")).rows;
+ assert.deepEqual(new Set(events.map(e=>e.recipient_user_id)),new Set([a,b]));
+ for(const event of events){
+  const deliveries=(await db.query('select * from public.push_deliveries where event_id=$1',[event.id])).rows;
+  assert.deepEqual(deliveries.map(d=>d.user_id),[event.recipient_user_id]);
+  assert.equal(deliveries[0].can_vote,false);
+ }
+});
+test('unchanged republication does not duplicate notices; changed text invalidates queued older notices',async()=>{
+ await publish();
+ assert.equal(Number((await db.query("select count(*) from public.push_events where kind='lineup_instruction'")).rows[0].count),2);
+ const old=(await db.query("select id from public.push_events where kind='lineup_instruction' and recipient_user_id=$1",[a])).rows[0];
+ draft=await save({[players[1].id]:'New instructions A',[players[2].id]:'Press high B'});
+ await publish();
+ assert.deepEqual(await claim(old.id),[]);
+ assert.equal((await db.query('select state from public.push_deliveries where event_id=$1',[old.id])).rows[0].state,'skipped');
+ const current=(await read(a))[0];
+ const event=(await db.query('select id from public.push_events where lineup_instruction_id=$1',[current.id])).rows[0];
+ assert.deepEqual((await claim(event.id)).map(d=>d.user_id),[a]);
+ assert.equal((await read(captain)).length,2);
+});
+test('drafts stay separate and changing the published XI removes indications for benched players',async()=>{
+ const bench={...document,slots:document.slots.map(s=>s.id===1?{...s,playerId:players[3].id}:s.id===3?{...s,playerId:players[1].id}:s)};
+ // The original note follows the player identity when he changes position.
+ draft=await save({[players[1].id]:'Follow A'},null,bench);
+ await publish();assert.deepEqual((await read(a)).map(i=>i.body),['Follow A']);assert.deepEqual(await read(b),[]);
+ assert.equal((await query(captain,'select public.list_lineup_drafts($1) value',[call.id])).rows[0].value.length,2);
+ const withoutA={...document,slots:document.slots.map(s=>s.id===1?{...s,playerId:players[11].id}:s),bench:[players[1].id]};
+ draft=await save({[players[1].id]:'Follow A'},draft,withoutA);
+ await publish();assert.deepEqual(await read(a),[]);
+});
+test('validation is atomic and legacy saves preserve private notes',async()=>{
+ const notes={[players[0].id]:'Captain instructions'};
+ draft=await save(notes);
+ await assert.rejects(save({[players[0].id]:'x'.repeat(1001)}),{code:'22023'});
+ await assert.rejects(save({[uid(999)]:'Foreign player'}),{code:'22023'});
+ await assert.rejects(query(a,'select public.save_lineup_draft_with_instructions($1,null,0,\'Forged\',$2,false,0,$3)',[call.id,document,notes]),{code:'42501'});
+ const legacy=(await query(captain,'select public.save_lineup_draft($1,$2,$3,$4,$5) value',[call.id,draft.id,draft.revision,draft.title,document])).rows[0].value;
+ draft={...legacy,instructions:notes};
+ const list=(await query(captain,'select public.list_lineup_drafts($1) value',[call.id])).rows[0].value;
+ assert.equal(list.find(d=>d.id===draft.id).instructions[players[0].id],'Captain instructions');
+});
+test('captains receive their own assigned instructions; revoked membership and ended calls skip pending deliveries',async()=>{
+ await publish();
+ const self=(await read(captain)).find(i=>i.player_id===players[0].id);
+ const event=(await db.query('select id from public.push_events where lineup_instruction_id=$1',[self.id])).rows[0];
+ assert.equal((await db.query('select user_id from public.push_deliveries where event_id=$1',[event.id])).rows[0].user_id,captain);
+ await db.query("update public.call_ups set starts_at=clock_timestamp()-interval '2 hours',ends_at=clock_timestamp()-interval '1 hour' where id=$1",[call.id]);
+ assert.deepEqual(await claim(event.id),[]);
+ await assert.rejects(publish(),{code:'42501'});
+ await assert.rejects(query(captain,'select public.claim_push_deliveries($1)',[event.id]),{code:'42501'});
+ await db.query('update public.club_members set is_active=false where club_id=$1 and user_id=$2',[club.id,a]);
+ await assert.rejects(read(a),{code:'42501'});
+});

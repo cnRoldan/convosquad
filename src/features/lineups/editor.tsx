@@ -6,6 +6,7 @@ import { LineupIncidentsModal } from '@/features/incidents/components';
 import { t } from '@/features/i18n/runtime';
 import { useLeaveGuard } from '@/components/navigation-leave-guard';
 import { goalkeeperNumberColor } from './kit-colors';
+import { LineupInstructionsButton } from './instructions';
 import { useResource } from '@/hooks/use-resource';
 import { suggestPlayers } from './suggestions';
 import { lineupPositionExperience } from './service';
@@ -62,6 +63,10 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const selectedIncidents = lineupIncidents(document, currentIncidents, incidentClock);
   const currentPublishIncidents = activeIncidents(publishIncidents, incidentClock);
   const [revision, setRevision] = useState(0);
+  const [instructions, setInstructions] = useState<Record<string, string>>({});
+  const baselineInstructions = useRef<Record<string, string>>({});
+  const [instructionTarget, setInstructionTarget] = useState<string | null>(null);
+  const [instructionText, setInstructionText] = useState('');
   const [slot, setSlot] = useState<number | null>(null);
   const loadExperience = useCallback(() => lineupPositionExperience(callId), [callId]);
   const experience = useResource(`lineup-experience:${clubId}:${callId}`, loadExperience, captain && slot !== null);
@@ -108,6 +113,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   }, [leaveGuard, captain, dirty]));
   function discardAndLeave() {
     setDocument(baseline.current);
+    setInstructions(baselineInstructions.current);
     setHistory([]); setDirty(false); setLayoutChanged(false);
     setSelectedPreset(presetFor(baseline.current, preference));
     leaveGuard.proceed();
@@ -139,13 +145,15 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       const loadedDocument = requested?.document ?? data.document;
       const preset = presetFor(loadedDocument, data.preference);
       baseline.current = loadedDocument;
+      const notes = requested?.instructions ?? rows.find(row => row.published)?.instructions ?? {};
+      baselineInstructions.current = notes; setInstructions(notes);
       setIncidents(data.incidents);
       setDocument(loadedDocument); setHistory([]); setCandidates(data.candidates); setPreference(data.preference); setPlayerColor(data.playerColor); setJerseyColor(data.jerseyColor);setGoalkeeperColor(data.goalkeeperColor); setSelectedPreset(preset); setRevision(data.revision); setMessage('');
       setActive(data.active);setPositionLocked(data.positionLocked);setDirty(false);setLayoutChanged(false);setConflict(false);
       setDrafts(rows); setActiveDraftId(requested?.id ?? null);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
-  }, [clubId, callId, captain, setActiveDraftId]);
+  }, [clubId, callId, captain, setActiveDraftId, setDirty]);
   useEffect(() => { const timer=setTimeout(()=>void reload(),0);return ()=>clearTimeout(timer); }, [reload]);
   useEffect(() => { void listClubMembers(clubId).then(rows => setCaptainCount(rows.filter(row => row.role === 'admin' && row.is_active).length)).catch(() => undefined); }, [clubId]);
   useEffect(()=>{
@@ -162,7 +170,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         if(dirty){
           if(selectedId ? !selected || selected.revision !== activeDraft?.revision : data.revision!==revision){setConflict(true);setMessage('Otro capitán ha cambiado el once. Recarga antes de continuar.');}
           else setDocument(current=>current?reconcileLineup(current,data.candidates):current);
-        }else{baseline.current=refreshedDocument;const preset=presetFor(refreshedDocument,data.preference);setDocument(refreshedDocument);setActiveDraftId(selected?.id ?? null);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setGoalkeeperColor(data.goalkeeperColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
+        }else{const notes=selected?.instructions??rows.find(row=>row.published)?.instructions??{};baselineInstructions.current=notes;setInstructions(notes);baseline.current=refreshedDocument;const preset=presetFor(refreshedDocument,data.preference);setDocument(refreshedDocument);setActiveDraftId(selected?.id ?? null);setHistory([]);setRevision(data.revision);setPreference(data.preference);setPlayerColor(data.playerColor);setJerseyColor(data.jerseyColor);setGoalkeeperColor(data.goalkeeperColor);setPositionLocked(data.positionLocked);setSelectedPreset(preset);setLayoutChanged(false);}
       }).catch(()=>undefined);
     },10000);
     return ()=>{live=false;clearInterval(timer);};
@@ -175,7 +183,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     const sendsExisting = mode === 'send' && Boolean(activeDraft && !activeDraft.submittedAt);
     if (mode === 'send' && !sendsExisting && drafts.some(draft => draft.title.trim().toLocaleLowerCase() === draftTitle.trim().toLocaleLowerCase())) { setMessage('Ya existe un borrador con ese nombre.'); return; }
     setBusy(true);
-    try { const saved = await saveLineupDraft(callId, saveAsNew || (mode === 'send' && !sendsExisting) ? null : activeDraft, draftTitle.trim(), document, mode !== 'save', mode === 'suggest' && activeDraft ? countLineupChanges(activeDraft.document, document) : 0); setActiveDraftId(saved.id); setDraftMode(null); setDirty(false); await reload(); setMessage(mode === 'send' ? (sendsExisting ? 'Borrador enviado para valoración.' : 'Nuevo borrador enviado para valoración.') : mode === 'suggest' ? 'Cambios enviados a valoración.' : 'Borrador guardado.'); if (leaving) leaveGuard.proceed(); }
+    try { const saved = await saveLineupDraft(callId, saveAsNew || (mode === 'send' && !sendsExisting) ? null : activeDraft, draftTitle.trim(), document, mode !== 'save', mode === 'suggest' && activeDraft ? countLineupChanges(activeDraft.document, document) : 0, instructions); setActiveDraftId(saved.id); setDraftMode(null); setDirty(false); await reload(); setMessage(mode === 'send' ? (sendsExisting ? 'Borrador enviado para valoración.' : 'Nuevo borrador enviado para valoración.') : mode === 'suggest' ? 'Cambios enviados a valoración.' : 'Borrador guardado.'); if (leaving) leaveGuard.proceed(); }
     catch { setMessage('No se pudo guardar el borrador.'); }
     finally { setBusy(false); }
   }
@@ -194,7 +202,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     if (!document || busy) return;
     setBusy(true); setPublishError('');
     try {
-      const saved = !activeDraft || dirty ? await saveLineupDraft(callId, activeDraft, activeDraft?.title ?? `Borrador #${drafts.length + 1}`, document) : activeDraft;
+      const saved = !activeDraft || dirty ? await saveLineupDraft(callId, activeDraft, activeDraft?.title ?? `Borrador #${drafts.length + 1}`, document, false, 0, instructions) : activeDraft;
       // Preserve the new draft even if publication requires another confirmation.
       setActiveDraftId(saved.id);
       await publishLineupDraft(saved.id, activeIncidents(publishIncidents, Date.now()).map(incident => incident.id));
@@ -289,13 +297,14 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         <IconButton icon="undo" label="Deshacer último cambio" disabled={!editable || history.length === 0 || dragging} onPress={undo} />
         <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setCustomGoalkeeperColor(goalkeeperColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
       </View> : null}
-      {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); baseline.current = draft.document; setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
+      {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); baseline.current = draft.document; baselineInstructions.current = draft.instructions ?? {}; setInstructions(draft.instructions ?? {}); setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
       <View testID="lineup-workspace" style={{ flexDirection: tablet ? 'row' : 'column', alignItems: 'stretch', gap: 20 }}>
       <View ref={shareImageRef} collapsable={false} style={[tablet ? { flex: 1, minWidth: 0 } : undefined, sharing ? { backgroundColor: '#0B1210', padding: 16, gap: 12 } : undefined]}>
         {sharing ? <LineupShareCard clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} goalkeeperColor={goalkeeperColor} /> : <LineupPitch incidentPlayerIds={incidentPlayerIds} goalkeeperColor={goalkeeperColor} playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}
       </View>
       <View testID="lineup-controls" style={{ gap: 20, ...(tablet ? { width: 280 } : {}) }}>
+      <LineupInstructionsButton callId={callId} captain={captain} />
       {captain && selectedIncidents.length ? <Button secondary label="Consultar incidencias de jugadores" onPress={() => setShowIncidents(true)} /> : null}
       {captain ? <Button secondary label="Histórico de incidencias" onPress={() => router.push('/incident-history')} /> : null}
       <Card title="Banquillo">
@@ -309,10 +318,11 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       </View>
     </> : !busy ? <Body>El capitán todavía está preparando el 11.</Body> : null}
     {adding && document ? <AddLineupPlayer incidentPlayerIds={incidentPlayerIds} playerColor={playerColor} jerseyColor={jerseyColor} candidates={candidates.filter(p=>!document.bench.includes(p.id)&&!document.slots.some(s=>s.playerId===p.id))} select={include} create={create} close={()=>setAdding(false)} /> : null}
-    <Modal transparent visible={slot !== null} onRequestClose={() => setSlot(null)}>
+    <Modal transparent visible={slot !== null && instructionTarget === null} onRequestClose={() => setSlot(null)}>
       <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><ScrollView style={{ maxHeight: '80%' }}><Card title="Cambiar jugador">
         {document && slot !== null ? <>
           {document.slots.find(s=>s.id===slot)?.playerId ? <Button label="Mandar al banquillo" disabled={!editable} onPress={() => { change(sendToBench(document, slot)); setSlot(null); }} />:null}
+          {(() => { const id = document.slots.find(item => item.id === slot)?.playerId; const player = candidates.find(item => item.id === id); return id && player?.category ? <Button secondary label={t(instructions[id] ? 'Editar indicaciones' : 'Añadir indicaciones')} disabled={!editable} onPress={() => { setInstructionTarget(id); setInstructionText(instructions[id] ?? ''); }} /> : null; })()}
           <Body>Banquillo</Body>
           <ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 4, paddingVertical: 8 }} accessibilityLabel="Elegir jugador del banquillo">
             {document.bench.map(id => <Pressable accessibilityRole="button" accessibilityLabel={`Elegir ${candidates.find(p => p.id === id)?.name ?? 'jugador'}`} disabled={!editable} key={id} onPress={() => { change(assignPlayer(document, slot, id)); setSlot(null); }}><PlayerToken compact warning={incidentPlayerIds.has(id)} color={playerColor} jerseyColor={jerseyColor} player={candidates.find(p => p.id === id)} /></Pressable>)}
@@ -333,6 +343,24 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
           </ScrollView>
         </> : null}
         <Button label="Cerrar" onPress={() => setSlot(null)} />
+      </Card></ScrollView></View>
+    </Modal>
+    <Modal transparent visible={instructionTarget !== null} onRequestClose={() => setInstructionTarget(null)}>
+      <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0,0,0,0.75)' }}><ScrollView style={{ maxHeight: '80%' }}><Card title={t('Indicaciones para {{v0}}', { v0: candidates.find(player => player.id === instructionTarget)?.name ?? '' })}>
+        <Body>{t('El jugador recibirá estas indicaciones al publicar el once. Solo él y los capitanes podrán consultarlas.')}</Body>
+        <Body>{t('El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.')}</Body>
+        <Field label={t('Indicaciones')} multiline maxLength={1000} style={{ minHeight: 140 }} value={instructionText} onChangeText={setInstructionText} />
+        <Body>{t('Deja el texto vacío para quitar la indicación del borrador.')}</Body>
+        <Button label={t('Guardar indicaciones')} disabled={!editable} onPress={() => {
+          if (!instructionTarget) return;
+          const text = instructionText.trim();
+          if ((instructions[instructionTarget] ?? '') !== text) {
+            setInstructions(current => { const next = { ...current }; if (text) next[instructionTarget] = text; else delete next[instructionTarget]; return next; });
+            setDirty(true);
+          }
+          setInstructionTarget(null); setSlot(null);
+        }} />
+        <Button secondary label={t('Cancelar')} onPress={() => setInstructionTarget(null)} />
       </Card></ScrollView></View>
     </Modal>
     <Modal transparent visible={benchPlayer !== null} onRequestClose={() => setBenchPlayer(null)}>

@@ -904,5 +904,20 @@
   "Ya jugó aquí · {{v0}} convocatorias": "Hat hier bereits gespielt · {{v0}} Spieltagskader",
   "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "Die veröffentlichte Startelf wird unabhängig von den Verfügbarkeitsmeldungen angezeigt. Weitere Spieler des Spieltagskaders können bei kurzfristiger Teilnahme hinzugefügt werden.",
   "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "Für diesen Spieltagskader wurde keine Startelf veröffentlicht. Füge die Spieler, die teilgenommen haben, manuell hinzu, um sie zu bewerten.",
-  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Für Spieler außerhalb der Startelf sind Bewertungen oder Vorfälle gespeichert. Füge den Spieler zur Bewertung hinzu, um sie einzusehen."
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Für Spieler außerhalb der Startelf sind Bewertungen oder Vorfälle gespeichert. Füge den Spieler zur Bewertung hinzu, um sie einzusehen.",
+  "Indicaciones de jugadores": "Spieleranweisungen",
+  "Mis indicaciones": "Meine Anweisungen",
+  "Cargando indicaciones…": "Anweisungen werden geladen…",
+  "No hay indicaciones publicadas para esta convocatoria.": "Für diesen Spieltagskader sind keine Anweisungen veröffentlicht.",
+  "No tienes indicaciones publicadas para esta convocatoria.": "Für diesen Spieltagskader hast du keine veröffentlichten Anweisungen.",
+  "Indicaciones de {{v0}}": "Anweisungen von {{v0}}",
+  "Sin cuenta vinculada: la indicación solo está disponible para los capitanes.": "Kein verknüpftes Konto: Nur Kapitäne können diese Anweisung lesen.",
+  "Editar indicaciones": "Anweisungen bearbeiten",
+  "Añadir indicaciones": "Anweisungen hinzufügen",
+  "Indicaciones para {{v0}}": "Anweisungen für {{v0}}",
+  "El jugador recibirá estas indicaciones al publicar el once. Solo él y los capitanes podrán consultarlas.": "Der Spieler erhält diese Anweisungen bei der Veröffentlichung der Startelf. Nur dieser Spieler und die Kapitäne können sie lesen.",
+  "El aviso solo se enviará si el jugador tiene una cuenta vinculada al club y las notificaciones activadas.": "Eine Benachrichtigung wird nur gesendet, wenn der Spieler ein mit dem Verein verknüpftes Konto und aktivierte Benachrichtigungen hat.",
+  "Indicaciones": "Anweisungen",
+  "Deja el texto vacío para quitar la indicación del borrador.": "Lasse den Text leer, um die Anweisung aus dem Entwurf zu entfernen.",
+  "Guardar indicaciones": "Anweisungen speichern"
 }
