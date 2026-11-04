@@ -901,5 +901,8 @@
   "Elegir {{v0}}": "Elegir {{v0}}",
   "Posición de plantilla": "Posición de plantilla",
   "Ya jugó aquí · 1 convocatoria": "Ya jugó aquí · 1 convocatoria",
-  "Ya jugó aquí · {{v0}} convocatorias": "Ya jugó aquí · {{v0}} convocatorias"
+  "Ya jugó aquí · {{v0}} convocatorias": "Ya jugó aquí · {{v0}} convocatorias",
+  "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.",
+  "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.",
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración."
 }

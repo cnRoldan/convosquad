@@ -901,5 +901,8 @@
   "Elegir {{v0}}": "Choose {{v0}}",
   "Posición de plantilla": "Roster position",
   "Ya jugó aquí · 1 convocatoria": "Previously played here · 1 call-up",
-  "Ya jugó aquí · {{v0}} convocatorias": "Previously played here · {{v0}} call-ups"
+  "Ya jugó aquí · {{v0}} convocatorias": "Previously played here · {{v0}} call-ups",
+  "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "The published starting XI is shown regardless of availability votes. You can add other players from the call-up if they took part at the last minute.",
+  "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "No starting XI was published for this call-up. Manually add the players who took part to rate them.",
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Some players outside the starting XI have saved ratings or incidents. Add a player to the rating list to view them."
 }

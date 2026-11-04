@@ -1687,6 +1687,12 @@ export type Database = {
         };
         Returns: Json;
       };
+      read_rating_lineup: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
+      };
       record_player_incident: {
         Args: {
           p_call_up_id: string;

@@ -901,5 +901,8 @@
   "Elegir {{v0}}": "Choisir {{v0}}",
   "Posición de plantilla": "Poste dans l’effectif",
   "Ya jugó aquí · 1 convocatoria": "A déjà joué ici · 1 convocation",
-  "Ya jugó aquí · {{v0}} convocatorias": "A déjà joué ici · {{v0}} convocations"
+  "Ya jugó aquí · {{v0}} convocatorias": "A déjà joué ici · {{v0}} convocations",
+  "Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.": "Les titulaires du onze publié sont affichés, quel que soit leur vote. Tu peux ajouter d’autres joueurs de la convocation s’ils ont participé au dernier moment.",
+  "No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.": "Aucun onze n’a été publié pour cette convocation. Ajoute manuellement les joueurs qui ont participé pour les évaluer.",
+  "Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.": "Des joueurs hors du onze ont des évaluations ou incidents enregistrés. Ajoute le joueur à l’évaluation pour les consulter."
 }

@@ -3,6 +3,10 @@ import { unwrap } from '@/lib/backend-result';
 import { latestRatingCalls } from './window';
 
 export type RatingChoice = '' | 'not_selected' | `${number}`;
+export type RatingLineup = { published: boolean; entryIds: string[] };
+export async function readRatingLineup(callId: string): Promise<RatingLineup> {
+  return unwrap(await requireSupabase().rpc('read_rating_lineup', { p_call_id: callId })) as unknown as RatingLineup;
+}
 export type RatingChange = { entry_id: string; score?: number; not_selected?: boolean; clear?: boolean; expected_updated_at: string | null };
 export async function listRatings(callId: string) {
   return unwrap(await requireSupabase().from('player_ratings').select('*').eq('call_up_id', callId));

@@ -25,7 +25,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -45,6 +45,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const next = { id: nextId, club_id: clubId, starts_at: new Date(now + 3600000).toISOString(), ends_at: new Date(now + 10800000).toISOString(), evaluation_at: null, timezone: club.timezone, status: 'open', status_version: 1 };
   const past = { ...next, id: pastId, starts_at: new Date(now - 7200000).toISOString(), ends_at: new Date(now - 3600000).toISOString(), evaluation_at: new Date(now - 3600000).toISOString() };
   const entries = roster.map((player, i) => ({ id: uuid(30 + i), call_up_id: pastId, club_id: clubId, source_player_id: player.id, ea_id_snapshot: player.ea_id, user_id: player.user_id, availability: 'available', category_snapshot: player.category, position_snapshot: 'MC', jersey_number_snapshot: i + 1, sort_order_snapshot: i }));
+  if(route==='/call-up-ratings') entries[0].availability='unavailable';
   const positions = posterExample ? [[.5,.9],[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.5,.56],[.34,.34],[.66,.34],[.84,.45],[.36,.15],[.64,.15]] : [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
   let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id] };
   let draft = null;
@@ -97,6 +98,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     else if (endpoint === 'set_lineup_position_lock') { positionLocked=body.p_locked; result=positionLocked; }
     else if (endpoint === 'read_lineup_preference') result = { playerColor: '#4C000B', jerseyColor: '#B3FF61', goalkeeperColor: '#F4A83A', positionLocked };
     else if (endpoint === 'list_rating_call_ups') result = [past];
+    else if (endpoint === 'read_rating_lineup') { assert.equal(body.p_call_id,pastId); result={published:!noPublishedLineup,entryIds:noPublishedLineup?[]:entries.slice(0,11).map(entry=>entry.id)}; }
     else if (endpoint === 'set_preferred_language') result = null;
     else if (endpoint === 'clubs') result = request.headers().accept?.includes('object') ? club : [club];
     else if (endpoint === 'club_members') result = [{ id: uuid(5), club_id: clubId, user_id: userId, role, is_active: true }];
@@ -251,6 +253,32 @@ test('incident recording keeps unsaved ratings and history includes archived rec
     await page.getByText('No entró y avisó al capitán', { exact: true }).waitFor();
     assert.ok(await page.getByText(/^Archivada desde /).count() > 0);
   } finally { await f.close(); }
+});
+
+test('ratings initially show published starters even when unavailable, and omit an available bench player with an incident',async()=>{
+  const f=await fixture({route:'/call-up-ratings'});
+  try {
+    await f.page.getByRole('combobox',{name:'Valoración de Selu',exact:true}).waitFor();
+    assert.equal(await f.page.getByRole('combobox',{name:/^Valoración de /}).count(),11);
+    assert.equal(await f.page.getByRole('combobox',{name:'Valoración de Jugador_12',exact:true}).count(),0);
+    await f.page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
+    await f.page.getByRole('combobox',{name:'Jugador que añadir a la valoración',exact:true}).selectOption(uuid(41));
+    await f.page.getByRole('button',{name:'Añadir a la valoración',exact:true}).click();
+    await f.page.getByRole('combobox',{name:'Valoración de Jugador_12',exact:true}).waitFor();
+    assert.equal(f.state.ratings,0);
+  } finally {await f.close();}
+});
+
+test('without a published XI, ratings explain manual selection instead of using availability',async()=>{
+  const f=await fixture({route:'/call-up-ratings',noPublishedLineup:true});
+  try {
+    await f.page.getByText('No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.',{exact:true}).waitFor();
+    assert.equal(await f.page.getByRole('combobox',{name:/^Valoración de /}).count(),0);
+    await f.page.getByRole('button',{name:'Añadir jugador a la valoración',exact:true}).click();
+    await f.page.getByRole('combobox',{name:'Jugador que añadir a la valoración',exact:true}).selectOption(uuid(30));
+    await f.page.getByRole('button',{name:'Añadir a la valoración',exact:true}).click();
+    await f.page.getByRole('combobox',{name:'Valoración de Selu',exact:true}).waitFor();
+  } finally {await f.close();}
 });
 
 test('players never request private incidents or see incident actions', async () => {

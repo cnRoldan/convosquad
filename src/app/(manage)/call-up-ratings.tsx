@@ -9,7 +9,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { getCallUp, listCallUpPlayers } from '@/features/call-ups/service';
 import { ratingVisibility, ratingVisibilityMessage } from '@/features/ratings/visibility';
 import { ratingDeadline, ratingWindowOpen } from '@/features/ratings/window';
-import { listRatingCalls, listRatings, saveRatings, ratingError, type RatingChoice, type RatingChange } from '@/features/ratings/service';
+import { listRatingCalls, listRatings, saveRatings, ratingError, readRatingLineup, type RatingLineup, type RatingChoice, type RatingChange } from '@/features/ratings/service';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
@@ -25,8 +25,8 @@ export default function CallUpRatingsScreen() {
   const { session, isDemo } = useAuth(); const { activeClub } = useClub(); const clubId = activeClub?.id;
   const load = useCallback(async () => {
     if (!clubId || !id) return null;
-    const [call, players, ratings, eligibleCalls, incidents] = await Promise.all([getCallUp(clubId, id), listCallUpPlayers(id), listRatings(id), listRatingCalls(clubId), listPlayerIncidents(clubId, false, id)]);
-    return { call, players, ratings, incidents, eligible: eligibleCalls.some(candidate => candidate.id === id) };
+    const [call, players, ratings, eligibleCalls, incidents, lineup] = await Promise.all([getCallUp(clubId, id), listCallUpPlayers(id), listRatings(id), listRatingCalls(clubId), listPlayerIncidents(clubId, false, id), readRatingLineup(id)]);
+    return { call, players, ratings, incidents, lineup, eligible: eligibleCalls.some(candidate => candidate.id === id) };
   }, [clubId, id]);
   const [savedFor, setSavedFor] = useState<string | null>(null);
   const result = useResource(`ratings:${session?.user.id}:${clubId}:${id}`, load, Boolean(session && clubId && id) && !isDemo);
@@ -34,8 +34,8 @@ export default function CallUpRatingsScreen() {
   if (!result.data || result.error) return <Screen><Message error>{result.error ?? t('No se encontró la convocatoria.')}</Message><Button label={t('Reintentar')} onPress={result.reload} /></Screen>;
   return <RatingsEditor key={`${session?.user.id}:${clubId}:${id}:${result.version}`} {...result.data} notice={savedFor === `${clubId}:${id}`} onSaved={saved => { setSavedFor(saved ? `${clubId}:${id}` : null); result.reload(); }} />;
 }
-function RatingsEditor({ call, players, ratings, incidents: initialIncidents, eligible, onSaved, notice }: {
-  call: Tables<'call_ups'>; players: Tables<'call_up_players'>[]; ratings: Tables<'player_ratings'>[]; incidents: PlayerIncident[]; eligible: boolean; onSaved: (saved?: boolean) => void; notice: boolean;
+function RatingsEditor({ call, players, ratings, incidents: initialIncidents, lineup, eligible, onSaved, notice }: {
+  call: Tables<'call_ups'>; players: Tables<'call_up_players'>[]; ratings: Tables<'player_ratings'>[]; incidents: PlayerIncident[]; lineup: RatingLineup; eligible: boolean; onSaved: (saved?: boolean) => void; notice: boolean;
 }) {
   useLanguage();
   const { activeClub } = useClub();
@@ -45,8 +45,8 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, el
   const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState('');
-  const visiblePlayers = players.filter(player => player.availability === 'available'
-    || ratings.some(rating => rating.call_up_player_id === player.id) || incidents.some(incident => incident.call_up_player_id === player.id) || addedPlayers.includes(player.id));
+  const visiblePlayers = players.filter(player => lineup.entryIds.includes(player.id) || addedPlayers.includes(player.id));
+  const savedOutsideLineup = players.some(player => !visiblePlayers.includes(player) && (ratings.some(rating => rating.call_up_player_id === player.id) || incidents.some(incident => incident.call_up_player_id === player.id)));
   const remainingPlayers = players.filter(player => !visiblePlayers.includes(player));
   const [choices, setChoices] = useState<Record<string, RatingChoice>>(() => Object.fromEntries(players.map(player => {
     const saved = ratings.find(rating => rating.call_up_player_id === player.id);
@@ -74,7 +74,9 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, el
     <Heading title={t('Valorar jugadores')} subtitle={formatMatchDate(call.starts_at, call.timezone)} />
     <Body>{t(ratingVisibilityMessage(ratingVisibility(activeClub?.ratingsVisibility)))}</Body>
     <Body>{t('Puntúa de 0 a 10. «No convocado» no cuenta como un cero ni entra en la media.')}</Body>
-    <Body>{t('Se muestran los jugadores disponibles y las valoraciones guardadas. Puedes añadir a otros jugadores de la convocatoria si jugaron a última hora.')}</Body>
+    <Body>{t('Se muestran los titulares del once publicado, independientemente de su voto. Puedes añadir a otros jugadores de la convocatoria si participaron a última hora.')}</Body>
+    {!lineup.published ? <Message>{t('No se publicó un once para esta convocatoria. Añade manualmente a los jugadores que participaron para valorarlos.')}</Message> : null}
+    {savedOutsideLineup ? <Message>{t('Hay valoraciones o incidencias guardadas de jugadores fuera del once. Puedes consultarlas añadiendo al jugador a la valoración.')}</Message> : null}
     {call.evaluation_at ? <Body>{t('Finalización: {{v0}}', { v0: formatMatchDate(call.ends_at, call.timezone) })}</Body> : null}
     {call.evaluation_at ? <Body>{t('Plazo para valorar: hasta {{v0}}', { v0: formatMatchDate(new Date(ratingDeadline(call)).toISOString(), call.timezone) })}</Body> : null}
     {!available ? <Message>{t('Solo puedes valorar la última convocatoria finalizada durante las 24 horas siguientes a su finalización.')}</Message> : null}
