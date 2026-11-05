@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -122,8 +122,8 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       document = body.p_document;
       draft = { id: uuid(90), ordinal: 1, title: body.p_title, document, instructions:body.p_instructions??draft?.instructions??{}, revision: (draft?.revision ?? 0) + 1, submittedAt: null, createdBy: 'Capitán', updatedBy: 'Capitán', upVotes: 0, downVotes: 0, published: false };
       result = draft;
-    } else if (endpoint === 'read_lineup_access') result = { allowed: true, premium: true, activated: true, remaining: 6 };
-    else if (endpoint === 'read_lineup') result = { document, revision: 0, inherited: false };
+    } else if (endpoint === 'read_lineup_access') { state.lineupAccessReads++; assert.equal(role,'admin'); result = { allowed: true, premium: true, activated: true, remaining: 6 }; }
+    else if (endpoint === 'read_lineup') { state.lineupReads++; assert.equal(role,'admin'); result = { document, revision: 0, inherited: false }; }
     else if (endpoint === 'list_lineup_drafts') result = draft ? [draft] : [];
     else if (endpoint === 'set_lineup_position_lock') { positionLocked=body.p_locked; result=positionLocked; }
     else if (endpoint === 'read_lineup_preference') result = { playerColor: '#4C000B', jerseyColor: '#B3FF61', goalkeeperColor: '#F4A83A', positionLocked };
@@ -203,7 +203,7 @@ test('captain saves private instructions with the draft and publishes them separ
 });
 
 test('players see only their published instructions and the targeted notification opens them',async()=>{
-  const f=await fixture({role:'player',seedInstructions:true});
+  const f=await fixture({role:'player',route:'/call-up',seedInstructions:true});
   try {
     const {page}=f;
     await page.getByRole('button',{name:'Mis indicaciones',exact:true}).click();
@@ -220,7 +220,7 @@ test('players see only their published instructions and the targeted notificatio
 });
 
 test('instruction notification for another account does not open private instructions',async()=>{
-  const f=await fixture({role:'player',seedInstructions:true});
+  const f=await fixture({role:'player',route:'/call-up',seedInstructions:true});
   try {
     await f.page.goto(`${origin}/notification?club=${clubId}&call=${nextId}&instructions=1&user=${uuid(999)}`);
     await f.page.getByText('Este aviso pertenece a otra cuenta. Inicia sesión con la cuenta destinataria.',{exact:true}).waitFor();
@@ -383,10 +383,16 @@ test('without a published XI, ratings explain manual selection instead of using 
   } finally {await f.close();}
 });
 
-test('players never request private incidents or see incident actions', async () => {
+test('players cannot open the lineup editor or request its data from a direct link', async () => {
   const f = await fixture({ role: 'player' });
   try {
-    await f.page.getByText('Banquillo', { exact: true }).waitFor();
+    await f.page.waitForURL('**/call-up');
+    await f.page.getByRole('button',{name:'Mis indicaciones',exact:true}).waitFor();
+    assert.equal(await f.page.getByTestId('lineup-pitch').count(),0);
+    assert.equal(await f.page.getByRole('button',{name:'Consulta el 11',exact:true}).count(),0);
+    assert.equal(await f.page.getByRole('button',{name:'¡Forma tu 11!',exact:true}).count(),0);
+    assert.equal(f.state.lineupReads,0);
+    assert.equal(f.state.lineupAccessReads,0);
     assert.equal(f.state.incidentReads, 0);
     assert.equal(f.state.historicalRatingReads, 0);
     assert.equal(await f.page.getByLabel(/^Media histórica de /).count(),0);

@@ -42,7 +42,8 @@ test('publication delivers only the personal instruction; captains see all; unli
  assert.equal((await read(captain)).find(i=>i.player_id===players[3].id).recipient_linked,false);
  await assert.rejects(read(outsider),{code:'42501'});
  await assert.rejects(query(a,'select * from public.lineup_instructions'),{code:'42501'});
- const publicLineup=(await query(a,'select public.read_lineup($1) value',[call.id])).rows[0].value;
+ await assert.rejects(query(a,'select public.read_lineup($1)',[call.id]),{code:'42501'});
+ const publicLineup=(await query(captain,'select public.read_lineup($1) value',[call.id])).rows[0].value;
  assert.ok(!JSON.stringify(publicLineup).includes('Stay wide'));
  const events=(await db.query("select * from public.push_events where kind='lineup_instruction'")).rows;
  assert.deepEqual(new Set(events.map(e=>e.recipient_user_id)),new Set([a,b]));

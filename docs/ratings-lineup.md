@@ -43,3 +43,11 @@ Validación: 202 pruebas unitarias y 18 de interfaz, TypeScript y lint. Se compr
 La esquina superior izquierda del campo muestra «VAL MED:» en escala 0–100: media aritmética de las medias históricas de los jugadores colocados en el once, multiplicada por 10 y redondeada al entero más cercano. Cada jugador con nota cuenta una vez, incluyendo las notas cero; el banquillo, los slots vacíos y jugadores sin historial no entran en el denominador. Sin ninguna nota disponible se muestra «—». El valor cambia inmediatamente al sustituir o retirar jugadores y solo aparece donde están disponibles las medias para el capitán. No se incorpora al documento de alineación ni al cartel compartido.
 
 Validación del indicador: 203 pruebas unitarias, dos pruebas de interfaz dirigidas a sustituciones y privacidad, TypeScript y lint correctos.
+
+## Acceso a la vista de alineación
+
+La ruta `/lineup` es exclusiva para capitanes. Un jugador que abra un enlace directo vuelve a Convocatoria antes de montar el editor o consultar sus datos. Convocatoria solo muestra «¡Forma tu 11!» a capitanes y ya no ofrece «Consulta el 11» a jugadores. Las indicaciones personales siguen accesibles desde Convocatoria.
+
+La migración `20261105000100_captain_only_lineup_view.sql`, aplicada en Supabase, exige administración activa del mismo club en `read_lineup` y `read_lineup_access`. Los clientes antiguos tampoco pueden consultar el campo. Se conservan los controles de activación, cuota mensual e histórico Prémium. Prémium no concede este acceso a jugadores.
+
+Validación: 10 pruebas de base de datos (permisos, historial e indicaciones), 18 de interfaz de alineación/valoraciones y 4 dirigidas de Convocatoria, 203 unitarias, TypeScript, lint y tipos generados. El bloqueo de servidor ya está activo; para ocultar el botón en clientes nativos antiguos hace falta la próxima compilación.

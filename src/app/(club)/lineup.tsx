@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Modal, StyleSheet, View } from 'react-native';
-import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { LineupEditor } from '@/features/lineups/editor';
 import { Body, Button, Card, Heading, Screen } from '@/components/ui';
 import { useClub } from '@/features/clubs/club-context';
@@ -9,6 +9,12 @@ import { colors } from '@/theme';
 import { activateLineupAccess, readLineupAccess, type LineupAccess } from '@/features/lineups/service';
 
 export default function LineupScreen() {
+  const { currentMembership } = useClub();
+  // The parent club layout waits for authentication and membership to load.
+  return currentMembership?.role === 'admin' ? <CaptainLineupScreen /> : <Redirect href="/call-up" />;
+}
+
+function CaptainLineupScreen() {
   useLanguage(); const { activeClub, currentMembership } = useClub();
   const { id, draft } = useLocalSearchParams<{ id?: string; draft?: string }>();
   const [noticeVisible, setNoticeVisible] = useState(true);
