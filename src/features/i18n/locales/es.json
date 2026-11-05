@@ -954,5 +954,14 @@
   "Seleccionar {{v0}} para el banquillo": "Seleccionar {{v0}} para el banquillo",
   "Añadir seleccionados ({{v0}})": "Añadir seleccionados ({{v0}})",
   "También se añadirán los jugadores seleccionados: {{v0}}.": "También se añadirán los jugadores seleccionados: {{v0}}.",
-  "Mostrar valoraciones": "Mostrar valoraciones"
+  "Mostrar valoraciones": "Mostrar valoraciones",
+  "Ocultar valoraciones": "Ocultar valoraciones",
+  "Historial Prémium: {{v0}} pruebas": "Historial Prémium: {{v0}} pruebas",
+  "Con Prémium puedes conservar más de 6 pruebas retiradas o incorporadas durante 12 meses.": "Con Prémium puedes conservar más de 6 pruebas retiradas o incorporadas durante 12 meses.",
+  "El historial gratuito conserva hasta 6 pruebas retiradas o incorporadas durante 12 meses.": "El historial gratuito conserva hasta 6 pruebas retiradas o incorporadas durante 12 meses.",
+  "Quitar ayuda {{v0}} de la plantilla": "Quitar ayuda {{v0}} de la plantilla",
+  "Quitar ayuda de la plantilla": "Quitar ayuda de la plantilla",
+  "Quitar ayuda": "Quitar ayuda",
+  "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.": "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.",
+  "Ayudas": "Ayudas"
 }

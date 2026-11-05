@@ -29,14 +29,9 @@ export async function listTrialContacts(clubId: string) {
   return unwrap(await requireSupabase().from('club_trial_contacts').select('trial_id,phone').eq('club_id', clubId));
 }
 
-export async function listTrialHistory(clubId: string) {
-  const since = new Date();
-  since.setUTCMonth(since.getUTCMonth() - 12);
-  const trials = unwrap(await requireSupabase().from('club_trials').select('*')
-    .eq('club_id', clubId).neq('status', 'active').gte('resolved_at', since.toISOString())
-    .order('resolved_at', { ascending: false }).limit(6));
-  const notes = unwrap(await requireSupabase().from('club_trial_notes').select('trial_id,notes').eq('club_id', clubId));
-  return trials.map(trial => ({ ...trial, notes: notes.find(note => note.trial_id === trial.id)?.notes ?? null }));
+export type TrialHistory = { premium: boolean; total: number; entries: (import('@/types/database').Tables<'club_trials'> & { notes: string | null })[]; hasMore: boolean };
+export async function listTrialHistory(clubId: string, offset = 0): Promise<TrialHistory> {
+  return unwrap(await requireSupabase().rpc('read_trial_history', { p_club_id: clubId, p_offset: offset })) as unknown as TrialHistory;
 }
 
 export async function deleteTrialHistory(id: string) {

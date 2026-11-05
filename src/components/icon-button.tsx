@@ -3,6 +3,10 @@ import Svg, { Path } from 'react-native-svg';
 import { colors } from '@/theme';
 
 const paths = {
+  // Star icons: Lucide, ISC license in licenses/lucide.txt.
+  'star-check': "M0 0 m19.06 12.501 2.78-2.707a.53.53 0 0 0-.294-.905l-5.166-.755a2.1 2.1 0 0 1-1.595-1.16l-2.31-4.68a.53.53 0 0 0-.95.001L9.216 6.974a2.1 2.1 0 0 1-1.597 1.16l-5.165.755a.53.53 0 0 0-.294.906l3.736 3.637a2.1 2.1 0 0 1 .611 1.879l-.88 5.139a.53.53 0 0 0 .769.56l4.617-2.428.027-.014 M0 0 m15 18 2 2 4-4",
+  'star-x': "M0 0 m15.5 15.5 5 5 M0 0 m20.063 11.525 1.777-1.731a.53.53 0 0 0-.294-.905l-5.166-.755a2.1 2.1 0 0 1-1.595-1.16l-2.31-4.68a.53.53 0 0 0-.95.001L9.216 6.974a2.1 2.1 0 0 1-1.597 1.16l-5.165.755a.53.53 0 0 0-.294.906l3.736 3.637a2.1 2.1 0 0 1 .611 1.879l-.88 5.139a.53.53 0 0 0 .769.56l4.617-2.428a2.1 2.1 0 0 1 .987-.243 2 2 0 0 1 .132.004 M0 0 m20.5 15.5-5 5",
+
   whatsapp: 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z',
   restart: 'M3 4v7h7M3 11a9 9 0 119 10M12 7v5l3 2',
   back: 'M19 12H5M12 19l-7-7 7-7',
@@ -23,17 +27,18 @@ const paths = {
   trash: 'M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7',
 } as const;
 
-export function IconButton({ icon, label, onPress, disabled = false, danger = false, variant = 'outlined', size = 44 }: {
+export function IconButton({ icon, label, onPress, disabled = false, danger = false, muted = false, variant = 'outlined', size = 44 }: {
   icon: keyof typeof paths;
   label: string;
   onPress: () => void;
   disabled?: boolean;
   danger?: boolean;
+  muted?: boolean;
   variant?: 'outlined' | 'plain';
   size?: number;
 }) {
   const whatsapp = icon === 'whatsapp';
-  const color = disabled ? colors.muted : whatsapp ? '#25D366' : danger ? colors.danger : colors.primary;
+  const color = disabled || muted ? colors.muted : whatsapp ? '#25D366' : danger ? colors.danger : colors.primary;
   return <Pressable accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled }}
     disabled={disabled} onPress={onPress}
     style={({ pressed }) => [styles.button, { width: size, height: size, borderRadius: Math.round(size * 0.27) }, whatsapp && styles.whatsapp, variant === 'plain' && styles.plain, (pressed || disabled) && styles.dimmed]}>

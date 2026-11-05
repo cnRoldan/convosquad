@@ -1798,6 +1798,13 @@ export type Database = {
         };
         Returns: Json;
       };
+      read_trial_history: {
+        Args: {
+          p_club_id: string;
+          p_offset?: number;
+        };
+        Returns: Json;
+      };
       record_player_incident: {
         Args: {
           p_call_up_id: string;
@@ -1832,6 +1839,12 @@ export type Database = {
       remove_call_up_trial: {
         Args: {
           p_trial_id: string;
+        };
+        Returns: undefined;
+      };
+      remove_roster_helper: {
+        Args: {
+          p_guest_id: string;
         };
         Returns: undefined;
       };

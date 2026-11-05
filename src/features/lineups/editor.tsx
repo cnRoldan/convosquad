@@ -13,7 +13,7 @@ import { useResource } from '@/hooks/use-resource';
 import { suggestPlayers } from './suggestions';
 import { lineupPositionExperience } from './service';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Platform, Modal, Pressable, ScrollView, Switch, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
 import { PlayerToken } from './player-token';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -313,14 +313,13 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
         {preference ? <><PresetChip label="Personalizada" selected={selectedPreset === 'custom'} disabled={!editable} onPress={() => { change(applyLayout(document, preference)); setSelectedPreset('custom'); setLayoutChanged(false); }} /><IconButton icon="trash" label="Eliminar posición personalizada" danger disabled={!editable} onPress={() => void deleteCustomLayout()} /></> : null}
         <IconButton icon="save" label="Guardar posición personalizada" disabled={!editable || !layoutChanged} onPress={() => void saveCustomLayout()} />
         <IconButton icon="undo" label="Deshacer último cambio" disabled={!editable || history.length === 0 || dragging} onPress={undo} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Configurar colores de jugadores" disabled={!editable} onPress={() => { setCustomColor(playerColor); setCustomJerseyColor(jerseyColor); setCustomGoalkeeperColor(goalkeeperColor); setEditingColor('shirt'); setColorPicker(true); }} style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: playerColor, borderWidth: 3, borderColor: jerseyColor, opacity: editable ? 1 : 0.45 }} />
+          <IconButton icon={showRatings ? 'star-check' : 'star-x'} muted={!showRatings} label={t(showRatings ? 'Ocultar valoraciones' : 'Mostrar valoraciones')} onPress={() => setShowRatings(current => !current)} />
+        </View>
       </View> : null}
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); baseline.current = draft.document; baselineInstructions.current = draft.instructions ?? {}; setInstructions(draft.instructions ?? {}); setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
-      {captain ? <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-        <Body>{t('Mostrar valoraciones')}</Body>
-        <Switch accessibilityLabel={t('Mostrar valoraciones')} value={showRatings} onValueChange={setShowRatings} trackColor={{ false: colors.border, true: colors.primary }} />
-      </View> : null}
       {captain && showRatings && ratingHistory.error ? <><Body>{t('No se pudieron consultar las medias históricas.')}</Body><Button secondary label={t('Reintentar')} onPress={ratingHistory.reload} /></> : null}
       <View testID="lineup-workspace" style={{ flexDirection: tablet ? 'row' : 'column', alignItems: 'stretch', gap: 20 }}>
       <View ref={shareImageRef} collapsable={false} style={[tablet ? { flex: 1, minWidth: 0 } : undefined, renderingPoster ? { backgroundColor: '#0B1210', alignSelf: 'flex-start', ...(tablet ? {} : { width: '100%' }) } : undefined]}>

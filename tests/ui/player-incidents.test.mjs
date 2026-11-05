@@ -26,14 +26,14 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, benchSelection = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], helperRemovals: [], trialWithdrawals: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: benchSelection ? 15 : 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -46,6 +46,8 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   }
   const next = { id: nextId, club_id: clubId, starts_at: new Date(now + 3600000).toISOString(), ends_at: new Date(now + 10800000).toISOString(), evaluation_at: null, timezone: club.timezone, status: 'open', status_version: 1 };
   const past = { ...next, id: pastId, starts_at: new Date(now - 7200000).toISOString(), ends_at: new Date(now - 3600000).toISOString(), evaluation_at: new Date(now - 3600000).toISOString() };
+  const rosterHelpers=rosterFixes?[{id:uuid(400),name:'Ayuda de plantilla'}]:[];
+  const trialRows=rosterFixes?Array.from({length:9},(_,i)=>({id:uuid(300+i),club_id:clubId,ea_id:i===8?'Prueba activa':`Prueba archivo ${i+1}`,status:i===8?'active':'withdrawn',created_at:past.starts_at,resolved_at:i===8?null:past.starts_at,sort_order:i,player_id:null,position:null})):[];
   const entries = roster.map((player, i) => ({ id: uuid(30 + i), call_up_id: pastId, club_id: clubId, source_player_id: player.id, ea_id_snapshot: player.ea_id, user_id: player.user_id, availability: 'available', category_snapshot: player.category, position_snapshot: 'MC', jersey_number_snapshot: i + 1, sort_order_snapshot: i }));
   if(benchSelection)for(const entry of entries.slice(12))entry.availability='unavailable';
   if(route==='/call-up-ratings') entries[0].availability='unavailable';
@@ -78,7 +80,16 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     const body = request.method() === 'POST' ? request.postDataJSON() : null;
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
-    if (endpoint === 'add_lineup_guest') {
+    if (endpoint === 'list_roster_helpers') result=rosterHelpers;
+    else if (endpoint === 'remove_roster_helper') {
+      assert.equal(role,'admin');state.helperRemovals.push(body.p_guest_id);const i=rosterHelpers.findIndex(h=>h.id===body.p_guest_id);if(i>=0)rosterHelpers.splice(i,1);result=null;
+    } else if (endpoint === 'read_trial_history') {
+      assert.equal(role,'admin');const rows=trialRows.filter(t=>t.status!=='active');result={premium:true,total:rows.length,entries:rows.slice(body.p_offset,body.p_offset+100),hasMore:false};
+    } else if (endpoint === 'withdraw_trial') {
+      assert.equal(role,'admin');state.trialWithdrawals.push(body.p_trial_id);const trial=trialRows.find(t=>t.id===body.p_trial_id);trial.status='withdrawn';trial.resolved_at=past.starts_at;result=trial;
+    } else if (endpoint === 'club_trials') result=url.searchParams.get('status')==='eq.active'?trialRows.filter(t=>t.status==='active'):trialRows;
+    else if (endpoint === 'club_trial_contacts') result=[];
+    else if (endpoint === 'add_lineup_guest') {
       const guest={id:uuid(200),name:body.p_name,kind:body.p_kind};state.guests.push(guest);result=guest.id;
     } else if (endpoint === 'list_lineup_guests') result=state.guests;
     else if (endpoint === 'get_player_performance') {
@@ -150,7 +161,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     else if (endpoint === 'players') result = roster;
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? past : next) : [next];
     else if (endpoint === 'call_up_players') result = entries;
-    else if (['call_up_trials', 'call_up_aids', 'club_trials', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
+    else if (['call_up_trials', 'call_up_aids', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     return route.fulfill({ json: result });
   });
@@ -414,7 +425,7 @@ test('players see only the published poster from a direct lineup link', async ()
     assert.equal(f.state.historicalRatingReads, 0);
     assert.equal(await f.page.getByLabel(/^Media histórica de /).count(),0);
     assert.equal(await f.page.getByText(/^VAL MED:/).count(),0);
-    assert.equal(await f.page.getByRole('switch',{name:'Mostrar valoraciones',exact:true}).count(),0);
+    assert.equal(await f.page.getByRole('button',{name:/^(Mostrar|Ocultar) valoraciones$/}).count(),0);
     assert.equal(await f.page.getByLabel('Incidencias vigentes', { exact: true }).count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Consultar incidencias de jugadores', exact: true }).count(), 0);
   } finally { await f.close(); }
@@ -678,9 +689,19 @@ test('rating toggle hides and restores player ratings and team average without e
  const f=await fixture({withHistory:true});
  try {
   const {page}=f;
-  const toggle=page.getByRole('switch',{name:'Mostrar valoraciones',exact:true});
+  const toggle=page.getByRole('button',{name:/^(Mostrar|Ocultar) valoraciones$/});
+  const color=page.getByRole('button',{name:'Configurar colores de jugadores',exact:true});
+  await toggle.waitFor();
+  for(const width of [390,320,1032]){
+   await page.setViewportSize({width,height:844});
+   const [left,right]=await Promise.all([color.boundingBox(),toggle.boundingBox()]);
+   assert.ok(right.x>=left.x+left.width);
+   assert.ok(Math.abs((left.y+left.height/2)-(right.y+right.height/2))<2);
+  }
+  assert.equal(await page.getByRole('button',{name:'Ocultar valoraciones',exact:true}).locator('svg').getAttribute('stroke'),'#B4F16C');
   await page.getByText('VAL MED: 49',{exact:true}).waitFor();
   await toggle.click();
+  assert.equal(await page.getByRole('button',{name:'Mostrar valoraciones',exact:true}).locator('svg').getAttribute('stroke'),'#AABCB0');
   assert.equal(await page.getByText(/^VAL MED:/).count(),0);
   assert.equal(await page.getByLabel(/^Media histórica de /).count(),0);
   assert.equal(await page.getByLabel(/^Sin valoraciones históricas para /).count(),0);
@@ -694,5 +715,38 @@ test('rating toggle hides and restores player ratings and team average without e
   await page.getByLabel('Media histórica de Selu: 2,5 de 10',{exact:true}).waitFor();
   assert.equal(await page.getByText('Tienes cambios sin guardar.',{exact:true}).count(),0);
   assert.equal(f.state.instructionSaves.length,0);
+  await color.locator('..').screenshot({path:'/workspace/shared/lineup-rating-star.png'});
  }finally {await f.close();}
+});
+
+test('Premium captain withdraws a trial with full free history and sees all archived entries',async()=>{
+ const f=await fixture({route:'/roster',rosterFixes:true});
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Quitar prueba de Prueba activa',exact:true}).click();
+  await page.getByRole('button',{name:'Quitar prueba',exact:true}).click();
+  await page.getByText('Prueba retirada de la plantilla. Las convocatorias anteriores conservan sus datos.',{exact:true}).waitFor();
+  assert.deepEqual(f.state.trialWithdrawals,[uuid(308)]);
+  await page.getByRole('button',{name:'Historial de pruebas',exact:true}).click();
+  await page.getByText('Historial Prémium: 9 pruebas',{exact:true}).waitFor();
+  await page.getByText('Prueba archivo 8',{exact:true}).waitFor();
+  assert.equal(await page.getByText(/^Historial gratuito:/).count(),0);
+ }finally {await f.close();}
+});
+
+test('roster helper removal requires confirmation and is hidden from players',async()=>{
+ const f=await fixture({route:'/roster',rosterFixes:true});
+ try {
+  const {page}=f;const remove=page.getByRole('button',{name:'Quitar ayuda Ayuda de plantilla de la plantilla',exact:true});
+  await remove.click();await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+  assert.equal(f.state.helperRemovals.length,0);
+  await remove.click();await page.getByRole('button',{name:'Quitar ayuda',exact:true}).click();
+  await page.getByText('Ayuda de plantilla',{exact:true}).waitFor({state:'hidden'});
+  assert.deepEqual(f.state.helperRemovals,[uuid(400)]);
+ }finally {await f.close();}
+ const player=await fixture({route:'/roster',role:'player',rosterFixes:true});
+ try {
+  await player.page.getByText('Ayuda de plantilla',{exact:true}).waitFor();
+  assert.equal(await player.page.getByRole('button',{name:'Quitar ayuda Ayuda de plantilla de la plantilla',exact:true}).count(),0);
+ }finally {await player.close();}
 });

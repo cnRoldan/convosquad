@@ -62,4 +62,6 @@ Validación: 6 pruebas de base de datos de acceso y publicación, 20 de interfaz
 
 Las notas históricas individuales se muestran como texto coloreado sin fondo ni borde, con una sombra discreta para que se lean sobre el césped. «VAL MED» mantiene su presentación independiente.
 
-El interruptor «Mostrar valoraciones», encima del campo y activado al entrar, controla las notas individuales del campo, banquillo y selectores junto con «VAL MED». Es un ajuste visual de la sesión de edición: no modifica ni guarda la alineación ni las notas y conserva cualquier cambio pendiente. Las incidencias siguen visibles. La vista de imagen publicada de los jugadores no incluye este control.
+El botón Star-check/Star-x, a la derecha del selector de color y activado al entrar, controla las notas individuales del campo, banquillo y selectores junto con «VAL MED». Es un ajuste visual de la sesión de edición: no modifica ni guarda la alineación ni las notas y conserva cualquier cambio pendiente. Las incidencias siguen visibles. La vista de imagen publicada de los jugadores no incluye este control.
+
+Star-check aparece en verde cuando las notas están visibles y Star-x en gris cuando están ocultas. La etiqueta accesible indica «Ocultar valoraciones» o «Mostrar valoraciones». El selector de color y la estrella permanecen juntos al adaptarse el ancho de la pantalla.
