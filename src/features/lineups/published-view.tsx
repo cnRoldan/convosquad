@@ -17,7 +17,7 @@ export function PublishedLineupView() {
   const { activeClub } = useClub();
   const load = useCallback(async () => {
     const result = await readPublishedLineup(id!);
-    const crestUrl = result.snapshot?.crestPath ? await getClubCrestUrl(result.snapshot.crestPath) : null;
+    const crestUrl = result.snapshot?.crestPath ? await loadPublishedCrest(result.snapshot.crestPath) : null;
     return { ...result, crestUrl };
   }, [id]);
   const result = useResource(`published-lineup:${session?.user.id}:${activeClub?.id}:${id}`, load, Boolean(session && activeClub && id));
@@ -29,4 +29,16 @@ export function PublishedLineupView() {
         <LineupShareCard {...result.data.snapshot} crestUrl={result.data.crestUrl} />
       </View> : <Body>{t(result.data?.allowed === false ? 'La imagen de esta alineación histórica no está disponible para el club.' : 'El capitán todavía no ha publicado el once.')}</Body>}
   </Screen>;
+}
+
+async function loadPublishedCrest(path: string): Promise<string> {
+  const response = await fetch(await getClubCrestUrl(path));
+  if (!response.ok) throw new Error('Could not load club crest');
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Could not read club crest'));
+    reader.readAsDataURL(blob);
+  });
 }

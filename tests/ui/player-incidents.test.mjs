@@ -526,8 +526,19 @@ test('published poster opens from call-up without downloading or loading the edi
   assert.equal(f.state.lineupReads,0);assert.equal(f.state.lineupAccessReads,0);assert.equal(f.state.historicalRatingReads,0);
   assert.equal(downloads,0);
   await crestLoaded;
+  const embeddedCrest=page.getByTestId('published-lineup-image').locator('svg image');
+  assert.ok((await embeddedCrest.evaluateAll(images=>images.map(img=>img.getAttribute('href')??img.getAttribute('xlink:href')??''))).some(href=>href.startsWith('data:image/png;base64,')));
   await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
-  await page.getByTestId('published-lineup-image').screenshot({path:'/workspace/shared/published-lineup-view.png'});
+  const screenshot=await page.getByTestId('published-lineup-image').screenshot({path:'/workspace/shared/published-lineup-view.png'});
+  const bright=await page.evaluate(async src=>{
+   const image=new Image();image.src=src;await image.decode();
+   const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+   const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);const scale=image.naturalWidth/1324;
+   const pixels=ctx.getImageData(Math.round(66*scale),Math.round(60*scale),Math.round(104*scale),Math.round(102*scale)).data;
+   let count=0;for(let i=0;i<pixels.length;i+=4)if(pixels[i]>100&&pixels[i+1]>130&&pixels[i+2]<140)count++;
+   return count;
+  },'data:image/png;base64,'+screenshot.toString('base64'));
+  assert.ok(bright>10,'published image contains the club crest, not an empty frame');
  }finally {await f.close();}
 });
 
