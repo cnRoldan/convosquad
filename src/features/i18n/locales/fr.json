@@ -937,5 +937,9 @@
   "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Votre note a été modifiée dans une autre session. Rechargez avant d’enregistrer.",
   "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "La moyenne inclut toutes les notes des capitaines sur la période choisie. Chaque note a le même poids ; « Non évalué » et « N’a pas joué » sont exclus.",
   "Media capitanes: {{v0}} / 10": "Moyenne des capitaines : {{v0}} / 10",
-  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} matchs notés · {{v1}} matchs non joués"
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} matchs notés · {{v1}} matchs non joués",
+  "Media histórica de {{v0}}: {{v1}} de 10": "Moyenne historique de {{v0}} : {{v1}} sur 10",
+  "Sin valoraciones históricas para {{v0}}": "Aucune note historique pour {{v0}}",
+  "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Moyenne historique des capitaines · 3 derniers mois. « — » indique aucune note.",
+  "No se pudieron consultar las medias históricas.": "Impossible de charger les moyennes historiques."
 }

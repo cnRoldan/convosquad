@@ -937,5 +937,9 @@
   "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.",
   "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.",
   "Media capitanes: {{v0}} / 10": "Media capitanes: {{v0}} / 10",
-  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} partidos valorados · {{v1}} veces no alineado"
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} partidos valorados · {{v1}} veces no alineado",
+  "Media histórica de {{v0}}: {{v1}} de 10": "Media histórica de {{v0}}: {{v1}} de 10",
+  "Sin valoraciones históricas para {{v0}}": "Sin valoraciones históricas para {{v0}}",
+  "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.",
+  "No se pudieron consultar las medias históricas.": "No se pudieron consultar las medias históricas."
 }

@@ -937,5 +937,9 @@
   "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Deine Bewertung wurde in einer anderen Sitzung geändert. Lade sie vor dem Speichern neu.",
   "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "Der Durchschnitt enthält alle Kapitänsnoten im gewählten Zeitraum. Jede Note zählt gleich; „Nicht bewertet“ und „Nicht eingesetzt“ werden ausgeschlossen.",
   "Media capitanes: {{v0}} / 10": "Kapitänsdurchschnitt: {{v0}} / 10",
-  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} bewertete Spiele · {{v1}} Mal nicht eingesetzt"
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} bewertete Spiele · {{v1}} Mal nicht eingesetzt",
+  "Media histórica de {{v0}}: {{v1}} de 10": "Historischer Durchschnitt für {{v0}}: {{v1}} von 10",
+  "Sin valoraciones históricas para {{v0}}": "Keine historischen Bewertungen für {{v0}}",
+  "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Historischer Kapitänsdurchschnitt · letzte 3 Monate. „—“ bedeutet keine Bewertungen.",
+  "No se pudieron consultar las medias históricas.": "Die historischen Durchschnittswerte konnten nicht geladen werden."
 }

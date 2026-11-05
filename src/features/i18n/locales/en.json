@@ -937,5 +937,9 @@
   "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Your rating changed in another session. Reload before saving.",
   "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "The average includes all captain ratings in the selected period. Each rating counts equally; “Not rated” and “Did not play” are excluded.",
   "Media capitanes: {{v0}} / 10": "Captains’ average: {{v0}} / 10",
-  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} rated matches · {{v1}} matches not played"
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} rated matches · {{v1}} matches not played",
+  "Media histórica de {{v0}}: {{v1}} de 10": "Historical average for {{v0}}: {{v1}} out of 10",
+  "Sin valoraciones históricas para {{v0}}": "No historical ratings for {{v0}}",
+  "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Historical captain average · last 3 months. “—” means no ratings.",
+  "No se pudieron consultar las medias históricas.": "Could not load historical averages."
 }

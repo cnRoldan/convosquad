@@ -26,14 +26,14 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -76,7 +76,11 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     const body = request.method() === 'POST' ? request.postDataJSON() : null;
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
-    if (endpoint === 'lineup_position_experience') {
+    if (endpoint === 'get_player_performance') {
+      state.historicalRatingReads++;
+      assert.equal(role,'admin');assert.equal(body.p_club_id,clubId);assert.equal(body.p_period,'3m');
+      result=withHistory ? [[0,2.5],[1,4.5],[2,5.5],[3,7],[11,8.25]].map(([index,score])=>({player_id:roster[index].id,player_name:roster[index].ea_id,average_score:score,rated_matches:2,not_selected_matches:0,last_match_at:past.starts_at})):[];
+    } else if (endpoint === 'lineup_position_experience') {
       assert.equal(role, 'admin'); assert.equal(body.p_call_id, nextId);
       if (historyError) return route.fulfill({ status: 500, json: { message: 'History unavailable' } });
       result = suggestions ? [{player_id:roster[4].id,category:'attackers',appearances:3}] : [];
@@ -384,6 +388,8 @@ test('players never request private incidents or see incident actions', async ()
   try {
     await f.page.getByText('Banquillo', { exact: true }).waitFor();
     assert.equal(f.state.incidentReads, 0);
+    assert.equal(f.state.historicalRatingReads, 0);
+    assert.equal(await f.page.getByLabel(/^Media histórica de /).count(),0);
     assert.equal(await f.page.getByLabel('Incidencias vigentes', { exact: true }).count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Consultar incidencias de jugadores', exact: true }).count(), 0);
   } finally { await f.close(); }
@@ -467,5 +473,27 @@ test('captain sees match averages separately from their own unsaved rating',asyn
   await page.getByRole('button',{name:'Guardar valoraciones',exact:true}).click();
   await page.getByText('Valoración media capitanes: 8,00',{exact:true}).waitFor();
   assert.equal(f.state.ratingChanges[0].p_ratings[0].score,10);
+ }finally {await f.close();}
+});
+
+test('captain sees coloured historical averages on the pitch, bench and player selector',async()=>{
+ const f=await fixture({withHistory:true});
+ try {
+  const {page}=f;
+  const expected=[['Selu','2,5','rgb(255, 139, 139)'],['Jugador_2','4,5','rgb(255, 188, 102)'],['Jugador_3','5,5','rgb(255, 228, 107)'],['Jugador_4','7','rgb(180, 241, 108)'],['Jugador_12','8,25','rgb(180, 241, 108)']];
+  for(const [name,score,colour] of expected){
+   const badge=page.getByLabel(`Media histórica de ${name}: ${score} de 10`,{exact:true});
+   await badge.waitFor();
+   assert.equal(await badge.evaluate(e=>getComputedStyle(e).backgroundColor),colour);
+  }
+  await page.getByLabel('Sin valoraciones históricas para Jugador_5',{exact:true}).waitFor();
+  assert.equal(await page.getByLabel('Incidencias vigentes',{exact:true}).count(),2);
+  await page.getByTestId('lineup-pitch').screenshot({path:'/workspace/shared/lineup-historical-ratings.png'});
+  await page.getByRole('button',{name:'Selu, dorsal 1',exact:true}).click();
+  assert.equal(await page.getByLabel('Media histórica de Jugador_12: 8,25 de 10',{exact:true}).count(),2);
+  await page.getByRole('button',{name:'Elegir Jugador_12',exact:true}).click();
+  const pitch=page.getByTestId('lineup-pitch');
+  await pitch.getByLabel('Media histórica de Jugador_12: 8,25 de 10',{exact:true}).waitFor();
+  assert.equal(await pitch.getByLabel('Media histórica de Selu: 2,5 de 10',{exact:true}).count(),0);
  }finally {await f.close();}
 });

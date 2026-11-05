@@ -31,3 +31,11 @@ La migración `20261104000600_performance_all_captain_votes.sql`, aplicada en Su
 El histórico sigue mostrando la media de cada partido y el contador cuenta partidos distintos. La interfaz distingue «Media capitanes» de «partidos valorados». Se mantienen la visibilidad del club y los filtros de período. Las filas históricas sin desglose individual se consideran una nota conservada. La prueba de dos notas 7 y 8 en un partido y una nota 10 en otro exige 8,33 en el resumen y dos partidos valorados.
 
 Validación: 12 pruebas de base de datos de medias y plazos, 201 unitarias, TypeScript, lint y tipos generados correctos. La nueva fórmula ya está en el servidor; los textos nativos llegarán con la próxima compilación.
+
+## Media histórica al alinear
+
+El capitán ve una insignia pequeña en la esquina superior derecha del jugador, tanto en el campo como en el banquillo y en el selector (incluidas sugerencias). Usa `get_player_performance` con período `3m`: la misma media de todos los votos individuales que el resumen, asociada al identificador del jugador, sin cruzar por nombre. No hay datos conservados anteriores a tres meses. El aviso de incidencias sigue a la izquierda.
+
+Rangos sin huecos ni solapamientos: rojo `[0,4)`, naranja `[4,5)`, amarillo `[5,7)` y verde `[7,10]`. El tramo de 3 a 4 se incluye en rojo para completar los rangos de la propuesta. El número conserva hasta dos decimales; los jugadores sin notas numéricas muestran «—» en gris, nunca un cero inventado. Las insignias se consultan únicamente para capitanes y no se añaden a la imagen compartida. Al actualizar la pantalla se recargan también las medias; un error permite reintentar sin bloquear la alineación.
+
+Validación: 202 pruebas unitarias y 18 de interfaz, TypeScript y lint. Se comprueban límites decimales, ausencia de historial, incidencias simultáneas, sustituciones, banquillo/selector y privacidad de jugadores. La interfaz requiere una compilación posterior a iOS 24 / Android 25.

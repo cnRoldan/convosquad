@@ -7,7 +7,7 @@ import { IconButton } from '@/components/icon-button';
 import type { Candidate, Lineup, Slot } from './model';
 import { moveSlot } from './model';
 
-type Props = { lineup: Lineup; candidates: Candidate[]; incidentPlayerIds?: ReadonlySet<string>; editable: boolean; playerColor: string; goalkeeperColor?: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
+type Props = { lineup: Lineup; candidates: Candidate[]; incidentPlayerIds?: ReadonlySet<string>; historicalRatings?: ReadonlyMap<string, number | null> | undefined; editable: boolean; playerColor: string; goalkeeperColor?: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
   const [width, setWidth] = useState(1);
@@ -69,7 +69,7 @@ function Position(props: Props & { slot: Slot; width: number; height: number }) 
   const player = props.candidates.find(p => p.id === props.slot.playerId);
   return <View {...responder.panHandlers} style={[styles.position, { left: props.slot.x * props.width - 40, top: props.slot.y * props.height - 24 }]}>
     <Pressable disabled={!props.editable} onPressIn={() => { didDrag.current = false; }} onPress={() => { if (!didDrag.current) props.onSelect(props.slot); }} accessibilityRole="button" accessibilityLabel={player ? `${player.name}, dorsal ${player.jerseyNumber ?? 'sin asignar'}` : 'Posición vacía'} style={styles.target}>
-      <PlayerToken player={player} warning={Boolean(player && props.incidentPlayerIds?.has(player.id))} color={props.slot.id === 0 ? props.goalkeeperColor ?? '#F4A83A' : props.playerColor} jerseyColor={props.slot.id === 0 ? goalkeeperNumberColor(props.goalkeeperColor ?? '#F4A83A') : props.jerseyColor} />
+      <PlayerToken averageScore={player && props.historicalRatings ? props.historicalRatings.get(player.id) ?? null : undefined} player={player} warning={Boolean(player && props.incidentPlayerIds?.has(player.id))} color={props.slot.id === 0 ? props.goalkeeperColor ?? '#F4A83A' : props.playerColor} jerseyColor={props.slot.id === 0 ? goalkeeperNumberColor(props.goalkeeperColor ?? '#F4A83A') : props.jerseyColor} />
     </Pressable>
   </View>;
 }
