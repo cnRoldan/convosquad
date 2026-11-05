@@ -23,3 +23,11 @@ La migración `20261104000500_captain_rating_averages.sql`, aplicada en Supabase
 Validación: 201 pruebas unitarias, 12 de base de datos (medias y plazos/avisos), 5 de interfaz de valoraciones/incidencias, TypeScript, lint y tipos generados. Se cubren migración de notas previas, privacidad, cero y exclusiones, concurrencia, borrado individual, clientes antiguos, aislamiento por partido y actualización periódica sin perder ediciones.
 
 En el despliegue se conservaron las 38 valoraciones existentes como 38 votos previos. La interfaz nativa requiere una nueva compilación.
+
+## Resumen del período: todas las notas
+
+La migración `20261104000600_performance_all_captain_votes.sql`, aplicada en Supabase, calcula la media de rendimiento con todas las notas numéricas individuales del período: suma de notas dividida entre número de notas. Cada voto pesa lo mismo, aunque distintos partidos tengan diferente número de capitanes votantes. No se promedian medias por partido ni se usan medias ya redondeadas. Los ceros cuentan y las exclusiones no.
+
+El histórico sigue mostrando la media de cada partido y el contador cuenta partidos distintos. La interfaz distingue «Media capitanes» de «partidos valorados». Se mantienen la visibilidad del club y los filtros de período. Las filas históricas sin desglose individual se consideran una nota conservada. La prueba de dos notas 7 y 8 en un partido y una nota 10 en otro exige 8,33 en el resumen y dos partidos valorados.
+
+Validación: 12 pruebas de base de datos de medias y plazos, 201 unitarias, TypeScript, lint y tipos generados correctos. La nueva fórmula ya está en el servidor; los textos nativos llegarán con la próxima compilación.

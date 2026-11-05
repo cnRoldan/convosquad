@@ -934,5 +934,8 @@
   "Sin valoraciones": "Aucune note",
   "No se pudieron actualizar las medias de este partido.": "Impossible de mettre à jour les moyennes de ce match.",
   "Actualizar medias": "Actualiser les moyennes",
-  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Votre note a été modifiée dans une autre session. Rechargez avant d’enregistrer."
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Votre note a été modifiée dans une autre session. Rechargez avant d’enregistrer.",
+  "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "La moyenne inclut toutes les notes des capitaines sur la période choisie. Chaque note a le même poids ; « Non évalué » et « N’a pas joué » sont exclus.",
+  "Media capitanes: {{v0}} / 10": "Moyenne des capitaines : {{v0}} / 10",
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} matchs notés · {{v1}} matchs non joués"
 }

@@ -89,7 +89,7 @@ test('legacy clients keep working and cannot clear another captain vote',async()
  assert.equal(Number((await read(captain,call))[0].score),7);
 });
 
-test('averages are isolated by match and performance weights each match once',async()=>{
+test('averages are isolated by match and performance weights every captain vote equally',async()=>{
  const {club,call,entry}=await fixture();
  await save(captain,call,entry,{score:7});await save(second,call,entry,{score:8});
  const next=(await query(captain,"select * from public.create_call_up_with_end($1,now()-interval '26 hours',now()-interval '30 minutes',null,'open',null,true)",[club.id])).rows[0];
@@ -98,7 +98,7 @@ test('averages are isolated by match and performance weights each match once',as
  assert.equal(Number((await averages(captain,call))[0].average_score),7.5);
  assert.equal(Number((await averages(captain,next))[0].average_score),10);
  const performance=(await query(captain,'select * from public.get_player_performance($1)',[club.id])).rows[0];
- assert.equal(Number(performance.average_score),8.75);assert.equal(performance.rated_matches,2);
+ assert.equal(Number(performance.average_score),8.33);assert.equal(performance.rated_matches,2);
 });
 
 test('migration preserves the last saved legacy vote and its owner',async()=>{

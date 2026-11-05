@@ -45,21 +45,21 @@ function PlayerRatingsScreen() {
     <Heading title={t('Valoraciones y rendimiento')} subtitle={activeClub?.name ?? ''} />
     <Body>{t(ratingVisibilityMessage(visibility))}</Body>
     {admin ? <RatingVisibilitySettings /> : null}
-    <Body>{t('Histórico de los últimos tres meses. Las convocatorias sin valorar y «No convocado» quedan fuera de la media.')}</Body>
+    <Body>{t('La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.')}</Body>
     <Options value={period} options={[{ value: '7d', label: t('Últimos 7 días') }, { value: '1m', label: t('Último mes') }, { value: '3m', label: t('Últimos 3 meses') }]}
       onChange={value => { setPeriod(value); setSelected(null); }} />
     <Options value={order} options={[{ value: 'desc', label: t('Mayor a menor') }, { value: 'asc', label: t('Menor a mayor') }]} onChange={setOrder} />
     {result.isLoading ? <Body>{t('Cargando valoraciones…')}</Body> : null}
     {result.error ? <><Message error>{result.error}</Message><Button label={t('Reintentar')} onPress={result.reload} /></> : null}
     {performance.map(player => <Card key={player.player_id} title={player.player_name}>
-      <Body>{player.average_score === null ? t('Sin media') : t('Media: {{v0}} / 10', { v0: Number(player.average_score).toLocaleString(intlLocale(), { maximumFractionDigits: 2 }) })}</Body>
-      <Body>{t('{{v0}} valoraciones · {{v1}} veces no convocado', { v0: player.rated_matches, v1: player.not_selected_matches })}</Body>
+      <Body>{player.average_score === null ? t('Sin media') : t('Media capitanes: {{v0}} / 10', { v0: Number(player.average_score).toLocaleString(intlLocale(), { maximumFractionDigits: 2 }) })}</Body>
+      <Body>{t('{{v0}} partidos valorados · {{v1}} veces no alineado', { v0: player.rated_matches, v1: player.not_selected_matches })}</Body>
       <Button secondary label={selected === player.player_id ? t('Ocultar historial de {{v0}}', { v0: player.player_name }) : t('Ver historial de {{v0}}', { v0: player.player_name })} onPress={() => setSelected(current => current === player.player_id ? null : player.player_id)} />
       {selected === player.player_id ? <>
         {history.isLoading ? <Body>{t('Cargando valoraciones…')}</Body> : null}
         {history.error ? <><Message error>{history.error}</Message><Button label={t('Reintentar')} onPress={history.reload} /></> : null}
         {history.data?.length ? <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }} contentContainerStyle={{ gap: 8 }}>
-          {history.data.map(match => <Body key={match.call_up_id}>{formatMatchDate(match.starts_at, match.timezone)} · {match.not_selected ? t('No convocado') : `${match.score} / 10`}</Body>)}
+          {history.data.map(match => <Body key={match.call_up_id}>{formatMatchDate(match.starts_at, match.timezone)} · {match.not_selected ? t('No alineado') : `${Number(match.score).toLocaleString(intlLocale(), { maximumFractionDigits: 2 })} / 10`}</Body>)}
         </ScrollView> : null}
       </> : null}
     </Card>)}

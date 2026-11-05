@@ -934,5 +934,8 @@
   "Sin valoraciones": "No ratings",
   "No se pudieron actualizar las medias de este partido.": "Could not update the averages for this match.",
   "Actualizar medias": "Refresh averages",
-  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Your rating changed in another session. Reload before saving."
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Your rating changed in another session. Reload before saving.",
+  "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "The average includes all captain ratings in the selected period. Each rating counts equally; “Not rated” and “Did not play” are excluded.",
+  "Media capitanes: {{v0}} / 10": "Captains’ average: {{v0}} / 10",
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} rated matches · {{v1}} matches not played"
 }

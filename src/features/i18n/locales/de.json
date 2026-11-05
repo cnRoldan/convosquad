@@ -934,5 +934,8 @@
   "Sin valoraciones": "Keine Bewertungen",
   "No se pudieron actualizar las medias de este partido.": "Die Durchschnittsnoten für dieses Spiel konnten nicht aktualisiert werden.",
   "Actualizar medias": "Durchschnitte aktualisieren",
-  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Deine Bewertung wurde in einer anderen Sitzung geändert. Lade sie vor dem Speichern neu."
+  "Tu valoración ha cambiado en otra sesión. Recarga antes de guardar.": "Deine Bewertung wurde in einer anderen Sitzung geändert. Lade sie vor dem Speichern neu.",
+  "La media incluye todas las notas de los capitanes en el período elegido. Cada nota cuenta por igual; «Sin valorar» y «No alineado» quedan fuera.": "Der Durchschnitt enthält alle Kapitänsnoten im gewählten Zeitraum. Jede Note zählt gleich; „Nicht bewertet“ und „Nicht eingesetzt“ werden ausgeschlossen.",
+  "Media capitanes: {{v0}} / 10": "Kapitänsdurchschnitt: {{v0}} / 10",
+  "{{v0}} partidos valorados · {{v1}} veces no alineado": "{{v0}} bewertete Spiele · {{v1}} Mal nicht eingesetzt"
 }
