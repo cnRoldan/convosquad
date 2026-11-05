@@ -59,3 +59,5 @@ Validación: 10 pruebas de base de datos (permisos, historial e indicaciones), 1
 La migración `20261105000200_published_lineup_image.sql`, aplicada en Supabase, exige pertenencia activa al mismo club y convocatoria abierta/cerrada. Se conserva la restricción Prémium de imágenes históricas. La pantalla carga el escudo y permite actualizar al volver a ella o mediante el gesto de recarga. Los RPC del editor siguen reservados a capitanes.
 
 Validación: 6 pruebas de base de datos de acceso y publicación, 20 de interfaz de alineación/valoraciones y 4 dirigidas de Convocatoria; unitarias, TypeScript, lint y tipos generados. Se verifica que no haya descargas ni consultas al editor desde la vista del jugador. La interfaz nativa requiere una nueva compilación.
+
+Las notas históricas individuales se muestran como texto coloreado sin fondo ni borde, con una sombra discreta para que se lean sobre el césped. «VAL MED» mantiene su presentación independiente.

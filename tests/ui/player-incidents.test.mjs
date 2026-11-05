@@ -498,7 +498,8 @@ test('captain sees coloured historical averages on the pitch, bench and player s
   for(const [name,score,colour] of expected){
    const badge=page.getByLabel(`Media histórica de ${name}: ${score} de 10`,{exact:true});
    await badge.waitFor();
-   assert.equal(await badge.evaluate(e=>getComputedStyle(e).backgroundColor),colour);
+   assert.equal(await badge.evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');
+   assert.equal(await badge.getByText(score,{exact:true}).evaluate(e=>getComputedStyle(e).color),colour);
   }
   await page.getByText('VAL MED: 49',{exact:true}).waitFor();
   await page.getByLabel('Sin valoraciones históricas para Jugador_5',{exact:true}).waitFor();
