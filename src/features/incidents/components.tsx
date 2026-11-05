@@ -14,8 +14,7 @@ import { useIncidentClock } from './use-incident-clock';
 
 export function IncidentDetails({ incident, now, onDelete }: { incident: PlayerIncident; now: number; onDelete?: (() => void) | undefined }) {
   useLanguage();
-  return <Card title={incident.player_name}>
-    {onDelete ? <View style={{ alignItems: 'flex-end' }}><IconButton icon="trash" danger label={t('Eliminar incidencia de {{v0}}', { v0: incident.player_name })} onPress={onDelete} /></View> : null}
+  return <Card title={incident.player_name} action={onDelete ? <IconButton icon="trash" danger label={t('Eliminar incidencia de {{v0}}', { v0: incident.player_name })} onPress={onDelete} /> : undefined}>
     <Body>{t(incidentLabel(incident.kind))}</Body>
     {incident.note ? <Body>{incident.note}</Body> : null}
     <Body>{t('Convocatoria: {{v0}}', { v0: formatMatchDate(incident.match_starts_at, incident.match_timezone) })}</Body>

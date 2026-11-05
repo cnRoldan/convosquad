@@ -953,5 +953,6 @@
   "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "L’incident de {{v0}} sera supprimé de l’historique et ne signalera plus le joueur. Ses notes ne changeront pas.",
   "Seleccionar {{v0}} para el banquillo": "Sélectionner {{v0}} pour le banc",
   "Añadir seleccionados ({{v0}})": "Ajouter la sélection ({{v0}})",
-  "También se añadirán los jugadores seleccionados: {{v0}}.": "Les joueurs sélectionnés seront également ajoutés : {{v0}}."
+  "También se añadirán los jugadores seleccionados: {{v0}}.": "Les joueurs sélectionnés seront également ajoutés : {{v0}}.",
+  "Mostrar valoraciones": "Afficher les notes"
 }

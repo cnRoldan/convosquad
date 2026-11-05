@@ -414,6 +414,7 @@ test('players see only the published poster from a direct lineup link', async ()
     assert.equal(f.state.historicalRatingReads, 0);
     assert.equal(await f.page.getByLabel(/^Media histórica de /).count(),0);
     assert.equal(await f.page.getByText(/^VAL MED:/).count(),0);
+    assert.equal(await f.page.getByRole('switch',{name:'Mostrar valoraciones',exact:true}).count(),0);
     assert.equal(await f.page.getByLabel('Incidencias vigentes', { exact: true }).count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Consultar incidencias de jugadores', exact: true }).count(), 0);
   } finally { await f.close(); }
@@ -670,5 +671,28 @@ test('adding a helper keeps pending roster selections',async()=>{
   await page.getByRole('button',{name:'Gestionar Ayuda nueva en el banquillo',exact:true}).waitFor();
   await page.getByRole('button',{name:'Gestionar Jugador_13 en el banquillo',exact:true}).waitFor();
   assert.equal(f.state.guests.length,1);
+ }finally {await f.close();}
+});
+
+test('rating toggle hides and restores player ratings and team average without editing the lineup',async()=>{
+ const f=await fixture({withHistory:true});
+ try {
+  const {page}=f;
+  const toggle=page.getByRole('switch',{name:'Mostrar valoraciones',exact:true});
+  await page.getByText('VAL MED: 49',{exact:true}).waitFor();
+  await toggle.click();
+  assert.equal(await page.getByText(/^VAL MED:/).count(),0);
+  assert.equal(await page.getByLabel(/^Media histórica de /).count(),0);
+  assert.equal(await page.getByLabel(/^Sin valoraciones históricas para /).count(),0);
+  assert.equal(await page.getByLabel('Incidencias vigentes',{exact:true}).count(),2);
+  await page.getByRole('button',{name:'Selu, dorsal 1',exact:true}).click();
+  await page.getByRole('button',{name:'Elegir Jugador_12',exact:true}).waitFor();
+  assert.equal(await page.getByLabel(/^Media histórica de /).count(),0);
+  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+  await toggle.click();
+  await page.getByText('VAL MED: 49',{exact:true}).waitFor();
+  await page.getByLabel('Media histórica de Selu: 2,5 de 10',{exact:true}).waitFor();
+  assert.equal(await page.getByText('Tienes cambios sin guardar.',{exact:true}).count(),0);
+  assert.equal(f.state.instructionSaves.length,0);
  }finally {await f.close();}
 });

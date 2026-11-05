@@ -44,11 +44,11 @@ export function Body({ children }: PropsWithChildren) {
   return <Text style={styles.body}>{children}</Text>;
 }
 
-export function Card({ title, children }: PropsWithChildren<{ title?: string }>) {
+export function Card({ title, action, children }: PropsWithChildren<{ title?: string; action?: ReactNode }>) {
   useLanguage();
   return (
     <View style={styles.card}>
-      {title ? <Text style={styles.cardTitle}>{title}</Text> : null}
+      {action ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>{title ? <Text style={[styles.cardTitle, { flex: 1, minWidth: 0 }]}>{title}</Text> : null}{action}</View> : title ? <Text style={styles.cardTitle}>{title}</Text> : null}
       {children}
     </View>
   );

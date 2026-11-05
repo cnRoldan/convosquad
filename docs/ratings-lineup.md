@@ -61,3 +61,5 @@ La migración `20261105000200_published_lineup_image.sql`, aplicada en Supabase,
 Validación: 6 pruebas de base de datos de acceso y publicación, 20 de interfaz de alineación/valoraciones y 4 dirigidas de Convocatoria; unitarias, TypeScript, lint y tipos generados. Se verifica que no haya descargas ni consultas al editor desde la vista del jugador. La interfaz nativa requiere una nueva compilación.
 
 Las notas históricas individuales se muestran como texto coloreado sin fondo ni borde, con una sombra discreta para que se lean sobre el césped. «VAL MED» mantiene su presentación independiente.
+
+El interruptor «Mostrar valoraciones», encima del campo y activado al entrar, controla las notas individuales del campo, banquillo y selectores junto con «VAL MED». Es un ajuste visual de la sesión de edición: no modifica ni guarda la alineación ni las notas y conserva cualquier cambio pendiente. Las incidencias siguen visibles. La vista de imagen publicada de los jugadores no incluye este control.

@@ -13,7 +13,7 @@ import { useResource } from '@/hooks/use-resource';
 import { suggestPlayers } from './suggestions';
 import { lineupPositionExperience } from './service';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Platform, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Modal, Pressable, ScrollView, Switch, Text, View, useWindowDimensions } from 'react-native';
 import { PlayerToken } from './player-token';
 import { Body, Button, Card, Field, Screen } from '@/components/ui';
 import { ConfirmDialog } from '@/components/confirm-dialog';
@@ -43,9 +43,10 @@ const historyLimit = 50;
 
 export function LineupEditor({ clubId, clubName, crestPath, callId, captain, initialDraftId }: { clubId: string; clubName: string; crestPath?: string | null | undefined; callId: string; captain: boolean; initialDraftId?: string }) {
   const { session } = useAuth();
+  const [showRatings, setShowRatings] = useState(true);
   const loadRatings = useCallback(() => getPerformance(clubId, '3m'), [clubId]);
   const ratingHistory = useResource(`lineup-ratings:${session?.user.id}:${clubId}`, loadRatings, captain && Boolean(session));
-  const historicalRatings = captain && ratingHistory.data ? new Map(ratingHistory.data.map(row => [row.player_id, row.average_score])) : undefined;
+  const historicalRatings = captain && showRatings && ratingHistory.data ? new Map(ratingHistory.data.map(row => [row.player_id, row.average_score])) : undefined;
   const historicalScore = (id: string | null | undefined) => historicalRatings && id ? historicalRatings.get(id) ?? null : undefined;
   const { width: windowWidth } = useWindowDimensions();
   const tablet = windowWidth >= 800;
@@ -316,7 +317,11 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       </View> : null}
       {captain && drafts.length ? <><Text style={{ color: colors.muted, fontSize: 18, fontWeight: '600' }}>Revisa tus borradores</Text><ScrollView horizontal showsHorizontalScrollIndicator contentContainerStyle={{ gap: 6, paddingTop: 9, paddingRight: 9 }}><PresetChip label="Sin borrador" selected={!activeDraftId} disabled={!editable} onPress={() => { setActiveDraftId(null); void reload(); }} />{drafts.map(draft => <PresetChip key={draft.id} label={draft.title} selected={activeDraftId === draft.id} published={draft.published} disabled={!editable} onPress={() => { setActiveDraftId(draft.id); baseline.current = draft.document; baselineInstructions.current = draft.instructions ?? {}; setInstructions(draft.instructions ?? {}); setDocument(draft.document); setSelectedPreset(presetFor(draft.document, preference)); setHistory([]); setDirty(false); setLayoutChanged(false); }} />)}</ScrollView></> : null}
       {captain && activeDraft ? <Card title={`${activeDraft.title} · revisión ${activeDraft.revision}`}>{activeDraft.published ? <><Body>Creado por: {activeDraft.createdBy}</Body><Body>Publicado por: {activeDraft.publishedBy ?? activeDraft.updatedBy}</Body></> : <Body>Modificado por: {activeDraft.updatedBy}</Body>}{activeDraft.suggestedBy && activeDraft.suggestedChanges > 0 ? <Body>{activeDraft.suggestedBy} ha sugerido {activeDraft.suggestedChanges} {activeDraft.suggestedChanges === 1 ? 'cambio' : 'cambios'}.</Body> : null}{!activeDraft.submittedAt ? <Body>Este borrador todavía no se ha enviado a valoración.</Body> : null}<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>{activeDraft.submittedAt ? <View style={{ flexDirection: 'row', gap: 8 }}><Button label={`👍 ${activeDraft.upVotes}`} disabled={busy} onPress={() => void vote(true)} /><Button secondary label={`👎 ${activeDraft.downVotes}`} disabled={busy} onPress={() => void vote(false)} /></View> : null}<IconButton icon="trash" label="Eliminar borrador" danger size={52} disabled={busy} onPress={() => setConfirmDeleteDraft(true)} /></View></Card> : null}
-      {captain && ratingHistory.error ? <><Body>{t('No se pudieron consultar las medias históricas.')}</Body><Button secondary label={t('Reintentar')} onPress={ratingHistory.reload} /></> : null}
+      {captain ? <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <Body>{t('Mostrar valoraciones')}</Body>
+        <Switch accessibilityLabel={t('Mostrar valoraciones')} value={showRatings} onValueChange={setShowRatings} trackColor={{ false: colors.border, true: colors.primary }} />
+      </View> : null}
+      {captain && showRatings && ratingHistory.error ? <><Body>{t('No se pudieron consultar las medias históricas.')}</Body><Button secondary label={t('Reintentar')} onPress={ratingHistory.reload} /></> : null}
       <View testID="lineup-workspace" style={{ flexDirection: tablet ? 'row' : 'column', alignItems: 'stretch', gap: 20 }}>
       <View ref={shareImageRef} collapsable={false} style={[tablet ? { flex: 1, minWidth: 0 } : undefined, renderingPoster ? { backgroundColor: '#0B1210', alignSelf: 'flex-start', ...(tablet ? {} : { width: '100%' }) } : undefined]}>
         {renderingPoster ? <LineupShareCard onAssetLoad={posterAssetLoaded} clubName={clubName} crestUrl={shareCrestUrl} lineup={document} candidates={candidates} shirtColor={playerColor} numberColor={jerseyColor} goalkeeperColor={goalkeeperColor} /> : <LineupPitch historicalRatings={historicalRatings} incidentPlayerIds={incidentPlayerIds} goalkeeperColor={goalkeeperColor} playerColor={playerColor} jerseyColor={jerseyColor} positionLocked={positionLocked} onTogglePositionLock={editable ? () => void togglePositionLock() : undefined} lineup={document} candidates={candidates} editable={editable} onDragStart={beginDrag} onChange={next => { change(next, false); setSelectedPreset(null); setLayoutChanged(true); }} onDragging={setDragging} onSelect={s => setSlot(s.id)} />}

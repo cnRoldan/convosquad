@@ -953,5 +953,6 @@
   "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "The incident for {{v0}} will be removed from history and the player will no longer be flagged for it. Their ratings will not change.",
   "Seleccionar {{v0}} para el banquillo": "Select {{v0}} for the bench",
   "Añadir seleccionados ({{v0}})": "Add selected ({{v0}})",
-  "También se añadirán los jugadores seleccionados: {{v0}}.": "Selected players will also be added: {{v0}}."
+  "También se añadirán los jugadores seleccionados: {{v0}}.": "Selected players will also be added: {{v0}}.",
+  "Mostrar valoraciones": "Show ratings"
 }
