@@ -950,5 +950,8 @@
   "Cargando alineación…": "Aufstellung wird geladen…",
   "Eliminar incidencia de {{v0}}": "Vorfall für {{v0}} löschen",
   "Eliminar incidencia": "Vorfall löschen",
-  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "Der Vorfall für {{v0}} wird aus dem Verlauf entfernt und der Spieler dafür nicht mehr markiert. Seine Bewertungen bleiben unverändert."
+  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "Der Vorfall für {{v0}} wird aus dem Verlauf entfernt und der Spieler dafür nicht mehr markiert. Seine Bewertungen bleiben unverändert.",
+  "Seleccionar {{v0}} para el banquillo": "{{v0}} für die Bank auswählen",
+  "Añadir seleccionados ({{v0}})": "Ausgewählte hinzufügen ({{v0}})",
+  "También se añadirán los jugadores seleccionados: {{v0}}.": "Die ausgewählten Spieler werden ebenfalls hinzugefügt: {{v0}}."
 }

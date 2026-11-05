@@ -26,18 +26,19 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, benchSelection = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
-  const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
+  const roster = Array.from({ length: benchSelection ? 15 : 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
   if (suggestions) roster[11].category = 'attackers';
+  if (benchSelection) { roster[12].category='attackers';roster[13].category='goalkeepers'; }
   if (posterExample) {
     const names=['Rojo impar','Selu','Salsinhes','MAZO NEGRO','Junior','k1mbowx','Boni','Pulpito','Twichpapiiisunda','Manoliko','istateclapeain02'];
     const numbers=[23,22,24,31,12,20,8,80,18,91,5];
@@ -46,9 +47,10 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const next = { id: nextId, club_id: clubId, starts_at: new Date(now + 3600000).toISOString(), ends_at: new Date(now + 10800000).toISOString(), evaluation_at: null, timezone: club.timezone, status: 'open', status_version: 1 };
   const past = { ...next, id: pastId, starts_at: new Date(now - 7200000).toISOString(), ends_at: new Date(now - 3600000).toISOString(), evaluation_at: new Date(now - 3600000).toISOString() };
   const entries = roster.map((player, i) => ({ id: uuid(30 + i), call_up_id: pastId, club_id: clubId, source_player_id: player.id, ea_id_snapshot: player.ea_id, user_id: player.user_id, availability: 'available', category_snapshot: player.category, position_snapshot: 'MC', jersey_number_snapshot: i + 1, sort_order_snapshot: i }));
+  if(benchSelection)for(const entry of entries.slice(12))entry.availability='unavailable';
   if(route==='/call-up-ratings') entries[0].availability='unavailable';
   const positions = posterExample ? [[.5,.9],[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.5,.56],[.34,.34],[.66,.34],[.84,.45],[.36,.15],[.64,.15]] : [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
-  let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id] };
+  let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id], ...(benchSelection?{excludedIds:[roster[13].id,roster[14].id]}:{}) };
   let draft = null;
   let publishedInstructions = seedInstructions ? [
     {id:uuid(120),player_id:roster[0].id,player_name:roster[0].ea_id,body:'Indicación privada para Selu',captain_name:'Capitán',published_at:past.ends_at,recipient_linked:true,recipient:userId},
@@ -76,7 +78,10 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     const body = request.method() === 'POST' ? request.postDataJSON() : null;
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
-    if (endpoint === 'get_player_performance') {
+    if (endpoint === 'add_lineup_guest') {
+      const guest={id:uuid(200),name:body.p_name,kind:body.p_kind};state.guests.push(guest);result=guest.id;
+    } else if (endpoint === 'list_lineup_guests') result=state.guests;
+    else if (endpoint === 'get_player_performance') {
       state.historicalRatingReads++;
       assert.equal(role,'admin');assert.equal(body.p_club_id,clubId);assert.equal(body.p_period,'3m');
       result=withHistory ? [[0,2.5],[1,4.5],[2,5.5],[3,7],[11,8.25]].map(([index,score])=>({player_id:roster[index].id,player_name:roster[index].ea_id,average_score:score,rated_matches:2,not_selected_matches:0,last_match_at:past.starts_at})):[];
@@ -145,7 +150,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     else if (endpoint === 'players') result = roster;
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? past : next) : [next];
     else if (endpoint === 'call_up_players') result = entries;
-    else if (['list_lineup_guests', 'call_up_trials', 'call_up_aids', 'club_trials', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
+    else if (['call_up_trials', 'call_up_aids', 'club_trials', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     return route.fulfill({ json: result });
   });
@@ -600,5 +605,70 @@ test('captains can remove an expired incident from history',async()=>{
   await page.getByRole('button',{name:'Eliminar incidencia de Jugador_2',exact:true}).waitFor({state:'hidden'});
   assert.deepEqual(f.state.incidentDeletes,[uuid(101)]);
   assert.equal(await page.getByRole('button',{name:'Eliminar incidencia de Selu',exact:true}).count(),1);
+ }finally {await f.close();}
+});
+
+test('bench multiselect keeps choices across filters and saves the whole group',async()=>{
+ const f=await fixture({benchSelection:true});
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Añadir al banquillo',exact:true}).click();
+  const add=()=>page.getByRole('button',{name:'Añadir seleccionados (2)',exact:true});
+  assert.equal(await page.getByRole('button',{name:'Añadir seleccionados (0)',exact:true}).isDisabled(),true);
+  await page.getByRole('checkbox',{name:'Seleccionar Jugador_13 para el banquillo',exact:true}).click();
+  await page.getByRole('button',{name:'Porteros',exact:true}).click();
+  await page.getByRole('checkbox',{name:'Seleccionar Jugador_14 para el banquillo',exact:true}).click();
+  await add().waitFor();
+  await page.getByRole('button',{name:'Todos',exact:true}).click();
+  const first=page.getByRole('checkbox',{name:'Seleccionar Jugador_13 para el banquillo',exact:true});
+  assert.equal(await first.getAttribute('aria-checked'),'true');
+  await first.click();await page.getByRole('button',{name:'Añadir seleccionados (1)',exact:true}).waitFor();
+  await first.click();await add().click();
+  await page.getByRole('button',{name:'Gestionar Jugador_13 en el banquillo',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Gestionar Jugador_14 en el banquillo',exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Gestionar Jugador_15 en el banquillo',exact:true}).count(),0);
+  await page.getByRole('button',{name:'Guardar borrador',exact:true}).click();
+  await page.getByRole('button',{name:'Guardar',exact:true}).click();
+  await page.getByText('Borrador guardado.',{exact:true}).waitFor();
+  const saved=f.state.instructionSaves.at(-1).p_document;
+  assert.deepEqual(saved.bench,[uuid(21),uuid(23),uuid(22)]);
+  assert.deepEqual(new Set(saved.manualIds),new Set([uuid(22),uuid(23)]));
+  assert.deepEqual(saved.excludedIds,[uuid(24)]);
+ }finally {await f.close();}
+});
+
+test('closing bench multiselect cancels changes and undo removes an added group together',async()=>{
+ const f=await fixture({benchSelection:true});
+ try {
+  const {page}=f;
+  const open=()=>page.getByRole('button',{name:'Añadir al banquillo',exact:true}).click();
+  const pick=name=>page.getByRole('checkbox',{name:`Seleccionar ${name} para el banquillo`,exact:true}).click();
+  await open();await pick('Jugador_13');
+  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+  assert.equal(await page.getByRole('button',{name:'Gestionar Jugador_13 en el banquillo',exact:true}).count(),0);
+  await open();await page.getByRole('button',{name:'Añadir seleccionados (0)',exact:true}).waitFor();
+  await pick('Jugador_13');await pick('Jugador_14');
+  await page.getByRole('button',{name:'Añadir seleccionados (2)',exact:true}).click();
+  await page.getByRole('button',{name:'Gestionar Jugador_14 en el banquillo',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Deshacer último cambio',exact:true}).click();
+  for(const name of ['Jugador_13','Jugador_14'])assert.equal(await page.getByRole('button',{name:`Gestionar ${name} en el banquillo`,exact:true}).count(),0);
+ }finally {await f.close();}
+});
+
+test('adding a helper keeps pending roster selections',async()=>{
+ const f=await fixture({benchSelection:true});
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Añadir al banquillo',exact:true}).click();
+  await page.getByRole('checkbox',{name:'Seleccionar Jugador_13 para el banquillo',exact:true}).click();
+  await page.getByRole('button',{name:'Añadir ayuda',exact:true}).click();
+  await page.getByRole('button',{name:'Volver',exact:true}).click();
+  assert.equal(await page.getByRole('checkbox',{name:'Seleccionar Jugador_13 para el banquillo',exact:true}).getAttribute('aria-checked'),'true');
+  await page.getByRole('button',{name:'Añadir ayuda',exact:true}).click();
+  await page.getByRole('textbox',{name:'Nombre',exact:true}).fill('Ayuda nueva');
+  await page.getByRole('button',{name:'Añadir ayuda',exact:true}).click();
+  await page.getByRole('button',{name:'Gestionar Ayuda nueva en el banquillo',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Gestionar Jugador_13 en el banquillo',exact:true}).waitFor();
+  assert.equal(f.state.guests.length,1);
  }finally {await f.close();}
 });

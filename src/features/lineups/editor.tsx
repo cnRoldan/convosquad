@@ -294,13 +294,14 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     catch { setMessage('No se pudo generar la imagen. Inténtalo de nuevo.'); }
     finally { posterReadiness.current?.cancel(); posterReadiness.current = null; setRenderingPoster(false); setSharing(false); }
   }
-  function include(id: string) {
-    if (document) change({...document,bench:[...new Set([...document.bench,id])],manualIds:[...new Set([...(document.manualIds??[]),id])],excludedIds:document.excludedIds?.filter(excludedId=>excludedId!==id)});
+  function include(ids: string[]) {
+    const selected = new Set(ids.filter(id => !document?.slots.some(slot => slot.playerId === id)));
+    if (document && selected.size) change({...document,bench:[...new Set([...document.bench,...selected])],manualIds:[...new Set([...(document.manualIds??[]),...selected])],excludedIds:document.excludedIds?.filter(id=>!selected.has(id))});
     setAdding(false);
   }
-  async function create(input: GuestInput) {
+  async function create(input: GuestInput, selectedIds: string[]) {
     const id=unwrap(await requireSupabase().rpc('add_lineup_guest',{p_call_id:callId,p_kind:input.kind,p_name:input.name,p_notes:input.notes,p_phone:input.phone,p_retain:input.retain}));
-    setCandidates(current=>[...current,{id,name:input.name,active:true,eligible:false,manual:true}]);include(id);
+    setCandidates(current=>[...current,{id,name:input.name,active:true,eligible:false,manual:true}]);include([...selectedIds,id]);
   }
   return <Screen wide scrollEnabled={!dragging} onRefresh={() => { ratingHistory.reload(); void reload(); }} refreshing={busy}>
     {message ? <Body>{message}</Body> : null}

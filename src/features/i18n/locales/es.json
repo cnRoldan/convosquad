@@ -950,5 +950,8 @@
   "Cargando alineación…": "Cargando alineación…",
   "Eliminar incidencia de {{v0}}": "Eliminar incidencia de {{v0}}",
   "Eliminar incidencia": "Eliminar incidencia",
-  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán."
+  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.",
+  "Seleccionar {{v0}} para el banquillo": "Seleccionar {{v0}} para el banquillo",
+  "Añadir seleccionados ({{v0}})": "Añadir seleccionados ({{v0}})",
+  "También se añadirán los jugadores seleccionados: {{v0}}.": "También se añadirán los jugadores seleccionados: {{v0}}."
 }
