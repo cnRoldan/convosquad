@@ -8,6 +8,12 @@ import type { Json } from '@/types/database';
 import { inheritLineup, reconcileLineup, type Candidate, type Lineup, type LineupLayout } from './model';
 import type { PositionExperience } from './suggestions';
 
+export type PublishedLineupSnapshot = { clubName: string; crestPath: string | null; lineup: Lineup; candidates: Candidate[]; shirtColor: string; numberColor: string; goalkeeperColor: string };
+export type PublishedLineup = { allowed: boolean; snapshot?: PublishedLineupSnapshot | null };
+export async function readPublishedLineup(callId: string): Promise<PublishedLineup> {
+  return unwrap(await requireSupabase().rpc('read_published_lineup', { p_call_id: callId })) as unknown as PublishedLineup;
+}
+
 export type LineupAccess = { activated: boolean; premium: boolean; remaining: number; allowed: boolean };
 export async function lineupPositionExperience(callId: string): Promise<PositionExperience[]> {
   return unwrap(await requireSupabase().rpc('lineup_position_experience', { p_call_id: callId })) as PositionExperience[];

@@ -1780,6 +1780,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['player_ratings']['Row'][];
       };
+      read_published_lineup: {
+        Args: {
+          p_call_id: string;
+        };
+        Returns: Json;
+      };
       read_rating_lineup: {
         Args: {
           p_call_id: string;

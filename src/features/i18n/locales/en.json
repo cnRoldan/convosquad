@@ -943,5 +943,9 @@
   "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Historical captain average · last 3 months. “—” means no ratings.",
   "No se pudieron consultar las medias históricas.": "Could not load historical averages.",
   "VAL MED: {{v0}}": "AVG RTG: {{v0}}",
-  "Valoración media del once: {{v0}} sobre 100": "Starting XI average rating: {{v0}} out of 100"
+  "Valoración media del once: {{v0}} sobre 100": "Starting XI average rating: {{v0}} out of 100",
+  "Imagen del once publicado": "Published starting XI image",
+  "La imagen de esta alineación histórica no está disponible para el club.": "The image of this historical lineup is not available for this club.",
+  "El capitán todavía no ha publicado el once.": "The captain has not published the starting XI yet.",
+  "Cargando alineación…": "Loading lineup…"
 }

@@ -46,8 +46,16 @@ Validación del indicador: 203 pruebas unitarias, dos pruebas de interfaz dirigi
 
 ## Acceso a la vista de alineación
 
-La ruta `/lineup` es exclusiva para capitanes. Un jugador que abra un enlace directo vuelve a Convocatoria antes de montar el editor o consultar sus datos. Convocatoria solo muestra «¡Forma tu 11!» a capitanes y ya no ofrece «Consulta el 11» a jugadores. Las indicaciones personales siguen accesibles desde Convocatoria.
+El editor de `/lineup` es exclusivo para capitanes. Convocatoria muestra «¡Forma tu 11!» a capitanes y «Consulta el 11» a jugadores; estos últimos solo acceden al cartel publicado. Las indicaciones personales siguen accesibles desde Convocatoria.
 
 La migración `20261105000100_captain_only_lineup_view.sql`, aplicada en Supabase, exige administración activa del mismo club en `read_lineup` y `read_lineup_access`. Los clientes antiguos tampoco pueden consultar el campo. Se conservan los controles de activación, cuota mensual e histórico Prémium. Prémium no concede este acceso a jugadores.
 
-Validación: 10 pruebas de base de datos (permisos, historial e indicaciones), 18 de interfaz de alineación/valoraciones y 4 dirigidas de Convocatoria, 203 unitarias, TypeScript, lint y tipos generados. El bloqueo de servidor ya está activo; para ocultar el botón en clientes nativos antiguos hace falta la próxima compilación.
+Validación: 10 pruebas de base de datos (permisos, historial e indicaciones), 18 de interfaz de alineación/valoraciones y 4 dirigidas de Convocatoria, 203 unitarias, TypeScript, lint y tipos generados. El bloqueo del editor en el servidor ya está activo.
+
+## Consulta de la imagen publicada
+
+«Consulta el 11» abre dentro de la app únicamente el cartel publicado, sin descargar ni compartir archivos, notas históricas, VAL MED ni controles del editor. Una consulta separada `read_published_lineup` devuelve solo los campos permitidos del snapshot publicado, nunca los borradores. No requiere consumir generaciones del once. Cambiar un borrador no cambia el cartel hasta que el capitán lo publique de nuevo. Sin publicación se informa al jugador y no se muestra una alineación provisional.
+
+La migración `20261105000200_published_lineup_image.sql`, aplicada en Supabase, exige pertenencia activa al mismo club y convocatoria abierta/cerrada. Se conserva la restricción Prémium de imágenes históricas. La pantalla carga el escudo y permite actualizar al volver a ella o mediante el gesto de recarga. Los RPC del editor siguen reservados a capitanes.
+
+Validación: 6 pruebas de base de datos de acceso y publicación, 20 de interfaz de alineación/valoraciones y 4 dirigidas de Convocatoria; unitarias, TypeScript, lint y tipos generados. Se verifica que no haya descargas ni consultas al editor desde la vista del jugador. La interfaz nativa requiere una nueva compilación.

@@ -943,5 +943,9 @@
   "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Historischer Kapitänsdurchschnitt · letzte 3 Monate. „—“ bedeutet keine Bewertungen.",
   "No se pudieron consultar las medias históricas.": "Die historischen Durchschnittswerte konnten nicht geladen werden.",
   "VAL MED: {{v0}}": "Ø BEW: {{v0}}",
-  "Valoración media del once: {{v0}} sobre 100": "Durchschnittsbewertung der Startelf: {{v0}} von 100"
+  "Valoración media del once: {{v0}} sobre 100": "Durchschnittsbewertung der Startelf: {{v0}} von 100",
+  "Imagen del once publicado": "Bild der veröffentlichten Startelf",
+  "La imagen de esta alineación histórica no está disponible para el club.": "Das Bild dieser historischen Aufstellung ist für diesen Verein nicht verfügbar.",
+  "El capitán todavía no ha publicado el once.": "Der Kapitän hat die Startelf noch nicht veröffentlicht.",
+  "Cargando alineación…": "Aufstellung wird geladen…"
 }

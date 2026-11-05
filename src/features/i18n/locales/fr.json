@@ -943,5 +943,9 @@
   "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Moyenne historique des capitaines · 3 derniers mois. « — » indique aucune note.",
   "No se pudieron consultar las medias históricas.": "Impossible de charger les moyennes historiques.",
   "VAL MED: {{v0}}": "NOTE MOY: {{v0}}",
-  "Valoración media del once: {{v0}} sobre 100": "Note moyenne du onze : {{v0}} sur 100"
+  "Valoración media del once: {{v0}} sobre 100": "Note moyenne du onze : {{v0}} sur 100",
+  "Imagen del once publicado": "Image du onze publié",
+  "La imagen de esta alineación histórica no está disponible para el club.": "L’image de cette composition historique n’est pas disponible pour ce club.",
+  "El capitán todavía no ha publicado el once.": "Le capitaine n’a pas encore publié le onze.",
+  "Cargando alineación…": "Chargement de la composition…"
 }

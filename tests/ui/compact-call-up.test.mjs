@@ -239,7 +239,7 @@ for (const width of [320, 390, 1280]) test(`filas compactas, paneles y filtros a
     assert.equal(await page.getByRole('button', { name: 'Historial de convocatorias', exact: true }).count(), 0);
     assert.equal(await page.getByRole('button', { name: 'Actualizar convocatoria', exact: true }).count(), 0);
     assert.equal(await page.getByText('Actualización en directo', { exact: true }).count(), 0);
-    assert.equal(await page.getByRole('button', { name: 'Consulta el 11', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Consulta el 11', exact: true }).count(), 1);
     const rows = page.locator('[data-testid^="call-up-player-"]:visible');
     assert.equal(await rows.count(), 24);
     const filters = page.getByTestId('call-up-filters');
@@ -306,10 +306,10 @@ test('Realtime actualiza contadores y retira una respuesta del filtro Pendientes
   } finally { await f.close(); }
 });
 
-test('players do not have a link to the captain lineup view',async()=>{
+test('players have a published-poster link and no captain editor button',async()=>{
  const f=await fixture();
  try {
-  assert.equal(await f.page.getByRole('button',{name:'Consulta el 11',exact:true}).count(),0);
+  assert.equal(await f.page.getByRole('button',{name:'Consulta el 11',exact:true}).count(),1);
   assert.equal(await f.page.getByRole('button',{name:'¡Forma tu 11!',exact:true}).count(),0);
  }finally {await f.close();}
 });

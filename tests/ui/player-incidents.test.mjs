@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -122,6 +122,10 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       document = body.p_document;
       draft = { id: uuid(90), ordinal: 1, title: body.p_title, document, instructions:body.p_instructions??draft?.instructions??{}, revision: (draft?.revision ?? 0) + 1, submittedAt: null, createdBy: 'Capitán', updatedBy: 'Capitán', upVotes: 0, downVotes: 0, published: false };
       result = draft;
+    } else if (endpoint === 'read_published_lineup') {
+      state.publishedReads++;
+      assert.equal(body.p_call_id,nextId);
+      result={allowed:true,snapshot:noPublishedLineup?null:{clubName:club.name,crestPath:withCrest?club.crest_path:null,lineup:document,candidates:roster.map(p=>({id:p.id,name:p.ea_id,jerseyNumber:p.jersey_number,active:true,eligible:true})),shirtColor:'#4C000B',numberColor:'#B3FF61',goalkeeperColor:'#F4A83A'}};
     } else if (endpoint === 'read_lineup_access') { state.lineupAccessReads++; assert.equal(role,'admin'); result = { allowed: true, premium: true, activated: true, remaining: 6 }; }
     else if (endpoint === 'read_lineup') { state.lineupReads++; assert.equal(role,'admin'); result = { document, revision: 0, inherited: false }; }
     else if (endpoint === 'list_lineup_drafts') result = draft ? [draft] : [];
@@ -383,11 +387,14 @@ test('without a published XI, ratings explain manual selection instead of using 
   } finally {await f.close();}
 });
 
-test('players cannot open the lineup editor or request its data from a direct link', async () => {
+test('players see only the published poster from a direct lineup link', async () => {
   const f = await fixture({ role: 'player' });
   try {
-    await f.page.waitForURL('**/call-up');
-    await f.page.getByRole('button',{name:'Mis indicaciones',exact:true}).waitFor();
+    await f.page.getByTestId('published-lineup-image').waitFor();
+    assert.ok(f.state.publishedReads>0);
+    assert.equal(await f.page.getByRole('button',{name:'Guardar borrador',exact:true}).count(),0);
+    assert.equal(await f.page.getByRole('button',{name:'Publicar 11',exact:true}).count(),0);
+    assert.equal(await f.page.locator('a[download]').count(),0);
     assert.equal(await f.page.getByTestId('lineup-pitch').count(),0);
     assert.equal(await f.page.getByRole('button',{name:'Consulta el 11',exact:true}).count(),0);
     assert.equal(await f.page.getByRole('button',{name:'¡Forma tu 11!',exact:true}).count(),0);
@@ -504,5 +511,32 @@ test('captain sees coloured historical averages on the pitch, bench and player s
   await pitch.getByLabel('Media histórica de Jugador_12: 8,25 de 10',{exact:true}).waitFor();
   assert.equal(await pitch.getByLabel('Media histórica de Selu: 2,5 de 10',{exact:true}).count(),0);
   await pitch.getByText('VAL MED: 63',{exact:true}).waitFor();
+ }finally {await f.close();}
+});
+
+test('published poster opens from call-up without downloading or loading the editor',async()=>{
+ const f=await fixture({role:'player',route:'/call-up',withCrest:true});
+ try {
+  const {page}=f;let downloads=0;page.on('download',()=>downloads++);
+  const crestLoaded=page.waitForResponse(response=>response.url().includes('/storage/v1/object/sign/club-crests/')&&response.request().method()==='GET');
+  await page.getByRole('button',{name:'Consulta el 11',exact:true}).click();
+  await page.getByTestId('published-lineup-image').waitFor();
+  await page.getByTestId('published-lineup-image').locator('svg').waitFor();
+  assert.equal(await page.getByTestId('lineup-pitch').count(),0);
+  assert.equal(f.state.lineupReads,0);assert.equal(f.state.lineupAccessReads,0);assert.equal(f.state.historicalRatingReads,0);
+  assert.equal(downloads,0);
+  await crestLoaded;
+  await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+  await page.getByTestId('published-lineup-image').screenshot({path:'/workspace/shared/published-lineup-view.png'});
+ }finally {await f.close();}
+});
+
+test('players see an unpublished message instead of drafts or the editor',async()=>{
+ const f=await fixture({role:'player',noPublishedLineup:true});
+ try {
+  await f.page.getByText('El capitán todavía no ha publicado el once.',{exact:true}).waitFor();
+  assert.equal(await f.page.getByTestId('published-lineup-image').count(),0);
+  assert.equal(await f.page.getByTestId('lineup-pitch').count(),0);
+  assert.equal(f.state.lineupReads,0);assert.equal(f.state.lineupAccessReads,0);
  }finally {await f.close();}
 });

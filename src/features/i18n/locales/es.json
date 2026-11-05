@@ -943,5 +943,9 @@
   "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.",
   "No se pudieron consultar las medias históricas.": "No se pudieron consultar las medias históricas.",
   "VAL MED: {{v0}}": "VAL MED: {{v0}}",
-  "Valoración media del once: {{v0}} sobre 100": "Valoración media del once: {{v0}} sobre 100"
+  "Valoración media del once: {{v0}} sobre 100": "Valoración media del once: {{v0}} sobre 100",
+  "Imagen del once publicado": "Imagen del once publicado",
+  "La imagen de esta alineación histórica no está disponible para el club.": "La imagen de esta alineación histórica no está disponible para el club.",
+  "El capitán todavía no ha publicado el once.": "El capitán todavía no ha publicado el once.",
+  "Cargando alineación…": "Cargando alineación…"
 }
