@@ -941,5 +941,7 @@
   "Media histórica de {{v0}}: {{v1}} de 10": "Historical average for {{v0}}: {{v1}} out of 10",
   "Sin valoraciones históricas para {{v0}}": "No historical ratings for {{v0}}",
   "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Historical captain average · last 3 months. “—” means no ratings.",
-  "No se pudieron consultar las medias históricas.": "Could not load historical averages."
+  "No se pudieron consultar las medias históricas.": "Could not load historical averages.",
+  "VAL MED: {{v0}}": "AVG RTG: {{v0}}",
+  "Valoración media del once: {{v0}} sobre 100": "Starting XI average rating: {{v0}} out of 100"
 }

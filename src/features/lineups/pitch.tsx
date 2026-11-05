@@ -1,7 +1,9 @@
 import { goalkeeperNumberColor } from './kit-colors';
 import { forwardRef, useLayoutEffect, useRef, useState } from 'react';
-import { PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
+import { lineupHistoricalRating } from './historical-rating';
+import { t, useLanguage } from '@/features/i18n/runtime';
 import { PlayerToken } from './player-token';
 import { IconButton } from '@/components/icon-button';
 import type { Candidate, Lineup, Slot } from './model';
@@ -10,11 +12,16 @@ import { moveSlot } from './model';
 type Props = { lineup: Lineup; candidates: Candidate[]; incidentPlayerIds?: ReadonlySet<string>; historicalRatings?: ReadonlyMap<string, number | null> | undefined; editable: boolean; playerColor: string; goalkeeperColor?: string; jerseyColor: string; positionLocked: boolean; onTogglePositionLock?: (() => void) | undefined; onChange: (lineup: Lineup) => void; onSelect: (slot: Slot) => void; onDragStart?: (() => void) | undefined; onDragging?: (dragging: boolean) => void };
 
 export const LineupPitch = forwardRef<View, Props>(function LineupPitch(props, imageRef) {
+  useLanguage();
   const [width, setWidth] = useState(1);
+  const average = props.historicalRatings ? lineupHistoricalRating(props.lineup, props.historicalRatings) : null;
   const height = Math.max(520, Math.min(960, Math.round(width * 1.35)));
   return <View testID="lineup-pitch" ref={imageRef} collapsable={false} style={[styles.pitch, { height }]} onLayout={event => setWidth(event.nativeEvent.layout.width)}>
     <PitchMarkings />
     {props.lineup.slots.map(slot => <Position key={slot.id} {...props} slot={slot} width={width} height={height} />)}
+    {props.historicalRatings ? <View pointerEvents="none" style={styles.average}>
+      <Text accessibilityLabel={t('Valoración media del once: {{v0}} sobre 100', { v0: average ?? '—' })} style={styles.averageText}>{t('VAL MED: {{v0}}', { v0: average ?? '—' })}</Text>
+    </View> : null}
     {props.onTogglePositionLock ? <View style={styles.lock}><IconButton icon={props.positionLocked ? 'lock' : 'unlock'} label={props.positionLocked ? 'Desbloquear posiciones' : 'Bloquear posiciones'} onPress={props.onTogglePositionLock} /></View> : null}
   </View>;
 });
@@ -77,5 +84,7 @@ const styles = StyleSheet.create({
   pitch: { borderRadius: 20, backgroundColor: '#216F3A', overflow: 'hidden' },
   position: { position: 'absolute', width: 80 },
   target: { alignItems: 'center', minHeight: 48 },
+  average: { position: 'absolute', top: 10, left: 10, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 5, backgroundColor: 'rgba(6, 18, 12, 0.9)', borderWidth: 1, borderColor: '#AABCB0' },
+  averageText: { color: '#F3F8F1', fontSize: 12, fontWeight: '800' },
   lock: { position: 'absolute', right: 8, bottom: 8 },
 });

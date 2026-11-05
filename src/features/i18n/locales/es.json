@@ -941,5 +941,7 @@
   "Media histórica de {{v0}}: {{v1}} de 10": "Media histórica de {{v0}}: {{v1}} de 10",
   "Sin valoraciones históricas para {{v0}}": "Sin valoraciones históricas para {{v0}}",
   "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.": "Media histórica de capitanes · últimos 3 meses. «—» indica que no hay valoraciones.",
-  "No se pudieron consultar las medias históricas.": "No se pudieron consultar las medias históricas."
+  "No se pudieron consultar las medias históricas.": "No se pudieron consultar las medias históricas.",
+  "VAL MED: {{v0}}": "VAL MED: {{v0}}",
+  "Valoración media del once: {{v0}} sobre 100": "Valoración media del once: {{v0}} sobre 100"
 }

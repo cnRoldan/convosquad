@@ -390,6 +390,7 @@ test('players never request private incidents or see incident actions', async ()
     assert.equal(f.state.incidentReads, 0);
     assert.equal(f.state.historicalRatingReads, 0);
     assert.equal(await f.page.getByLabel(/^Media histórica de /).count(),0);
+    assert.equal(await f.page.getByText(/^VAL MED:/).count(),0);
     assert.equal(await f.page.getByLabel('Incidencias vigentes', { exact: true }).count(), 0);
     assert.equal(await f.page.getByRole('button', { name: 'Consultar incidencias de jugadores', exact: true }).count(), 0);
   } finally { await f.close(); }
@@ -486,6 +487,7 @@ test('captain sees coloured historical averages on the pitch, bench and player s
    await badge.waitFor();
    assert.equal(await badge.evaluate(e=>getComputedStyle(e).backgroundColor),colour);
   }
+  await page.getByText('VAL MED: 49',{exact:true}).waitFor();
   await page.getByLabel('Sin valoraciones históricas para Jugador_5',{exact:true}).waitFor();
   assert.equal(await page.getByLabel('Incidencias vigentes',{exact:true}).count(),2);
   await page.getByTestId('lineup-pitch').screenshot({path:'/workspace/shared/lineup-historical-ratings.png'});
@@ -495,5 +497,6 @@ test('captain sees coloured historical averages on the pitch, bench and player s
   const pitch=page.getByTestId('lineup-pitch');
   await pitch.getByLabel('Media histórica de Jugador_12: 8,25 de 10',{exact:true}).waitFor();
   assert.equal(await pitch.getByLabel('Media histórica de Selu: 2,5 de 10',{exact:true}).count(),0);
+  await pitch.getByText('VAL MED: 63',{exact:true}).waitFor();
  }finally {await f.close();}
 });
