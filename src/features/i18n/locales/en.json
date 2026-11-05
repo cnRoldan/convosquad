@@ -947,5 +947,8 @@
   "Imagen del once publicado": "Published starting XI image",
   "La imagen de esta alineación histórica no está disponible para el club.": "The image of this historical lineup is not available for this club.",
   "El capitán todavía no ha publicado el once.": "The captain has not published the starting XI yet.",
-  "Cargando alineación…": "Loading lineup…"
+  "Cargando alineación…": "Loading lineup…",
+  "Eliminar incidencia de {{v0}}": "Delete incident for {{v0}}",
+  "Eliminar incidencia": "Delete incident",
+  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "The incident for {{v0}} will be removed from history and the player will no longer be flagged for it. Their ratings will not change."
 }

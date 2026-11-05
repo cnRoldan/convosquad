@@ -165,7 +165,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
       setDrafts(rows); setActiveDraftId(requested?.id ?? null);
     } catch { setMessage('No se pudo cargar el once.'); }
     finally { setBusy(false); }
-  }, [clubId, callId, captain, setActiveDraftId, setDirty]);
+  }, [clubId, callId, captain, setActiveDraftId, setDirty, setIncidents]);
   useEffect(() => { const timer=setTimeout(()=>void reload(),0);return ()=>clearTimeout(timer); }, [reload]);
   useEffect(() => { void listClubMembers(clubId).then(rows => setCaptainCount(rows.filter(row => row.role === 'admin' && row.is_active).length)).catch(() => undefined); }, [clubId]);
   useEffect(()=>{
@@ -414,7 +414,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     }}>
       <Button secondary label="Salir sin guardar" disabled={busy} onPress={discardAndLeave} />
     </ConfirmDialog>
-    {captain && showIncidents ? <LineupIncidentsModal incidents={selectedIncidents} close={() => setShowIncidents(false)} /> : null}
+    {captain && showIncidents ? <LineupIncidentsModal incidents={selectedIncidents} onDeleted={id => { setIncidents(current => current.filter(incident => incident.id !== id)); setPublishIncidents(current => current.filter(incident => incident.id !== id)); }} close={() => setShowIncidents(false)} /> : null}
     <ConfirmDialog visible={confirmPublish && !showIncidents} title="Publicar 11" description={currentPublishIncidents.length ? t('Vas a publicar una alineación con jugadores que tienen incidencias.') : activeDraft?.submittedAt ? `Publicarás ${activeDraft.title}. Los jugadores verán este once oficialmente.` : 'Vas a publicar esta alineación sin haberla sometido a valoración con el resto de capitanes. ¿Deseas continuar?'} confirmLabel="Publicar 11" busy={busy} onCancel={() => setConfirmPublish(false)} onConfirm={() => void publishDraft()}>
       {currentPublishIncidents.length ? <Button secondary label="Consultar incidencias de jugadores" disabled={busy} onPress={() => setShowIncidents(true)} /> : null}
       {publishError ? <Body>{t(publishError)}</Body> : null}

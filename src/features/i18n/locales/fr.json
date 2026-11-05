@@ -947,5 +947,8 @@
   "Imagen del once publicado": "Image du onze publié",
   "La imagen de esta alineación histórica no está disponible para el club.": "L’image de cette composition historique n’est pas disponible pour ce club.",
   "El capitán todavía no ha publicado el once.": "Le capitaine n’a pas encore publié le onze.",
-  "Cargando alineación…": "Chargement de la composition…"
+  "Cargando alineación…": "Chargement de la composition…",
+  "Eliminar incidencia de {{v0}}": "Supprimer l’incident de {{v0}}",
+  "Eliminar incidencia": "Supprimer l’incident",
+  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "L’incident de {{v0}} sera supprimé de l’historique et ne signalera plus le joueur. Ses notes ne changeront pas."
 }

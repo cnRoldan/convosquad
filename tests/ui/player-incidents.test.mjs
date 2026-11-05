@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -88,6 +88,11 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       state.incidentReads++;
       assert.equal(role, 'admin');
       result = incidents.filter(incident => (!body.p_active_only || Date.parse(incident.expires_at) > (expiresSoon ? now : Date.now())) && (!body.p_call_up_id || incident.call_up_id === body.p_call_up_id));
+    } else if (endpoint === 'delete_player_incident') {
+      assert.equal(role,'admin');state.incidentDeletes.push(body.p_incident_id);
+      const index=incidents.findIndex(incident=>incident.id===body.p_incident_id);
+      if(index>=0)incidents.splice(index,1);
+      result=null;
     } else if (endpoint === 'record_player_incident') {
       state.recorded.push(body);
       const index = entries.findIndex(entry => entry.id === body.p_entry_id);
@@ -550,5 +555,50 @@ test('players see an unpublished message instead of drafts or the editor',async(
   assert.equal(await f.page.getByTestId('published-lineup-image').count(),0);
   assert.equal(await f.page.getByTestId('lineup-pitch').count(),0);
   assert.equal(f.state.lineupReads,0);assert.equal(f.state.lineupAccessReads,0);
+ }finally {await f.close();}
+});
+
+test('captain cancels or deletes an incident from the pitch and the warning clears',async()=>{
+ const f=await fixture();
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Consultar incidencias de jugadores',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar incidencia de Selu',exact:true}).click();
+  await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+  assert.deepEqual(f.state.incidentDeletes,[]);
+  await page.getByRole('button',{name:'Eliminar incidencia de Selu',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar incidencia',exact:true}).click();
+  await page.getByText('Los jugadores alineados no tienen incidencias vigentes.',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Cerrar',exact:true}).click();
+  assert.deepEqual(f.state.incidentDeletes,[uuid(100)]);
+  assert.equal(await page.getByTestId('lineup-pitch').getByLabel('Incidencias vigentes',{exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Consultar incidencias de jugadores',exact:true}).count(),0);
+ }finally {await f.close();}
+});
+
+test('deleting an incident from ratings preserves the unsaved score',async()=>{
+ const f=await fixture({route:'/call-up-ratings'});
+ try {
+  const {page}=f;
+  const score=page.getByRole('radio',{name:'Nota 8 para Selu',exact:true});
+  await score.click();
+  await page.getByRole('button',{name:'Eliminar incidencia de Selu',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar incidencia',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar incidencia de Selu',exact:true}).waitFor({state:'hidden'});
+  assert.equal(await score.getAttribute('aria-checked'),'true');
+  assert.equal(f.state.ratings,0);
+  assert.deepEqual(f.state.incidentDeletes,[uuid(100)]);
+ }finally {await f.close();}
+});
+
+test('captains can remove an expired incident from history',async()=>{
+ const f=await fixture({route:'/incident-history'});
+ try {
+  const {page}=f;
+  await page.getByRole('button',{name:'Eliminar incidencia de Jugador_2',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar incidencia',exact:true}).click();
+  await page.getByRole('button',{name:'Eliminar incidencia de Jugador_2',exact:true}).waitFor({state:'hidden'});
+  assert.deepEqual(f.state.incidentDeletes,[uuid(101)]);
+  assert.equal(await page.getByRole('button',{name:'Eliminar incidencia de Selu',exact:true}).count(),1);
  }finally {await f.close();}
 });

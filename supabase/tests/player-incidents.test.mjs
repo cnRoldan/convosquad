@@ -102,3 +102,20 @@ test('historical pagination preserves older entries and active incidents are nev
   assert.equal((await list(captain, false, 100)).rows.length, 7);
   assert.equal((await list(captain)).rows.length, 105);
 });
+
+test('captains can delete mistaken incidents at any time; members cannot; lineup warnings clear',async()=>{
+  for(const user of [member,outsider])await assert.rejects(query(user,'select public.delete_player_incident($1)',[first.id]),{code:'42501'});
+  await assert.rejects(asUser(db,null,tx=>tx.query('select public.delete_player_incident($1)',[first.id]),'anon'),{code:'42501'});
+  await assert.rejects(query(peer,'delete from public.player_incidents where id=$1',[first.id]),{code:'42501'});
+  // This expired incident has lost both its call-up and its original roster player.
+  await query(peer,'select public.delete_player_incident($1)',[first.id]);
+  assert.ok(!(await list(peer,false)).rows.some(i=>i.id===first.id));
+  const incident=(await db.query("insert into public.player_incidents(club_id,player_id,player_name,match_starts_at,match_timezone,kind,note,captain_name,recorded_by) values($1,$2,'Corrected player',now(),'UTC','other','Mistaken report','Other captain',$3) returning *",[club.id,players[2].id,peer])).rows[0];
+  await assert.rejects(db.query('select private.require_incident_acknowledgement($1,$2,$3)',[club.id,document(),[]]),{code:'P0052'});
+  assert.ok((await list(captain)).rows.some(i=>i.id===incident.id));
+  await query(captain,'select public.delete_player_incident($1)',[incident.id]);
+  assert.ok(!(await list(peer)).rows.some(i=>i.id===incident.id));
+  assert.ok(!(await list(peer,false)).rows.some(i=>i.id===incident.id));
+  await db.query('select private.require_incident_acknowledgement($1,$2,$3)',[club.id,document(),[]]);
+  await query(captain,'select public.delete_player_incident($1)',[incident.id]);
+});

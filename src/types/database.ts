@@ -1571,6 +1571,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      delete_player_incident: {
+        Args: {
+          p_incident_id: string;
+        };
+        Returns: undefined;
+      };
       delete_trial_history: {
         Args: {
           p_trial_id: string;

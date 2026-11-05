@@ -947,5 +947,8 @@
   "Imagen del once publicado": "Imagen del once publicado",
   "La imagen de esta alineación histórica no está disponible para el club.": "La imagen de esta alineación histórica no está disponible para el club.",
   "El capitán todavía no ha publicado el once.": "El capitán todavía no ha publicado el once.",
-  "Cargando alineación…": "Cargando alineación…"
+  "Cargando alineación…": "Cargando alineación…",
+  "Eliminar incidencia de {{v0}}": "Eliminar incidencia de {{v0}}",
+  "Eliminar incidencia": "Eliminar incidencia",
+  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán."
 }

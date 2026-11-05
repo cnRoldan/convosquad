@@ -947,5 +947,8 @@
   "Imagen del once publicado": "Bild der veröffentlichten Startelf",
   "La imagen de esta alineación histórica no está disponible para el club.": "Das Bild dieser historischen Aufstellung ist für diesen Verein nicht verfügbar.",
   "El capitán todavía no ha publicado el once.": "Der Kapitän hat die Startelf noch nicht veröffentlicht.",
-  "Cargando alineación…": "Aufstellung wird geladen…"
+  "Cargando alineación…": "Aufstellung wird geladen…",
+  "Eliminar incidencia de {{v0}}": "Vorfall für {{v0}} löschen",
+  "Eliminar incidencia": "Vorfall löschen",
+  "Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.": "Der Vorfall für {{v0}} wird aus dem Verlauf entfernt und der Spieler dafür nicht mehr markiert. Seine Bewertungen bleiben unverändert."
 }

@@ -17,7 +17,8 @@ import { formatMatchDate } from '@/lib/format';
 import { colors } from '@/theme';
 import { listPlayerIncidents, type PlayerIncident } from '@/features/incidents/service';
 import { incidentLabel } from '@/features/incidents/model';
-import { RecordIncidentModal } from '@/features/incidents/components';
+import { IconButton } from '@/components/icon-button';
+import { DeleteIncidentDialog, RecordIncidentModal } from '@/features/incidents/components';
 import type { Tables } from '@/types/database';
 
 export default function CallUpRatingsScreen() {
@@ -50,6 +51,7 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
   const [incidents, setIncidents] = useState(initialIncidents);
   const [incidentEntry, setIncidentEntry] = useState<Tables<'call_up_players'> | null>(null);
   const [incidentSaved, setIncidentSaved] = useState(false);
+  const [deletingIncident, setDeletingIncident] = useState<PlayerIncident | null>(null);
   const [addedPlayers, setAddedPlayers] = useState<string[]>([]);
   const [addingPlayer, setAddingPlayer] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState('');
@@ -104,7 +106,7 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
         <RatingSelector playerName={player.ea_id_snapshot} value={choices[player.id] ?? ''} disabled={!available || busy}
           onChange={value => setChoices(current => ({ ...current, [player.id]: value }))} />
       </View>
-      {incidents.filter(incident => incident.call_up_player_id === player.id).map(incident => <Body key={incident.id}>{t(incidentLabel(incident.kind))}{incident.note ? ` · ${incident.note}` : ''}</Body>)}
+      {incidents.filter(incident => incident.call_up_player_id === player.id).map(incident => <View key={incident.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><View style={{ flex: 1 }}><Body>{t(incidentLabel(incident.kind))}{incident.note ? ` · ${incident.note}` : ''}</Body></View><IconButton icon="trash" danger label={t('Eliminar incidencia de {{v0}}', { v0: incident.player_name })} disabled={busy} onPress={() => setDeletingIncident(incident)} /></View>)}
       <Button secondary label={t('Registrar incidencia')} disabled={!available || busy || !player.source_player_id} onPress={() => { setIncidentSaved(false); setIncidentEntry(player); }} />
     </Card>)}
     {!visiblePlayers.length ? <Body>{t('No hay jugadores que valorar.')}</Body> : null}
@@ -125,6 +127,7 @@ function RatingsEditor({ call, players, ratings, incidents: initialIncidents, li
     <Button secondary label={t('Recargar valoraciones')} disabled={busy} onPress={() => onSaved(false)} />
     <Button secondary label={t('Ver rendimiento del club')} onPress={() => router.replace('/performance')} />
     <Button secondary label={t('Histórico de incidencias')} onPress={() => router.push('/incident-history')} />
+    {deletingIncident ? <DeleteIncidentDialog incident={deletingIncident} onCancel={() => setDeletingIncident(null)} onDeleted={id => { setIncidents(current => current.filter(incident => incident.id !== id)); setDeletingIncident(null); setIncidentSaved(false); }} /> : null}
     {incidentEntry ? <RecordIncidentModal key={incidentEntry.id} callId={call.id} entryId={incidentEntry.id} playerName={incidentEntry.ea_id_snapshot} close={() => setIncidentEntry(null)} saved={incident => {
       setIncidents(current => [incident, ...current]); setIncidentEntry(null); setIncidentSaved(true);
     }} /> : null}

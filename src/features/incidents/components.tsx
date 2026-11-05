@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, View } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { IconButton } from '@/components/icon-button';
+import { backendErrorMessage } from '@/lib/backend-result';
 import { Body, Button, Card, Field, Message } from '@/components/ui';
 import { formatMatchDate } from '@/lib/format';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { colors } from '@/theme';
 import { incidentKinds, incidentLabel, type IncidentKind } from './model';
-import { incidentError, recordPlayerIncident, type PlayerIncident } from './service';
+import { deletePlayerIncident, incidentError, recordPlayerIncident, type PlayerIncident } from './service';
 import { useIncidentClock } from './use-incident-clock';
 
-export function IncidentDetails({ incident, now }: { incident: PlayerIncident; now: number }) {
+export function IncidentDetails({ incident, now, onDelete }: { incident: PlayerIncident; now: number; onDelete?: (() => void) | undefined }) {
   useLanguage();
   return <Card title={incident.player_name}>
+    {onDelete ? <View style={{ alignItems: 'flex-end' }}><IconButton icon="trash" danger label={t('Eliminar incidencia de {{v0}}', { v0: incident.player_name })} onPress={onDelete} /></View> : null}
     <Body>{t(incidentLabel(incident.kind))}</Body>
     {incident.note ? <Body>{incident.note}</Body> : null}
     <Body>{t('Convocatoria: {{v0}}', { v0: formatMatchDate(incident.match_starts_at, incident.match_timezone) })}</Body>
@@ -21,26 +24,55 @@ export function IncidentDetails({ incident, now }: { incident: PlayerIncident; n
   </Card>;
 }
 
-function IncidentModal({ title, children, close, busy = false }: { title: string; children: React.ReactNode; close: () => void; busy?: boolean }) {
+function IncidentModal({ title, children, close, busy = false, closeLabel = 'Cerrar' }: { title: string; children: React.ReactNode; close: () => void; busy?: boolean; closeLabel?: string }) {
   const insets = useSafeAreaInsets();
   return <Modal transparent animationType="fade" onRequestClose={() => { if (!busy) close(); }}>
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <View accessibilityViewIsModal style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
-          <Card title={t(title)}>{children}<Button secondary label="Cerrar" disabled={busy} onPress={close} /></Card>
+          <Card title={t(title)}>{children}<Button secondary label={t(closeLabel)} disabled={busy} onPress={close} /></Card>
         </ScrollView>
       </View>
     </KeyboardAvoidingView>
   </Modal>;
 }
 
-export function LineupIncidentsModal({ incidents, close }: { incidents: PlayerIncident[]; close: () => void }) {
+function IncidentDeletion({ incident, onDeleted, busy, onBusyChange }: { incident: PlayerIncident; onDeleted: (id: string) => void; busy: boolean; onBusyChange: (busy: boolean) => void }) {
+  useLanguage();
+  const [error, setError] = useState('');
+  async function remove() {
+    if (busy) return;
+    onBusyChange(true); setError('');
+    try { await deletePlayerIncident(incident.id); onDeleted(incident.id); }
+    catch (failure) { setError(backendErrorMessage(failure)); }
+    finally { onBusyChange(false); }
+  }
+  return <>
+    <Body>{t('Se eliminará la incidencia de {{v0}} del histórico y dejará de marcar al jugador. Sus valoraciones no cambiarán.', { v0: incident.player_name })}</Body>
+    <Body>{t(incidentLabel(incident.kind))}{incident.note ? ` · ${incident.note}` : ''}</Body>
+    {error ? <Message error>{t(error)}</Message> : null}
+    <Button label={busy ? t('Un momento…') : t('Eliminar incidencia')} disabled={busy} onPress={() => void remove()} />
+  </>;
+}
+
+export function DeleteIncidentDialog({ incident, onDeleted, onCancel }: { incident: PlayerIncident; onDeleted: (id: string) => void; onCancel: () => void }) {
+  const [busy, setBusy] = useState(false);
+  return <IncidentModal title="Eliminar incidencia" close={onCancel} closeLabel="Cancelar" busy={busy}>
+    <IncidentDeletion incident={incident} onDeleted={onDeleted} busy={busy} onBusyChange={setBusy} />
+  </IncidentModal>;
+}
+
+export function LineupIncidentsModal({ incidents, close, onDeleted }: { incidents: PlayerIncident[]; close: () => void; onDeleted: (id: string) => void }) {
   useLanguage();
   const now = useIncidentClock(incidents);
-  return <IncidentModal title="Incidencias de jugadores alineados" close={close}>
-    <Body>{t('Solo se muestran las incidencias vigentes de los jugadores del once. Las demás permanecen en el histórico.')}</Body>
-    {incidents.map(incident => <IncidentDetails key={incident.id} incident={incident} now={now} />)}
-    {!incidents.length ? <Body>{t('Los jugadores alineados no tienen incidencias vigentes.')}</Body> : null}
+  const [deleting, setDeleting] = useState<PlayerIncident | null>(null);
+  const [busy, setBusy] = useState(false);
+  return <IncidentModal title={deleting ? 'Eliminar incidencia' : 'Incidencias de jugadores alineados'} close={deleting ? () => setDeleting(null) : close} closeLabel={deleting ? 'Cancelar' : 'Cerrar'} busy={busy}>
+    {deleting ? <IncidentDeletion key={deleting.id} incident={deleting} busy={busy} onBusyChange={setBusy} onDeleted={id => { onDeleted(id); setDeleting(null); }} /> : <>
+      <Body>{t('Solo se muestran las incidencias vigentes de los jugadores del once. Las demás permanecen en el histórico.')}</Body>
+      {incidents.map(incident => <IncidentDetails key={incident.id} incident={incident} now={now} onDelete={() => setDeleting(incident)} />)}
+      {!incidents.length ? <Body>{t('Los jugadores alineados no tienen incidencias vigentes.')}</Body> : null}
+    </>}
   </IncidentModal>;
 }
 

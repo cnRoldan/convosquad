@@ -12,6 +12,10 @@ export async function listPlayerIncidents(clubId: string, activeOnly = true, cal
 export async function recordPlayerIncident(callId: string, entryId: string, kind: IncidentKind, note: string): Promise<PlayerIncident> {
   return unwrap(await requireSupabase().rpc('record_player_incident', { p_call_up_id: callId, p_entry_id: entryId, p_kind: kind, p_note: note })) as unknown as PlayerIncident;
 }
+export async function deletePlayerIncident(incidentId: string): Promise<void> {
+  const { error } = await requireSupabase().rpc('delete_player_incident', { p_incident_id: incidentId });
+  if (error) throw error;
+}
 export function incidentError(error: unknown) {
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null;
   if (code === 'P0041') return 'Solo puedes registrar incidencias durante el plazo de valoración de la última convocatoria finalizada.';
