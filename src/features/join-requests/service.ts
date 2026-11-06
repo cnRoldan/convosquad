@@ -1,6 +1,10 @@
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 
+export async function listInactiveClubMembers(clubId: string) {
+  return unwrap(await requireSupabase().rpc('list_inactive_club_members', { p_club_id: clubId }));
+}
+
 export async function listUnlinkedClubMembers(clubId: string) {
   return unwrap(await requireSupabase().rpc('list_unlinked_club_members', { p_club_id: clubId }));
 }

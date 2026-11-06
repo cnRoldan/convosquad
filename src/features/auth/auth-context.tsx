@@ -11,6 +11,7 @@ import { RecoveryState } from './recovery-state';
 import { pauseDeviceRegistration } from '@/features/notifications/device-service';
 import { supabase } from '@/lib/supabase';
 import { logoutAccount } from './service';
+import { createActivityTracker } from './activity-tracker';
 
 type AuthContextValue = {
   session: Session | null;
@@ -75,6 +76,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => () => { clubCrestCache.clear(); }, [session?.user.id]);
+
+  useEffect(() => {
+    const client = supabase;
+    if (!client || !session?.user.id || isDemo || isRecovery || isSigningOut) return;
+    const tracker = createActivityTracker(async () => {
+      const { error } = await client.rpc('record_account_activity');
+      if (error) throw error;
+    });
+    const record = () => { void tracker.recordForeground(Platform.OS === 'web' ? document.visibilityState === 'visible' : AppState.currentState === 'active'); };
+    record();
+    const timer = setInterval(record, 60_000);
+    const subscription = AppState.addEventListener('change', record);
+    if (Platform.OS === 'web') document.addEventListener('visibilitychange', record);
+    return () => {
+      tracker.stop(); clearInterval(timer); subscription.remove();
+      if (Platform.OS === 'web') document.removeEventListener('visibilitychange', record);
+    };
+  }, [session?.user.id, isDemo, isRecovery, isSigningOut]);
 
   const enterDemo = useCallback(() => setDemo(true), []);
   const exitDemo = useCallback(() => setDemo(false), []);

@@ -6,6 +6,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { useRequests } from '@/features/join-requests/requests-context';
 import { IncomingRequests } from '@/features/join-requests/incoming-requests';
 import { UnlinkedMembers } from '@/features/join-requests/unlinked-members';
+import { InactiveMembers } from '@/features/join-requests/inactive-members';
 import { useState } from 'react';
 
 export default function JoinRequestsScreen() {
@@ -20,7 +21,7 @@ export default function JoinRequestsScreen() {
     {isDemo ? <DemoNotice /> : null}
     {requests.isLoading ? <Body>{t('Cargando solicitudes…')}</Body> : null}
     {requests.error ? <Message error>{requests.error}</Message> : null}
-    {activeClub && !isDemo ? <><IncomingRequests clubId={activeClub.id} /><PlayerLinkRequests clubId={activeClub.id} /><UnlinkedMembers clubId={activeClub.id} revision={revision} /></> : null}
+    {activeClub && !isDemo ? <><IncomingRequests clubId={activeClub.id} /><PlayerLinkRequests clubId={activeClub.id} /><UnlinkedMembers clubId={activeClub.id} revision={revision} /><InactiveMembers clubId={activeClub.id} revision={revision} /></> : null}
     <Button secondary label={t('Actualizar')} disabled={isDemo || requests.isLoading} onPress={refresh} />
   </Screen>;
 }

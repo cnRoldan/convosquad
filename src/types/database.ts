@@ -1657,6 +1657,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      list_inactive_club_members: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: { user_id: string; username: string; role: Database['public']['Enums']['club_role']; last_active_at: string; has_player_card: boolean; sole_captain: boolean }[];
+      };
       list_lineup_drafts: {
         Args: {
           p_call_id: string;
@@ -1810,6 +1816,10 @@ export type Database = {
           p_offset?: number;
         };
         Returns: Json;
+      };
+      record_account_activity: {
+        Args: Record<string, never>;
+        Returns: undefined;
       };
       record_player_incident: {
         Args: {

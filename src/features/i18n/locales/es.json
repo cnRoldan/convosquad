@@ -970,5 +970,11 @@
   "Tu cuenta": "Tu cuenta",
   "Desvincular del club": "Desvincular del club",
   "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.": "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.",
-  "La cuenta ya tiene una ficha de jugador vinculada.": "La cuenta ya tiene una ficha de jugador vinculada."
+  "La cuenta ya tiene una ficha de jugador vinculada.": "La cuenta ya tiene una ficha de jugador vinculada.",
+  "Miembros inactivos": "Miembros inactivos",
+  "Miembros que llevan al menos 6 meses sin utilizar la app. Sus cuentas y fichas se conservan.": "Miembros que llevan al menos 6 meses sin utilizar la app. Sus cuentas y fichas se conservan.",
+  "No hay miembros inactivos.": "No hay miembros inactivos.",
+  "Sin actividad desde: {{v0}}": "Sin actividad desde: {{v0}}",
+  "Sin ficha de jugador vinculada.": "Sin ficha de jugador vinculada.",
+  "Único capitán del club. Debe conservarse el acceso a la administración.": "Único capitán del club. Debe conservarse el acceso a la administración."
 }

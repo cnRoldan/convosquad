@@ -970,5 +970,11 @@
   "Tu cuenta": "Votre compte",
   "Desvincular del club": "Retirer du club",
   "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.": "Retirer {{v0}} du club ? Cette personne perdra l’accès au club. Son compte et les données historiques seront conservés.",
-  "La cuenta ya tiene una ficha de jugador vinculada.": "Ce compte possède déjà une fiche joueur associée."
+  "La cuenta ya tiene una ficha de jugador vinculada.": "Ce compte possède déjà une fiche joueur associée.",
+  "Miembros inactivos": "Membres inactifs",
+  "Miembros que llevan al menos 6 meses sin utilizar la app. Sus cuentas y fichas se conservan.": "Membres qui n’utilisent plus l’application depuis au moins 6 mois. Leurs comptes et fiches sont conservés.",
+  "No hay miembros inactivos.": "Il n’y a aucun membre inactif.",
+  "Sin actividad desde: {{v0}}": "Inactif depuis : {{v0}}",
+  "Sin ficha de jugador vinculada.": "Aucune fiche joueur associée.",
+  "Único capitán del club. Debe conservarse el acceso a la administración.": "Seul capitaine du club. L’accès à l’administration doit être conservé."
 }

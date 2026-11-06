@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { unlinkedRemoved: [], incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], helperRemovals: [], trialWithdrawals: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { activityWrites: 0, unlinkedRemoved: [], incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], helperRemovals: [], trialWithdrawals: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: benchSelection ? 15 : 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -80,7 +80,8 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     const body = request.method() === 'POST' ? request.postDataJSON() : null;
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
-    if (endpoint === 'list_roster_helpers') result=rosterHelpers;
+    if (endpoint === 'record_account_activity') {state.activityWrites++;result=null;}
+    else if (endpoint === 'list_roster_helpers') result=rosterHelpers;
     else if (endpoint === 'remove_roster_helper') {
       assert.equal(role,'admin');state.helperRemovals.push(body.p_guest_id);const i=rosterHelpers.findIndex(h=>h.id===body.p_guest_id);if(i>=0)rosterHelpers.splice(i,1);result=null;
     } else if (endpoint === 'read_trial_history') {
@@ -156,6 +157,10 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     else if (endpoint === 'read_rating_lineup') { assert.equal(body.p_call_id,pastId); result={published:!noPublishedLineup,entryIds:noPublishedLineup?[]:entries.slice(0,11).map(entry=>entry.id)}; }
     else if (endpoint === 'set_preferred_language') result = null;
     else if (endpoint === 'list_player_link_requests') result = [];
+    else if (endpoint === 'list_inactive_club_members') {
+      assert.equal(role,'admin');assert.equal(body.p_club_id,clubId);
+      result=[{user_id:uuid(151),username:'Jugador inactivo',role:'player',last_active_at:new Date(now-220*86400000).toISOString(),has_player_card:true,sole_captain:false}];
+    }
     else if (endpoint === 'list_call_up_history') { assert.equal(body.p_club_id,clubId);result=[past]; }
     else if (endpoint === 'list_unlinked_club_members') {
       assert.equal(role,'admin'); assert.equal(body.p_club_id,clubId);
@@ -205,6 +210,10 @@ test('captain can inspect unlinked members and must confirm removal; own account
     await page.getByText('Miembros sin ficha',{exact:true}).waitFor();
     await page.getByText('Miembro sin ficha',{exact:true}).waitFor();
     await page.getByText('Tu cuenta',{exact:true}).waitFor();
+    await page.getByText('Miembros inactivos',{exact:true}).waitFor();
+    await page.getByText('Jugador inactivo',{exact:true}).waitFor();
+    await page.getByText(/^Sin actividad desde:/).waitFor();
+    assert.ok(f.state.activityWrites>=1,'opening the foreground app records real use');
     assert.equal(await page.getByRole('button',{name:'Desvincular del club',exact:true}).count(),1);
     await page.getByRole('button',{name:'Desvincular del club',exact:true}).click();
     await page.getByText('¿Desvincular a Miembro sin ficha del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.',{exact:true}).waitFor();

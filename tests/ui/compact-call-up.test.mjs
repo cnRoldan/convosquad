@@ -104,7 +104,7 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
         players[3].decision_locked = body.p_enabled;
         return route.fulfill({json: body.p_enabled});
       }
-      if (endpoint === 'set_preferred_language') return route.fulfill({json: null});
+      if (endpoint === 'set_preferred_language' || endpoint === 'record_account_activity') return route.fulfill({json: null});
       if (endpoint === 'save_call_up_contact') {
         assert.equal(role, 'admin');
         const body = request.postDataJSON();

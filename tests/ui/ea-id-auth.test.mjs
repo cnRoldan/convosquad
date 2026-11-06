@@ -225,6 +225,8 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
       const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.fixture`;
       return route.fulfill({ json: { user, access_token: token, refresh_token: 'fixture-refresh', expires_in: 3600, token_type: 'bearer' } });
     }
+    if (endpoint === 'record_account_activity') return route.fulfill({json:null});
+    if (endpoint === 'list_inactive_club_members' || endpoint === 'list_unlinked_club_members') return route.fulfill({json:[]});
     if (endpoint === 'set_preferred_language') { preferredLanguage = body.p_language; return route.fulfill({json: null}); }
     if (endpoint === 'profiles') return route.fulfill({ json: { id: '00000000-0000-4000-8000-000000000901', username: 'EA-Player_9', preferred_language: preferredLanguage } });
     if (['clubs', 'club_members', 'search_clubs', 'join_requests', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
