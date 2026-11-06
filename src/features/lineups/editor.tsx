@@ -114,7 +114,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
   const [customJerseyColor,setCustomJerseyColor]=useState('#0B1210');
   const shareImageRef = useRef<View>(null);
   const [shareCrestUrl, setShareCrestUrl] = useState<string | null>(null);
-  const editable=captain && active && !busy && !conflict;
+  const editable=captain && active && !busy && !sharing && !conflict;
   useFocusEffect(useCallback(() => {
     leaveGuard.setHandler(() => captain && dirty);
     const beforeUnload = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
@@ -268,6 +268,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
     finally { setBusy(false); }
   }
   async function shareImage() {
+    if (sharing || busy || !document) return;
     setSharing(true); setRenderingPoster(false); setMessage('');
     try {
       const club = await getClubSettings(clubId);
@@ -335,7 +336,7 @@ export function LineupEditor({ clubId, clubName, crestPath, callId, captain, ini
           {captain ? <Pressable accessibilityRole="button" accessibilityLabel="Añadir al banquillo" disabled={!editable} onPress={()=>setAdding(true)} style={{opacity:editable?1:0.45}}><PlayerToken compact /></Pressable> : null}
         </ScrollView>
       </Card>
-      {captain ? <><Button label={activeDraft?.submittedAt ? "Sugerir cambios" : "Guardar borrador"} disabled={!editable || Boolean(activeDraft?.submittedAt && !dirty)} onPress={() => openDraft(activeDraft?.submittedAt ? 'suggest' : 'save')} />{captainCount > 1 ? <Button label="Enviar para valoración" disabled={!editable || (!dirty && (!activeDraft || Boolean(activeDraft.submittedAt)))} onPress={() => openDraft('send')} /> : null}<Button label={activeDraft?.published ? "Republicar 11" : "Publicar 11"} disabled={!editable || !canPublish(document) || Boolean(activeDraft?.published && !dirty)} onPress={() => void requestPublish()} />{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
+      {captain ? <><Button label={activeDraft?.submittedAt ? "Sugerir cambios" : "Guardar borrador"} disabled={!editable || Boolean(activeDraft?.submittedAt && !dirty)} onPress={() => openDraft(activeDraft?.submittedAt ? 'suggest' : 'save')} />{captainCount > 1 ? <Button label="Enviar para valoración" disabled={!editable || (!dirty && (!activeDraft || Boolean(activeDraft.submittedAt)))} onPress={() => openDraft('send')} /> : null}<Button label={activeDraft?.published ? "Republicar 11" : "Publicar 11"} disabled={!editable || !canPublish(document) || Boolean(activeDraft?.published && !dirty)} onPress={() => void requestPublish()} />{!published ? <Button secondary label={sharing ? 'Generando imagen…' : 'Generar imagen'} disabled={sharing || busy} onPress={() => void shareImage()} /> : null}{!canPublish(document)?<Body>Completa las once posiciones para publicar.</Body>:null}{dirty?<Body>Tienes cambios sin guardar.</Body>:null}</> : null}
       </View>
       </View>
     </> : !busy ? <Body>El capitán todavía está preparando el 11.</Body> : null}

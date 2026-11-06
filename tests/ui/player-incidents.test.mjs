@@ -26,7 +26,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, lineupPlayers = 11, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -52,7 +52,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   if(benchSelection)for(const entry of entries.slice(12))entry.availability='unavailable';
   if(route==='/call-up-ratings') entries[0].availability='unavailable';
   const positions = posterExample ? [[.5,.9],[.25,.72],[.5,.72],[.75,.72],[.16,.45],[.5,.56],[.34,.34],[.66,.34],[.84,.45],[.36,.15],[.64,.15]] : [[.5,.9],[.2,.72],[.4,.72],[.6,.72],[.8,.72],[.2,.43],[.4,.43],[.6,.43],[.8,.43],[.36,.15],[.64,.15]];
-  let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: roster[id].id })), bench: [roster[11].id], ...(benchSelection?{excludedIds:[roster[13].id,roster[14].id]}:{}) };
+  let document = { formation: posterExample ? '3-5-2' : '4-4-2', slots: positions.map(([x,y], id) => ({ id, x, y, playerId: id < lineupPlayers ? roster[id].id : null })), bench: [roster[11].id], ...(benchSelection?{excludedIds:[roster[13].id,roster[14].id]}:{}) };
   let draft = null;
   let publishedInstructions = seedInstructions ? [
     {id:uuid(120),player_id:roster[0].id,player_name:roster[0].ea_id,body:'Indicación privada para Selu',captain_name:'Capitán',published_at:past.ends_at,recipient_linked:true,recipient:userId},
@@ -343,6 +343,25 @@ test('roster suggestions remain usable if position history fails', async () => {
     await f.page.getByLabel('Jugadores sugeridos',{exact:true}).getByRole('button',{name:'Elegir Jugador_12',exact:true}).click();
     await f.page.getByRole('button',{name:'Jugador_12, dorsal 12',exact:true}).waitFor();
   } finally { await f.close(); }
+});
+
+for(const lineupPlayers of [0,5,11]) test(`captain exports an unpublished lineup with ${lineupPlayers} players without saving or publishing`,async()=>{
+  const f=await fixture({lineupPlayers});
+  try {
+    const {page}=f;
+    const generate=page.getByRole('button',{name:'Generar imagen',exact:true});
+    await generate.waitFor();
+    assert.equal(await generate.isEnabled(),true);
+    if(lineupPlayers<11)assert.equal(await page.getByRole('button',{name:'Publicar 11',exact:true}).isEnabled(),false);
+    const pending=page.waitForEvent('download');
+    await generate.click();
+    const download=await pending;
+    assert.equal(download.suggestedFilename(),'convosquad-once.png');
+    await generate.waitFor();
+    assert.deepEqual(f.publications,[]);
+    assert.deepEqual(f.state.instructionSaves,[]);
+    assert.equal(await page.getByText('Tienes cambios sin guardar.',{exact:true}).count(),0);
+  } finally {await f.close();}
 });
 
 for(const withCrest of [false,true]) test(`generated portrait poster downloads readable players ${withCrest?'with the embedded crest':'without a club crest'}`, async () => {
