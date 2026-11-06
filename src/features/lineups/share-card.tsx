@@ -48,10 +48,12 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
         <Text x={0} y={68} textAnchor="middle" fill="#FFFFFF" fontFamily="Arial" fontSize={nameFontSize} fontWeight="bold">{player.name}</Text>
       </G>;
     })}
-    <Rect x={896} y={g.height - 98} width={337} height={66} rx={14} fill="#041007" fillOpacity={0.97} stroke="#BDFF43" strokeOpacity={0.3} />
-    <Text x={910} y={g.height - 57} fill="#FFFFFF" fontFamily="Arial" fontSize={14}>Powered by</Text>
-    <Image href={require('../../../assets/images/icon.png')} x={987} y={g.height - 94} width={58} height={58} preserveAspectRatio="xMidYMid meet" onLoad={() => onAssetLoad?.('brand')} />
-    <Text x={1037} y={g.height - 54} fill="#FFFFFF" fontFamily="Arial" fontSize={28} fontWeight="bold">ConvoSquad</Text>
+    <G transform={`translate(${g.width - 337 - 14} ${g.height - 98})`}>
+      <Rect width={337} height={66} rx={14} fill="#041007" fillOpacity={0.97} stroke="#BDFF43" strokeOpacity={0.3} />
+      <Text x={14} y={41} fill="#FFFFFF" fontFamily="Arial" fontSize={14}>Powered by</Text>
+      <Image href={require('../../../assets/images/icon.png')} x={91} y={4} width={58} height={58} preserveAspectRatio="xMidYMid meet" onLoad={() => onAssetLoad?.('brand')} />
+      <Text x={141} y={44} fill="#FFFFFF" fontFamily="Arial" fontSize={28} fontWeight="bold">ConvoSquad</Text>
+    </G>
   </Svg>;
 }
 

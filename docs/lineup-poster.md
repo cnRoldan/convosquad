@@ -8,6 +8,8 @@ La exportación utiliza un lienzo vertical de 1324 × 1740. La cabecera ocupa 18
 
 Las camisetas y los dorsales tienen una ampliación adicional del 15 % respecto a los nombres. Sus límites incluyen el trazo del SVG para que el cálculo de separación contemple el nuevo tamaño.
 
+La firma «Powered by ConvoSquad» queda a 6 píxeles del marco derecho. La portería del fondo se ha ensanchado y rebajado en la imagen base para compensar el estiramiento vertical del campo y conservar proporciones de fútbol.
+
 La preparación del escudo termina antes de montar la vista que se captura. En nativo, `poster-readiness.ts` espera el layout y los eventos de carga del fondo, escudo y marca. Después deja dos fotogramas para el dibujo antes de `captureRef`. Una imagen que no termina de cargar cancela la captura tras 15 segundos en lugar de exportar un recuadro vacío. Los callbacks están ligados a la captura concreta, para que un evento antiguo no complete otra captura.
 
 En web se espera el layout y el exportador incrusta las imágenes en el SVG y utiliza `Image.decode()` antes de dibujar el PNG. La vista capturada no añade márgenes exteriores y conserva la misma relación de aspecto que el SVG.
