@@ -1,6 +1,7 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { endInstant } from '@/features/call-ups/end-time';
 import { callUpHasEnded, callUpStatusLabel } from '@/features/call-ups/lifecycle';
+import { CallUpStatusLabel } from '@/features/call-ups/status-label';
 import { votingDeadlinePassed } from '@/features/call-ups/closing-time';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -170,7 +171,7 @@ export default function CallUpScreen() {
     {notice ? <Message>{notice}</Message> : null}
     {votingClosed && !availabilityFooter ? <Text accessibilityLiveRegion="polite" style={styles.finishedNotice}>{historical ? t("Convocatoria finalizada.") : t("Votación cerrada. La convocatoria sigue activa.")}</Text> : null}
     {call ? <>
-      <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · {t(callUpStatusLabel(call, clock, historical))}</Text>
+      <Text style={styles.date}>{formatMatchDate(call.starts_at, call.timezone)} · {call.timezone} · <CallUpStatusLabel label={callUpStatusLabel(call, clock, historical)} /></Text>
       {admin && call.evaluation_at && historical ? <Button secondary label={t("Valorar jugadores")} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: call.id } })} /> : null}
       {votingClosed && !historical ? <Body>{t("El plazo para marcar Disponible ha terminado. Puedes elegir No disponible o Backup.")}</Body> : null}
       {!historical && (call.status === 'open' || call.status === 'closed') ? <Button label={openingLineup ? 'Abriendo Tu 11…' : admin ? t('¡Forma tu 11!') : t('Consulta el 11')} disabled={openingLineup} onPress={() => void openLineup()} /> : null}

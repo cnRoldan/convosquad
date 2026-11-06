@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { formatMatchDate } from '@/lib/format';
 import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
+import { CallUpStatusLabel } from '@/features/call-ups/status-label';
 import { clubLocalDateTime } from '@/features/call-ups/local-time';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
 import { useRequests } from '@/features/join-requests/requests-context';
@@ -79,8 +80,8 @@ export default function HomeScreen() {
         {upcomingCallUp ? <>
           <Body>{upcomingCallUp.title}</Body>
           <Body>{formatMatchDate(upcomingCallUp.startsAt, upcomingCallUp.timezone)} · {upcomingCallUp.timezone}</Body>
-          <Body>{t(callUpStatusLabel({ status: upcomingCallUp.status ?? 'open', closes_at: upcomingCallUp.closesAt ?? null, ends_at: upcomingCallUp.endsAt ?? null,
-            local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date, timezone: upcomingCallUp.timezone }, clock))}</Body>
+          <Body><CallUpStatusLabel label={callUpStatusLabel({ status: upcomingCallUp.status ?? 'open', closes_at: upcomingCallUp.closesAt ?? null, ends_at: upcomingCallUp.endsAt ?? null,
+            local_date: clubLocalDateTime(upcomingCallUp.timezone, new Date(upcomingCallUp.startsAt)).date, timezone: upcomingCallUp.timezone }, clock)} /></Body>
           <Text accessibilityLiveRegion="polite" style={{ color: colors.primary, fontSize: 18, fontWeight: '700' }}>{t("Jugadores: {{v0}}/{{v1}}", {
             v0: upcomingCallUp.responses.filter(player => player.status === 'available').length,
             v1: upcomingCallUp.responses.length,

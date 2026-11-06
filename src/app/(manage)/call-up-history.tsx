@@ -6,6 +6,7 @@ import { useClub } from '@/features/clubs/club-context';
 import { useAuth } from '@/features/auth/auth-context';
 import { listCallUpHistory } from '@/features/call-ups/service';
 import { callUpStatusLabel } from '@/features/call-ups/lifecycle';
+import { CallUpStatusLabel } from '@/features/call-ups/status-label';
 import { useCallUpSync } from '@/features/call-ups/use-call-up-sync';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
@@ -28,7 +29,7 @@ export default function CallUpHistoryScreen() {
     {result.isLoading ? <Body>{t("Cargando historial…")}</Body> : null}
     {result.error ? <Message error>{result.error}</Message> : null}
     {result.data?.map(call => <Card key={call.id} title={formatMatchDate(call.starts_at, call.timezone)}>
-      <Body>{t(callUpStatusLabel(call, undefined, true))}</Body>
+      <Body><CallUpStatusLabel label={callUpStatusLabel(call, undefined, true)} /></Body>
       <Button secondary label={t("Consultar convocatoria del {{v0}}", { v0: call.local_date })} onPress={() => router.push({ pathname: '/call-up', params: { id: call.id, history: '1' } })} />
       <Button secondary label="Consultar alineación" onPress={() => router.push({ pathname: '/lineup-history', params: { id: call.id } })} />
     </Card>)}
