@@ -65,3 +65,11 @@ Las notas históricas individuales se muestran como texto coloreado sin fondo ni
 El botón Star-check/Star-x, a la derecha del selector de color y activado al entrar, controla las notas individuales del campo, banquillo y selectores junto con «VAL MED». Es un ajuste visual de la sesión de edición: no modifica ni guarda la alineación ni las notas y conserva cualquier cambio pendiente. Las incidencias siguen visibles. La vista de imagen publicada de los jugadores no incluye este control.
 
 Star-check aparece en verde cuando las notas están visibles y Star-x en gris cuando están ocultas. La etiqueta accesible indica «Ocultar valoraciones» o «Mostrar valoraciones». El selector de color y la estrella permanecen juntos al adaptarse el ancho de la pantalla.
+
+## Media del equipo en el historial (Prémium)
+
+Cada tarjeta del historial muestra «Valoración media del equipo: X,XX / 10» únicamente si la jornada tiene notas numéricas y el club tiene Prémium activo. Se suman todas las notas numéricas de los capitanes para esa convocatoria y se dividen por su número; se incluye el cero y se excluyen «Sin valorar» y «No alineado». Las fichas con distinto número de votantes aportan cada voto individual, como en el sumarizado de rendimiento. No se usan las medias históricas del alineador. Los registros heredados sin desglose de votantes aportan su nota guardada una vez.
+
+`list_call_up_history_ratings` exige un capitán activo del club y comprueba Prémium en el servidor. Sin Prémium devuelve una lista vacía; no cambia el acceso al historial ordinario. Respeta las diez convocatorias del historial, la conservación de notas de tres meses y la exclusión de convocatorias canceladas. Sin notas no devuelve una media, mientras que una media cero sí se muestra.
+
+Validación: cuatro pruebas de base de datos (media de todos los votantes, cero, vacíos, legado, Prémium/expiración, permisos, cancelación y ámbito del historial), tres casos de interfaz con media ausente/cero/decimal y los dos recorridos de regreso al historial.

@@ -1657,6 +1657,12 @@ export type Database = {
         };
         Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
+      list_call_up_history_ratings: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: { call_up_id: string; average_score: number }[];
+      };
       list_inactive_club_members: {
         Args: {
           p_club_id: string;

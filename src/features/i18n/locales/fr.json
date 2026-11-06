@@ -976,5 +976,6 @@
   "No hay miembros inactivos.": "Il n’y a aucun membre inactif.",
   "Sin actividad desde: {{v0}}": "Inactif depuis : {{v0}}",
   "Sin ficha de jugador vinculada.": "Aucune fiche joueur associée.",
-  "Único capitán del club. Debe conservarse el acceso a la administración.": "Seul capitaine du club. L’accès à l’administration doit être conservé."
+  "Único capitán del club. Debe conservarse el acceso a la administración.": "Seul capitaine du club. L’accès à l’administration doit être conservé.",
+  "Valoración media del equipo: {{v0}} / 10": "Note moyenne de l’équipe : {{v0}} / 10"
 }

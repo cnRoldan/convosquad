@@ -1,4 +1,4 @@
-import { t, useLanguage } from '@/features/i18n/runtime';
+import { intlLocale, t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback } from 'react';
 import { router } from 'expo-router';
 import { Body, Button, Card, DemoNotice, Heading, Message, Screen } from '@/components/ui';
@@ -30,6 +30,7 @@ export default function CallUpHistoryScreen() {
     {result.error ? <Message error>{result.error}</Message> : null}
     {result.data?.map(call => <Card key={call.id} title={formatMatchDate(call.starts_at, call.timezone)}>
       <Body><CallUpStatusLabel label={callUpStatusLabel(call, undefined, true)} /></Body>
+      {call.average_score !== null ? <Body>{t('Valoración media del equipo: {{v0}} / 10', { v0: new Intl.NumberFormat(intlLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(call.average_score) })}</Body> : null}
       <Button secondary label={t("Consultar convocatoria del {{v0}}", { v0: call.local_date })} onPress={() => router.push({ pathname: '/historical-call-up', params: { id: call.id } })} />
       <Button secondary label="Consultar alineación" onPress={() => router.push({ pathname: '/lineup-history', params: { id: call.id } })} />
     </Card>)}

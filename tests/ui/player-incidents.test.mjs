@@ -26,7 +26,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, lineupPlayers = 11, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, lineupPlayers = 11, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, historyTeamAverage = null, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -162,6 +162,10 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
       result=[{user_id:uuid(151),username:'Jugador inactivo',role:'player',last_active_at:new Date(now-220*86400000).toISOString(),has_player_card:true,sole_captain:false}];
     }
     else if (endpoint === 'list_call_up_history') { assert.equal(body.p_club_id,clubId);result=[past]; }
+    else if (endpoint === 'list_call_up_history_ratings') {
+      assert.equal(role,'admin');assert.equal(body.p_club_id,clubId);
+      result=historyTeamAverage===null ? [] : [{call_up_id:pastId,average_score:historyTeamAverage}];
+    }
     else if (endpoint === 'list_unlinked_club_members') {
       assert.equal(role,'admin'); assert.equal(body.p_club_id,clubId);
       result = [{user_id:userId,username:'Capitán sin ficha',role:'admin'}, ...(!state.unlinkedRemoved.length ? [{user_id:uuid(150),username:'Miembro sin ficha',role:'player'}] : [])];
@@ -181,6 +185,16 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   async function close() { await context.close(); assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); }
   return { page, state, incidents, publications, close };
 }
+
+for(const mean of [null,0,7.33]) test(`history shows only available Premium team ratings: ${mean}`,async()=>{
+  const f=await fixture({route:'/call-up-history',historyTeamAverage:mean});
+  try {
+    await f.page.getByRole('button',{name:/Consultar convocatoria del/}).waitFor();
+    const summary=f.page.getByText(/^Valoración media del equipo:/);
+    if(mean===null)assert.equal(await summary.count(),0);
+    else await f.page.getByText(`Valoración media del equipo: ${mean.toFixed(2).replace('.',',')} / 10`,{exact:true}).waitFor();
+  } finally {await f.close();}
+});
 
 for (const entry of ['/home','/call-up']) test(`historical call-up returns through history to its original entry ${entry}`, async () => {
   const f=await fixture({route:entry});

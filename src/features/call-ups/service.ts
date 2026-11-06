@@ -63,7 +63,11 @@ export async function getCallUpCreator(userId: string | null) {
   return profile?.username ?? null;
 }
 export async function listCallUpHistory(clubId: string) {
-  return unwrap(await requireSupabase().rpc('list_call_up_history', { p_club_id: clubId }));
+  const [calls, ratings] = await Promise.all([
+    requireSupabase().rpc('list_call_up_history', { p_club_id: clubId }).then(unwrap),
+    requireSupabase().rpc('list_call_up_history_ratings', { p_club_id: clubId }).then(unwrap),
+  ]);
+  return calls.map(call => ({ ...call, average_score: ratings.find(rating => rating.call_up_id === call.id)?.average_score ?? null }));
 }
 
 export async function respondFromNotification(clubId: string, callUpId: string, availability: 'available' | 'unavailable' | 'backup', actionId: string) {

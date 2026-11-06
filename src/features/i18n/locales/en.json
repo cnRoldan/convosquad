@@ -976,5 +976,6 @@
   "No hay miembros inactivos.": "There are no inactive members.",
   "Sin actividad desde: {{v0}}": "Inactive since: {{v0}}",
   "Sin ficha de jugador vinculada.": "No linked player card.",
-  "Único capitán del club. Debe conservarse el acceso a la administración.": "The club’s only captain. Access to club management must be preserved."
+  "Único capitán del club. Debe conservarse el acceso a la administración.": "The club’s only captain. Access to club management must be preserved.",
+  "Valoración media del equipo: {{v0}} / 10": "Average team rating: {{v0}} / 10"
 }

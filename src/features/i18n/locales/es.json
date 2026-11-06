@@ -976,5 +976,6 @@
   "No hay miembros inactivos.": "No hay miembros inactivos.",
   "Sin actividad desde: {{v0}}": "Sin actividad desde: {{v0}}",
   "Sin ficha de jugador vinculada.": "Sin ficha de jugador vinculada.",
-  "Único capitán del club. Debe conservarse el acceso a la administración.": "Único capitán del club. Debe conservarse el acceso a la administración."
+  "Único capitán del club. Debe conservarse el acceso a la administración.": "Único capitán del club. Debe conservarse el acceso a la administración.",
+  "Valoración media del equipo: {{v0}} / 10": "Valoración media del equipo: {{v0}} / 10"
 }

@@ -976,5 +976,6 @@
   "No hay miembros inactivos.": "Es gibt keine inaktiven Mitglieder.",
   "Sin actividad desde: {{v0}}": "Inaktiv seit: {{v0}}",
   "Sin ficha de jugador vinculada.": "Kein verknüpftes Spielerprofil.",
-  "Único capitán del club. Debe conservarse el acceso a la administración.": "Einziger Kapitän des Vereins. Der Zugang zur Vereinsverwaltung muss erhalten bleiben."
+  "Único capitán del club. Debe conservarse el acceso a la administración.": "Einziger Kapitän des Vereins. Der Zugang zur Vereinsverwaltung muss erhalten bleiben.",
+  "Valoración media del equipo: {{v0}} / 10": "Durchschnittliche Teambewertung: {{v0}} / 10"
 }
