@@ -1,7 +1,7 @@
 export const posterGeometry = {
-  width: 1324, height: 1550,
+  width: 1324, height: 1740,
   // Keep the header compact and use the stadium/grass portion of the asset.
-  backgroundSourceTop: 300, backgroundTop: 180, backgroundHeight: 1370,
+  backgroundSourceTop: 330, backgroundTop: 180, backgroundHeight: 1560,
   sourceHeight: 1190, fieldFarY: 399, fieldHalfY: 634, fieldNearY: 1126,
 } as const;
 

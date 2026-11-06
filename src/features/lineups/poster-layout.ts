@@ -19,7 +19,7 @@ export function posterPlayers(lineup: Lineup, candidates: Candidate[]) {
   });
   // One scale for the entire team. Per-player perspective/collision scaling
   // made neighbours look tactically closer and gave shirts different sizes.
-  let scale = 1.05;
+  let scale = 1.22;
   for (let i = 0; i < players.length; i++) {
     for (let j = i + 1; j < players.length; j++) {
       const a = players[i]!, b = players[j]!;

@@ -18,7 +18,7 @@ export function LineupPoster({ clubName, crestUrl, lineup, candidates, shirtColo
   const backgroundScale = g.backgroundHeight / (g.sourceHeight - g.backgroundSourceTop);
   return <Svg width="100%" height="100%" viewBox={`0 0 ${g.width} ${g.height}`}>
     <Defs>
-      <ClipPath id="stadiumCrop"><Rect x={12} y={180} width={1300} height={1350} /></ClipPath>
+      <ClipPath id="stadiumCrop"><Rect x={12} y={g.backgroundTop} width={g.width - 24} height={g.height - g.backgroundTop - 20} /></ClipPath>
       <LinearGradient id="headerShade" x1="0" y1="0" x2="0" y2="1"><Stop offset="0" stopColor="#000" stopOpacity="0.7" /><Stop offset="1" stopColor="#000" stopOpacity="0" /></LinearGradient>
       <LinearGradient id="fabricShade" x1="0" y1="0" x2="1" y2="0"><Stop offset="0" stopColor="#000" stopOpacity="0.5" /><Stop offset="0.4" stopColor="#FFF" stopOpacity="0.12" /><Stop offset="0.7" stopColor="#000" stopOpacity="0" /><Stop offset="1" stopColor="#000" stopOpacity="0.45" /></LinearGradient>
     </Defs>

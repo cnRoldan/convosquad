@@ -1,6 +1,6 @@
 # Imagen del once: campo y carga del escudo
 
-La exportación utiliza un lienzo vertical de 1324 × 1550. La cabecera ocupa 180 píxeles y el fondo recorta el cielo y parte de las gradas; la zona útil de campo ocupa más del 70 % de la altura. Se amplían uniformemente las camisetas y los nombres respecto a la composición anterior de 1324 × 1190.
+La exportación utiliza un lienzo vertical de 1324 × 1740. La cabecera ocupa 180 píxeles y el fondo recorta el cielo y parte de las gradas; la zona útil de campo ocupa más del 70 % de la altura. Frente al cartel de 1324 × 1550, se aumenta el tamaño máximo de camisetas, dorsales y nombres un 16 %, con más espacio vertical de campo para mantener la separación. Las formaciones más densas ajustan uniformemente el tamaño según el espacio disponible.
 
 `poster-geometry.ts` comparte dimensiones entre SVG, vista nativa y PNG web. Proyecta las coordenadas de la pizarra sobre el campo en perspectiva, haciendo coincidir su profundidad 0,5 con la línea de medio campo del fondo. Las coordenadas guardadas de la alineación no cambian. `poster-layout.ts` mantiene una escala común a todo el equipo y comprueba separación entre camisetas y nombres; las posiciones coincidentes intencionadamente conservan el tamaño mínimo legible.
 
