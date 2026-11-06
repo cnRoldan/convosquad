@@ -1,6 +1,9 @@
 import type { Candidate, Lineup } from './model';
 import { posterPoint } from './poster-geometry.ts';
 
+// Include the SVG stroke in the shirt bounds used by the collision checks.
+export const posterShirt = { scale: 0.92, offsetY: -6, width: 118, top: 59 } as const;
+
 export function posterPlayers(lineup: Lineup, candidates: Candidate[]) {
   const players = lineup.slots.flatMap(slot => {
     const player = candidates.find(candidate => candidate.id === slot.playerId);
@@ -14,7 +17,7 @@ export function posterPlayers(lineup: Lineup, candidates: Candidate[]) {
     }, 0);
     return [{ slot, player, fontSize, nameWidth,
       ...posterPoint(slot.x, depth),
-      halfWidth: Math.max(102, nameWidth) / 2,
+      halfWidth: Math.max(posterShirt.width, nameWidth) / 2,
     }];
   });
   // One scale for the entire team. Per-player perspective/collision scaling
@@ -25,7 +28,7 @@ export function posterPlayers(lineup: Lineup, candidates: Candidate[]) {
       const a = players[i]!, b = players[j]!;
       // Keep a six-pixel gap between badges/shirts without moving any slot.
       const horizontal = (Math.abs(a.x - b.x) - 6) / (a.halfWidth + b.halfWidth);
-      const vertical = (Math.abs(a.y - b.y) - 6) / (78 + 46);
+      const vertical = (Math.abs(a.y - b.y) - 6) / (78 + posterShirt.top);
       scale = Math.min(scale, Math.max(horizontal, vertical));
     }
   }

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { preset } from '../src/features/lineups/model.ts';
-import { posterPlayers } from '../src/features/lineups/poster-layout.ts';
+import { posterPlayers, posterShirt } from '../src/features/lineups/poster-layout.ts';
 import { posterPoint, posterGeometry } from '../src/features/lineups/poster-geometry.ts';
 
 const candidates = Array.from({ length: 11 }, (_, i) => ({ id: String(i), name: ['Selu', 'Salsinhes', 'juannma_CR24', 'alexinstic23'][i % 4], eligible: true, active: true }));
@@ -15,7 +15,7 @@ for (const formation of ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '3-5-2-one-pivot'
       const a = players[i], b = players[j];
       const [upper, lower] = a.y <= b.y ? [a, b] : [b, a];
       const horizontalGap = Math.abs(a.x - b.x) - (a.halfWidth * a.scale + b.halfWidth * b.scale);
-      const verticalGap = Math.abs(a.y - b.y) - (78 * upper.scale + 46 * lower.scale);
+      const verticalGap = Math.abs(a.y - b.y) - (78 * upper.scale + posterShirt.top * lower.scale);
       assert.ok(horizontalGap > 0 || verticalGap > 0, `Overlap between slots ${a.slot.id} and ${b.slot.id}`);
     }
     assert.deepEqual(lineup.slots, preset(formation).map(slot => ({ ...slot, playerId: String(slot.id) })));
@@ -35,7 +35,7 @@ test('custom pivot and middle centre-back retain their tactical separation with 
   const pivot=players.find(player=>player.slot.id===5),central=players.find(player=>player.slot.id===2);
   assert.equal(pivot.scale,central.scale);
   assert.ok(Math.abs((central.y-pivot.y)-(posterPoint(.5,.72).y-posterPoint(.5,.60).y))<1e-8);
-  assert.ok(central.y-pivot.y-(78*pivot.scale+46*central.scale)>=6-1e-8,'badge and next shirt keep visible space');
+  assert.ok(central.y-pivot.y-(78*pivot.scale+posterShirt.top*central.scale)>=6-1e-8,'badge and next shirt keep visible space');
   for(const player of players) assert.equal(player.y,posterPoint(player.slot.x,player.slot.y).y,'no individual vertical offsets');
 });
 
@@ -52,7 +52,7 @@ test('portrait poster dedicates most of its height to the pitch and enlarges shi
  for(const player of players){
   assert.ok(player.x-player.halfWidth*player.scale>=12);
   assert.ok(player.x+player.halfWidth*player.scale<=posterGeometry.width-12);
-  assert.ok(player.y-46*player.scale>180);
+  assert.ok(player.y-posterShirt.top*player.scale>180);
   assert.ok(player.y+78*player.scale<posterGeometry.height-98);
  }
 });
