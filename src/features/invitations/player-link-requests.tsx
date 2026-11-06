@@ -7,9 +7,9 @@ import { unwrap, backendErrorMessage } from '@/lib/backend-result';
 import { useClub } from '@/features/clubs/club-context';
 type Request={userId:string;eaId:string;playerEaId:string;playerId:string};
 export function PlayerLinkRequests({clubId}:{clubId:string}){
- const {refreshRoster}=useClub();const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
+ const {refreshRoster,rosterVersion}=useClub();const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');
  const load=useCallback(async()=>unwrap(await requireSupabase().rpc('list_player_link_requests',{p_club_id:clubId})) as unknown as Request[],[clubId]);
- const result=useResource(`player-links:${clubId}`,load);const reload=result.reload;
+ const result=useResource(`player-links:${clubId}:${rosterVersion}`,load);const reload=result.reload;
  useFocusEffect(useCallback(()=>{reload();},[reload]));
  async function review(userId:string,approve:boolean){setBusy(true);setMessage('');try{unwrap(await requireSupabase().rpc('review_player_link',{p_club_id:clubId,p_user_id:userId,p_approve:approve}));refreshRoster();reload();}catch(e){setMessage(backendErrorMessage(e));}finally{setBusy(false);}}
  return <>

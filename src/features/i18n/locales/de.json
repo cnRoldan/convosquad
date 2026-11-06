@@ -963,5 +963,12 @@
   "Quitar ayuda de la plantilla": "Aushilfe aus dem Kader entfernen",
   "Quitar ayuda": "Aushilfe entfernen",
   "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.": "{{v0}} aus den Aushilfen des Kaders entfernen? Bisherige Spieltagskader und Aufstellungen behalten ihre Daten.",
-  "Ayudas": "Aushilfen"
+  "Ayudas": "Aushilfen",
+  "Miembros sin ficha": "Mitglieder ohne Spielerprofil",
+  "Cuentas del club que no tienen una ficha de jugador vinculada.": "Vereinskonten ohne verknüpftes Spielerprofil.",
+  "No hay miembros sin ficha.": "Alle Mitglieder haben ein Spielerprofil.",
+  "Tu cuenta": "Dein Konto",
+  "Desvincular del club": "Aus dem Verein entfernen",
+  "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.": "{{v0}} aus dem Verein entfernen? Der Zugriff auf den Verein geht verloren. Das Konto und historische Daten bleiben erhalten.",
+  "La cuenta ya tiene una ficha de jugador vinculada.": "Dieses Konto hat bereits ein verknüpftes Spielerprofil."
 }

@@ -1,6 +1,15 @@
 import { requireSupabase } from '@/lib/supabase';
 import { unwrap } from '@/lib/backend-result';
 
+export async function listUnlinkedClubMembers(clubId: string) {
+  return unwrap(await requireSupabase().rpc('list_unlinked_club_members', { p_club_id: clubId }));
+}
+
+export async function removeUnlinkedClubMember(clubId: string, userId: string) {
+  const { error } = await requireSupabase().rpc('remove_unlinked_club_member', { p_club_id: clubId, p_user_id: userId });
+  if (error) throw error;
+}
+
 export async function listJoinRequests(clubId: string) {
   return unwrap(await requireSupabase().from('join_requests').select('*, profiles!join_requests_user_id_fkey(username)').eq('club_id', clubId).eq('status', 'pending').order('created_at'));
 }

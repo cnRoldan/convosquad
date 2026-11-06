@@ -10,6 +10,7 @@ export default function ManageLayout() {
     <Stack.Screen name="club-settings" options={{ title: t("Capitanes") }} />
     <Stack.Screen name="lineup-history" options={{ title: t("Alineación histórica") }} />
     <Stack.Screen name="call-up-history" options={{ title: t("Historial de convocatorias") }} />
+    <Stack.Screen name="historical-call-up" options={{ title: t('Convocatoria histórica') }} />
     <Stack.Screen name="call-up-ratings" options={{ title: t("Valorar jugadores") }} />
     <Stack.Screen name="incident-history" options={{ title: t('Histórico de incidencias') }} />
     <Stack.Screen name="call-up-player-totals" options={{ title: t("Total por jugador") }} />

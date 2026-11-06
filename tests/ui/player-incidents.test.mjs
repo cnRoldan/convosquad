@@ -33,7 +33,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   const now = Date.now();
   if (expiresSoon || ratingMeans) await page.clock.install({ time: now });
   const errors = [], unexpected = [], publications = [];
-  const state = { incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], helperRemovals: [], trialWithdrawals: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
+  const state = { unlinkedRemoved: [], incidentReads: 0, incidentDeletes: [], recorded: [], ratings: 0, ratingChanges: [], averageScore: 7.5, historicalRatingReads: 0, lineupReads: 0, lineupAccessReads: 0, publishedReads: 0, guests: [], helperRemovals: [], trialWithdrawals: [], instructionSaves: [], instructionReads: 0, instructionDeletes: [] };
   page.on('pageerror', error => errors.push(error.message));
   const club = { id: clubId, name: 'Incidents club', ...(withCrest ? {crest_path:`${clubId}/crest.png`} : {}), timezone: 'Europe/Madrid', ratings_visibility: 'captains' };
   const roster = Array.from({ length: benchSelection ? 15 : 12 }, (_, i) => ({ id: uuid(10 + i), club_id: clubId, ea_id: i === 0 ? 'Selu' : `Jugador_${i + 1}`, nickname: null, jersey_number: i + 1, category: i === 0 ? 'goalkeepers' : 'midfielders', position: 'MC', sort_order: i, is_active: true, user_id: i === 0 ? userId : null }));
@@ -155,13 +155,20 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     else if (endpoint === 'list_rating_call_ups') result = [past];
     else if (endpoint === 'read_rating_lineup') { assert.equal(body.p_call_id,pastId); result={published:!noPublishedLineup,entryIds:noPublishedLineup?[]:entries.slice(0,11).map(entry=>entry.id)}; }
     else if (endpoint === 'set_preferred_language') result = null;
+    else if (endpoint === 'list_player_link_requests') result = [];
+    else if (endpoint === 'list_call_up_history') { assert.equal(body.p_club_id,clubId);result=[past]; }
+    else if (endpoint === 'list_unlinked_club_members') {
+      assert.equal(role,'admin'); assert.equal(body.p_club_id,clubId);
+      result = [{user_id:userId,username:'Capitán sin ficha',role:'admin'}, ...(!state.unlinkedRemoved.length ? [{user_id:uuid(150),username:'Miembro sin ficha',role:'player'}] : [])];
+    }
+    else if (endpoint === 'remove_unlinked_club_member') { assert.equal(role,'admin'); assert.equal(body.p_club_id,clubId);assert.equal(body.p_user_id,uuid(150));state.unlinkedRemoved.push(body.p_user_id);result=null; }
     else if (endpoint === 'clubs') result = request.headers().accept?.includes('object') ? club : [club];
     else if (endpoint === 'club_members') result = [{ id: uuid(5), club_id: clubId, user_id: userId, role, is_active: true }];
     else if (endpoint === 'profiles') result = { id: userId, username: 'Capitán' };
     else if (endpoint === 'players') result = roster;
     else if (endpoint === 'call_ups') result = request.headers().accept?.includes('object') ? (url.searchParams.get('id') === `eq.${pastId}` ? past : next) : [next];
     else if (endpoint === 'call_up_players') result = entries;
-    else if (['call_up_trials', 'call_up_aids', 'club_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
+    else if (['call_up_trials', 'call_up_aids', 'club_trial_notes', 'call_up_contacts', 'call_up_trial_notes', 'player_ratings', 'join_requests', 'player_link_requests', 'notification_preferences', 'club_decision_locks'].includes(endpoint)) result = [];
     else { unexpected.push(endpoint); return route.abort(); }
     return route.fulfill({ json: result });
   });
@@ -169,6 +176,49 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
   async function close() { await context.close(); assert.deepEqual(errors, []); assert.deepEqual(unexpected, []); }
   return { page, state, incidents, publications, close };
 }
+
+for (const entry of ['/home','/call-up']) test(`historical call-up returns through history to its original entry ${entry}`, async () => {
+  const f=await fixture({route:entry});
+  try {
+    const {page}=f;
+    await page.getByRole('button',{name:'Historial de convocatorias',exact:true}).click();
+    await page.waitForURL('**/call-up-history');
+    const consult=page.getByRole('button',{name:/Consultar convocatoria del/});
+    await consult.click();
+    await page.waitForURL('**/historical-call-up?**');
+    await page.getByRole('button',{name:'Historial de convocatorias',exact:true}).click();
+    await page.waitForURL('**/call-up-history');
+    await consult.waitFor();
+    await page.getByRole('button',{name:'Volver',exact:true}).click();
+    await page.waitForURL(`**${entry}`);
+    if(entry==='/call-up') {
+      await page.getByRole('button',{name:'Historial de convocatorias',exact:true}).waitFor();
+      assert.equal(await page.getByRole('button',{name:'Volver a la convocatoria actual',exact:true}).count(),0);
+    }
+  } finally {await f.close();}
+});
+
+test('captain can inspect unlinked members and must confirm removal; own account has no removal button', async () => {
+  const f = await fixture({route:'/join-requests'});
+  try {
+    const {page}=f;
+    await page.getByText('Miembros sin ficha',{exact:true}).waitFor();
+    await page.getByText('Miembro sin ficha',{exact:true}).waitFor();
+    await page.getByText('Tu cuenta',{exact:true}).waitFor();
+    assert.equal(await page.getByRole('button',{name:'Desvincular del club',exact:true}).count(),1);
+    await page.getByRole('button',{name:'Desvincular del club',exact:true}).click();
+    await page.getByText('¿Desvincular a Miembro sin ficha del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    await page.getByText('¿Desvincular a Miembro sin ficha del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.',{exact:true}).waitFor({state:'hidden'});
+    assert.equal(f.state.unlinkedRemoved.length,0);
+    await page.getByRole('button',{name:'Desvincular del club',exact:true}).first().click();
+    await page.getByText('¿Desvincular a Miembro sin ficha del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'Desvincular del club',exact:true}).last().click();
+    await page.getByText('Miembro sin ficha',{exact:true}).waitFor({state:'hidden'});
+    assert.deepEqual(f.state.unlinkedRemoved,[uuid(150)]);
+    await page.getByText('Capitán sin ficha',{exact:true}).waitFor();
+  } finally {await f.close();}
+});
 
 test('lineup warns only for active starters, lists details and requires renewed consent when incidents change', async () => {
   const f = await fixture({ race: true });

@@ -963,5 +963,12 @@
   "Quitar ayuda de la plantilla": "Remove roster helper",
   "Quitar ayuda": "Remove helper",
   "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.": "Remove {{v0}} from roster helpers? Previous call-ups and lineups will keep their data.",
-  "Ayudas": "Helpers"
+  "Ayudas": "Helpers",
+  "Miembros sin ficha": "Members without a player card",
+  "Cuentas del club que no tienen una ficha de jugador vinculada.": "Club accounts without a linked player card.",
+  "No hay miembros sin ficha.": "All members have a player card.",
+  "Tu cuenta": "Your account",
+  "Desvincular del club": "Remove from club",
+  "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.": "Remove {{v0}} from the club? They will lose access to the club. Their account and historical data will be preserved.",
+  "La cuenta ya tiene una ficha de jugador vinculada.": "This account already has a linked player card."
 }

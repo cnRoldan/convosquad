@@ -1696,6 +1696,12 @@ export type Database = {
         };
         Returns: { id: string; name: string }[];
       };
+      list_unlinked_club_members: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: { user_id: string; username: string; role: Database['public']['Enums']['club_role']; joined_at: string }[];
+      };
       prepare_call_up_push: {
         Args: {
           p_club_id: string;
@@ -1845,6 +1851,13 @@ export type Database = {
       remove_roster_helper: {
         Args: {
           p_guest_id: string;
+        };
+        Returns: undefined;
+      };
+      remove_unlinked_club_member: {
+        Args: {
+          p_club_id: string;
+          p_user_id: string;
         };
         Returns: undefined;
       };

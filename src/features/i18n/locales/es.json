@@ -963,5 +963,12 @@
   "Quitar ayuda de la plantilla": "Quitar ayuda de la plantilla",
   "Quitar ayuda": "Quitar ayuda",
   "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.": "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.",
-  "Ayudas": "Ayudas"
+  "Ayudas": "Ayudas",
+  "Miembros sin ficha": "Miembros sin ficha",
+  "Cuentas del club que no tienen una ficha de jugador vinculada.": "Cuentas del club que no tienen una ficha de jugador vinculada.",
+  "No hay miembros sin ficha.": "No hay miembros sin ficha.",
+  "Tu cuenta": "Tu cuenta",
+  "Desvincular del club": "Desvincular del club",
+  "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.": "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.",
+  "La cuenta ya tiene una ficha de jugador vinculada.": "La cuenta ya tiene una ficha de jugador vinculada."
 }

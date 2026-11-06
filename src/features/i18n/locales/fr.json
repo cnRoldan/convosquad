@@ -963,5 +963,12 @@
   "Quitar ayuda de la plantilla": "Retirer l’aide de l’effectif",
   "Quitar ayuda": "Retirer l’aide",
   "¿Quitar a {{v0}} de las ayudas de la plantilla? Las convocatorias y alineaciones anteriores conservarán sus datos.": "Retirer {{v0}} des aides de l’effectif ? Les convocations et compositions précédentes conserveront leurs données.",
-  "Ayudas": "Aides"
+  "Ayudas": "Aides",
+  "Miembros sin ficha": "Membres sans fiche joueur",
+  "Cuentas del club que no tienen una ficha de jugador vinculada.": "Comptes du club sans fiche joueur associée.",
+  "No hay miembros sin ficha.": "Tous les membres ont une fiche joueur.",
+  "Tu cuenta": "Votre compte",
+  "Desvincular del club": "Retirer du club",
+  "¿Desvincular a {{v0}} del club? Perderá el acceso al club. Su cuenta y los datos históricos se conservarán.": "Retirer {{v0}} du club ? Cette personne perdra l’accès au club. Son compte et les données historiques seront conservés.",
+  "La cuenta ya tiene una ficha de jugador vinculada.": "Ce compte possède déjà une fiche joueur associée."
 }
