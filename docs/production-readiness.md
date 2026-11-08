@@ -1,5 +1,7 @@
 # Publicación: comprobación del 4 de noviembre de 2026
 
+Actualización del 8 de noviembre: Apple ha rechazado el envío por acceso insuficiente a contenido (2.1a). Se confirmó que seguía asociado a la compilación 13. La cuenta configurada ya dispone de un club de revisión poblado; ver [acceso de App Review](app-review-access.md). La respuesta y las credenciales están preparadas fuera del repositorio y todavía no se han enviado al revisor. El estado original que sigue corresponde a la comprobación del día 4.
+
 ## Estado comprobado
 
 - App Store Connect: versión de producción `1.0.0`, id `403b5a72-54d3-40b3-9a22-4a9694ec31ca`, en `WAITING_FOR_REVIEW`. Tiene asociada la **compilación 13**, subida el 24 de octubre, y `releaseType=AFTER_APPROVAL`. Aprobar este envío publicaría esa compilación antigua, no la 22.
