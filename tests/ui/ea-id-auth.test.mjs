@@ -1291,6 +1291,22 @@ test('el menú del ID se abre junto al identificador, se cierra al tocar fuera y
    await f.page.waitForURL(origin + '/');
    await f.page.getByRole('button',{name:'Iniciar sesión',exact:true}).waitFor();
    assert.deepEqual(f.requests.filter(r=>r.endpoint==='logout').map(r=>r.scope),['local']);
+   // No reload: the native failure left an invisible menu over these buttons.
+   assert.equal(await f.page.getByRole('menu').count(),0);
+   await f.page.getByRole('button',{name:'Crear una cuenta',exact:true}).click();
+   await f.page.waitForURL('**/register');
+   await f.page.getByRole('button',{name:'Ya tengo una cuenta',exact:true}).click();
+   await f.page.waitForURL('**/login');
+   await f.page.getByLabel('ID de EA',{exact:true}).fill('EA-Player_9');
+   await f.page.getByLabel('Contraseña',{exact:true}).fill('Review-test-password');
+   await f.page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
+   await f.page.waitForURL(/\/(clubs|home)(\?|$)/);
+   assert.equal(f.requests.filter(r=>r.endpoint==='token').length,1,'buttons and authentication work again in the same app session');
+   await f.page.goto(`${origin}/home`);
+   await f.page.getByRole('button',{name:'Sesión iniciada como EA-Player_9',exact:true}).click();
+   await f.page.getByRole('menuitem',{name:'Cerrar sesión',exact:true}).click();
+   await f.page.waitForURL(origin+'/');
+   assert.equal(f.requests.filter(r=>r.endpoint==='logout').length,2,'repeated sign-in/sign-out does not retain a blocking modal');
    await f.page.reload();
    await f.page.goto(`${origin}/home`);
    await f.page.waitForURL('**/login');

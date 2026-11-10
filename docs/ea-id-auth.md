@@ -1,5 +1,13 @@
 # Registro y acceso con ID de EA
 
+## Cierre del menú de sesión en iOS
+
+El menú del ID debe terminar de cerrar su `Modal` antes de cerrar la sesión o navegar a biometría. El cierre anterior iniciaba `logout()` con el modal todavía presentado; `SIGNED_OUT` desmontaba `SessionIdentity` antes de ejecutar `close()`. En iOS ese orden puede dejar una ventana invisible bloqueando los toques de la pantalla de acceso.
+
+`DismissedMenuAction` conserva una única acción y la ejecuta desde `Modal.onDismiss` en iOS y web. En Android se oculta el diálogo sin animación para estas acciones y se continúa en el siguiente fotograma tras el cambio de visibilidad. Desmontar el menú descarta una acción pendiente. Si falla la desvinculación del dispositivo y la sesión sigue vigente, el menú se vuelve a abrir con el error y permite reintentar. Se conserva el cierre local y la limpieza del dispositivo antes de revocar credenciales.
+
+Validación: pruebas unitarias de orden, duplicados y desmontaje; navegación a registro/acceso, inicio de sesión y segundo cierre desde el menú sin recargar, en 320 y 390 píxeles. La validación física de iOS requiere una compilación posterior a la 25; las pruebas web no reproducen el controlador modal nativo de UIKit.
+
 Las nuevas cuentas utilizan únicamente **ID de EA + contraseña**, sin correo, confirmación ni recuperación automática. Si un ID está ocupado o se pierde una contraseña, el usuario contacta con el administrador. La aplicación no verifica la propiedad del ID en EA. La eliminación voluntaria está disponible en Mis clubes → Eliminar mi cuenta.
 
 ## Activación en Supabase desde el navegador

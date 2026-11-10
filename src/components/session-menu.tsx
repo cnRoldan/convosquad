@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
@@ -7,6 +7,7 @@ import { t, useLanguage } from '@/features/i18n/runtime';
 import { useSessionLogout } from '@/features/auth/use-session-logout';
 import { logoutErrorMessage } from '@/features/auth/logout';
 import { colors } from '@/theme';
+import { DismissedMenuAction } from './dismissed-menu-action';
 
 export function SessionMenu({ eaId }: { eaId: string }) {
   useLanguage();
@@ -16,7 +17,23 @@ export function SessionMenu({ eaId }: { eaId: string }) {
   const { logout, isSigningOut } = useSessionLogout();
   const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [closingForAction, setClosingForAction] = useState(false);
   const [error, setError] = useState('');
+  const dismissal = useRef(new DismissedMenuAction());
+  const mounted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    const queue = new DismissedMenuAction();
+    dismissal.current = queue;
+    return () => { mounted.current = false; queue.dispose(); };
+  }, []);
+  // Android does not deliver Modal.onDismiss. Hide its dialog without an exit
+  // animation, then defer the action until the visibility update has committed.
+  useEffect(() => {
+    if (Platform.OS !== 'android' || menuOpen) return;
+    const frame = requestAnimationFrame(() => dismissal.current.dismissed());
+    return () => cancelAnimationFrame(frame);
+  }, [menuOpen]);
   const menuWidth = Math.min(220, width - 32);
   function open() {
     setError('');
@@ -30,29 +47,40 @@ export function SessionMenu({ eaId }: { eaId: string }) {
   }
   // Keep the measured position while the modal finishes its exit animation.
   function close() { setMenuOpen(false); }
+  function dismissThen(action: () => void) {
+    if (closingForAction || isSigningOut || !dismissal.current.enqueue(action)) return;
+    setClosingForAction(true);
+    close();
+  }
   async function leave() {
     setError('');
-    try { await logout(); close(); }
-    catch (cause) { setError(t(logoutErrorMessage(cause))); }
+    try { await logout(); }
+    catch (cause) {
+      if (mounted.current) {
+        setError(t(logoutErrorMessage(cause)));
+        setClosingForAction(false);
+        setMenuOpen(true);
+      }
+    }
   }
   return <>
     <Pressable ref={trigger} accessibilityRole="button" accessibilityLabel={t('Sesión iniciada como {{v0}}', { v0: eaId })}
-      accessibilityState={{ expanded: menuOpen, disabled: isSigningOut }} disabled={isSigningOut}
+      accessibilityState={{ expanded: menuOpen, disabled: isSigningOut || closingForAction }} disabled={isSigningOut || closingForAction}
       onPress={open} style={({ pressed }) => [styles.badge, pressed && styles.pressed]}>
       <Text numberOfLines={1} ellipsizeMode="tail" style={styles.identity}>ID: {eaId}</Text>
     </Pressable>
-    <Modal visible={menuOpen} transparent animationType="fade" statusBarTranslucent navigationBarTranslucent onRequestClose={close}>
+    <Modal visible={menuOpen} transparent animationType={Platform.OS === 'android' && closingForAction ? 'none' : 'fade'} statusBarTranslucent navigationBarTranslucent onRequestClose={close} onDismiss={() => dismissal.current.dismissed()}>
       <View style={styles.overlay} accessibilityViewIsModal onAccessibilityEscape={close}>
         <Pressable accessibilityRole="button" accessibilityLabel={t('Cerrar')} style={StyleSheet.absoluteFill} onPress={close} />
         <View accessibilityRole="menu" style={[styles.menu, { width: menuWidth, top: anchor?.top, right: anchor?.right }]}>
-          <Pressable accessibilityRole="menuitem" accessibilityLabel={t('Cerrar sesión')} disabled={isSigningOut} accessibilityState={{ disabled: isSigningOut, busy: isSigningOut }}
-            style={({ pressed }) => [styles.item, pressed && styles.pressed]} onPress={() => { void leave(); }}>
+          <Pressable accessibilityRole="menuitem" accessibilityLabel={t('Cerrar sesión')} disabled={isSigningOut || closingForAction} accessibilityState={{ disabled: isSigningOut || closingForAction, busy: isSigningOut || closingForAction }}
+            style={({ pressed }) => [styles.item, pressed && styles.pressed]} onPress={() => dismissThen(() => { void leave(); })}>
             {isSigningOut ? <ActivityIndicator size="small" color={colors.primary} /> : <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" accessible={false}>
               <Path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
             </Svg>}
             <Text style={styles.itemText}>{t('Cerrar sesión')}</Text>
           </Pressable>
-          {Platform.OS !== 'web' ? <Pressable accessibilityRole="menuitem" style={styles.item} onPress={() => { close(); router.push('/biometrics'); }}><Text style={styles.itemText}>Acceso biométrico</Text></Pressable> : null}
+          {Platform.OS !== 'web' ? <Pressable accessibilityRole="menuitem" disabled={isSigningOut || closingForAction} style={styles.item} onPress={() => dismissThen(() => { setClosingForAction(false); router.push('/biometrics'); })}><Text style={styles.itemText}>Acceso biométrico</Text></Pressable> : null}
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         </View>
       </View>
