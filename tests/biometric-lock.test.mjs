@@ -1,10 +1,40 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BiometricLock, needsNativeLockCover } from '../src/features/auth/biometric-lock.ts';
+import { BiometricLock, biometricPresentation, needsNativeLockCover } from '../src/features/auth/biometric-lock.ts';
 function setup(enabled=true){let now=0,calls=0;const flags=new Map([['a',enabled],['b',true]]);let authenticate=async()=>true;
  const lock=new BiometricLock({read:async u=>flags.get(u)??false,write:async(u,e)=>{flags.set(u,e);},authenticate:async()=>{calls++;return authenticate();},now:()=>now});
  return {lock,flags,calls:()=>calls,time:v=>{now=v;},auth:fn=>{authenticate=fn;}};
 }
+test('signing out never presents a new native lock modal while the security account catches up',async()=>{
+ for(const enabled of [false,true]){
+  const f=setup(enabled);await f.lock.setUser('a');if(enabled)await f.lock.unlock();
+  const before=needsNativeLockCover(f.lock.snapshot(),true,false);
+  // SIGNED_OUT renders auth.userId=null before the provider effect calls setUser(null).
+  const transition=needsNativeLockCover(f.lock.snapshot(),false,false);
+  await f.lock.setUser(null);
+  const after=needsNativeLockCover(f.lock.snapshot(),true,false);
+  assert.deepEqual([before,transition,after],[false,false,false]);
+ }
+});
+test('initial restoration and logout keep content hidden without presenting a transient native controller',async()=>{
+ const f=setup(false);
+ assert.deepEqual(biometricPresentation(f.lock.snapshot(),null,true,false),{ready:false,blocked:true,nativeCover:false});
+ await f.lock.setUser('a');
+ assert.deepEqual(biometricPresentation(f.lock.snapshot(),'a',false,false),{ready:true,blocked:false,nativeCover:false});
+ assert.deepEqual(biometricPresentation(f.lock.snapshot(),null,false,false),{ready:false,blocked:true,nativeCover:false});
+ await f.lock.setUser(null);
+ assert.deepEqual(biometricPresentation(f.lock.snapshot(),null,false,false),{ready:true,blocked:false,nativeCover:false});
+});
+test('switching to a biometric account protects content until its preference loads, then shows a real lock',async()=>{
+ let finish;
+ const lock=new BiometricLock({read:()=>new Promise(resolve=>{finish=resolve;}),write:async()=>{},authenticate:async()=>true,now:Date.now});
+ const loading=lock.setUser('secure');
+ assert.deepEqual(biometricPresentation(lock.snapshot(),'secure',false,false),{ready:false,blocked:true,nativeCover:false});
+ finish(true);await loading;
+ assert.deepEqual(biometricPresentation(lock.snapshot(),'secure',false,false),{ready:true,blocked:true,nativeCover:true});
+ await lock.unlock();
+ assert.deepEqual(biometricPresentation(lock.snapshot(),'secure',false,true),{ready:true,blocked:false,nativeCover:false});
+});
 test('cold start is locked; cancellation stays locked and retry unlocks',async()=>{
  const f=setup();await f.lock.setUser('a');assert.equal(f.lock.snapshot().locked,true);
  f.auth(async()=>false);await f.lock.unlock();assert.equal(f.lock.snapshot().locked,true);

@@ -1,8 +1,19 @@
 export type LockState = { userId: string | null; ready: boolean; enabled: boolean; locked: boolean; hidden: boolean; authInactive: boolean; busy: boolean; error: string };
 export function needsNativeLockCover(state: LockState, ready: boolean, alreadyPresented: boolean) {
+  // Restoring/clearing an account is not a biometric challenge. Presenting a
+  // UIKit modal for that one-render mismatch can leave it stuck over login.
+  if (!ready || !state.userId || !state.enabled) return false;
   // Do not present another native modal while Face ID is closing on the settings
   // screen. A lock cover already presented before authentication stays in place.
-  return !ready || (state.enabled && (state.locked || (state.hidden && (!state.authInactive || alreadyPresented))));
+  return state.locked || (state.hidden && (!state.authInactive || alreadyPresented));
+}
+export function biometricPresentation(state: LockState, userId: string | null, authLoading: boolean, alreadyPresented: boolean) {
+  const ready = !authLoading && state.ready && state.userId === userId;
+  return {
+    ready,
+    blocked: !ready || (state.enabled && (state.locked || state.hidden)),
+    nativeCover: needsNativeLockCover(state, ready, alreadyPresented),
+  };
 }
 type Dependencies = { read(userId: string): Promise<boolean>; write(userId: string, enabled: boolean): Promise<void>; authenticate(): Promise<boolean>; now(): number };
 export class BiometricLock {

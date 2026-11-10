@@ -8,6 +8,10 @@ El menú del ID debe terminar de cerrar su `Modal` antes de cerrar la sesión o 
 
 Validación: pruebas unitarias de orden, duplicados y desmontaje; navegación a registro/acceso, inicio de sesión y segundo cierre desde el menú sin recargar, en 320 y 390 píxeles. La validación física de iOS requiere una compilación posterior a la 25; las pruebas web no reproducen el controlador modal nativo de UIKit.
 
+La prueba física comunicada por el propietario confirmó que el bloqueo persistía en la 26. Se encontró una segunda presentación nativa en `BiometricProvider`: al cambiar la cuenta autenticada a `null`, el estado biométrico conserva la identidad anterior hasta ejecutar su efecto. El anterior `!ready` abría un `Modal` durante ese único render, incluso sin biometría, y lo cerraba inmediatamente cuando se completaba `setUser(null)`. La nueva prueba reproduce la secuencia `false → true → false` de la 26 y exige que no se presente ningún controlador en esa transición.
+
+La restauración y el cambio de cuenta usan ahora una cubierta de carga dentro de la misma vista de React Native, con el contenido oculto y sin interacción hasta que el estado sea coherente. El modal nativo se reserva para una cuenta identificada, con preferencias cargadas y biometría habilitada que necesite bloqueo real. Se conservan las protecciones de Face ID, segundo plano, cancelación, cambio de cuenta y lectura pendiente de SecureStore. Este segundo arreglo requiere una compilación posterior a la 26 y una nueva comprobación física.
+
 Las nuevas cuentas utilizan únicamente **ID de EA + contraseña**, sin correo, confirmación ni recuperación automática. Si un ID está ocupado o se pierde una contraseña, el usuario contacta con el administrador. La aplicación no verifica la propiedad del ID en EA. La eliminación voluntaria está disponible en Mis clubes → Eliminar mi cuenta.
 
 ## Activación en Supabase desde el navegador

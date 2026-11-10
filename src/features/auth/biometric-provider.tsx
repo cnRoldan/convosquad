@@ -3,7 +3,7 @@ import { ActivityIndicator, AppState, Modal, Platform, Pressable, ScrollView, St
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from './auth-context';
-import { BiometricLock, needsNativeLockCover } from './biometric-lock';
+import { BiometricLock, biometricPresentation } from './biometric-lock';
 import { colors } from '@/theme';
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { LanguageSelector } from '@/features/i18n/language-selector';
@@ -34,8 +34,7 @@ export function BiometricProvider({ children }: PropsWithChildren) {
     const frame = requestAnimationFrame(() => void lock.unlockAutomatically());
     return () => cancelAnimationFrame(frame);
   }, [lock, coverPresented, state.ready, state.locked, state.hidden, state.busy, state.userId, userId]);
-  const ready = !auth.isLoading && state.ready && state.userId === userId;
-  const blocked = !ready || (state.enabled && (state.locked || state.hidden));
+  const { ready, blocked, nativeCover } = biometricPresentation(state, userId, auth.isLoading, coverPresented);
   useEffect(() => {
     if (blocked) return;
     const frame = requestAnimationFrame(() => setCoverPresented(false));
@@ -55,7 +54,10 @@ export function BiometricProvider({ children }: PropsWithChildren) {
   return <Context.Provider value={context}>
     <View style={{ flex: 1 }}>
       <View style={{ flex: 1, opacity: blocked ? 0 : 1 }} pointerEvents={blocked ? 'none' : 'auto'} accessibilityElementsHidden={blocked} importantForAccessibility={blocked ? 'no-hide-descendants' : 'auto'}>{children}</View>
-      <Modal visible={needsNativeLockCover(state, ready, coverPresented)} animationType="none" onShow={() => setCoverPresented(true)} onDismiss={() => setCoverPresented(false)} onRequestClose={() => undefined}>
+      {!ready ? <View style={styles.transitionCover} accessibilityViewIsModal>
+        <ActivityIndicator color={colors.primary} accessibilityLabel={t('Comprobando tu sesión…')} />
+      </View> : null}
+      <Modal visible={nativeCover} animationType="none" onShow={() => setCoverPresented(true)} onDismiss={() => setCoverPresented(false)} onRequestClose={() => undefined}>
         <ScrollView accessibilityViewIsModal style={{ flex: 1, backgroundColor: colors.background }} contentContainerStyle={styles.cover}>
           <Text style={styles.title}>ConvoSquad</Text>
           <LanguageSelector inline />
@@ -77,6 +79,7 @@ export function useBiometrics() {
   return value;
 }
 const styles = StyleSheet.create({
+  transitionCover: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
   cover: { flexGrow: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 22 },
   title: { fontSize: 30, color: colors.primary, fontWeight: '900' },
   copy: { color: colors.text, textAlign: 'center', fontSize: 16 },
