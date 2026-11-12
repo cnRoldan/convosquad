@@ -642,7 +642,7 @@ export type Database = {
           store: string;
           original_transaction_id: string;
           club_id: string;
-          purchaser_user_id: string;
+          purchaser_user_id: string | null;
           kind: Database['public']['Enums']['club_billing_kind'];
           product_id: string;
           expires_at: string | null;
@@ -653,7 +653,7 @@ export type Database = {
           store: string;
           original_transaction_id: string;
           club_id: string;
-          purchaser_user_id: string;
+          purchaser_user_id?: string | null;
           kind: Database['public']['Enums']['club_billing_kind'];
           product_id: string;
           expires_at?: string | null;
@@ -664,7 +664,7 @@ export type Database = {
           store?: string;
           original_transaction_id?: string;
           club_id?: string;
-          purchaser_user_id?: string;
+          purchaser_user_id?: string | null;
           kind?: Database['public']['Enums']['club_billing_kind'];
           product_id?: string;
           expires_at?: string | null;

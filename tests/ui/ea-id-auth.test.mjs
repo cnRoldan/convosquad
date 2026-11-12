@@ -952,8 +952,9 @@ test('visibilidad: por defecto privada, capitán puede compartir y el modo perso
 test('eliminar cuenta: confirmación cancelable, contraseña y cierre de sesión sin modificar a otros',async()=>{
  const f=await fixture({clubRole:'player'});
  try {
-  await f.page.goto(`${origin}/clubs`);
-  await f.page.getByRole('button',{name:'Eliminar mi cuenta',exact:true}).click();
+  await f.page.goto(`${origin}/home`);
+  await f.page.getByRole('button',{name:'Sesión iniciada como EA-Player_9',exact:true}).click();
+  await f.page.getByRole('menuitem',{name:'Eliminar mi cuenta',exact:true}).click();
   await f.page.getByText('Cuenta: EA-Player_9',{exact:true}).waitFor();
   const remove=f.page.getByRole('button',{name:'Eliminar mi cuenta',exact:true});
   assert.equal(await remove.getAttribute('aria-disabled'),'true');

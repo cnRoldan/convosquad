@@ -39,7 +39,7 @@ export function SessionMenu({ eaId }: { eaId: string }) {
     setError('');
     trigger.current?.measureInWindow((x, y, triggerWidth, triggerHeight) => {
       setAnchor({
-        top: Math.max(insets.top + 8, Math.min(y + triggerHeight + 6, height - insets.bottom - 180)),
+        top: Math.max(insets.top + 8, Math.min(y + triggerHeight + 6, height - insets.bottom - 240)),
         right: Math.max(16, Math.min(width - x - triggerWidth, width - menuWidth - 16)),
       });
       setMenuOpen(true);
@@ -81,6 +81,11 @@ export function SessionMenu({ eaId }: { eaId: string }) {
             <Text style={styles.itemText}>{t('Cerrar sesión')}</Text>
           </Pressable>
           {Platform.OS !== 'web' ? <Pressable accessibilityRole="menuitem" disabled={isSigningOut || closingForAction} style={styles.item} onPress={() => dismissThen(() => { setClosingForAction(false); router.push('/biometrics'); })}><Text style={styles.itemText}>Acceso biométrico</Text></Pressable> : null}
+          <Pressable accessibilityRole="menuitem" accessibilityLabel={t('Eliminar mi cuenta')} disabled={isSigningOut || closingForAction}
+            style={({ pressed }) => [styles.item, pressed && styles.pressed]}
+            onPress={() => dismissThen(() => { setClosingForAction(false); router.push('/delete-account'); })}>
+            <Text style={[styles.itemText, styles.danger]}>{t('Eliminar mi cuenta')}</Text>
+          </Pressable>
           {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         </View>
       </View>
@@ -97,4 +102,5 @@ const styles = StyleSheet.create({
   itemText: { color: colors.text, fontSize: 14, fontWeight: '600', flexShrink: 1 },
   pressed: { backgroundColor: '#243622' },
   error: { color: colors.danger, fontSize: 13, padding: 12 },
+  danger: { color: colors.danger },
 });

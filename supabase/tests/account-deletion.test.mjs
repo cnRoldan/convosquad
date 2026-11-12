@@ -72,7 +72,13 @@ test('borra cuenta y copias vinculadas incluso cerradas; conserva datos de otros
  assert.equal((await row(other,'select public.is_ea_id_available($1) available',['DeleteAccount_1'])).available,true);
 });
 test('borrar al creador transfiere sus controles al capitán restante y conserva el escudo sin su identidad',async()=>{
+ await query(captain,'select public.begin_club_purchase($1,$2)',[club.id,'com.convosquad.premium.monthly']);
+ await db.query("select public.apply_revenuecat_event($1,$1,'com.convosquad.premium.monthly','deleted-captain-purchase','APP_STORE','INITIAL_PURCHASE',now()+interval '1 month')",[captain]);
  await remove(captain,'DeleteAccount_0');
+ assert.deepEqual((await db.query("select purchaser_user_id,club_id from public.club_store_purchases where original_transaction_id='deleted-captain-purchase'")).rows,[{purchaser_user_id:null,club_id:club.id}]);
+ const renewal=await db.query("select public.apply_revenuecat_event($1,$1,'com.convosquad.premium.monthly','deleted-captain-purchase','APP_STORE','RENEWAL',now()+interval '2 months') result",[captain]);
+ assert.equal(renewal.rows[0].result.applied,true);
+ assert.equal(renewal.rows[0].result.clubId,club.id);
  assert.equal((await row(other,'select * from public.clubs where id=$1',[club.id])).created_by,other);
  assert.deepEqual((await db.query('select owner,owner_id from storage.objects')).rows,[{owner:null,owner_id:null}]);
  assert.equal((await db.query('select count(*)::int n from auth.users')).rows[0].n,2);

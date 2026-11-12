@@ -12,7 +12,7 @@ La prueba física comunicada por el propietario confirmó que el bloqueo persist
 
 La restauración y el cambio de cuenta usan ahora una cubierta de carga dentro de la misma vista de React Native, con el contenido oculto y sin interacción hasta que el estado sea coherente. El modal nativo se reserva para una cuenta identificada, con preferencias cargadas y biometría habilitada que necesite bloqueo real. Se conservan las protecciones de Face ID, segundo plano, cancelación, cambio de cuenta y lectura pendiente de SecureStore. Este segundo arreglo requiere una compilación posterior a la 26 y una nueva comprobación física.
 
-Las nuevas cuentas utilizan únicamente **ID de EA + contraseña**, sin correo, confirmación ni recuperación automática. Si un ID está ocupado o se pierde una contraseña, el usuario contacta con el administrador. La aplicación no verifica la propiedad del ID en EA. La eliminación voluntaria está disponible en Mis clubes → Eliminar mi cuenta.
+Las nuevas cuentas utilizan únicamente **ID de EA + contraseña**, sin correo, confirmación ni recuperación automática. Si un ID está ocupado o se pierde una contraseña, el usuario contacta con el administrador. La aplicación no verifica la propiedad del ID en EA. La eliminación voluntaria está disponible directamente en el menú del ID de EA → Eliminar mi cuenta, además de Mis clubes.
 
 ## Activación en Supabase desde el navegador
 

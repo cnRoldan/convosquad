@@ -1,6 +1,9 @@
 # Eliminación de cuenta
 
-Mis clubes → **Eliminar mi cuenta** abre el mismo flujo que la página pública
+Menú del ID de EA → **Eliminar mi cuenta** abre directamente el flujo desde
+cualquier pantalla autenticada. También sigue disponible en Mis clubes. El menú
+espera a que termine de cerrarse su modal antes de navegar, para evitar bloquear
+la interacción en iOS. Ambos accesos abren el mismo flujo que la página pública
 `https://convosquad.netlify.app/delete-account`. Esta URL se puede registrar como
 recurso de eliminación en Google Play; permite iniciar sesión y completar la
 eliminación desde el navegador, sin instalar la aplicación.
@@ -32,6 +35,12 @@ snapshots. Las invitaciones creadas por la cuenta se invalidan eliminándolas.
 Las referencias de autor sobre datos compartidos quedan sin identificación.
 
 Se conservan los clubes compartidos, sus escudos y los datos de otros jugadores.
+Las transacciones de tienda conservan su asociación al club para procesar
+renovaciones y reembolsos, pero pierden la referencia al perfil eliminado. La
+migración `20261112000100_account_deletion_purchases.sql` sustituye el bloqueo de
+borrado del comprador por `ON DELETE SET NULL`; no borra compras ni cuentas al
+aplicarse. La prueba SQL incluye eliminar al comprador y procesar una renovación
+posterior sobre el mismo club.
 Del escudo compartido se retira la identidad del usuario que lo subió; no se
 elimina el objeto ni su archivo. No se intenta inferir identidades en textos libres
 o registros de ayudas/pruebas sin vínculo con la cuenta: las solicitudes sobre
@@ -56,3 +65,17 @@ Las pruebas SQL usan PGlite y las pruebas de cliente/navegador interceptan Auth:
 ninguna prueba borra cuentas remotas. Cubren sesión reciente, identidad, permisos,
 último capitán, limpieza del historial, conservación de otros jugadores,
 transferencia de creador, contraseña incorrecta, cancelación y cierre local.
+
+## Evidencia para App Review (5.1.1(v))
+
+Apple solicitó el 12 de noviembre de 2026 un vídeo grabado en un dispositivo
+físico, mostrando alta o inicio de sesión, navegación al borrado y todo el proceso
+hasta la confirmación. Las pruebas de navegador no sustituyen esa evidencia.
+
+Usar una cuenta desechable, sin clubes, para no borrar las cuentas de revisión
+con contenido ni el club real. Grabar desde el alta/inicio de sesión, abrir el
+menú del ID de EA, pulsar Eliminar mi cuenta, completar contraseña e ID, confirmar
+Eliminar definitivamente y mostrar el mensaje de éxito. Añadir el enlace accesible
+al vídeo a las notas de revisión y responder al rechazo con la ruta exacta y la
+compilación utilizada. Si se prueba con un capitán único, antes debe transferir
+el rol o eliminar su club; el flujo explica esta condición.
