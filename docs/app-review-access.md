@@ -2,10 +2,12 @@
 
 ## Actualización del 16 de noviembre de 2026: compras localizables en la compilación 28
 
-El envío actual `60fcf464-cc54-463e-b9c2-0f2093ea8f39` está en
-`UNRESOLVED_ISSUES` y la versión 1.0.0 está rechazada porque el revisor no localiza
-las compras. El envío contiene cinco elementos. No se ha reenviado desde esta
-preparación ni enviado un mensaje al revisor.
+El envío `60fcf464-cc54-463e-b9c2-0f2093ea8f39` se reenvió por petición
+expresa del usuario el 16 de noviembre de 2026 a las 21:35 UTC. Apple confirmó
+`WAITING_FOR_REVIEW` con los cinco elementos en `READY_FOR_REVIEW` y la compilación
+28 vinculada. Se añadieron a las notas de App Review los recorridos de compra y
+la restricción de storefront español, conservando las credenciales y las notas
+anteriores. No se envió un mensaje separado en la conversación con el revisor.
 
 El club original **ConvoSquad App Review** conserva la activación y Prémium manuales
 para revisar todas las funciones. Esas concesiones ocultan los accesos naturales
