@@ -10,6 +10,12 @@ en sus rutas habituales.
 
 ## Enlaces de las tiendas
 
+Google Play está publicado y el botón enlaza a
+`https://play.google.com/store/apps/details?id=com.convosquad.app`. El enlace
+funciona también con JavaScript desactivado. App Store sigue pendiente de la
+verificación DSA para España; su botón continúa deshabilitado.
+
+
 En `public/descargar/stores.js`, sustituir el `null` de `apple` o `google` por la
 URL HTTPS pública y verificada de su ficha. Hacerlo para cada tienda cuando su
 aplicación esté publicada; no apuntar a TestFlight ni a pruebas cerradas. El script

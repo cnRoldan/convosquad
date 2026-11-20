@@ -2,7 +2,7 @@
 // Keep null during review: the page must not send players to an unavailable app.
 const stores = {
   apple: null,
-  google: null,
+  google: 'https://play.google.com/store/apps/details?id=com.convosquad.app',
 };
 
 const available = [];
