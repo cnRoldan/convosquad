@@ -20,15 +20,26 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/descargar/media/favicon.png" type="image/png">
   <link rel="stylesheet" href="/descargar/landing.css">
-  <script type="module" src="/descargar/stores.js"></script>
+  <script type="module" src="/descargar/language.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#contenido">Ir al contenido</a>
   <header class="site-header wrap">
     <a class="brand" href="/descargar/" aria-label="ConvoSquad, inicio"><img src="/descargar/media/icon.png" width="40" height="40" alt=""><span>ConvoSquad</span></a>
+    <div class="header-actions">
     <nav aria-label="Navegación principal">
       <a href="#la-app">La app</a><a href="#precios">Precios</a><a class="nav-web" href="/">Entrar en la web <span aria-hidden="true">↗</span></a>
     </nav>
+    <label class="language-control" data-language-control hidden>
+      <span>Idioma</span>
+      <select aria-label="Idioma de la página" data-language-select>
+        <option value="es" lang="es">Español</option>
+        <option value="en" lang="en">English</option>
+        <option value="de" lang="de">Deutsch</option>
+        <option value="fr" lang="fr">Français</option>
+      </select>
+    </label>
+    </div>
   </header>
 
   <main id="contenido">
@@ -79,7 +90,7 @@
         <article class="price-card"><p class="plan-type">PAGO ÚNICO</p><h3>Activación del club</h3><p class="price">2,99 €<span> / club</span></p><p>Activa el club de forma permanente, sin cuota mensual para las funciones básicas.</p><ul><li>Sigue creando convocatorias tras la prueba</li><li>Gestiona plantilla y disponibilidad</li><li>6 generaciones gratuitas del 11 al mes</li></ul><p class="plan-availability">Se contrata desde la app</p><p class="plan-note">La activación permanente no incluye la suscripción Prémium.</p></article>
         <article class="price-card premium"><span class="premium-tag">PARA IR UN PASO MÁS ALLÁ</span><p class="plan-type">SUSCRIPCIÓN OPCIONAL</p><h3>ConvoSquad Prémium</h3><p class="price">0,99 €<span> / mes</span></p><p class="annual-price">O <strong>9,99 € / año</strong></p><ul><li>Genera el 11 en todas las convocatorias</li><li>Consulta alineaciones históricas</li><li>Valoración media del equipo en el historial</li><li>Más de dos capitanes por club</li></ul><p class="plan-availability">Se contrata desde la app</p><p class="plan-note">Renovación automática hasta su cancelación. Elige mensual o anual; no se suman.</p></article>
       </div>
-      <p class="pricing-note">Precios de referencia para España, en euros. El precio y las condiciones definitivas se muestran en tu tienda antes de confirmar la compra. Las compras en las tiendas estarán disponibles tras el lanzamiento.</p>
+      <p class="pricing-note">Precios de referencia para España, en euros. El precio y las condiciones definitivas se muestran en tu tienda antes de confirmar la compra. La disponibilidad de las compras depende de la tienda y del país.</p>
     </div></section>
 
     <section class="section wrap faq-section" aria-labelledby="faq-title"><div><p class="eyebrow">ANTES DE SALIR AL CAMPO</p><h2 id="faq-title">Por si te lo<br>estabas preguntando.</h2></div><div class="faq-list">

@@ -47,3 +47,28 @@ Revisar `/descargar/` a 320, 390, 768 y 1440 px: ausencia de desplazamiento hori
 imágenes cargadas, navegación interna, preguntas desplegables y enlaces a la app.
 Verificar también el estado de las tiendas con ambos enlaces pendientes y con una
 sola tienda publicada. La página sigue siendo legible con JavaScript desactivado.
+
+## Idiomas de la landing
+
+La landing admite los mismos idiomas que la app: español, inglés, alemán y francés.
+`language.js` conserva el HTML español como alternativa sin JavaScript y carga los
+diccionarios de `locales/` para los demás idiomas. El selector del encabezado permite
+cambiar de idioma sin perder enlaces, iconos ni desplegables.
+
+Prioridad inicial: parámetro `?lang=es|en|de|fr`, preferencia guardada en
+`convosquad.landing.language`, primer idioma compatible del navegador y español
+como alternativa. La selección manual guarda la preferencia y actualiza `?lang=`
+para compartir el enlace. Si el almacenamiento está bloqueado o falla la descarga
+del diccionario, la página y el enlace de Google Play siguen utilizables.
+
+También se traducen los textos de disponibilidad de tiendas, título, descripción,
+etiquetas accesibles y textos alternativos. `stores.js` exporta `renderStores` y
+recibe la función de traducción: cualquier cambio de disponibilidad se refleja en
+el idioma seleccionado. Las capturas y la imagen social siguen en español; el pie
+de las capturas lo indica en las traducciones. Los precios siguen siendo referencias
+para España en euros, sin inferir precios de otros países a partir del idioma.
+
+Verificación en Chromium: los cuatro idiomas a 320, 390, 768 y 1440 px, sin desborde
+horizontal; detección del navegador, selector, persistencia tras recarga, prioridad
+del enlace compartido, vuelta al español, almacenamiento bloqueado, error al cargar
+traducciones, enlaces y alternativa sin JavaScript.
