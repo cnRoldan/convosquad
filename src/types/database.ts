@@ -1708,6 +1708,12 @@ export type Database = {
         };
         Returns: { id: string; name: string }[];
       };
+      list_roster_notification_status: {
+        Args: {
+          p_club_id: string;
+        };
+        Returns: { player_id: string; status: string; checked_at: string; vote_notifications: boolean }[];
+      };
       list_unlinked_club_members: {
         Args: {
           p_club_id: string;
@@ -1896,6 +1902,13 @@ export type Database = {
         Args: {
           p_club_id: string;
           p_ids: string[];
+        };
+        Returns: undefined;
+      };
+      report_push_device_status: {
+        Args: {
+          p_device_id: string;
+          p_state: string;
         };
         Returns: undefined;
       };

@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import { before, after, test } from 'node:test';
+import { createTestDatabase, asUser } from '../../scripts/database-test-utils.mjs';
+let db, club, other;
+const id=n=>`98000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
+const captain=id(1),player=id(2),stranger=id(3),device=id(10),second=id(11);
+const query=(u,sql,args=[])=>asUser(db,u,tx=>tx.query(sql,args));
+const status=async()=> (await query(captain,'select * from public.list_roster_notification_status($1)',[club.id])).rows.find(r=>r.player_id===id(20));
+before(async()=>{
+ db=await createTestDatabase();
+ for(const [u,name]of[[captain,'NotifyCaptain'],[player,'NotifyPlayer'],[stranger,'NotifyOther']])await db.query('insert into auth.users(id,raw_user_meta_data) values($1,$2)',[u,{username:name}]);
+ club=(await query(captain,"select * from public.create_club('Notifications',null,'UTC',true)")).rows[0];
+ other=(await query(stranger,"select * from public.create_club('Other notifications',null,'UTC',true)")).rows[0];
+ await db.query("insert into public.club_members(club_id,user_id,role) values($1,$2,'player')",[club.id,player]);
+ await db.query("insert into public.players(id,club_id,ea_id,category,user_id) values($1,$2,'NotifyPlayer','midfielders',$3),($4,$2,'NotLinked','attackers',null)",[id(20),club.id,player,id(21)]);
+});
+after(async()=>db?.close());
+test('captains only, club scoped, no token disclosure and own reports only',async()=>{
+ for(const u of[player,stranger])await assert.rejects(query(u,'select * from public.list_roster_notification_status($1)',[club.id]));
+ await assert.rejects(query(null,'select * from public.list_roster_notification_status($1)',[club.id]));
+ await assert.rejects(query(player,'select * from private.push_device_checks'));
+ assert.equal((await status()).status,'unknown');
+ const rows=(await query(captain,'select * from public.list_roster_notification_status($1)',[club.id])).rows;
+ assert.equal(rows.find(r=>r.player_id===id(21)).status,'unlinked');
+ assert.deepEqual(Object.keys(rows[0]).sort(),['checked_at','player_id','status','vote_notifications']);
+ await assert.rejects(query(player,"select public.report_push_device_status($1,'enabled')",[device]));
+ await assert.rejects(query(player,"select public.report_push_device_status($1,'wrong')",[device]));
+});
+test('denied and disabled checks, multiple devices, stale state, logout and preferences',async()=>{
+ await query(player,"select public.report_push_device_status($1,'denied')",[device]);assert.equal((await status()).status,'denied');
+ await query(player,"select public.report_push_device_status($1,'disabled')",[device]);assert.equal((await status()).status,'disabled');
+ await query(player,"select public.register_push_device($1,'ExpoPushToken[test_device]','ios')",[second]);
+ assert.equal((await status()).status,'unknown','old clients are not guaranteed blocked');
+ await query(player,"select public.report_push_device_status($1,'enabled')",[second]);assert.equal((await status()).status,'enabled','one enabled device overrides another disabled device');
+ await query(player,'select public.set_notification_preferences(false)');assert.equal((await status()).status,'enabled');assert.equal((await status()).vote_notifications,false,'vote preference must not imply all alerts are off');
+ await db.query("update private.push_device_checks set checked_at=now()-interval '8 days' where user_id=$1",[player]);assert.equal((await status()).status,'unknown');
+ await query(player,'select public.deactivate_push_device($1,true)',[second]);assert.equal((await status()).status,'unknown');
+ await query(player,"select public.report_push_device_status($1,'unregistered')",[device]);assert.equal((await status()).status,'no_device');
+ await query(stranger,"select public.report_push_device_status($1,'disabled')",[device]);assert.equal((await status()).status,'no_device','another user cannot overwrite this user’s check');
+ await db.query('update public.club_members set is_active=false where club_id=$1 and user_id=$2',[club.id,player]);assert.equal((await status()).status,'no_membership');
+ assert.equal((await query(stranger,'select * from public.list_roster_notification_status($1)',[other.id])).rows.length,0);
+});

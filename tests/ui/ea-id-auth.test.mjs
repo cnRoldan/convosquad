@@ -188,6 +188,7 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
         return route.fulfill({ json: req.headers().accept?.includes('object') ? club : [club] });
       }
       if (endpoint === 'club_members') return route.fulfill({ json: accounts });
+      if (endpoint === 'list_roster_notification_status') return route.fulfill({json:players.map(p=>({player_id:p.id,status:'enabled',checked_at:new Date().toISOString(),vote_notifications:true}))});
       if (endpoint === 'players') return route.fulfill(failRoster ? {status:503,json:{message:'Roster unavailable'}} : { json: players });
       if (endpoint === 'create_my_player') {
         assert.equal(clubRole,'admin');

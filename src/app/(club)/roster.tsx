@@ -1,6 +1,6 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { Body, Button, Card, Field, Heading, Message, Options, Screen } from '@/components/ui';
 import { IconButton } from '@/components/icon-button';
@@ -15,6 +15,8 @@ import { TrialSection } from '@/features/trials/trial-section';
 import { useResource } from '@/hooks/use-resource';
 import { backendErrorMessage } from '@/lib/backend-result';
 import { MyPlayerNotice } from '@/features/players/my-player-notice';
+import { listRosterNotificationStatus } from '@/features/notifications/roster-status';
+import { RosterNotificationBadge } from '@/features/notifications/roster-status-badge';
 import { RosterHelpers } from '@/features/lineups/roster-helpers';
 export default function RosterScreen() {
   useLanguage();
@@ -31,6 +33,10 @@ export default function RosterScreen() {
   const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   const load = useCallback(() => clubId ? listPlayers(clubId) : Promise.resolve([]), [clubId]);
   const result = useResource(`players:${session?.user.id}:${clubId}:${admin}:${rosterVersion}`, load, Boolean(session && clubId) && !isDemo);
+  const loadNotifications = useCallback(() => clubId ? listRosterNotificationStatus(clubId) : Promise.resolve([]), [clubId]);
+  const notifications = useResource(`roster-notifications:${session?.user.id}:${clubId}:${admin}:${rosterVersion}`, loadNotifications, Boolean(session && clubId && admin) && !isDemo);
+  const reloadNotifications = notifications.reload;
+  useFocusEffect(useCallback(() => { if (admin && !isDemo) reloadNotifications(); }, [admin, isDemo, reloadNotifications]));
   const players = (isDemo ? roster.map(player => ({ ...player, isActive: true })) : result.data?.map(player => ({
     id: player.id, eaId: player.ea_id, displayName: player.ea_id, jerseyNumber: player.jersey_number,
     category: player.category, sortOrder: player.sort_order, userId: player.user_id, isActive: player.is_active, nickname: player.nickname,
@@ -47,7 +53,7 @@ export default function RosterScreen() {
     catch (error) { setMessage(backendErrorMessage(error)); result.reload(); }
     finally { setBusy(false); }
   }
-  function refresh() { result.reload(); refreshRoster(); }
+  function refresh() { result.reload(); notifications.reload(); refreshRoster(); }
   return <Screen onRefresh={!isDemo && clubId ? refresh : undefined} refreshing={result.isLoading || rosterLoading}>
     <Heading title={t("La plantilla")} subtitle={activeClub?.name ?? t("Tu club")} />
     <MyPlayerNotice />
@@ -72,6 +78,7 @@ export default function RosterScreen() {
       return <Card key={category} title={t(categoryLabels[category])}>
         {category === 'backups' ? <Body>{t("Miembros habituales de la plantilla. Su categoría no determina su respuesta a una convocatoria.")}</Body> : null}
         {group.map((player, index) => <PlayerCard key={player.id} player={player}
+          notificationBadge={admin && !isDemo ? <RosterNotificationBadge key={`${scope}:${player.id}`} name={player.eaId} value={notifications.data?.find(value => value.player_id === player.id)} /> : undefined}
           {...(admin ? { actions: {
             first: index === 0, last: index === group.length - 1,
             disabled: busy || result.isLoading,

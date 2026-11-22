@@ -1,7 +1,7 @@
 import type { Language } from '../i18n/runtime';
 
 export const privacyContact = 'convosquad.soporte@gmail.com';
-export const privacyUpdatedAt = '2026-10-19';
+export const privacyUpdatedAt = '2026-11-22';
 export const privacyController = 'Claudio Roldán Ramos';
 
 type Policy = { intro: string; sections: { title: string; paragraphs: string[] }[]; providerLinks: { label: string; href: `https://${string}` }[] };
@@ -38,6 +38,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       ] },
       { title: '5. Notificaciones y almacenamiento del dispositivo', paragraphs: [
         'Si autorizas las notificaciones del sistema, tratamos un identificador aleatorio de instalación, un token de notificaciones, la plataforma del dispositivo y las preferencias de avisos. Conservamos los eventos y resultados de entrega necesarios para enviar avisos y evitar duplicados. El contenido puede incluir el ID de quien vota y su disponibilidad, y aparecer en la pantalla bloqueada según tus ajustes del sistema.',
+        "Los capitanes pueden consultar el estado agregado de notificaciones de los jugadores de su plantilla, sus preferencias de avisos de votos y la fecha de la última comprobación. Los permisos se comprueban al abrir la app móvil; no se comparten tokens ni identificadores de dispositivos con los capitanes y no se confirma la entrega o lectura de cada aviso.",
         'Puedes gestionar los avisos desde la app y los permisos del sistema. En el dispositivo o navegador se conservan la sesión, el idioma, el club seleccionado, las preferencias de avisos y una caché de escudos para mantener el acceso y mejorar la carga. No se utilizan para publicidad personalizada.',
         'Al elegir un escudo, solo se sube la imagen seleccionada. Los servidores y proveedores pueden tratar datos técnicos de conexión, como IP, fecha, navegador o dispositivo y errores, para operar y proteger el servicio.',
       ] },
@@ -93,6 +94,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       ] },
       { title: '5. Notifications and device storage', paragraphs: [
         'If you allow system notifications, we process a random installation identifier, notification token, device platform and notification preferences. We retain events and delivery results needed to send alerts and prevent duplicates. Alerts may include a voter’s player ID and availability and may appear on the lock screen, depending on your system settings.',
+        "Captains can view the aggregate notification status of players in their squad, their vote-alert preference and the last check time. Permissions are checked when the mobile app opens. Device tokens and identifiers are not shared with captains, and individual delivery or reading is not confirmed.",
         'You can manage alerts in the app and in system permissions. Your device or browser stores the session, language, selected club, notification preferences and a crest cache to maintain access and improve loading. They are not used for personalised advertising.',
         'When you select a crest, only the selected image is uploaded. Servers and providers may process technical connection data such as IP address, time, browser or device details and errors to operate and protect the service.',
       ] },
@@ -148,6 +150,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       ] },
       { title: '5. Benachrichtigungen und Gerätespeicher', paragraphs: [
         'Bei erlaubten Systembenachrichtigungen verarbeiten wir eine zufällige Installationskennung, einen Benachrichtigungstoken, die Geräteplattform und Benachrichtigungseinstellungen. Wir speichern die für den Versand und die Vermeidung doppelter Nachrichten erforderlichen Ereignisse und Zustellergebnisse. Hinweise können die Spieler-ID und Verfügbarkeit einer abstimmenden Person enthalten und je nach Systemeinstellung auf dem Sperrbildschirm erscheinen.',
+        "Kapitäne können den zusammengefassten Benachrichtigungsstatus der Kaderspieler, ihre Einstellung für Abstimmungshinweise und den Zeitpunkt der letzten Prüfung sehen. Berechtigungen werden beim Öffnen der mobilen App geprüft. Gerätetoken und Gerätekennungen werden nicht an Kapitäne weitergegeben; Zustellung und Lesen einzelner Hinweise werden nicht bestätigt.",
         'Hinweise lassen sich in der App und über die Systemberechtigungen verwalten. Auf dem Gerät oder im Browser werden Sitzung, Sprache, ausgewählter Club, Benachrichtigungseinstellungen und ein Wappen-Cache gespeichert, um den Zugang aufrechtzuerhalten und Ladezeiten zu verbessern. Sie werden nicht für personalisierte Werbung verwendet.',
         'Bei der Auswahl eines Wappens wird nur das ausgewählte Bild hochgeladen. Server und Anbieter können technische Verbindungsdaten wie IP-Adresse, Zeitpunkt, Browser- oder Geräteangaben und Fehler zur Bereitstellung und Absicherung des Dienstes verarbeiten.',
       ] },
@@ -203,6 +206,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       ] },
       { title: '5. Notifications et stockage sur l’appareil', paragraphs: [
         'Si tu autorises les notifications du système, nous traitons un identifiant aléatoire d’installation, un jeton de notification, la plateforme de l’appareil et tes préférences. Nous conservons les événements et résultats d’envoi nécessaires aux notifications et à la prévention des doublons. Une notification peut contenir l’identifiant et la disponibilité du joueur ayant voté et apparaître sur l’écran verrouillé selon tes réglages.',
+        "Les capitaines peuvent consulter l’état agrégé des notifications des joueurs de leur effectif, leur préférence pour les notifications de votes et la date de la dernière vérification. Les autorisations sont vérifiées à l’ouverture de l’application mobile. Les jetons et identifiants des appareils ne sont pas communiqués aux capitaines et la réception ou la lecture de chaque notification n’est pas confirmée.",
         'Tu peux gérer les notifications dans l’application et dans les autorisations du système. L’appareil ou le navigateur conserve la session, la langue, le club choisi, les préférences et un cache d’écussons pour maintenir l’accès et améliorer le chargement. Ils ne servent pas à la publicité personnalisée.',
         'Lorsque tu choisis un écusson, seule l’image sélectionnée est envoyée. Les serveurs et prestataires peuvent traiter des données techniques de connexion telles que l’adresse IP, l’heure, le navigateur ou l’appareil et les erreurs afin de fournir et protéger le service.',
       ] },

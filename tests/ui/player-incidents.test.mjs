@@ -26,7 +26,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ route = '/lineup', role = 'admin', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, lineupPlayers = 11, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, historyTeamAverage = null, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
+async function fixture({ route = '/lineup', role = 'admin', notificationStatus = 'enabled', race = false, expiresSoon = false, suggestions = false, historyError = false, posterExample = false, lineupPlayers = 11, noPublishedLineup = false, seedInstructions = false, withCrest = false, ratingMeans = false, withHistory = false, historyTeamAverage = null, benchSelection = false, rosterFixes = false, viewport = { width: 390, height: 844 } } = {}) {
   const context = await browser.newContext({ viewport, locale: 'es-ES' });
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -81,6 +81,7 @@ async function fixture({ route = '/lineup', role = 'admin', race = false, expire
     let result;
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (endpoint === 'record_account_activity') {state.activityWrites++;result=null;}
+    else if (endpoint === 'list_roster_notification_status') { assert.equal(role,'admin'); result=roster.map(p=>({player_id:p.id,status:notificationStatus,checked_at:notificationStatus==='unknown'?null:new Date(now).toISOString(),vote_notifications:true})); }
     else if (endpoint === 'list_roster_helpers') result=rosterHelpers;
     else if (endpoint === 'remove_roster_helper') {
       assert.equal(role,'admin');state.helperRemovals.push(body.p_guest_id);const i=rosterHelpers.findIndex(h=>h.id===body.p_guest_id);if(i>=0)rosterHelpers.splice(i,1);result=null;
@@ -841,4 +842,21 @@ test('roster helper removal requires confirmation and is hidden from players',as
   await player.page.getByText('Ayuda de plantilla',{exact:true}).waitFor();
   assert.equal(await player.page.getByRole('button',{name:'Quitar ayuda Ayuda de plantilla de la plantilla',exact:true}).count(),0);
  }finally {await player.close();}
+});
+
+
+test('only captains see notification warnings and can open their reason', async()=>{
+ const captain=await fixture({route:'/roster',notificationStatus:'denied'});
+ try {
+  const warning=captain.page.getByRole('button',{name:'Notificaciones de Selu: Permisos de notificaciones bloqueados',exact:true});
+  await warning.click();
+  await captain.page.getByText('Los permisos están bloqueados en un dispositivo comprobado recientemente y no consta otro dispositivo habilitado.',{exact:true}).waitFor();
+  await captain.page.getByRole('button',{name:'Cerrar',exact:true}).click();
+ }finally{await captain.close();}
+ const player=await fixture({route:'/roster',role:'player',notificationStatus:'denied'});
+ try{await player.page.getByText('Selu',{exact:true}).waitFor();assert.equal(await player.page.getByRole('button',{name:/Notificaciones de/}).count(),0);}finally{await player.close();}
+});
+test('unknown notification status is distinct from a confirmed block',async()=>{
+ const f=await fixture({route:'/roster',notificationStatus:'unknown'});
+ try{await f.page.getByRole('button',{name:'Notificaciones de Selu: Estado de notificaciones desconocido',exact:true}).click();await f.page.getByText('Sin comprobaciones de dispositivo disponibles.',{exact:true}).waitFor();}finally{await f.close();}
 });

@@ -40,6 +40,18 @@ async function deactivate(userId: string, unlink: boolean, rememberChoice = true
   }
   if (unlink && await AsyncStorage.getItem(enabledKey(userId)) !== '0') await AsyncStorage.removeItem(enabledKey(userId));
   else if (!unlink && rememberChoice) await AsyncStorage.setItem(enabledKey(userId), '0');
+  if (!unlink && rememberChoice) await reportInstallationStatus(userId, 'disabled');
+}
+async function reportInstallationStatus(userId: string, state: 'enabled' | 'disabled' | 'denied') {
+  // Reporting is best effort and must never interrupt notification registration or logout.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    if (!await currentUser(userId, true)) return;
+    const id = await installationId();
+    await requireSupabase().rpc('report_push_device_status', { p_device_id: id, p_state: state }).abortSignal(controller.signal);
+  } catch { /* A failed check remains unknown to captains. */ }
+  finally { clearTimeout(timeout); }
 }
 export async function enableInstallation(userId: string, prompt = true, automatic = false) {
   if (!nativePushSupported()) return 'unsupported' as const;
@@ -63,8 +75,12 @@ export async function enableInstallation(userId: string, prompt = true, automati
       const { error } = await requireSupabase().rpc('register_push_device', { p_device_id: id, p_expo_push_token: token, p_platform: Platform.OS });
       if (error) throw new Error('No se pudo registrar este dispositivo. Comprueba la configuración y la conexión.');
       await AsyncStorage.setItem(enabledKey(userId), '1');
+      await reportInstallationStatus(userId, 'enabled');
     }),
-    deactivate: () => gate.run(() => deactivate(userId, false, false)),
+    deactivate: () => gate.run(async () => {
+      await deactivate(userId, false, false);
+      await reportInstallationStatus(userId, 'denied');
+    }),
   }, prompt);
 }
 export async function syncInstallation(userId: string, prompt = false) {
@@ -72,7 +88,11 @@ export async function syncInstallation(userId: string, prompt = false) {
   const existing = synchronizing.get(userId);
   if (existing) return existing;
   const operation = (async () => {
-    if (await AsyncStorage.getItem(enabledKey(userId)) === '0' || !await currentUser(userId)) return;
+    if (await AsyncStorage.getItem(enabledKey(userId)) === '0') {
+      await gate.run(() => reportInstallationStatus(userId, 'disabled'));
+      return;
+    }
+    if (!await currentUser(userId)) return;
     return enableInstallation(userId, prompt, true);
   })().finally(() => synchronizing.delete(userId));
   synchronizing.set(userId, operation);
