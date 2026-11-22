@@ -1360,6 +1360,60 @@ export type Database = {
           { foreignKeyName: 'push_events_recipient_user_id_fkey'; columns: ["recipient_user_id"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
         ];
       };
+      recurring_call_ups: {
+        Row: {
+          id: string;
+          club_id: string;
+          created_by: string | null;
+          timezone: string;
+          weekdays: number[];
+          start_time: string;
+          end_time: string;
+          notice_time: string | null;
+          closing_time: string | null;
+          ratings_enabled: boolean;
+          next_date: string;
+          enabled: boolean;
+          last_error: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          club_id: string;
+          created_by?: string | null;
+          timezone: string;
+          weekdays: number[];
+          start_time: string;
+          end_time: string;
+          notice_time?: string | null;
+          closing_time?: string | null;
+          ratings_enabled: boolean;
+          next_date: string;
+          enabled?: boolean;
+          last_error?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          club_id?: string;
+          created_by?: string | null;
+          timezone?: string;
+          weekdays?: number[];
+          start_time?: string;
+          end_time?: string;
+          notice_time?: string | null;
+          closing_time?: string | null;
+          ratings_enabled?: boolean;
+          next_date?: string;
+          enabled?: boolean;
+          last_error?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          { foreignKeyName: 'recurring_call_ups_club_id_fkey'; columns: ["club_id"]; isOneToOne: true; referencedRelation: 'clubs'; referencedColumns: ["id"]; },
+          { foreignKeyName: 'recurring_call_ups_created_by_fkey'; columns: ["created_by"]; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ["id"]; },
+        ];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
@@ -1526,6 +1580,19 @@ export type Database = {
           p_jersey_number?: number;
         };
         Returns: Database['public']['Tables']['players']['Row'][];
+      };
+      create_recurring_call_up: {
+        Args: {
+          p_club_id: string;
+          p_first_date: string;
+          p_weekdays: number[];
+          p_start_time: string;
+          p_end_time: string;
+          p_notice_time?: string;
+          p_closing_time?: string;
+          p_ratings_enabled?: boolean;
+        };
+        Returns: Database['public']['Tables']['call_ups']['Row'][];
       };
       deactivate_push_device: {
         Args: {
@@ -2131,6 +2198,12 @@ export type Database = {
         Args: {
           p_club_id: string;
           p_visibility: string;
+        };
+        Returns: undefined;
+      };
+      stop_recurring_call_up: {
+        Args: {
+          p_club_id: string;
         };
         Returns: undefined;
       };

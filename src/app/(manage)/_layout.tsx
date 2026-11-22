@@ -15,6 +15,7 @@ export default function ManageLayout() {
     <Stack.Screen name="incident-history" options={{ title: t('Histórico de incidencias') }} />
     <Stack.Screen name="call-up-player-totals" options={{ title: t("Total por jugador") }} />
     <Stack.Screen name="trial-history" options={{ title: t("Historial de pruebas") }} />
+    <Stack.Screen name="recurring-call-ups" options={{ title: t("Convocatorias periódicas") }} />
     <Stack.Screen name="create-call-up" options={{ title: t("Crear convocatoria") }} />
     <Stack.Screen name="trials/[id]" options={{ title: t("Pruebas") }} />
     <Stack.Screen name="inactive-players" options={{ title: t("Jugadores inactivos") }} />

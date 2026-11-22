@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRoster = false, logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], ratingStarters = [0,1], ratingPublished = true, browserLanguage = 'es-ES' } = {}) {
+async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRoster = false, logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], ratingStarters = [0,1], ratingPublished = true, browserLanguage = 'es-ES', profileLanguage = null } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -78,7 +78,8 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
     user_id: player.user_id, ea_id_snapshot: player.ea_id, category_snapshot: player.category, sort_order_snapshot: index,
     availability: ratingAvailability[index], responded_at: matchAt, auto_response: false}));
   const ratings = seedRatings ? ratingPlayers.map((entry,index)=>({call_up_player_id:entry.id,call_up_id:ratingCall.id,club_id:club.id,player_id:entry.source_player_id,player_name:entry.ea_id_snapshot,score:index?4:8,not_selected:false,updated_at:matchAt})) : [];
-  let preferredLanguage = null;
+  let preferredLanguage = profileLanguage;
+  let recurringRule = null;
   let voteNotifications = true;
   const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAC0lEQVQImWNgQAcAABIAAW/6Y7cAAAAASUVORK5CYII=', 'base64');
   const page = await context.newPage(); const requests = []; const errors = [];
@@ -110,6 +111,14 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
     if (endpoint === 'set_notification_preferences') { voteNotifications = body.p_vote_notifications; return route.fulfill({ json: { user_id: userId, vote_notifications: voteNotifications } }); }
+    if (endpoint === 'recurring_call_ups') return route.fulfill({json:recurringRule});
+    if (endpoint === 'stop_recurring_call_up') { assert.equal(clubRole,'admin'); recurringRule.enabled=false; return route.fulfill({json:null}); }
+    if (endpoint === 'create_recurring_call_up') {
+      assert.equal(clubRole,'admin');
+      recurringRule={id:'weekly-rule',club_id:club.id,enabled:true,timezone:club.timezone,weekdays:body.p_weekdays,start_time:body.p_start_time,next_date:'2038-01-13',last_error:null};
+      createdCall={id:'new-call',club_id:club.id,starts_at:`${body.p_first_date}T${body.p_start_time}:00Z`,local_date:body.p_first_date,timezone:club.timezone,status:'open',ends_at:`${body.p_first_date}T23:59:00Z`,evaluation_at:null,last_notice_at:null,closes_at:null};
+      return route.fulfill({json:createdCall});
+    }
     if (endpoint === 'create_call_up_with_end') {
       createdCall = {id: 'new-call', club_id: club.id, starts_at: body.p_starts_at, local_date: body.p_starts_at.slice(0,10), timezone: club.timezone,
         status: body.p_status, last_notice_at: body.p_last_notice_at ?? null, closes_at: body.p_closes_at ?? null, ends_at: body.p_ends_at, evaluation_at: body.p_ratings_enabled ? body.p_ends_at : null};
@@ -1327,4 +1336,34 @@ test('cerrar sesión desde clubes termina correctamente aunque la revocación re
   await f.page.reload();
   assert.equal(await f.page.getByText('ID: EA-Player_9',{exact:true}).count(),0);
  } finally { await f.close(); }
+});
+
+
+for(const [language,toggle,review,create,days] of [
+ ['es','Repetir convocatoria cada semana','Revisar convocatoria','Crear convocatoria',['lunes','miércoles','viernes']],
+ ['en','Repeat call-up every week','Review call-up','Create call-up',['Monday','Wednesday','Friday']],
+ ['de','Spieltermin jede Woche wiederholen','Überprüfungsanruf','Aufgebot erstellen',['Montag','Mittwoch','Freitag']],
+ ['fr','Répéter la convocation chaque semaine','Revoir la convocation','Créer une convocation',['lundi','mercredi','vendredi']],
+])test(`weekly recurrence selection and submission in ${language}`,async()=>{
+ const f=await fixture({clubRole:'admin',profileLanguage:language});
+ try{
+  const {page}=f;await page.goto(origin+'/create-call-up');
+  await page.getByRole('switch',{name:toggle,exact:true}).click();
+  await page.setViewportSize({width:320,height:844});
+  const boxes=page.getByRole('checkbox');assert.equal(await boxes.count(),7);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  for(const box of await boxes.all())if(await box.isChecked()) await box.click();
+  for(const name of days)await page.getByRole('checkbox',{name,exact:true}).click();
+  await page.locator('input[type="date"]').fill('2038-01-11');
+  await page.getByRole('button',{name:review,exact:true}).click();
+  await page.getByRole('button',{name:create,exact:true}).click();await page.waitForURL('**/call-up*');
+  const request=f.requests.find(r=>r.endpoint==='create_recurring_call_up');assert.deepEqual(request.body.p_weekdays,[1,3,5]);assert.equal(request.body.p_start_time,'21:50');assert.equal(request.body.p_end_time,'00:00');assert.equal(f.requests.some(r=>r.endpoint==='create_call_up_with_end'),false);
+ }finally{await f.close();}
+});
+test('captain can stop recurrence without deleting existing call-ups',async()=>{
+ const f=await fixture({clubRole:'admin'});
+ try{
+  const {page}=f;await page.goto(origin+'/create-call-up');await page.getByRole('switch',{name:'Repetir convocatoria cada semana',exact:true}).click();await page.locator('input[type="date"]').fill('2038-01-11');await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();await page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();await page.waitForURL('**/call-up*');
+  await page.goto(origin+'/recurring-call-ups');await page.getByRole('button',{name:'Detener repetición',exact:true}).click();await page.getByRole('button',{name:'Detener repetición',exact:true}).last().click();await page.getByText('No hay una repetición semanal activa.',{exact:true}).waitFor();assert.equal(f.requests.filter(r=>r.endpoint==='stop_recurring_call_up').length,1);assert.equal(f.requests.some(r=>r.endpoint==='delete_cancelled_call_up'),false);
+ }finally{await f.close();}
 });

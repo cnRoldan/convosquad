@@ -95,6 +95,7 @@ export default function HomeScreen() {
       {currentMembership?.role !== 'admin' && (activeClub?.ratingsVisibility === 'members' || activeClub?.ratingsVisibility === 'self') ? <Card title={t("Valoraciones y rendimiento")}><Button secondary label={t("Ver rendimiento del club")} onPress={() => router.navigate('/performance')} /></Card> : null}
       {currentMembership?.role === 'admin' ? <Card title={t("Administrar el club")}>
           <Button secondary label={t("Editar información")} onPress={() => router.push('/club-info')} />
+        <Button secondary label={t("Convocatorias periódicas")} onPress={() => router.push('/recurring-call-ups')} />
         <Button secondary label={t("Capitanes")} onPress={() => router.push('/club-settings')} />
         <Button secondary label={t("Valoraciones y rendimiento")} onPress={() => router.navigate('/performance')} />
         <Button secondary label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} />
