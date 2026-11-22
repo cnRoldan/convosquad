@@ -88,6 +88,8 @@ async function fixture({ width = 390, role = 'player', empty = false, status = '
     const endpoint = url.pathname.split('/').at(-1);
     if (request.method() === 'OPTIONS') return route.fulfill({ status: 204 });
     if (request.method() !== 'GET') {
+      if (endpoint === 'list_roster_helpers') return route.fulfill({json:[]});
+      if (endpoint === 'list_roster_notification_status') return route.fulfill({json:[]});
       if (endpoint === 'list_rating_call_ups') return route.fulfill({json: []});
       if (endpoint === 'delete_cancelled_call_up') {
         assert.equal(role,'admin');assert.equal(call.status,'cancelled');

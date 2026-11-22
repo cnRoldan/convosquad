@@ -42,7 +42,7 @@ async function deactivate(userId: string, unlink: boolean, rememberChoice = true
   else if (!unlink && rememberChoice) await AsyncStorage.setItem(enabledKey(userId), '0');
   if (!unlink && rememberChoice) await reportInstallationStatus(userId, 'disabled');
 }
-async function reportInstallationStatus(userId: string, state: 'enabled' | 'disabled' | 'denied') {
+async function reportInstallationStatus(userId: string, state: 'enabled' | 'disabled' | 'denied' | 'unregistered') {
   // Reporting is best effort and must never interrupt notification registration or logout.
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -79,7 +79,8 @@ export async function enableInstallation(userId: string, prompt = true, automati
     }),
     deactivate: () => gate.run(async () => {
       await deactivate(userId, false, false);
-      await reportInstallationStatus(userId, 'denied');
+      const permission = await Notifications.getPermissionsAsync();
+      await reportInstallationStatus(userId, permission.status === 'undetermined' ? 'unregistered' : 'denied');
     }),
   }, prompt);
 }
