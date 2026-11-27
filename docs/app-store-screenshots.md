@@ -30,3 +30,11 @@ No se reenvió el mismo cambio ni se modificaron las capturas de tablet.
 Antes de enviar 1.1.0: elegir la nueva compilación que corresponda, revisar notas de
 versión y datos de App Review según su contenido final, verificar compras y cuentas
 de revisión y enviar a Apple. La subida de imágenes por sí sola no publica 1.1.0.
+
+## Envío del 27 de noviembre de 2026
+
+El mismo borrador se actualizó a **1.1.1**, conservando las doce capturas completas.
+Se asoció la nueva compilación **29**, procesada como `VALID`, y se envió a App
+Review a las 18:35 UTC. Apple confirmó `WAITING_FOR_REVIEW` en el envío
+`51be89b4-875c-46ad-8eb0-1e50e3daa00d`. La publicación queda configurada para después
+de aprobación. Véase [release-1.1.1.md](release-1.1.1.md) para compilaciones y validación.

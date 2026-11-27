@@ -1,5 +1,15 @@
 # Acceso de App Review
 
+## Actualización del 27 de noviembre de 2026
+
+La versión 1.1.1 se envió con la compilación **29** y Apple confirmó
+`WAITING_FOR_REVIEW`, envío `51be89b4-875c-46ad-8eb0-1e50e3daa00d`.
+Se conservaron las credenciales y los recorridos de compras del envío anterior,
+añadiendo las invitaciones HTTPS, recurrencia semanal, avisos de notificaciones
+para capitanes y teléfonos copiados desde WhatsApp. Las doce capturas nuevas están
+completas. La publicación está configurada para después de aprobación. Este envío
+no modificó cuentas, contraseñas ni clubes reales o de revisión.
+
 ## Actualización del 16 de noviembre de 2026: compras localizables en la compilación 28
 
 El envío `60fcf464-cc54-463e-b9c2-0f2093ea8f39` se reenvió por petición
