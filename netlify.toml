@@ -18,3 +18,9 @@
   [headers.values]
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
+
+[[headers]]
+  for = "/invite*"
+  [headers.values]
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"

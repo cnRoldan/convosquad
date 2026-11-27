@@ -107,6 +107,9 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
       assert.equal(clubRole,'admin');const row=joinRequests.find(row=>row.id===body.p_request_id);assert.equal(row.status,'pending');row.status=body.p_approve?'approved':'rejected';return route.fulfill({json:row});
     }
     if (endpoint === 'club_decision_locks') return route.fulfill({json: []});
+    if (endpoint === 'create_invitation_for_hours') return route.fulfill({json:{id:'fixture-invitation',token:'a'.repeat(64),expires_at:new Date(Date.now()+86400000).toISOString()}});
+    if (endpoint === 'club_invitations') return route.fulfill({json:[]});
+    if (endpoint === 'redeem_club_invitation') return route.fulfill({status:400,json:{code:'22023',message:'Expired fixture invitation'}});
     if (endpoint === 'create_club') { club.name = body.p_name; club.timezone = body.p_timezone; return route.fulfill({json: club}); }
     if (endpoint === 'set_club_crest') { club.crest_path = body.p_has_crest ? `${club.id}/crest.png` : null; return route.fulfill({json: club}); }
     if (endpoint === 'notification_preferences') return route.fulfill({ json: [{ vote_notifications: voteNotifications }] });
@@ -1380,5 +1383,44 @@ test('adding a trial accepts a phone copied from WhatsApp with invisible formatt
   await page.waitForURL('**/roster');
   const request=f.requests.find(r=>r.endpoint==='save_club_trial_with_contact');assert.equal(request.body.p_phone,'+34612345678');
   await page.getByRole('button',{name:'WhatsApp de Prueba pegada',exact:true,disabled:false}).waitFor();
+ }finally{await f.close();}
+});
+
+
+test('captain shares a clickable public HTTPS invitation with the token in its fragment',async()=>{
+ const f=await fixture({clubRole:'admin'});
+ try{
+  const {page}=f;await page.goto(origin+'/invitations');await page.getByRole('button',{name:'Generar invitación',exact:true}).click();
+  const navigation=await page.context().newCDPSession(page);await navigation.send('Page.enable');let sharedInvitation;navigation.on('Page.frameRequestedNavigation',event=>{if(event.url.startsWith('https://wa.me/'))sharedInvitation=event.url;});await page.route('https://wa.me/**',route=>route.abort());
+  await page.getByRole('button',{name:'Abrir WhatsApp',exact:true}).click({noWaitAfter:true});await assert.doesNotReject(async()=>{for(let i=0;i<50&&!sharedInvitation;i++)await new Promise(resolve=>setTimeout(resolve,20));assert.ok(sharedInvitation);});
+  const share=sharedInvitation;const text=new URL(share).searchParams.get('text');const address=text.match(/https:\/\/[^\s]+/)[0];const url=new URL(address);
+  assert.equal(url.origin,'https://convosquad.com');assert.equal(url.pathname,'/invite');assert.equal(url.searchParams.get('token'),null);assert.equal(new URLSearchParams(url.hash.slice(1)).get('token'),'a'.repeat(64));
+ }finally{await f.close();}
+});
+test('public invitation offers app downloads without installation and survives login-page reload',async()=>{
+ const f=await fixture();
+ try{
+  const {page}=f;const token='a'.repeat(64),club='00000000-0000-4000-8000-000000000903';
+  await page.goto(origin+'/invite?club='+club+'#token='+token);
+  await page.getByRole('button',{name:'Descargar en App Store',exact:true}).waitFor();await page.getByRole('button',{name:'Descargar en Google Play',exact:true}).waitFor();
+  await page.evaluate(()=>{window.open=url=>{window.__nativeInvite=String(url);return null;};});
+  await page.getByRole('button',{name:'Abrir invitación en la app',exact:true}).click();await page.waitForFunction(()=>Boolean(window.__nativeInvite));
+  const app=new URL(await page.evaluate(()=>window.__nativeInvite));assert.equal(app.protocol,'convosquad:');assert.equal(app.searchParams.get('token'),token);
+  assert.equal(f.requests.some(r=>r.endpoint==='redeem_club_invitation'),false);
+  await page.getByRole('button',{name:'Continuar en el navegador',exact:true}).click();await page.waitForURL('**/login');await page.reload();
+  await page.getByLabel('ID de EA',{exact:true}).fill('EA-Player_9');await page.getByLabel('Contraseña',{exact:true}).fill('test-only-password');await page.getByRole('button',{name:'Iniciar sesión',exact:true}).click();
+  await page.waitForURL('**/invite');await page.getByRole('button',{name:'Aceptar invitación',exact:true}).click();
+  await page.getByText('La invitación no es válida, ha caducado, está revocada o se han agotado sus usos. Solicita un enlace nuevo.',{exact:true}).waitFor();
+  assert.equal(f.requests.find(r=>r.endpoint==='redeem_club_invitation').body.p_token,token);
+  await page.getByRole('button',{name:'Cancelar',exact:true}).click();assert.equal(await page.evaluate(()=>sessionStorage.getItem('convosquad:pending-invite')),null);
+ }finally{await f.close();}
+});
+test('public invitation keeps its context through registration without joining automatically',async()=>{
+ const f=await fixture();
+ try{
+  const {page}=f;await page.goto(origin+'/invite?club=00000000-0000-4000-8000-000000000903#token='+'a'.repeat(64));
+  await page.getByRole('button',{name:'Crear cuenta para unirme',exact:true}).click();await page.waitForURL('**/register');await page.reload();
+  await page.getByLabel('ID de EA',{exact:true}).fill('EA-Player_9');await page.getByLabel('Contraseña',{exact:true}).fill('test-only-password');await page.getByRole('button',{name:'Crear cuenta',exact:true}).click();
+  await page.waitForURL('**/invite');await page.getByRole('button',{name:'Aceptar invitación',exact:true}).waitFor();assert.equal(f.requests.some(r=>r.endpoint==='redeem_club_invitation'),false);
  }finally{await f.close();}
 });

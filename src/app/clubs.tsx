@@ -24,13 +24,13 @@ function ClubSelection() {
   const { auto } = useLocalSearchParams<{ auto?: string }>();
   const { availableClubs, ownMemberships, activeClub, selectClub, isLoading, error, refresh } = useClub();
   const { isDemo } = useAuth();
-  const { pendingInvite } = usePendingInvite();
+  const { pendingInvite, isRestoring: isRestoringInvite } = usePendingInvite();
   const { logout, isSigningOut } = useSessionLogout();
   const [message, setMessage] = useState('');
   const requests = useRequests();
   const pendingCount = requests.error ? 0 : requests.incoming.length;
-  if (isLoading) return <LoadingScreen label={t("Cargando tus clubes…")} />;
-  if (auto === '1' && availableClubs.length === 1 && activeClub) return <Redirect href="/home" />;
+  if (isLoading || isRestoringInvite) return <LoadingScreen label={t("Cargando tus clubes…")} />;
+  if (auto === '1' && !pendingInvite && availableClubs.length === 1 && activeClub) return <Redirect href="/home" />;
 
   async function leave() {
     setMessage('');

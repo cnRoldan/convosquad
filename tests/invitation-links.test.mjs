@@ -35,3 +35,15 @@ test('un fragmento malformado no produce una invitación válida', () => {
   assert.equal(invitationFragmentToken(`https://club.example.test/invite#token=${invitation.token}&token=other`), null);
   assert.equal(readInvitation(invitation.clubId, invitationFragmentToken('https://club.example.test/invite#token=bad')), null);
 });
+
+test('sharing defaults to the public HTTPS site and preserves native handoff separately',async()=>{
+ const {invitationWebBase,invitationAppUrl}=await import('../src/features/invitations/links.ts');
+ for(const configured of [undefined,'','   ']){
+  const url=new URL(invitationUrl(invitationWebBase(configured),invitation));
+  assert.equal(url.origin,'https://convosquad.com');assert.equal(url.pathname,'/invite');
+  assert.equal(url.searchParams.get('token'),null);assert.equal(invitationFragmentToken(url.href),invitation.token);
+ }
+ assert.equal(invitationWebBase('https://preview.example.test'),'https://preview.example.test/invite');
+ assert.throws(()=>invitationWebBase('convosquad:///invite'));assert.throws(()=>invitationWebBase('http://example.test'));
+ const app=new URL(invitationAppUrl(invitation));assert.equal(app.protocol,'convosquad:');assert.equal(app.pathname,'/invite');assert.equal(app.searchParams.get('club'),invitation.clubId);assert.equal(app.searchParams.get('token'),invitation.token);
+});

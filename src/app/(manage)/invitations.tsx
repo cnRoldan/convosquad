@@ -1,12 +1,12 @@
 import { t, useLanguage } from '@/features/i18n/runtime';
 import { useCallback, useEffect, useState } from 'react';
-import { Platform, Share } from 'react-native';
+import { Share } from 'react-native';
 import * as Linking from 'expo-linking';
 import { Body, Button, Card, DemoNotice, Field, Heading, Message, Screen } from '@/components/ui';
 import { useAuth } from '@/features/auth/auth-context';
 import { useClub } from '@/features/clubs/club-context';
 import { createClubInvitation, listClubInvitations, revokeClubInvitation } from '@/features/invitations/service';
-import { invitationUrl, webInviteBase } from '@/features/invitations/links';
+import { invitationUrl, invitationWebBase } from '@/features/invitations/links';
 import { useResource } from '@/hooks/use-resource';
 import { formatMatchDate } from '@/lib/format';
 import { backendErrorMessage } from '@/lib/backend-result';
@@ -35,13 +35,7 @@ export default function InvitationsScreen() {
     setBusy(true);
     setMessage('');
     try {
-      const origin = process.env.EXPO_PUBLIC_INVITE_BASE_URL;
-      const local = Linking.createURL('/invite');
-      if (!origin && Platform.OS === 'web' && new URL(local).protocol !== 'https:') {
-        setMessage(t("Configura una dirección web HTTPS accesible para compartir invitaciones desde esta versión web."));
-        return;
-      }
-      const base = origin ? webInviteBase(origin) : local;
+      const base = invitationWebBase(process.env.EXPO_PUBLIC_INVITE_BASE_URL);
       const invitation = await createClubInvitation(clubId, Number(hours), Number(uses));
       setLink({ id: invitation.id, url: invitationUrl(base, { clubId, token: invitation.token }) });
       setMessage(t("Invitación creada. Comparte este enlace; no podrás recuperarlo al salir de esta pantalla."));
@@ -58,7 +52,7 @@ export default function InvitationsScreen() {
   }
   async function share() {
     if (!link) return;
-    try { await Share.share({ message: t("Únete a {{v0}} en ConvoSquad: {{v1}}", { v0: activeClub?.name ?? t("mi club"), v1: link.url }) }); }
+    try { await Share.share({ message: t("Únete a {{v0}} en ConvoSquad: {{v1}}", { v0: activeClub?.name ?? t("mi club"), v1: `\n${link.url}` }) }); }
     catch { setMessage(t("No se pudo abrir el menú para compartir. Prueba «Abrir WhatsApp».")); }
   }
   return <Screen>
@@ -70,10 +64,10 @@ export default function InvitationsScreen() {
     {message ? <Message>{message}</Message> : null}
     {link ? <Card title={t("Comparte tu invitación")}>
       <Body>{t("El enlace permite incorporarse sin aprobación adicional. Compártelo solo con los jugadores que quieres invitar.")}</Body>
-      {!process.env.EXPO_PUBLIC_INVITE_BASE_URL ? <Body>{t("Este enlace se abre con ConvoSquad instalada en el móvil.")}</Body> : null}
+      <Body>{t("Este enlace se puede abrir sin instalar la app. Permite continuar en el navegador o descargar ConvoSquad.")}</Body>
       <Button label={t("Compartir enlace")} onPress={() => { void share(); }} />
       <Button secondary label={t("Abrir WhatsApp")} onPress={() => {
-        void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(t("Únete a {{v0}}: {{v1}}", { v0: activeClub?.name ?? t("mi club"), v1: link.url }))}`)
+        void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(t("Únete a {{v0}}: {{v1}}", { v0: activeClub?.name ?? t("mi club"), v1: `\n${link.url}` }))}`)
           .catch(() => setMessage(t("No se pudo abrir WhatsApp en este dispositivo.")));
       }} />
     </Card> : null}

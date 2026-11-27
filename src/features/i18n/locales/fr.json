@@ -1020,5 +1020,18 @@
   "No se crearán más convocatorias automáticamente. Las que ya existen se conservan.": "Aucune nouvelle convocation ne sera créée automatiquement. Celles qui existent déjà sont conservées.",
   "Ya hay una programación semanal activa. Detén la anterior antes de crear otra.": "Une programmation hebdomadaire est déjà active. Arrêtez-la avant d’en créer une autre.",
   "La primera convocatoria se crea al confirmar. Las siguientes se preparan automáticamente desde el día anterior, con la plantilla de ese momento y la hora local del club.": "La première convocation est créée à la confirmation. Les suivantes sont préparées automatiquement à partir de la veille, avec l’effectif du moment et l’heure locale du club.",
-  "Cada convocatoria se prepara desde el día anterior. No se sobrescriben las convocatorias que ya existan para esa fecha.": "Chaque convocation est préparée à partir de la veille. Les convocations déjà présentes à cette date ne sont pas remplacées."
+  "Cada convocatoria se prepara desde el día anterior. No se sobrescriben las convocatorias que ya existan para esa fecha.": "Chaque convocation est préparée à partir de la veille. Les convocations déjà présentes à cette date ne sont pas remplacées.",
+  "Este enlace se puede abrir sin instalar la app. Permite continuar en el navegador o descargar ConvoSquad.": "Ce lien fonctionne sans installer l’application. Vous pouvez continuer dans le navigateur ou télécharger ConvoSquad.",
+  "Invitación a ConvoSquad": "Invitation à ConvoSquad",
+  "Únete a tu club desde la app o el navegador. Descarga ConvoSquad para iOS y Android.": "Rejoignez votre club dans l’application ou le navigateur. Téléchargez ConvoSquad pour iOS et Android.",
+  "Continuar en el navegador": "Continuer dans le navigateur",
+  "Crear cuenta para unirme": "Créer un compte pour rejoindre le club",
+  "¿Prefieres usar la app?": "Vous préférez l’application ?",
+  "Si ya tienes ConvoSquad instalada, abre esta invitación en la app.": "Si ConvoSquad est déjà installée, ouvrez cette invitation dans l’application.",
+  "Abrir invitación en la app": "Ouvrir l’invitation dans l’application",
+  "Instala ConvoSquad y vuelve a abrir esta invitación para continuar.": "Installez ConvoSquad et rouvrez cette invitation pour continuer.",
+  "Descargar en App Store": "Télécharger sur l’App Store",
+  "Descargar en Google Play": "Télécharger sur Google Play",
+  "No se pudo abrir la tienda. Inténtalo de nuevo.": "Impossible d’ouvrir la boutique. Réessayez.",
+  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "Après l’installation, revenez au message et ouvrez à nouveau ce lien. L’invitation n’est pas transférée automatiquement depuis la boutique."
 }

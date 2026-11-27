@@ -17,13 +17,13 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
   useLanguage();
   const isRegister = mode === 'register';
   const { session, isDemo, exitDemo, isLoading, isRecovery } = useAuth();
-  const { pendingInvite } = usePendingInvite(); const { pendingPush } = usePendingPush();
+  const { pendingInvite, isRestoring: isRestoringInvite } = usePendingInvite(); const { pendingPush } = usePendingPush();
   const destination = pendingPush ? '/notification' as const : pendingInvite ? '/invite' as const : { pathname: '/clubs' as const, params: { auto: '1' } };
   const [eaId, setEaId] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
-  if (isLoading) return <LoadingScreen label={t("Comprobando tu sesión…")} />;
+  if (isLoading || isRestoringInvite) return <LoadingScreen label={t("Comprobando tu sesión…")} />;
   if (session && !isDemo) return <Redirect href={isRecovery ? '/reset-password' : destination} />;
 
   async function submit() {

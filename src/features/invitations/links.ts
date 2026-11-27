@@ -30,3 +30,12 @@ export function invitationFragmentToken(url: string | null): string | null {
   }
   catch { return null; }
 }
+
+
+export const publicInviteOrigin = 'https://convosquad.com';
+export function invitationWebBase(configuredOrigin?: string) {
+  return webInviteBase(configuredOrigin?.trim() || publicInviteOrigin);
+}
+export function invitationAppUrl(invitation: PendingInvitation) {
+  return invitationUrl('convosquad:///invite', invitation);
+}
