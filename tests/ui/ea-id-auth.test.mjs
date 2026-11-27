@@ -197,6 +197,7 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
         return route.fulfill({ json: req.headers().accept?.includes('object') ? club : [club] });
       }
       if (endpoint === 'club_members') return route.fulfill({ json: accounts });
+      if (endpoint === 'list_roster_helpers') return route.fulfill({json:[]});
       if (endpoint === 'list_roster_notification_status') return route.fulfill({json:players.map(p=>({player_id:p.id,status:'enabled',checked_at:new Date().toISOString(),vote_notifications:true}))});
       if (endpoint === 'players') return route.fulfill(failRoster ? {status:503,json:{message:'Roster unavailable'}} : { json: players });
       if (endpoint === 'create_my_player') {
@@ -1365,5 +1366,19 @@ test('captain can stop recurrence without deleting existing call-ups',async()=>{
  try{
   const {page}=f;await page.goto(origin+'/create-call-up');await page.getByRole('switch',{name:'Repetir convocatoria cada semana',exact:true}).click();await page.locator('input[type="date"]').fill('2038-01-11');await page.getByRole('button',{name:'Revisar convocatoria',exact:true}).click();await page.getByRole('button',{name:'Crear convocatoria',exact:true}).click();await page.waitForURL('**/call-up*');
   await page.goto(origin+'/recurring-call-ups');await page.getByRole('button',{name:'Detener repetición',exact:true}).click();await page.getByRole('button',{name:'Detener repetición',exact:true}).last().click();await page.getByText('No hay una repetición semanal activa.',{exact:true}).waitFor();assert.equal(f.requests.filter(r=>r.endpoint==='stop_recurring_call_up').length,1);assert.equal(f.requests.some(r=>r.endpoint==='delete_cancelled_call_up'),false);
+ }finally{await f.close();}
+});
+
+
+test('adding a trial accepts a phone copied from WhatsApp with invisible formatting',async()=>{
+ const f=await fixture({clubRole:'admin'});
+ try{
+  const {page}=f;await page.goto(origin+'/trials/new');
+  await page.getByLabel('Nombre de la prueba',{exact:true}).fill('Prueba pegada');
+  await page.getByLabel('Teléfono de la prueba (solo capitanes, opcional)',{exact:true}).fill('\u202a+34 612 34 56 78\u202c');
+  await page.getByRole('button',{name:'Guardar prueba',exact:true}).click();
+  await page.waitForURL('**/roster');
+  const request=f.requests.find(r=>r.endpoint==='save_club_trial_with_contact');assert.equal(request.body.p_phone,'+34612345678');
+  await page.getByRole('button',{name:'WhatsApp de Prueba pegada',exact:true,disabled:false}).waitFor();
  }finally{await f.close();}
 });
