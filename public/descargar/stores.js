@@ -1,7 +1,7 @@
 // Set each URL only after confirming that its public listing is available.
 // Keep null during review: the page must not send players to an unavailable app.
 const stores = {
-  apple: null,
+  apple: 'https://apps.apple.com/es/app/convosquad/id6824663674',
   google: 'https://play.google.com/store/apps/details?id=com.convosquad.app',
 };
 

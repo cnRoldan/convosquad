@@ -12,8 +12,9 @@ en sus rutas habituales.
 
 Google Play está publicado y el botón enlaza a
 `https://play.google.com/store/apps/details?id=com.convosquad.app`. El enlace
-funciona también con JavaScript desactivado. App Store sigue pendiente de la
-verificación DSA para España; su botón continúa deshabilitado.
+funciona también con JavaScript desactivado. Desde el 27 de noviembre de 2026,
+App Store está verificada en España y su botón enlaza a
+`https://apps.apple.com/es/app/convosquad/id6824663674`. Ambos botones están activos.
 
 
 En `public/descargar/stores.js`, sustituir el `null` de `apple` o `google` por la
