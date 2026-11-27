@@ -48,6 +48,14 @@
         "ascAppId": "6824663674",
         "appleTeamId": "525YGU2J8U"
       }
+    },
+    "store-production": {
+      "extends": "production",
+      "android": {
+        "track": "production",
+        "releaseStatus": "completed",
+        "changesNotSentForReview": false
+      }
     }
   }
 }
