@@ -1,5 +1,11 @@
-export function authErrorMessage(error: unknown, operation: 'login' | 'register' | 'recovery' | 'password' | 'callback'): string {
+export function authErrorMessage(error: unknown, operation: 'login' | 'register' | 'recovery' | 'password' | 'callback' | 'ea-id'): string {
   const code = typeof error === 'object' && error !== null && 'code' in error ? error.code : null;
+  if (code === 'P4101') return 'El ID de EA debe tener entre 3 y 24 letras, números, guiones o guiones bajos.';
+  if (code === 'P4102') return 'Este ID de EA ya está registrado. Elige otro.';
+  if (code === 'P4103') return 'Vuelve a confirmar tu contraseña antes de cambiar el ID de EA.';
+  if (code === 'P4104') return 'Tu ID de EA ha cambiado. Actualiza los datos de tu cuenta e inténtalo de nuevo.';
+  if (code === 'P4105') return 'Esta cuenta no utiliza acceso mediante ID de EA. Contacta con soporte para cambiarlo.';
+  if (code === 'ea_id_change_uncertain') return 'No se pudo confirmar el cambio. Comprueba tu cuenta antes de volver a intentarlo; el nuevo ID podría haberse guardado.';
   if (code === 'current_password_required') return 'Introduce tu contraseña actual.';
   if (code === 'current_password_incorrect' || code === 'wrong_password') return 'La contraseña actual no es correcta.';
   if (code === 'password_too_short') return 'La nueva contraseña debe tener al menos 8 caracteres.';
@@ -19,6 +25,7 @@ export function authErrorMessage(error: unknown, operation: 'login' | 'register'
   if (error instanceof TypeError || (error instanceof Error && error.name === 'AuthRetryableFetchError')) return 'No se pudo conectar con el servicio de acceso. Comprueba tu conexión y vuelve a intentarlo.';
   if (operation === 'login') return 'No se pudo iniciar sesión. Comprueba tus datos y tu conexión.';
   if (operation === 'register') return 'No se pudo crear la cuenta. Revisa el ID de EA, que debe ser único, y tu conexión.';
+  if (operation === 'ea-id') return 'No se pudo cambiar el ID de EA. Comprueba tu conexión y vuelve a intentarlo.';
   if (operation === 'password') return 'No se pudo cambiar la contraseña. Comprueba tu conexión y vuelve a intentarlo.';
   if (operation === 'callback') return 'El enlace no se pudo verificar. Contacta con el administrador.';
   return 'No se pudo completar la recuperación. Revisa el código y vuelve a intentarlo.';

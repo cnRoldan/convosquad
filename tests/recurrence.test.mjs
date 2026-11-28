@@ -3,9 +3,11 @@ import assert from 'node:assert/strict';
 import { weeklyDays, firstRecurringDate, localWeekday } from '../src/features/call-ups/recurrence.ts';
 test('Spanish weekdays use L M X J V S D and every locale has full accessible names',()=>{
  assert.deepEqual(weeklyDays('es-ES').map(d=>d.label),['L','M','X','J','V','S','D']);
- for(const locale of ['es-ES','en-GB','de-DE','fr-FR']){
+ for(const locale of ['es-ES','en-GB','de-DE','fr-FR','it-IT','pt-PT']){
   const days=weeklyDays(locale);assert.deepEqual(days.map(d=>d.value),[1,2,3,4,5,6,7]);assert.equal(new Set(days.map(d=>d.name)).size,7);assert.ok(days.every(d=>d.label.length<=4&&d.name.length>2));
  }
+ assert.deepEqual(weeklyDays('pt-PT').map(d=>d.label),['2.ª','3.ª','4.ª','5.ª','6.ª','sáb','dom']);
+ assert.equal(weeklyDays('it-IT')[0].name,'lunedì');assert.equal(weeklyDays('pt-PT')[0].name,'segunda-feira');
  assert.equal(weeklyDays('en-GB')[0].name,'Monday');assert.equal(weeklyDays('de-DE')[0].name,'Montag');assert.equal(weeklyDays('fr-FR')[0].name,'lundi');
 });
 test('first recurrence honours selected days and month/year transitions without device zone assumptions',()=>{

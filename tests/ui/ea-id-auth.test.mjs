@@ -24,7 +24,7 @@ before(async () => {
 });
 after(async () => { await browser?.close(); await new Promise(resolve => server?.close(resolve)); });
 
-async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRoster = false, logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], ratingStarters = [0,1], ratingPublished = true, browserLanguage = 'es-ES', profileLanguage = null } = {}) {
+async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRoster = false, logoutFailure = false, deletionBlocked = false, deletionRace = false, confirmed = true, available = true, clubRole = null, creator = false, wrongPassword = false, failCrestUploadOnce = false, rosterTrials = false, failTrialContacts = false, failTrialPromotion = false, performance = false, ratingFuture = false, ratingAgeHours = 1, multipleRatingCalls = false, ratingConflict = false, ratingsVisibility = 'captains', seedRatings = false, pendingJoinRequests = false, ratingAvailability = ['available', 'available'], ratingStarters = [0,1], ratingPublished = true, browserLanguage = 'es-ES', profileLanguage = null, renameAccount = false, renameError = null } = {}) {
   const context = await browser.newContext({ locale: browserLanguage, viewport: { width: 390, height: 844 } });
   const userId = '00000000-0000-4000-8000-000000000901';
   const candidateId = '00000000-0000-4000-8000-000000000902';
@@ -78,6 +78,7 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
     user_id: player.user_id, ea_id_snapshot: player.ea_id, category_snapshot: player.category, sort_order_snapshot: index,
     availability: ratingAvailability[index], responded_at: matchAt, auto_response: false}));
   const ratings = seedRatings ? ratingPlayers.map((entry,index)=>({call_up_player_id:entry.id,call_up_id:ratingCall.id,club_id:club.id,player_id:entry.source_player_id,player_name:entry.ea_id_snapshot,score:index?4:8,not_selected:false,updated_at:matchAt})) : [];
+  let accountName = 'EA-Player_9';
   let preferredLanguage = profileLanguage;
   let recurringRule = null;
   let voteNotifications = true;
@@ -226,23 +227,28 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
         return route.fulfill({ json: account });
       }
     }
+    if (endpoint === 'change_my_ea_id') {
+      assert.equal(renameAccount,true);assert.equal(body.p_current_ea_id,accountName);
+      if(renameError)return route.fulfill({status:409,json:{code:renameError,message:'Private backend detail'}});
+      accountName=body.p_new_ea_id;accounts[0].profiles.username=accountName;return route.fulfill({json:accountName});
+    }
     if (endpoint === 'account_deletion_blockers') return route.fulfill({json: deletionBlocked ? [{club_id:club.id,club_name:club.name}] : []});
     if (endpoint === 'delete_my_account') return route.fulfill(deletionRace
       ? {status:400,json:{code:'P4002',message:'Private server details'}} : {status:204});
     if (endpoint === 'settings') return route.fulfill({ json: { mailer_autoconfirm: confirmed, disable_signup: false } });
     if (endpoint === 'is_ea_id_available') return route.fulfill({ json: available });
-    if (endpoint === 'user') return route.fulfill({ json: { id: userId, aud: 'authenticated', role: 'authenticated', email: 'ea.player@accounts.convosquad.invalid', user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() } });
+    if (endpoint === 'user') return route.fulfill({ json: { id: userId, aud: 'authenticated', role: 'authenticated', email: renameAccount ? `ea.${accountName.toLowerCase()}@accounts.convosquad.invalid` : 'ea.player@accounts.convosquad.invalid', user_metadata: renameAccount ? {username:accountName,login_type:'ea_id'} : {}, app_metadata: {}, created_at: new Date().toISOString() } });
     if (endpoint === 'logout') return route.fulfill(logoutFailure ? { status: 503, json: { msg: 'Private server detail' } } : { json: {} });
     if (endpoint === 'token' && wrongPassword) return route.fulfill({ status: 400, headers: { 'X-Supabase-Api-Version': '2024-01-01', 'Access-Control-Expose-Headers': 'X-Supabase-Api-Version' }, json: { code: 'invalid_credentials', msg: 'Invalid login credentials' } });
     if (endpoint === 'signup' || endpoint === 'token') {
-      const user = { id: '00000000-0000-4000-8000-000000000901', aud: 'authenticated', role: 'authenticated', email: body.email, user_metadata: body.data ?? {}, app_metadata: {}, created_at: new Date().toISOString() };
+      const user = { id: '00000000-0000-4000-8000-000000000901', aud: 'authenticated', role: 'authenticated', email: renameAccount ? `ea.${accountName.toLowerCase()}@accounts.convosquad.invalid` : body.email, user_metadata: renameAccount ? {username:accountName,login_type:'ea_id'} : body.data ?? {}, app_metadata: {}, created_at: new Date().toISOString() };
       const token = `${Buffer.from('{}').toString('base64url')}.${Buffer.from(JSON.stringify({ sub: user.id, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.fixture`;
       return route.fulfill({ json: { user, access_token: token, refresh_token: 'fixture-refresh', expires_in: 3600, token_type: 'bearer' } });
     }
     if (endpoint === 'record_account_activity') return route.fulfill({json:null});
     if (endpoint === 'list_inactive_club_members' || endpoint === 'list_unlinked_club_members') return route.fulfill({json:[]});
     if (endpoint === 'set_preferred_language') { preferredLanguage = body.p_language; return route.fulfill({json: null}); }
-    if (endpoint === 'profiles') return route.fulfill({ json: { id: '00000000-0000-4000-8000-000000000901', username: 'EA-Player_9', preferred_language: preferredLanguage } });
+    if (endpoint === 'profiles') return route.fulfill({ json: { id: '00000000-0000-4000-8000-000000000901', username: accountName, preferred_language: preferredLanguage } });
     if (['clubs', 'club_members', 'search_clubs', 'join_requests', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
     throw new Error(`Unexpected fixture endpoint: ${endpoint}`);
   });
@@ -1348,6 +1354,8 @@ for(const [language,toggle,review,create,days] of [
  ['en','Repeat call-up every week','Review call-up','Create call-up',['Monday','Wednesday','Friday']],
  ['de','Spieltermin jede Woche wiederholen','Überprüfungsanruf','Aufgebot erstellen',['Montag','Mittwoch','Freitag']],
  ['fr','Répéter la convocation chaque semaine','Revoir la convocation','Créer une convocation',['lundi','mercredi','vendredi']],
+ ['it','Ripeti la convocazione ogni settimana','Rivedi convocazione','Crea convocazione',['lunedì','mercoledì','venerdì']],
+ ['pt','Repetir a convocatória todas as semanas','Rever convocatória','Criar convocatória',['segunda-feira','quarta-feira','sexta-feira']],
 ])test(`weekly recurrence selection and submission in ${language}`,async()=>{
  const f=await fixture({clubRole:'admin',profileLanguage:language});
  try{
@@ -1423,4 +1431,23 @@ test('public invitation keeps its context through registration without joining a
   await page.getByLabel('ID de EA',{exact:true}).fill('EA-Player_9');await page.getByLabel('Contraseña',{exact:true}).fill('test-only-password');await page.getByRole('button',{name:'Crear cuenta',exact:true}).click();
   await page.waitForURL('**/invite');await page.getByRole('button',{name:'Aceptar invitación',exact:true}).waitFor();assert.equal(f.requests.some(r=>r.endpoint==='redeem_club_invitation'),false);
  }finally{await f.close();}
+});
+
+
+test('correct EA ID from the identity menu preserves the account and refreshes the displayed login',async()=>{
+ const f=await fixture({clubRole:'player',renameAccount:true});try{
+  const p=f.page;await p.goto(origin+'/clubs');await p.getByRole('button',{name:'Sesión iniciada como EA-Player_9',exact:true}).click();await p.getByRole('menuitem',{name:'Cambiar mi ID de EA',exact:true}).click();await p.waitForURL('**/change-ea-id');
+  await p.getByLabel('Nuevo ID de EA',{exact:true}).fill('Correct_Player');await p.getByLabel('Contraseña actual',{exact:true}).fill('fixture-password');await p.getByRole('button',{name:'Guardar nuevo ID',exact:true}).click();
+  await p.getByText('ID actualizado a Correct_Player. A partir de ahora, inicia sesión con este ID y tu contraseña habitual.',{exact:true}).waitFor();await p.getByRole('button',{name:'Sesión iniciada como Correct_Player',exact:true}).waitFor();
+  const session=await p.evaluate(()=>JSON.parse(localStorage.getItem('sb-auth-auth-token')));assert.equal(session.user.id,'00000000-0000-4000-8000-000000000901');assert.equal(session.user.email,'ea.correct_player@accounts.convosquad.invalid');assert.equal(JSON.stringify(session).includes('fixture-password'),false);assert.equal(f.requests.filter(r=>r.endpoint==='change_my_ea_id').length,1);
+ }finally{await f.close();}
+});
+test('taken EA ID shows a safe error, clears the password and keeps the original account name',async()=>{
+ const f=await fixture({clubRole:'player',renameAccount:true,renameError:'P4102'});try{
+  const p=f.page;await p.goto(origin+'/change-ea-id');await p.getByLabel('Nuevo ID de EA',{exact:true}).fill('Taken_Player');await p.getByLabel('Contraseña actual',{exact:true}).fill('fixture-password');await p.getByRole('button',{name:'Guardar nuevo ID',exact:true}).click();await p.getByText('Este ID de EA ya está registrado. Elige otro.',{exact:true}).waitFor();assert.equal(await p.getByLabel('Contraseña actual',{exact:true}).inputValue(),'');await p.getByRole('button',{name:'Sesión iniciada como EA-Player_9',exact:true}).waitFor();assert.equal((await p.locator('body').innerText()).includes('Private backend detail'),false);
+ }finally{await f.close();}
+});
+
+for(const[language,label,login]of[['it','Italiano','Accedi'],['pt','Português','Iniciar sessão']])test(`language picker supports ${language} on a small screen and keeps the guest preference after reload`,async()=>{
+ const f=await fixture();try{const p=f.page;await p.setViewportSize({width:320,height:568});await p.goto(origin+'/login');await p.getByRole('button',{name:'Cambiar idioma',exact:true}).click();assert.equal(await p.getByRole('radio').count(),6);await p.getByRole('radio',{name:label,exact:true}).click();await p.getByRole('button',{name:login,exact:true}).waitFor();await p.reload();await p.getByRole('button',{name:login,exact:true}).waitFor();assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.equal(f.requests.some(r=>r.endpoint==='set_preferred_language'),false);}finally{await f.close();}
 });

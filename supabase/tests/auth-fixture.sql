@@ -5,8 +5,12 @@ create schema auth;
 create table auth.users (
   id uuid primary key,
   email text unique,
-  raw_user_meta_data jsonb not null default '{}'::jsonb
+  raw_user_meta_data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz default now(),
+  email_change text default '', email_change_token_new text default '', email_change_token_current text default '',
+  email_change_confirm_status smallint default 0, email_change_sent_at timestamptz
 );
+create table auth.identities (id uuid primary key default gen_random_uuid(), user_id uuid references auth.users(id) on delete cascade, provider text not null, identity_data jsonb not null default '{}'::jsonb, updated_at timestamptz default now());
 create table auth.sessions (id uuid primary key default gen_random_uuid(), user_id uuid references auth.users(id) on delete cascade);
 create table auth.refresh_tokens (id bigint generated always as identity primary key, user_id text, session_id uuid references auth.sessions(id) on delete cascade);
 create table auth.flow_state (id uuid primary key default gen_random_uuid(), user_id uuid);

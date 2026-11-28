@@ -1033,5 +1033,21 @@
   "Descargar en App Store": "Descargar en App Store",
   "Descargar en Google Play": "Descargar en Google Play",
   "No se pudo abrir la tienda. Inténtalo de nuevo.": "No se pudo abrir la tienda. Inténtalo de nuevo.",
-  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda."
+  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.",
+  "Cambiar mi ID de EA": "Cambiar mi ID de EA",
+  "Cargando tu cuenta…": "Cargando tu cuenta…",
+  "ID de EA actual": "ID de EA actual",
+  "Nuevo ID de EA": "Nuevo ID de EA",
+  "Guardar nuevo ID": "Guardar nuevo ID",
+  "Puedes corregir tu usuario sin crear otra cuenta. Se conservarán tus clubes, fichas, respuestas y valoraciones.": "Puedes corregir tu usuario sin crear otra cuenta. Se conservarán tus clubes, fichas, respuestas y valoraciones.",
+  "Los nombres de las fichas del club y de las convocatorias anteriores se mantienen. El capitán puede vincular tu cuenta aunque los nombres no coincidan.": "Los nombres de las fichas del club y de las convocatorias anteriores se mantienen. El capitán puede vincular tu cuenta aunque los nombres no coincidan.",
+  "El nuevo ID será tu usuario de acceso. Comprueba que esté bien escrito antes de guardarlo.": "El nuevo ID será tu usuario de acceso. Comprueba que esté bien escrito antes de guardarlo.",
+  "ID actualizado a {{v0}}. A partir de ahora, inicia sesión con este ID y tu contraseña habitual.": "ID actualizado a {{v0}}. A partir de ahora, inicia sesión con este ID y tu contraseña habitual.",
+  "El ID ya se ha guardado, pero no se pudo actualizar la sesión. Si vuelves a entrar, utiliza el nuevo ID.": "El ID ya se ha guardado, pero no se pudo actualizar la sesión. Si vuelves a entrar, utiliza el nuevo ID.",
+  "Este ID de EA ya está registrado. Elige otro.": "Este ID de EA ya está registrado. Elige otro.",
+  "Vuelve a confirmar tu contraseña antes de cambiar el ID de EA.": "Vuelve a confirmar tu contraseña antes de cambiar el ID de EA.",
+  "Tu ID de EA ha cambiado. Actualiza los datos de tu cuenta e inténtalo de nuevo.": "Tu ID de EA ha cambiado. Actualiza los datos de tu cuenta e inténtalo de nuevo.",
+  "Esta cuenta no utiliza acceso mediante ID de EA. Contacta con soporte para cambiarlo.": "Esta cuenta no utiliza acceso mediante ID de EA. Contacta con soporte para cambiarlo.",
+  "No se pudo confirmar el cambio. Comprueba tu cuenta antes de volver a intentarlo; el nuevo ID podría haberse guardado.": "No se pudo confirmar el cambio. Comprueba tu cuenta antes de volver a intentarlo; el nuevo ID podría haberse guardado.",
+  "No se pudo cambiar el ID de EA. Comprueba tu conexión y vuelve a intentarlo.": "No se pudo cambiar el ID de EA. Comprueba tu conexión y vuelve a intentarlo."
 }

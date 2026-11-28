@@ -1,0 +1,92 @@
+{
+  "intro": "Questa informativa spiega come ConvoSquad tratta i dati personali nell’app mobile e su convosquad.netlify.app. ConvoSquad organizza squadre di Club Pro ed è indipendente da Electronic Arts.",
+  "sections": [
+    {
+      "title": "1. Titolare e contatti",
+      "paragraphs": [
+        "Il servizio è gestito da Claudio Roldán Ramos, persona fisica residente in Spagna. Per domande sulla privacy o per esercitare i tuoi diritti, scrivi a convosquad.soporte@gmail.com."
+      ]
+    },
+    {
+      "title": "2. Account e accesso",
+      "paragraphs": [
+        "Trattiamo l’ID giocatore che inserisci, un identificatore interno dell’account, la lingua e le date di registrazione e accesso. La password viene trasmessa al servizio di autenticazione di Supabase tramite una connessione cifrata e conservata in modo protetto come hash; non viene salvata come testo leggibile nelle tabelle dell’app.",
+        "La registrazione attuale non richiede un indirizzo email reale: genera un identificatore tecnico a partire dall’ID giocatore. Non accediamo al tuo account Electronic Arts e non riceviamo la tua password EA. Se contatti l’assistenza, riceviamo il tuo indirizzo email e le informazioni che ci invii."
+      ]
+    },
+    {
+      "title": "3. Dati dei club e dei giocatori",
+      "paragraphs": [
+        "Conserviamo nomi, descrizioni, stemmi e fusi orari dei club; membri, ruoli, richieste e inviti; identificatori dei giocatori, numeri di maglia e posizioni; convocazioni, risposte sulla disponibilità e decisioni mantenute. I capitani possono aggiungere nomi di rinforzi o giocatori in prova, un numero di telefono facoltativo e note. Questi dati possono riguardare persone senza account.",
+        "Conserviamo anche le valutazioni del rendimento inserite dai capitani, le relative date e le statistiche calcolate a partire da esse. Non richiediamo dati sulla salute, documenti di identità, posizione precisa o accesso alla rubrica.",
+        "Prima di aggiungere i dati di un’altra persona, i capitani devono informarla e disporre di una base giuridica valida. Numeri di telefono e note sono facoltativi e non devono includere informazioni sensibili o dettagli non necessari all’organizzazione della squadra."
+      ]
+    },
+    {
+      "title": "4. Chi può vedere le informazioni",
+      "paragraphs": [
+        "I membri autorizzati possono accedere alle informazioni e alle risposte delle convocazioni del proprio club. Nella ricerca pubblica compaiono solo il nome e la descrizione dei club contrassegnati come pubblici. L’accesso agli stemmi è riservato ai membri del club.",
+        "I numeri di telefono e le note dei rinforzi e dei giocatori in prova sono accessibili solo ai capitani del club. Le valutazioni sono riservate ai capitani per impostazione predefinita; un capitano può consentire ai giocatori di vedere le proprie valutazioni o condividerle con i membri del club. L’amministratore tecnico del servizio può accedere ai dati quando necessario per assistenza, manutenzione o sicurezza."
+      ]
+    },
+    {
+      "title": "5. Notifiche e archiviazione sul dispositivo",
+      "paragraphs": [
+        "Se autorizzi le notifiche di sistema, trattiamo un identificatore casuale dell’installazione, il token delle notifiche, la piattaforma del dispositivo e le preferenze degli avvisi. Conserviamo gli eventi e i risultati di consegna necessari per inviare gli avvisi ed evitare duplicati. Gli avvisi possono includere l’ID e la disponibilità del giocatore che risponde e comparire sulla schermata di blocco, in base alle impostazioni di sistema.",
+        "I capitani possono consultare lo stato aggregato delle notifiche dei giocatori nella rosa, la preferenza sugli avvisi delle risposte e l’ora dell’ultimo controllo. Le autorizzazioni vengono verificate all’apertura dell’app mobile. I token e gli identificatori del dispositivo non vengono condivisi con i capitani e non viene confermata la consegna o lettura dei singoli avvisi.",
+        "Puoi gestire gli avvisi nell’app e nelle autorizzazioni di sistema. Il dispositivo o browser conserva la sessione, la lingua, il club selezionato, le preferenze delle notifiche e una cache degli stemmi per mantenere l’accesso e migliorare il caricamento. Questi dati non vengono usati per pubblicità personalizzata.",
+        "Quando scegli uno stemma, viene caricata solo l’immagine selezionata. Server e fornitori possono trattare dati tecnici di connessione, come indirizzo IP, orario, dettagli del browser o dispositivo ed errori, per gestire e proteggere il servizio."
+      ]
+    },
+    {
+      "title": "6. Finalità e basi giuridiche",
+      "paragraphs": [
+        "Utilizziamo i dati necessari per fornire il servizio richiesto: creare l’account, gestire club, autorizzazioni e convocazioni, registrare le risposte e mostrare le valutazioni. La base giuridica è l’esecuzione del rapporto di servizio (articolo 6, paragrafo 1, lettera b del RGPD).",
+        "Le funzioni facoltative vengono attivate su tua richiesta; le notifiche richiedono anche l’autorizzazione di sistema. Quando il trattamento richiede il consenso, puoi revocarlo senza pregiudicare il trattamento precedente. La sicurezza, la prevenzione degli abusi e la diagnosi tecnica si basano sul nostro legittimo interesse a un servizio sicuro e affidabile (articolo 6, paragrafo 1, lettera f). Gli obblighi di legge applicabili vengono adempiuti ai sensi dell’articolo 6, paragrafo 1, lettera c.",
+        "ConvoSquad non vende dati personali e non include pubblicità personalizzata. Gli acquisti e gli abbonamenti sono gestiti da Apple o Google e da RevenueCat. Trattiamo gli identificatori dell’account e del club, le transazioni e lo stato degli acquisti necessari per assegnare le funzioni acquistate; non riceviamo i dati della carta. Le valutazioni sono inserite da persone e non prendiamo decisioni automatizzate con effetti giuridici sui giocatori."
+      ]
+    },
+    {
+      "title": "7. Fornitori e trasferimenti internazionali",
+      "paragraphs": [
+        "Supabase fornisce autenticazione, database, archiviazione dei file e funzioni del server. Il database principale si trova in eu-west-1 (Irlanda). Netlify ospita e distribuisce il sito web. Expo gestisce la consegna delle notifiche, che può utilizzare Firebase Cloud Messaging di Google su Android o Apple Push Notification service su iOS. Google/Gmail interviene quando invii un’email all’assistenza. RevenueCat gestisce la verifica degli acquisti e lo stato degli abbonamenti insieme agli store Apple e Google.",
+        "I fornitori ricevono i dati necessari alle loro funzioni. Le notifiche contengono il token del dispositivo, gli identificatori del club, della convocazione e del destinatario e, a seconda dell’avviso, il nome di un giocatore e la sua risposta. Il link WhatsApp apre quel servizio con il numero selezionato, secondo le sue condizioni; non inviamo automaticamente l’intera rosa o la rubrica.",
+        "Sebbene il database principale sia nell’UE, le reti globali e alcuni fornitori possono trattare dati al di fuori dello Spazio economico europeo. Si applicano le garanzie previste nei loro accordi e i meccanismi del RGPD, come le clausole contrattuali standard o le decisioni di adeguatezza, ove applicabili. Puoi chiedere maggiori informazioni sui fornitori e sulle garanzie al contatto per la privacy."
+      ]
+    },
+    {
+      "title": "8. Conservazione e cancellazione",
+      "paragraphs": [
+        "L’account e le preferenze vengono conservati finché sono attivi. I dati del club, della rosa e delle convocazioni precedenti vengono conservati durante l’utilizzo da parte del club, fino alla cancellazione tramite le funzioni disponibili o a seguito di una richiesta. Le valutazioni consultabili coprono gli ultimi tre mesi; quelle più vecchie vengono eliminate da un’attività giornaliera.",
+        "Puoi eliminare il tuo account da I miei club → Elimina il mio account oppure da convosquad.netlify.app/delete-account. Sono richieste la password e la conferma dell’ID. Se sei l’unico capitano, devi prima nominare un altro capitano o eliminare il club; l’assistenza può aiutarti se non riesci a completare la procedura.",
+        "La cancellazione rimuove l’account e i dati collegati, comprese le schede giocatore, le risposte, le valutazioni, le preferenze e le registrazioni dei dispositivi. I club condivisi e i dati degli altri giocatori rimangono. I dati di rinforzi o giocatori in prova non collegati a un account e i riferimenti nel testo libero possono richiedere l’intervento di un capitano o dell’assistenza per essere identificati e rimossi.",
+        "Eliminare i dati attivi non riscrive i backup o i registri operativi dei fornitori. Questi seguono i propri cicli di rotazione e conservazione e non vengono utilizzati per mantenere attivo un account cancellato. I messaggi di assistenza e i registri di sicurezza vengono conservati per il tempo necessario a gestire la richiesta, indagare sugli incidenti o adempiere alle responsabilità legali, quindi eliminati o anonimizzati. Puoi chiedere informazioni sui periodi applicabili al tuo caso."
+      ]
+    },
+    {
+      "title": "9. Sicurezza",
+      "paragraphs": [
+        "Utilizziamo HTTPS, autenticazione e controlli di accesso basati su club e ruoli. I telefoni e le note private hanno autorizzazioni separate dai dati visibili ai giocatori. Nessun sistema è completamente sicuro: usa una password unica, proteggi il dispositivo ed evita di condividere inviti o credenziali con persone non autorizzate."
+      ]
+    },
+    {
+      "title": "10. I tuoi diritti",
+      "paragraphs": [
+        "Puoi richiedere accesso, rettifica, cancellazione, limitazione, opposizione e portabilità, ove applicabili, e revocare il consenso. Scrivi a convosquad.soporte@gmail.com indicando il tuo ID giocatore e i dati interessati. Chiederemo solo le informazioni necessarie a verificare la tua identità. Le richieste vengono generalmente gestite entro un mese, salvo le proroghe consentite dalla legge.",
+        "Questi diritti si applicano anche se non hai un account e un capitano ha inserito i tuoi dati. Puoi presentare un reclamo all’Agenzia spagnola per la protezione dei dati (www.aepd.es) o all’autorità competente del luogo in cui vivi."
+      ]
+    },
+    {
+      "title": "11. Fascia di età prevista",
+      "paragraphs": [
+        "ConvoSquad è destinato a persone di almeno 16 anni. Attualmente non richiediamo la data di nascita e non verifichiamo automaticamente l’età. Se individui dati relativi a una persona di meno di 16 anni, contatta l’assistenza per consentirci di esaminare la situazione e gestire l’eventuale richiesta di rimozione."
+      ]
+    },
+    {
+      "title": "12. Modifiche alla presente informativa",
+      "paragraphs": [
+        "Pubblicheremo le modifiche su questa pagina con una data aggiornata. Se introduciamo nuove finalità, acquisti o altri trattamenti significativi, aggiorneremo queste informazioni e raccoglieremo gli eventuali consensi aggiuntivi necessari."
+      ]
+    }
+  ]
+}

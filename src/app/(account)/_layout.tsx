@@ -7,6 +7,7 @@ export default function AccountLayout() {
   useLanguage();
   return <AuthAccess><Stack screenOptions={{ ...headerBackOptions(() => { if (router.canGoBack()) router.back(); else router.replace('/clubs'); }, t('Volver')), headerBackButtonDisplayMode: 'minimal', headerShadowVisible: false }}>
     <Stack.Screen name="performance" options={{ title: t("Valoraciones y rendimiento"), ...headerBackOptions(() => router.dismissTo('/home'), t("Volver al club")) }} />
+    <Stack.Screen name="change-ea-id" options={{ title: t("Cambiar mi ID de EA") }} />
     <Stack.Screen name="change-password" options={{ title: t("Cambiar mi contraseña") }} />
     <Stack.Screen name="biometrics" options={{ title: 'Acceso biométrico' }} />
     <Stack.Screen name="notifications" options={{ title: t("Notificaciones") }} />

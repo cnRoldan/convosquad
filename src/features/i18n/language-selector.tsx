@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Card, Message } from '@/components/ui';
 import { colors } from '@/theme';
 import { languages, supportedLanguage, t, useLanguage } from './runtime';
@@ -23,7 +23,7 @@ export function LanguageSelector({ inline = false }: { inline?: boolean }) {
       <LanguageFlag language={language} />
     </Pressable>
     {inline ? open ? <View style={{ width: '100%', maxWidth: 420 }}>{choices}</View> : null : <Modal visible={open} transparent animationType="fade" onRequestClose={() => { if (!busy) setOpen(false); }}>
-      <View accessibilityViewIsModal style={styles.overlay}><View style={{ width: '100%', maxWidth: 420 }}>{choices}</View></View>
+      <View accessibilityViewIsModal style={styles.overlay}><ScrollView style={{ width: '100%', maxWidth: 420, maxHeight: '90%' }} contentContainerStyle={{ flexGrow: 0 }}>{choices}</ScrollView></View>
     </Modal>}
   </>;
 }

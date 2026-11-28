@@ -1033,5 +1033,21 @@
   "Descargar en App Store": "Download on App Store",
   "Descargar en Google Play": "Download on Google Play",
   "No se pudo abrir la tienda. Inténtalo de nuevo.": "Could not open the store. Try again.",
-  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "After installing, return to the message and open this link again. The invitation is not transferred automatically from the store."
+  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "After installing, return to the message and open this link again. The invitation is not transferred automatically from the store.",
+  "Cambiar mi ID de EA": "Change my EA ID",
+  "Cargando tu cuenta…": "Loading your account…",
+  "ID de EA actual": "Current EA ID",
+  "Nuevo ID de EA": "New EA ID",
+  "Guardar nuevo ID": "Save new ID",
+  "Puedes corregir tu usuario sin crear otra cuenta. Se conservarán tus clubes, fichas, respuestas y valoraciones.": "You can correct your username without creating another account. Your clubs, player profiles, responses and ratings will be kept.",
+  "Los nombres de las fichas del club y de las convocatorias anteriores se mantienen. El capitán puede vincular tu cuenta aunque los nombres no coincidan.": "Names on club player profiles and past call-ups stay unchanged. The captain can link your account even if the names differ.",
+  "El nuevo ID será tu usuario de acceso. Comprueba que esté bien escrito antes de guardarlo.": "The new ID will be your sign-in username. Check its spelling before saving.",
+  "ID actualizado a {{v0}}. A partir de ahora, inicia sesión con este ID y tu contraseña habitual.": "ID updated to {{v0}}. From now on, sign in with this ID and your usual password.",
+  "El ID ya se ha guardado, pero no se pudo actualizar la sesión. Si vuelves a entrar, utiliza el nuevo ID.": "The ID was saved, but the session could not be refreshed. Use the new ID when you sign in again.",
+  "Este ID de EA ya está registrado. Elige otro.": "This EA ID is already registered. Choose another.",
+  "Vuelve a confirmar tu contraseña antes de cambiar el ID de EA.": "Confirm your password again before changing your EA ID.",
+  "Tu ID de EA ha cambiado. Actualiza los datos de tu cuenta e inténtalo de nuevo.": "Your EA ID has changed. Refresh your account details and try again.",
+  "Esta cuenta no utiliza acceso mediante ID de EA. Contacta con soporte para cambiarlo.": "This account does not use EA ID sign-in. Contact support to change it.",
+  "No se pudo confirmar el cambio. Comprueba tu cuenta antes de volver a intentarlo; el nuevo ID podría haberse guardado.": "The change could not be confirmed. Check your account before trying again; the new ID may have been saved.",
+  "No se pudo cambiar el ID de EA. Comprueba tu conexión y vuelve a intentarlo.": "Could not change the EA ID. Check your connection and try again."
 }

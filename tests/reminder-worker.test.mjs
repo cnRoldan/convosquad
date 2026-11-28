@@ -35,34 +35,34 @@ test('fallos de red y respuestas ambiguas no provocan reenvíos automáticos', a
 });
 test('el recordatorio de valoración se traduce y abre la convocatoria sin botones de voto', () => {
   const titles = new Set();
-  for (const language of ['es','en','de','fr']) {
+  for (const language of ['es','en','de','fr','it','pt']) {
     const message = pushMessage({ clubId:'club',callUpId:'call',eventKey:'evaluation',kind:'evaluation' },'token','captain',true,language);
     assert.equal('categoryId' in message,false);
     assert.deepEqual(message.data,{type:'call_up',clubId:'club',callUpId:'call',userId:'captain',kind:'evaluation'});
     assert.ok(message.body.length>20);titles.add(message.title);
   }
-  assert.equal(titles.size,4);
+  assert.equal(titles.size,6);
 });
 
 test('aviso de vencimiento usa el texto solicitado en español y se traduce sin ofrecer acciones de voto',()=>{
  const titles=new Set();
- for(const language of ['es','en','de','fr']) {
+ for(const language of ['es','en','de','fr','it','pt']) {
   const message=pushMessage({clubId:'club',callUpId:'call',eventKey:'deadline',kind:'evaluation_deadline'},'token','captain',true,language);
   assert.equal('categoryId' in message,false);assert.equal(message.data.kind,'evaluation_deadline');assert.equal(message.data.userId,'captain');
   assert.ok(message.body.length>20);titles.add(message.title);
   if(language==='es')assert.equal(message.body,'¡Valora a tus jugadores en su última convocatoria antes de que expire el tiempo!');
  }
- assert.equal(titles.size,4);
+ assert.equal(titles.size,6);
 });
 
-test('admisión: nombre del club, cuatro idiomas y sin acciones de voto ni convocatoria inventada',async()=>{
+test('admisión: nombre del club, seis idiomas y sin acciones de voto ni convocatoria inventada',async()=>{
  const titles=new Set();
- for(const language of ['es','en','de','fr']) {
+ for(const language of ['es','en','de','fr','it','pt']) {
   const msg=pushMessage({clubId:'club',callUpId:null,eventKey:'club-approved:request',kind:'club_approved',clubName:'Wabi Sabi'},'token','new-member',true,language);
   assert.match(msg.body,/Wabi Sabi/);assert.equal('categoryId' in msg,false);assert.equal(msg.data.type,'club_approved');assert.equal('callUpId' in msg.data,false);titles.add(msg.title);
   if(language==='es') assert.equal(msg.body,'Wabi Sabi te ha admitido en su club. Ya puedes acceder a sus convocatorias.');
  }
- assert.equal(titles.size,4);
+ assert.equal(titles.size,6);
  let captured;
  await dispatchReminders({async prepare(){},async events(){return [{id:'e',club_id:'club',call_up_id:null,event_key:'club-approved:r',kind:'club_approved',club_name_snapshot:'Wabi Sabi'}]},async claim(){return [{id:'d',token_snapshot:'token',user_id:'u',preferred_language:'es',can_vote:false}]},async finish(){}},async messages=>{captured=messages[0];return {data:[{status:'ok',id:'ticket'}]}});
  assert.match(captured.body,/Wabi Sabi/);assert.equal(captured.data.userId,'u');
@@ -70,12 +70,12 @@ test('admisión: nombre del club, cuatro idiomas y sin acciones de voto ni convo
 
 test('solicitud entrante usa nombres reales e idioma del capitán, sin botones de voto',async()=>{
  const titles=new Set();
- for(const language of ['es','en','de','fr']){
+ for(const language of ['es','en','de','fr','it','pt']){
   const message=pushMessage({clubId:'club',callUpId:null,eventKey:'club-join-request:r',kind:'club_join_request',clubName:'Wabi Sabi',actorEaId:'NuevoEA'},'token','captain',true,language);
   assert.match(message.body,/NuevoEA/);assert.match(message.body,/Wabi Sabi/);assert.equal('categoryId' in message,false);assert.deepEqual(message.data,{type:'club_join_request',clubId:'club',userId:'captain'});titles.add(message.title);
   if(language==='es')assert.equal(message.body,'NuevoEA quiere unirse a Wabi Sabi. Revisa las solicitudes pendientes.');
  }
- assert.equal(titles.size,4);
+ assert.equal(titles.size,6);
  let captured;
  await dispatchReminders({async prepare(){},async events(){return [{id:'e',club_id:'club',call_up_id:null,event_key:'club-join-request:r',kind:'club_join_request',club_name_snapshot:'Wabi Sabi',actor_ea_id:'NuevoEA'}]},async claim(){return [{id:'d',token_snapshot:'token',user_id:'captain',can_vote:false,preferred_language:'en'}]},async finish(){}},async messages=>{captured=messages[0];return {data:[{status:'ok',id:'ticket'}]}});
  assert.equal(captured.body,'NuevoEA wants to join Wabi Sabi. Review the pending requests.');

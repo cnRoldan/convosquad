@@ -1,7 +1,9 @@
+import it from './locales/it.json' with { type: 'json' };
+import pt from './locales/pt.json' with { type: 'json' };
 import type { Language } from '../i18n/runtime';
 
 export const privacyContact = 'convosquad.soporte@gmail.com';
-export const privacyUpdatedAt = '2026-11-22';
+export const privacyUpdatedAt = '2026-11-28';
 export const privacyController = 'Claudio Roldán Ramos';
 
 type Policy = { intro: string; sections: { title: string; paragraphs: string[] }[]; providerLinks: { label: string; href: `https://${string}` }[] };
@@ -11,12 +13,15 @@ const providerLinks: Policy['providerLinks'] = [
   { label: 'Expo', href: 'https://expo.dev/privacy' },
   { label: 'Netlify', href: 'https://www.netlify.com/privacy/' },
   { label: 'Firebase', href: 'https://firebase.google.com/support/privacy' },
-  { label: 'Google / Gmail', href: 'https://policies.google.com/privacy' },
+  { label: 'RevenueCat', href: 'https://www.revenuecat.com/privacy/' },
+  { label: 'Google / Google Play / Gmail', href: 'https://policies.google.com/privacy' },
   { label: 'Apple', href: 'https://www.apple.com/legal/privacy/' },
   { label: 'WhatsApp', href: 'https://www.whatsapp.com/legal/privacy-policy' },
 ];
 
 export const privacyPolicies: Record<Language, Policy> = {
+  it: { ...it, providerLinks },
+  pt: { ...pt, providerLinks },
   es: {
     intro: 'Esta política explica cómo ConvoSquad trata los datos personales en la aplicación móvil y en convosquad.netlify.app. ConvoSquad organiza equipos de Clubes Pro y es independiente de Electronic Arts.',
     sections: [
@@ -45,7 +50,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       { title: '6. Finalidades y bases jurídicas', paragraphs: [
         'Usamos los datos necesarios para prestar el servicio que solicitas: crear la cuenta, gestionar los clubes, sus permisos y convocatorias, registrar votos y mostrar valoraciones. La base jurídica es la ejecución de la relación de servicio (artículo 6.1.b del RGPD).',
         'Las funciones opcionales se activan cuando las solicitas; las notificaciones requieren además el permiso del sistema. Cuando el tratamiento requiera tu consentimiento, puedes retirarlo sin afectar a lo realizado previamente. La seguridad, la prevención de abusos y el diagnóstico técnico se basan en el interés legítimo de mantener un servicio seguro y fiable (artículo 6.1.f). Atendemos las obligaciones legales aplicables conforme al artículo 6.1.c.',
-        'ConvoSquad no vende datos personales ni incorpora publicidad personalizada. La versión actual no procesa compras ni datos de tarjetas. Las valoraciones son introducidas por personas y no adoptamos decisiones automatizadas con efectos jurídicos sobre los jugadores.',
+        "ConvoSquad no vende datos personales ni incorpora publicidad personalizada. Las compras y suscripciones se gestionan mediante Apple o Google y RevenueCat. Tratamos identificadores de cuenta y club, transacciones y estado de las compras necesarios para conceder las funciones adquiridas; no recibimos datos de tarjetas. Las valoraciones son introducidas por personas y no adoptamos decisiones automatizadas con efectos jurídicos sobre los jugadores.",
       ] },
       { title: '7. Proveedores y transferencias internacionales', paragraphs: [
         'Supabase proporciona autenticación, base de datos, archivos y funciones del servidor. La base de datos principal está alojada en la región eu-west-1 (Irlanda). Netlify aloja y distribuye la web. Expo gestiona el envío de notificaciones, que pueden pasar por Firebase Cloud Messaging de Google en Android o por Apple Push Notification service en iOS. Google/Gmail interviene cuando escribes al correo de soporte.',
@@ -101,7 +106,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       { title: '6. Purposes and legal bases', paragraphs: [
         'We use data necessary to provide the service you request: creating an account, managing clubs, permissions and call-ups, recording votes and displaying ratings. The legal basis is performance of the service relationship (GDPR Article 6(1)(b)).',
         'Optional features are activated at your request; notifications also require system permission. Where processing requires consent, you may withdraw it without affecting earlier processing. Security, abuse prevention and technical diagnosis rely on our legitimate interest in a secure, reliable service (Article 6(1)(f)). Applicable legal obligations are handled under Article 6(1)(c).',
-        'ConvoSquad does not sell personal data or include personalised advertising. The current version does not process purchases or card details. Ratings are entered by people; we do not make automated decisions with legal effects on players.',
+        "ConvoSquad does not sell personal data or include personalised advertising. Purchases and subscriptions are handled through Apple or Google and RevenueCat. We process account and club identifiers, transactions and purchase status needed to grant purchased features; we do not receive card details. Ratings are entered by people; we do not make automated decisions with legal effects on players.",
       ] },
       { title: '7. Providers and international transfers', paragraphs: [
         'Supabase provides authentication, database, file storage and server functions. The primary database is hosted in eu-west-1 (Ireland). Netlify hosts and distributes the website. Expo handles notification delivery, which may use Google’s Firebase Cloud Messaging on Android or Apple Push Notification service on iOS. Google/Gmail is involved when you email support.',
@@ -157,7 +162,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       { title: '6. Zwecke und Rechtsgrundlagen', paragraphs: [
         'Wir verwenden die notwendigen Daten, um den angeforderten Dienst bereitzustellen: Kontoerstellung, Verwaltung von Clubs, Berechtigungen und Aufgeboten, Erfassung von Stimmen und Anzeige von Bewertungen. Rechtsgrundlage ist die Erfüllung des Dienstverhältnisses gemäß Artikel 6 Absatz 1 Buchstabe b DSGVO.',
         'Optionale Funktionen werden auf deinen Wunsch aktiviert; Benachrichtigungen erfordern zusätzlich die Systemberechtigung. Soweit eine Einwilligung erforderlich ist, kann sie mit Wirkung für die Zukunft widerrufen werden. Sicherheit, Missbrauchsprävention und technische Fehlerdiagnose beruhen auf unserem berechtigten Interesse an einem sicheren, zuverlässigen Dienst (Artikel 6 Absatz 1 Buchstabe f). Gesetzliche Pflichten erfüllen wir nach Artikel 6 Absatz 1 Buchstabe c.',
-        'ConvoSquad verkauft keine personenbezogenen Daten und enthält keine personalisierte Werbung. Die aktuelle Version verarbeitet keine Käufe oder Kartendaten. Bewertungen werden von Menschen eingegeben; wir treffen keine automatisierten Entscheidungen mit rechtlicher Wirkung für Spieler.',
+        "ConvoSquad verkauft keine personenbezogenen Daten und enthält keine personalisierte Werbung. Käufe und Abonnements werden über Apple oder Google und RevenueCat abgewickelt. Wir verarbeiten Konto- und Vereinskennungen, Transaktionen und den Kaufstatus, um gekaufte Funktionen freizuschalten; wir erhalten keine Kartendaten. Bewertungen werden von Menschen eingegeben; wir treffen keine automatisierten Entscheidungen mit rechtlicher Wirkung für Spieler.",
       ] },
       { title: '7. Anbieter und internationale Übermittlungen', paragraphs: [
         'Supabase stellt Authentifizierung, Datenbank, Dateispeicher und Serverfunktionen bereit. Die Hauptdatenbank befindet sich in eu-west-1 (Irland). Netlify hostet und verteilt die Website. Expo übernimmt Benachrichtigungen, die auf Android über Firebase Cloud Messaging von Google und auf iOS über den Apple Push Notification service laufen können. Google/Gmail ist beteiligt, wenn du den Support per E-Mail kontaktierst.',
@@ -213,7 +218,7 @@ export const privacyPolicies: Record<Language, Policy> = {
       { title: '6. Finalités et bases juridiques', paragraphs: [
         'Nous utilisons les données nécessaires au service demandé : créer le compte, gérer les clubs, autorisations et convocations, enregistrer les votes et afficher les évaluations. La base juridique est l’exécution de la relation de service (article 6, paragraphe 1, point b du RGPD).',
         'Les fonctions facultatives sont activées à ta demande ; les notifications nécessitent aussi l’autorisation du système. Lorsque le traitement exige un consentement, tu peux le retirer sans remettre en cause les traitements antérieurs. La sécurité, la prévention des abus et le diagnostic technique reposent sur l’intérêt légitime à fournir un service sûr et fiable (article 6, paragraphe 1, point f). Les obligations légales relèvent de l’article 6, paragraphe 1, point c.',
-        'ConvoSquad ne vend pas de données personnelles et ne contient pas de publicité personnalisée. La version actuelle ne traite pas d’achats ni de coordonnées de carte bancaire. Les évaluations sont saisies par des personnes ; nous ne prenons pas de décisions automatisées ayant des effets juridiques sur les joueurs.',
+        "ConvoSquad ne vend pas de données personnelles et ne contient pas de publicité personnalisée. Les achats et abonnements sont gérés par Apple ou Google et RevenueCat. Nous traitons les identifiants du compte et du club, les transactions et l’état des achats nécessaires pour activer les fonctions achetées ; nous ne recevons pas les données de carte bancaire. Les évaluations sont saisies par des personnes ; nous ne prenons pas de décisions automatisées ayant des effets juridiques sur les joueurs.",
       ] },
       { title: '7. Prestataires et transferts internationaux', paragraphs: [
         'Supabase fournit l’authentification, la base de données, le stockage de fichiers et les fonctions serveur. La base principale se trouve dans la région eu-west-1 (Irlande). Netlify héberge et distribue le site. Expo gère l’envoi des notifications, qui peuvent passer par Firebase Cloud Messaging de Google sur Android ou Apple Push Notification service sur iOS. Google/Gmail intervient lorsque tu écris au support.',

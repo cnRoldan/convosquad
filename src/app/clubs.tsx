@@ -51,6 +51,7 @@ function ClubSelection() {
     <Button label={t("Crear un club")} onPress={() => router.push('/create-club')} />
     <Button secondary label={t("Buscar clubes")} onPress={() => router.push('/search-clubs')} />
     <Button secondary label={t("Notificaciones")} onPress={() => router.push('/notifications')} />
+    {!isDemo ? <Button secondary label={t("Cambiar mi ID de EA")} onPress={() => router.push('/change-ea-id')} /> : null}
     {!isDemo ? <Button secondary label={t("Cambiar mi contraseña")} onPress={() => router.push('/change-password')} /> : null}
     <Button secondary label={t("Mis solicitudes")} badge={pendingCount} accessibilityLabel={pendingCount ? t('Mis solicitudes, {{v0}} pendientes de revisión', { v0: pendingCount }) : t('Mis solicitudes')} onPress={() => router.push('/my-requests')} />
     {requests.error ? <Message error>{t('No se pudieron actualizar las solicitudes.')}</Message> : null}

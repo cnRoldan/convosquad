@@ -1482,6 +1482,13 @@ export type Database = {
         };
         Returns: string;
       };
+      change_my_ea_id: {
+        Args: {
+          p_current_ea_id: string;
+          p_new_ea_id: string;
+        };
+        Returns: string;
+      };
       claim_push_deliveries: {
         Args: {
           p_event_id: string;

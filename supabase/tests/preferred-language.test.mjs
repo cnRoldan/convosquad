@@ -10,3 +10,9 @@ test('usuario guarda únicamente su idioma; no puede actualizar otros perfiles n
  await assert.rejects(asUser(db,one,tx=>tx.query("select public.set_preferred_language('xx')")),e=>e.code==='22023');
  await assert.rejects(asUser(db,null,tx=>tx.query("select public.set_preferred_language('en')"),'anon'),e=>e.code==='42501');
 });
+
+test('Italian and Portuguese are saved per account, including direct constraint validation',async()=>{
+ for(const language of ['it','pt']){await asUser(db,one,tx=>tx.query('select public.set_preferred_language($1)',[language]));assert.equal((await db.query('select preferred_language from public.profiles where id=$1',[one])).rows[0].preferred_language,language);assert.equal((await db.query('select preferred_language from public.profiles where id=$1',[two])).rows[0].preferred_language,null);}
+ await assert.rejects(db.query("update public.profiles set preferred_language='pt-BR' where id=$1",[one]),e=>e.code==='23514');
+ await assert.rejects(asUser(db,one,tx=>tx.query('select public.set_preferred_language($1)',[null])),e=>e.code==='22023');
+});

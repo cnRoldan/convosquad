@@ -60,7 +60,7 @@ test('worker distingue votos y avisos pendientes, añade acciones y no reenvía 
 });
 
 test('private lineup instructions use a targeted read-only notice and survive intent restoration',()=>{
- for(const language of ['es','en','de','fr']){
+ for(const language of ['es','en','de','fr','it','pt']){
   const message=pushMessage({clubId,callUpId,eventKey:'instruction:one',kind:'lineup_instruction',actorEaId:'CONFIDENTIAL_BODY'},'ExpoPushToken[fixture]',userId,false,language);
   assert.equal(message.data.kind,'lineup_instruction');assert.equal(message.data.userId,userId);
   assert.equal(message.categoryId,undefined);assert.ok(!JSON.stringify(message).includes('CONFIDENTIAL_BODY'));

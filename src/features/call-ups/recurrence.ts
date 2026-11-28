@@ -3,6 +3,7 @@ export function weeklyDays(locale: string) {
     const day = new Date(Date.UTC(2026, 0, 5 + index)); // Monday first, independent of the device zone.
     return { value: index + 1,
       label: locale.toLowerCase().startsWith('es') ? ['L', 'M', 'X', 'J', 'V', 'S', 'D'][index]!
+        : locale.toLowerCase().startsWith('pt') ? ['2.ª', '3.ª', '4.ª', '5.ª', '6.ª', 'sáb', 'dom'][index]!
         : new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(day).replace(/\.$/, ''),
       name: new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(day),
     };

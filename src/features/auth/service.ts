@@ -1,3 +1,4 @@
+import { changeOwnEaId, type EaIdChangeInput } from './ea-id-change';
 import { deleteOwnAccount } from './account-deletion';
 import type { Database } from '@/types/database';
 import { createClient } from '@supabase/supabase-js';
@@ -40,4 +41,10 @@ export async function deleteAccount(userId: string, password: string, confirmati
     { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'convosquad-deletion-check' } },
   );
   return deleteOwnAccount(requireSupabase(), verifier, userId, password, confirmation);
+}
+
+export async function changeAccountEaId(userId: string, input: EaIdChangeInput) {
+  const verifier = createClient<Database>(process.env.EXPO_PUBLIC_SUPABASE_URL!, process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'convosquad-ea-id-check' } });
+  return changeOwnEaId(requireSupabase(), verifier, userId, input);
 }

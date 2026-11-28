@@ -73,6 +73,10 @@ export function SessionMenu({ eaId }: { eaId: string }) {
       <View style={styles.overlay} accessibilityViewIsModal onAccessibilityEscape={close}>
         <Pressable accessibilityRole="button" accessibilityLabel={t('Cerrar')} style={StyleSheet.absoluteFill} onPress={close} />
         <View accessibilityRole="menu" style={[styles.menu, { width: menuWidth, top: anchor?.top, right: anchor?.right }]}>
+          <Pressable accessibilityRole="menuitem" accessibilityLabel={t('Cambiar mi ID de EA')} disabled={isSigningOut || closingForAction}
+            style={({ pressed }) => [styles.item, pressed && styles.pressed]} onPress={() => dismissThen(() => { setClosingForAction(false); router.push('/change-ea-id'); })}>
+            <Text style={styles.itemText}>{t('Cambiar mi ID de EA')}</Text>
+          </Pressable>
           <Pressable accessibilityRole="menuitem" accessibilityLabel={t('Cerrar sesión')} disabled={isSigningOut || closingForAction} accessibilityState={{ disabled: isSigningOut || closingForAction, busy: isSigningOut || closingForAction }}
             style={({ pressed }) => [styles.item, pressed && styles.pressed]} onPress={() => dismissThen(() => { void leave(); })}>
             {isSigningOut ? <ActivityIndicator size="small" color={colors.primary} /> : <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={colors.primary} strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" accessible={false}>

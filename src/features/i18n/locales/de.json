@@ -1033,5 +1033,21 @@
   "Descargar en App Store": "Im App Store herunterladen",
   "Descargar en Google Play": "Bei Google Play herunterladen",
   "No se pudo abrir la tienda. Inténtalo de nuevo.": "Der Store konnte nicht geöffnet werden. Versuche es erneut.",
-  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "Kehre nach der Installation zur Nachricht zurück und öffne diesen Link erneut. Die Einladung wird nicht automatisch vom Store übertragen."
+  "Después de instalarla, vuelve al mensaje y abre de nuevo este enlace. La invitación no se transfiere automáticamente desde la tienda.": "Kehre nach der Installation zur Nachricht zurück und öffne diesen Link erneut. Die Einladung wird nicht automatisch vom Store übertragen.",
+  "Cambiar mi ID de EA": "Meine EA-ID ändern",
+  "Cargando tu cuenta…": "Dein Konto wird geladen…",
+  "ID de EA actual": "Aktuelle EA-ID",
+  "Nuevo ID de EA": "Neue EA-ID",
+  "Guardar nuevo ID": "Neue ID speichern",
+  "Puedes corregir tu usuario sin crear otra cuenta. Se conservarán tus clubes, fichas, respuestas y valoraciones.": "Du kannst deinen Benutzernamen korrigieren, ohne ein neues Konto anzulegen. Deine Vereine, Spielerprofile, Antworten und Bewertungen bleiben erhalten.",
+  "Los nombres de las fichas del club y de las convocatorias anteriores se mantienen. El capitán puede vincular tu cuenta aunque los nombres no coincidan.": "Die Namen in den Spielerprofilen und früheren Aufgeboten bleiben erhalten. Der Kapitän kann dein Konto auch bei unterschiedlichen Namen verknüpfen.",
+  "El nuevo ID será tu usuario de acceso. Comprueba que esté bien escrito antes de guardarlo.": "Die neue ID wird dein Anmeldename. Prüfe die Schreibweise vor dem Speichern.",
+  "ID actualizado a {{v0}}. A partir de ahora, inicia sesión con este ID y tu contraseña habitual.": "ID in {{v0}} geändert. Melde dich ab jetzt mit dieser ID und deinem bisherigen Passwort an.",
+  "El ID ya se ha guardado, pero no se pudo actualizar la sesión. Si vuelves a entrar, utiliza el nuevo ID.": "Die ID wurde gespeichert, aber die Sitzung konnte nicht aktualisiert werden. Verwende bei der nächsten Anmeldung die neue ID.",
+  "Este ID de EA ya está registrado. Elige otro.": "Diese EA-ID ist bereits registriert. Wähle eine andere.",
+  "Vuelve a confirmar tu contraseña antes de cambiar el ID de EA.": "Bestätige dein Passwort erneut, bevor du deine EA-ID änderst.",
+  "Tu ID de EA ha cambiado. Actualiza los datos de tu cuenta e inténtalo de nuevo.": "Deine EA-ID hat sich geändert. Aktualisiere deine Kontodaten und versuche es erneut.",
+  "Esta cuenta no utiliza acceso mediante ID de EA. Contacta con soporte para cambiarlo.": "Dieses Konto verwendet keine Anmeldung per EA-ID. Wende dich für eine Änderung an den Support.",
+  "No se pudo confirmar el cambio. Comprueba tu cuenta antes de volver a intentarlo; el nuevo ID podría haberse guardado.": "Die Änderung konnte nicht bestätigt werden. Prüfe dein Konto vor einem erneuten Versuch; die neue ID wurde möglicherweise gespeichert.",
+  "No se pudo cambiar el ID de EA. Comprueba tu conexión y vuelve a intentarlo.": "Die EA-ID konnte nicht geändert werden. Prüfe deine Verbindung und versuche es erneut."
 }

@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import type { Language } from './runtime';
 
 // Draw flags locally: regional-indicator emoji render as letters on Windows.
@@ -13,6 +13,15 @@ export function LanguageFlag({ language }: { language: Language }) {
       <Rect width={30} height={20} fill="#000000" />
       <Rect y={20 / 3} width={30} height={40 / 3} fill="#DD0000" />
       <Rect y={40 / 3} width={30} height={20 / 3} fill="#FFCE00" />
+    </> : language === 'it' ? <>
+      <Rect width={30} height={20} fill="#FFFFFF" />
+      <Rect width={10} height={20} fill="#009246" />
+      <Rect x={20} width={10} height={20} fill="#CE2B37" />
+    </> : language === 'pt' ? <>
+      <Rect width={30} height={20} fill="#FF0000" />
+      <Rect width={12} height={20} fill="#006600" />
+      <Circle cx={12} cy={10} r={4} fill="#FFCC00" />
+      <Path d="M10 7H14V11Q12 14 10 11Z" fill="#FFFFFF" stroke="#FF0000" strokeWidth={1} />
     </> : language === 'fr' ? <>
       <Rect width={30} height={20} fill="#FFFFFF" />
       <Rect width={10} height={20} fill="#002395" />

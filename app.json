@@ -53,13 +53,17 @@
               "es",
               "en",
               "de",
-              "fr"
+              "fr",
+              "it",
+              "pt"
             ],
             "android": [
               "es",
               "en",
               "de",
-              "fr"
+              "fr",
+              "it",
+              "pt"
             ]
           }
         }

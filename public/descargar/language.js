@@ -1,6 +1,6 @@
 import { renderStores } from './stores.js';
 
-const languages = ['es', 'en', 'de', 'fr'];
+const languages = ['es', 'en', 'de', 'fr', 'it', 'pt'];
 const storageKey = 'convosquad.landing.language';
 const selector = document.querySelector('[data-language-select]');
 const control = document.querySelector('[data-language-control]');
@@ -58,7 +58,7 @@ async function setLanguage(language, remember = false) {
   }
   for (const { element, name, source } of attributes) element.setAttribute(name, translate(source));
   document.documentElement.lang = language;
-  document.querySelector('meta[property="og:locale"]').content = { es: 'es_ES', en: 'en_GB', de: 'de_DE', fr: 'fr_FR' }[language];
+  document.querySelector('meta[property="og:locale"]').content = { es: 'es_ES', en: 'en_GB', de: 'de_DE', fr: 'fr_FR', it: 'it_IT', pt: 'pt_PT' }[language];
   control.querySelector('span').textContent = translate('Idioma');
   selector.setAttribute('aria-label', translate('Idioma de la página'));
   selector.value = language;
