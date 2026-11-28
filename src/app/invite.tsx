@@ -24,14 +24,16 @@ export default function InviteScreen() {
   const invitation = params.club || params.token ? incoming : pendingInvite;
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
-  const metadata = (<Head>
+  // These tags are for link previews in browsers. Native Head enables iOS
+  // Handoff, which needs separate origin configuration and is not used here.
+  const metadata = Platform.OS === 'web' ? (<Head>
       <title>{t('Invitación a ConvoSquad')}</title>
       <meta name="description" content={t('Únete a tu club desde la app o el navegador. Descarga ConvoSquad para iOS y Android.')} />
       <meta property="og:title" content={t('Invitación a ConvoSquad')} />
       <meta property="og:description" content={t('Únete a tu club desde la app o el navegador. Descarga ConvoSquad para iOS y Android.')} />
       <meta property="og:image" content="https://convosquad.com/descargar/media/compartir.png" />
       <meta name="referrer" content="no-referrer" />
-    </Head>);
+    </Head>) : null;
   if (isLoading || isRestoringInvite) return <>{metadata}<LoadingScreen label={t("Comprobando tu sesión…")} /></>;
   const ownClub = availableClubs.find((club) => club.id === invitation?.clubId);
   function authenticate(destination: '/login' | '/register') {
