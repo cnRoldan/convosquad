@@ -27,7 +27,9 @@ export default function HomeScreen() {
   const requests = useRequests();
   const pathname = usePathname();
   const [clock, setClock] = useState(Date.now);
-  const { activeClub, currentMembership, roster, upcomingCallUp, hasCurrentCallUp, rosterLoading, rosterError, refreshRoster, notice, reloadClubs } = useClub();
+  const { activeClub, currentMembership, roster, upcomingCallUp, hasCurrentCallUp, rosterLoading, hasRosterData, rosterError, refreshRoster, notice, reloadClubs } = useClub();
+  // Polling keeps the current club data; only the first load needs placeholders.
+  const rosterPending = rosterLoading && !hasRosterData;
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [leaveError, setLeaveError] = useState('');
@@ -69,11 +71,11 @@ export default function HomeScreen() {
     <Screen>
       <Heading title={activeClub?.name ?? t("Tu club")} subtitle={t("Tu rol: {{v0}}.", { v0: currentMembership?.role === 'admin' ? t("capitán") : t("jugador") })} />
       {notice ? <Body>{notice}</Body> : null}
-      {rosterLoading ? <Body>{t("Cargando datos del vestuario…")}</Body> : null}
+      {rosterPending ? <Body>{t("Cargando datos del vestuario…")}</Body> : null}
       {rosterError ? <Card title={t("No se pudieron cargar los datos")}><Body>{rosterError}</Body><Button label={t("Reintentar")} onPress={refreshRoster} /></Card> : null}
       <MyPlayerNotice />
       <Card title={t("El vestuario")}>
-        {!rosterLoading && !rosterError ? <Body>{t("{{v0}} jugadores en plantilla", { v0: roster.length })}</Body> : null}
+        {!rosterPending && !rosterError ? <Body>{t("{{v0}} jugadores en plantilla", { v0: roster.length })}</Body> : null}
         <Button secondary label={t("Ver plantilla")} onPress={() => router.navigate('/roster')} />
       </Card>
       <Card title={t("Próxima convocatoria")}>
@@ -87,7 +89,7 @@ export default function HomeScreen() {
             v1: upcomingCallUp.responses.length,
           })}</Text>
           <Button label={t("Ver convocatoria")} onPress={() => router.navigate({ pathname: '/call-up', params: { id: upcomingCallUp.id } })} />
-        </> : !rosterLoading && !rosterError ? <>
+        </> : !rosterPending && !rosterError ? <>
           <Body>{t("Todavía no hay convocatorias.")}</Body>
           {admin && ratingCall ? <Button label={t('Valorar rendimiento de jugadores')} onPress={() => router.push({ pathname: '/call-up-ratings', params: { id: ratingCall.id } })} /> : null}
         </> : null}
@@ -100,7 +102,7 @@ export default function HomeScreen() {
         <Button secondary label={t("Valoraciones y rendimiento")} onPress={() => router.navigate('/performance')} />
         <Button secondary label={t("Historial de convocatorias")} onPress={() => router.push('/call-up-history')} />
         <Button secondary label={t('Histórico de incidencias')} onPress={() => router.push('/incident-history')} />
-        {!hasCurrentCallUp && !rosterLoading && !rosterError ? <Button secondary label={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} /> : null}
+        {!hasCurrentCallUp && !rosterPending && !rosterError ? <Button secondary label={t("Crear convocatoria")} onPress={() => router.push('/create-call-up')} /> : null}
         <Button secondary label={t("Solicitudes pendientes")} badge={pendingRequests} floatingBadge
           {...(pendingRequests ? { accessibilityLabel: t('Solicitudes pendientes, {{v0}} pendientes de revisión', { v0: pendingRequests }) } : {})}
           onPress={() => router.push('/join-requests')} />

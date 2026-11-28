@@ -7,8 +7,8 @@ import { t, useLanguage } from '@/features/i18n/runtime';
 export function MyPlayerNotice() {
   useLanguage();
   const { session, isDemo } = useAuth();
-  const { activeClub, currentMembership, roster, rosterLoading, rosterError } = useClub();
-  if (isDemo || !session || !activeClub || !currentMembership || rosterLoading || rosterError
+  const { activeClub, currentMembership, roster, rosterLoading, hasRosterData, rosterError } = useClub();
+  if (isDemo || !session || !activeClub || !currentMembership || (rosterLoading && !hasRosterData) || rosterError
     || roster.some(player => player.userId === session.user.id)) return null;
   return <Card title={t('Aún no cuentas con ficha de jugador en plantilla')}>
     <Body>{currentMembership.role === 'admin' ? t('Crea tu ficha para aparecer como jugador y poder votar en las convocatorias de este club.') : 'Completa tu ficha o vincúlala con una existente para participar en las convocatorias.'}</Body>

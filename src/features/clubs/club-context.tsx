@@ -26,6 +26,7 @@ type ClubContextValue = {
   isLoading: boolean;
   error: string | null;
   rosterLoading: boolean;
+  hasRosterData: boolean;
   rosterVersion: number;
   notice: string | null;
   notifyClub: (clubId: string, message: string) => void;
@@ -142,6 +143,7 @@ export function ClubProvider({ children }: PropsWithChildren) {
     hasCurrentCallUp: isDemo ? callUps.some(callUp => callUp.clubId === selectedId) : data.data?.hasCurrentCallUp ?? false,
     isLoading: authLoading || (!isDemo && Boolean(userId) && !isRecovery && liveClubs?.userId !== userId),
     error: !isDemo && userId && liveClubs?.userId === userId ? liveClubs.error : null,
+    hasRosterData: isDemo || data.data !== null,
     rosterLoading: data.isLoading, rosterVersion: data.version, rosterError: data.error, refreshRoster: data.reload,
     refresh: () => { void reloadClubs().catch(() => undefined); data.reload(); },
     reloadClubs, selectClub, clearClub,

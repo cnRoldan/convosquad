@@ -252,7 +252,7 @@ async function fixture({ missingOwnPlayer = false, failMyPlayer = false, failRos
     if (['clubs', 'club_members', 'search_clubs', 'join_requests', 'club_directory'].includes(endpoint)) return route.fulfill({ json: [] });
     throw new Error(`Unexpected fixture endpoint: ${endpoint}`);
   });
-  return { page, requests, joinRequests, emitRequest, crestFixture: transparentPng, async close() { assert.deepEqual(errors, []); await context.close(); } };
+  return { page, requests, players, joinRequests, emitRequest, crestFixture: transparentPng, async close() { assert.deepEqual(errors, []); await context.close(); } };
 }
 
 test('registro móvil: dos campos, sesión inmediata y navegación a clubes sin confirmar correo', async () => {
@@ -1450,4 +1450,30 @@ test('taken EA ID shows a safe error, clears the password and keeps the original
 
 for(const[language,label,login]of[['it','Italiano','Accedi'],['pt','Português','Iniciar sessão']])test(`language picker supports ${language} on a small screen and keeps the guest preference after reload`,async()=>{
  const f=await fixture();try{const p=f.page;await p.setViewportSize({width:320,height:568});await p.goto(origin+'/login');await p.getByRole('button',{name:'Cambiar idioma',exact:true}).click();assert.equal(await p.getByRole('radio').count(),6);await p.getByRole('radio',{name:label,exact:true}).click();await p.getByRole('button',{name:login,exact:true}).waitFor();await p.reload();await p.getByRole('button',{name:login,exact:true}).waitFor();assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.equal(f.requests.some(r=>r.endpoint==='set_preferred_language'),false);}finally{await f.close();}
+});
+
+test('home rating shortcut stays mounted and clickable during a delayed background roster poll',async()=>{
+ const f=await fixture({clubRole:'admin',performance:true,missingOwnPlayer:true});let release;let hold=false;let entered;
+ const gate=new Promise(resolve=>{release=resolve;});const waiting=new Promise(resolve=>{entered=resolve;});
+ try{
+  const p=f.page;await p.clock.install({time:new Date()});
+  for(const endpoint of ['read_my_player_ratings','read_call_up_rating_averages'])await p.route('**/rest/v1/rpc/'+endpoint,route=>route.fulfill({json:[]}));
+  await p.route('**/rest/v1/call_ups?*',async route=>{if(!new URL(route.request().url()).searchParams.has('ends_at'))return route.fallback();if(hold){entered();await gate;}return route.fulfill({json:[]});});
+  await p.goto(origin+'/home');const shortcut=p.getByRole('button',{name:'Valorar rendimiento de jugadores',exact:true});await shortcut.waitFor();await p.clock.runFor(500);await shortcut.waitFor();
+  const before=await shortcut.boundingBox();
+  await shortcut.evaluate(node=>{window.__homeRatingNode=node;window.__homeRatingRemoved=false;window.__homeRatingObserver=new MutationObserver(()=>{if(!node.isConnected)window.__homeRatingRemoved=true;});window.__homeRatingObserver.observe(document.body,{childList:true,subtree:true});});
+  f.players.push({id:'refreshed-player',club_id:'00000000-0000-4000-8000-000000000903',user_id:null,ea_id:'New_Player',category:'midfielders',sort_order:2,is_active:true});
+  hold=true;await p.clock.fastForward(30000);await p.clock.runFor(200);await waiting;
+  assert.equal(await shortcut.count(),1,'background polling must not hide the rating shortcut');
+  assert.equal(await p.getByText('Cargando datos del vestuario…',{exact:true}).count(),0);assert.equal(await p.getByText('2 jugadores en plantilla',{exact:true}).count(),1);
+  assert.equal(await p.evaluate(()=>window.__homeRatingNode.isConnected&&!window.__homeRatingRemoved),true);
+  assert.equal(await p.getByText('Aún no cuentas con ficha de jugador en plantilla',{exact:true}).count(),1);
+  const during=await shortcut.boundingBox();assert.equal(during.y,before.y,'background polling must not move the shortcut');
+  release();await p.clock.runFor(200);await p.getByText('3 jugadores en plantilla',{exact:true}).waitFor();await shortcut.click();await p.waitForURL('**/call-up-ratings?*');await p.getByRole('button',{name:'Guardar valoraciones',exact:true}).waitFor();
+ }finally{release();await f.close();}
+});
+test('home waits for the initial roster before showing the rating shortcut',async()=>{
+ const f=await fixture({clubRole:'admin',performance:true});let release,entered;const gate=new Promise(r=>{release=r;});const waiting=new Promise(r=>{entered=r;});
+ try{const p=f.page;await p.route('**/rest/v1/call_ups?*',async route=>{if(!new URL(route.request().url()).searchParams.has('ends_at'))return route.fallback();entered();await gate;return route.fulfill({json:[]});});await p.goto(origin+'/home');await waiting;await p.getByText('Cargando datos del vestuario…',{exact:true}).waitFor();assert.equal(await p.getByRole('button',{name:'Valorar rendimiento de jugadores',exact:true}).count(),0);release();await p.getByRole('button',{name:'Valorar rendimiento de jugadores',exact:true}).waitFor();
+ }finally{release();await f.close();}
 });
